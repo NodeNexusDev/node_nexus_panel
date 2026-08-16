@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Spinner } from '../components/ui/Spinner'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Modal } from '../components/ui/Modal'
+import { FormSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/Toast'
 import { useAuthStore } from '../stores/auth-store'
 import {
@@ -72,16 +72,16 @@ export function Settings() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">{t('settings.title')}</h1>
-        <p className="text-surface-500 dark:text-surface-400">{t('settings.description')}</p>
+      <div className="animate-slide-up">
+        <h1 className="text-3xl font-bold gradient-text">{t('settings.title')}</h1>
+        <p className="text-surface-500 dark:text-surface-400 mt-1">{t('settings.description')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="animate-slide-up stagger-item" style={{ animationDelay: '100ms' }}>
           <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.profile')}</h2></CardHeader>
           <CardContent>
-            {profileLoading ? <div className="flex justify-center py-8"><Spinner /></div> : (
+            {profileLoading ? <FormSkeleton fields={3} /> : (
               <div className="space-y-4">
                 <Input label={t('settings.name')} value={name} onChange={(e) => setName(e.target.value)} />
                 <Input label={t('settings.email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -93,10 +93,10 @@ export function Settings() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="stagger-item" style={{ animationDelay: '200ms' }}>
           <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.apiKeys')}</h2></CardHeader>
           <CardContent>
-            {keysLoading ? <div className="flex justify-center py-8"><Spinner /></div> : (
+            {keysLoading ? <FormSkeleton fields={2} /> : (
               <div className="space-y-4">
                 {apiKeys.length === 0 ? (
                   <p className="text-sm text-surface-500 dark:text-surface-500">No API keys yet</p>
@@ -120,7 +120,7 @@ export function Settings() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="stagger-item" style={{ animationDelay: '300ms' }}>
           <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.notifications')}</h2></CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -144,7 +144,7 @@ export function Settings() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="stagger-item" style={{ animationDelay: '400ms' }}>
           <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.dangerZone')}</h2></CardHeader>
           <CardContent>
             <div className="p-4 border border-red-200 rounded-lg dark:border-red-500/20">

@@ -1,65 +1,66 @@
 import type { ReactNode } from 'react'
 
-interface TableProps {
-  children: ReactNode
+interface Column<T> {
+  key: string
+  header: string
+  render: (item: T) => ReactNode
   className?: string
 }
 
-export function Table({ children, className = '' }: TableProps) {
+interface TableProps<T> {
+  data: T[]
+  columns: Column<T>[]
+  keyExtractor: (item: T) => string
+  emptyMessage?: string
+  className?: string
+}
+
+export function Table<T>({
+  data,
+  columns,
+  keyExtractor,
+  emptyMessage = 'No data',
+  className = '',
+}: TableProps<T>) {
+  if (data.length === 0) {
+    return (
+      <div className="py-12 text-center text-sm text-surface-500 dark:text-surface-400">
+        {emptyMessage}
+      </div>
+    )
+  }
+
   return (
     <div className={`overflow-x-auto ${className}`}>
-      <table className="w-full">{children}</table>
+      <table className="w-full table-zebra">
+        <thead className="table-sticky">
+          <tr className="border-b border-surface-200 dark:border-surface-800">
+            {columns.map((col) => (
+              <th
+                key={col.key}
+                className={`px-6 py-3 text-left text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider ${col.className || ''}`}
+              >
+                {col.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
+          {data.map((item, index) => (
+            <tr
+              key={keyExtractor(item)}
+              className="table-row-hover stagger-item"
+              style={{ animationDelay: `${index * 30}ms` }}
+            >
+              {columns.map((col) => (
+                <td key={col.key} className={`px-6 py-4 ${col.className || ''}`}>
+                  {col.render(item)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
-}
-
-interface TableHeadProps {
-  children: ReactNode
-}
-
-export function TableHead({ children }: TableHeadProps) {
-  return (
-    <thead>
-      <tr className="border-b border-surface-200 dark:border-surface-800">{children}</tr>
-    </thead>
-  )
-}
-
-interface TableHeaderCellProps {
-  children: ReactNode
-  className?: string
-}
-
-export function TableHeaderCell({ children, className = '' }: TableHeaderCellProps) {
-  return (
-    <th className={`px-6 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider ${className}`}>
-      {children}
-    </th>
-  )
-}
-
-interface TableBodyProps {
-  children: ReactNode
-}
-
-export function TableBody({ children }: TableBodyProps) {
-  return <tbody className="divide-y divide-surface-200 dark:divide-surface-800">{children}</tbody>
-}
-
-interface TableRowProps {
-  children: ReactNode
-  className?: string
-}
-
-export function TableRow({ children, className = '' }: TableRowProps) {
-  return <tr className={`hover:bg-surface-50 dark:hover:bg-surface-800/50 ${className}`}>{children}</tr>
-}
-
-interface TableCellProps {
-  children: ReactNode
-  className?: string
-}
-
-export function TableCell({ children, className = '' }: TableCellProps) {
-  return <td className={`px-6 py-4 text-sm ${className}`}>{children}</td>
 }

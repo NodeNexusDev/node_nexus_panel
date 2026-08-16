@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useHotkey } from '../../hooks/useHotkey'
+import { IconDashboard, IconNodes, IconCommands, IconScripts, IconSettings } from './Icons'
 
 interface CommandItem {
   id: string
   label: string
   description: string
   path: string
-  icon: string
+  icon: ReactNode
 }
 
 export function CommandPalette() {
@@ -21,11 +22,11 @@ export function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null)
 
   const commands: CommandItem[] = useMemo(() => [
-    { id: 'dashboard', label: t('nav.dashboard'), description: 'View system overview', path: '/', icon: '📊' },
-    { id: 'nodes', label: t('nav.nodes'), description: 'Manage server nodes', path: '/nodes', icon: '🖥️' },
-    { id: 'commands', label: t('nav.commands'), description: 'Execute commands', path: '/commands', icon: '⚡' },
-    { id: 'scripts', label: t('nav.scripts'), description: 'Manage scripts', path: '/scripts', icon: '📜' },
-    { id: 'settings', label: t('nav.settings'), description: 'System settings', path: '/settings', icon: '⚙️' },
+    { id: 'dashboard', label: t('nav.dashboard'), description: 'View system overview', path: '/', icon: <IconDashboard className="w-5 h-5" /> },
+    { id: 'nodes', label: t('nav.nodes'), description: 'Manage server nodes', path: '/nodes', icon: <IconNodes className="w-5 h-5" /> },
+    { id: 'commands', label: t('nav.commands'), description: 'Execute commands', path: '/commands', icon: <IconCommands className="w-5 h-5" /> },
+    { id: 'scripts', label: t('nav.scripts'), description: 'Manage scripts', path: '/scripts', icon: <IconScripts className="w-5 h-5" /> },
+    { id: 'settings', label: t('nav.settings'), description: 'System settings', path: '/settings', icon: <IconSettings className="w-5 h-5" /> },
   ], [t])
 
   const filtered = useMemo(() => {
@@ -127,7 +128,7 @@ export function CommandPalette() {
                     : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'
                 }`}
               >
-                <span className="text-lg">{cmd.icon}</span>
+                <span className="text-surface-500 dark:text-surface-400">{cmd.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{cmd.label}</p>
                   <p className="text-xs text-surface-500 dark:text-surface-400 truncate">{cmd.description}</p>

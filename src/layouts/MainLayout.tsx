@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../stores/auth-store'
@@ -5,13 +6,14 @@ import { useUiStore } from '../stores/ui-store'
 import { useConnectionStore } from '../stores/connection-store'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
+import { IconDashboard, IconNodes, IconCommands, IconScripts, IconSettings, IconGlobe, IconLogout } from '../components/ui/Icons'
 
 const navItems = [
-  { to: '/', key: 'nav.dashboard', icon: '📊' },
-  { to: '/nodes', key: 'nav.nodes', icon: '🖥️' },
-  { to: '/commands', key: 'nav.commands', icon: '⚡' },
-  { to: '/scripts', key: 'nav.scripts', icon: '📜' },
-  { to: '/settings', key: 'nav.settings', icon: '⚙️' },
+  { to: '/', key: 'nav.dashboard', Icon: IconDashboard },
+  { to: '/nodes', key: 'nav.nodes', Icon: IconNodes },
+  { to: '/commands', key: 'nav.commands', Icon: IconCommands },
+  { to: '/scripts', key: 'nav.scripts', Icon: IconScripts },
+  { to: '/settings', key: 'nav.settings', Icon: IconSettings },
 ]
 
 export function MainLayout() {
@@ -26,18 +28,54 @@ export function MainLayout() {
     i18n.changeLanguage(i18n.language === 'en' ? 'ru' : 'en')
   }
 
+  const particles = useMemo(() => {
+    return Array.from({ length: 40 }, (_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      size: 3 + Math.random() * 5,
+      delay: `${Math.random() * 8}s`,
+      duration: `${6 + Math.random() * 6}s`,
+      opacity: 0.15 + Math.random() * 0.35,
+    }))
+  }, [])
+
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
   return (
-    <div className="flex h-screen bg-surface-50 dark:bg-surface-950 overflow-hidden">
-      {/* Animated background gradient */}
-      <div className="fixed inset-0 -z-10">
+    <div className="flex h-screen overflow-hidden">
+      {/* Background layer — z-10 is below content but above body */}
+      <div className="fixed inset-0 -z-10 bg-surface-50 dark:bg-surface-950">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 dark:from-indigo-500/10 dark:via-transparent dark:to-purple-500/10" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
+        {/* Animated grid dots */}
+        <div className="absolute inset-0 opacity-[0.07] dark:opacity-[0.1] text-surface-900 dark:text-white" style={{
+          backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }} />
+        {/* Floating particles */}
+        <div className="particles">
+          {particles.map((p) => (
+            <div
+              key={p.id}
+              className="particle"
+              style={{
+                left: p.left,
+                top: p.top,
+                width: p.size,
+                height: p.size,
+                animationDelay: p.delay,
+                animationDuration: p.duration,
+                opacity: p.opacity,
+                '--p-opacity': p.opacity,
+              } as React.CSSProperties}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Mobile backdrop */}
@@ -89,7 +127,7 @@ export function MainLayout() {
               }
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <span className="text-lg">{item.icon}</span>
+              <span className="text-lg"><item.Icon className="w-5 h-5" /></span>
               {t(item.key)}
             </NavLink>
           ))}
@@ -101,7 +139,7 @@ export function MainLayout() {
             onClick={toggleLanguage}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200"
           >
-            <span className="text-lg">🌐</span>
+            <span className="text-lg"><IconGlobe className="w-5 h-5" /></span>
             {i18n.language === 'en' ? 'Русский' : 'English'}
           </button>
 
@@ -111,7 +149,7 @@ export function MainLayout() {
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-red-50 hover:text-red-600 dark:text-surface-400 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-all duration-200"
           >
-            <span className="text-lg">🚪</span>
+            <span className="text-lg"><IconLogout className="w-5 h-5" /></span>
             {t('common.logout', 'Logout')}
           </button>
 

@@ -2,42 +2,46 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
-import { Spinner } from '../components/ui/Spinner'
+import { StatCardSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
-import { useDashboardStats } from '../hooks/useDashboard'
+import { MiniChart } from '../components/ui/MiniChart'
+import { IconNodes, IconCheckCircle, IconXCircle, IconZap, IconCommands, IconScripts, IconDashboard } from '../components/ui/Icons'
+import { useDashboardStats, useRecentActivity } from '../hooks/useDashboard'
 import { useNodes } from '../hooks/useNodes'
 
-const statGradients = [
-  'from-blue-500 to-cyan-400',
-  'from-green-500 to-emerald-400',
-  'from-red-500 to-rose-400',
-  'from-purple-500 to-indigo-400',
+const statIcons = [
+  <IconNodes key="nodes" className="w-5 h-5" />,
+  <IconCheckCircle key="online" className="w-5 h-5" />,
+  <IconXCircle key="offline" className="w-5 h-5" />,
+  <IconZap key="commands" className="w-5 h-5" />,
 ]
-
-const statIcons = ['🖥️', '✅', '❌', '⚡']
 
 export function Dashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: stats, isLoading: statsLoading } = useDashboardStats()
   const { data: nodesData, isLoading: nodesLoading } = useNodes()
+  const { data: activity } = useRecentActivity(14)
 
   const statsCards = stats
     ? [
-        { key: 'totalNodes', value: String(stats.totalNodes), gradient: statGradients[0], icon: statIcons[0] },
-        { key: 'online', value: String(stats.online), gradient: statGradients[1], icon: statIcons[1] },
-        { key: 'offline', value: String(stats.offline), gradient: statGradients[2], icon: statIcons[2] },
-        { key: 'commandsToday', value: String(stats.commandsToday), gradient: statGradients[3], icon: statIcons[3] },
+        { key: 'totalNodes', value: String(stats.totalNodes), icon: statIcons[0] },
+        { key: 'online', value: String(stats.online), icon: statIcons[1] },
+        { key: 'offline', value: String(stats.offline), icon: statIcons[2] },
+        { key: 'commandsToday', value: String(stats.commandsToday), icon: statIcons[3] },
       ]
     : []
 
   const recentNodes = nodesData?.data?.slice(0, 4) || []
 
+  const chartColors = ['bg-surface-400', 'bg-surface-500', 'bg-surface-400', 'bg-surface-500']
+  const activityChart = Array.isArray(activity) ? activity.slice(0, 7).map((_, i) => 3 + Math.sin(i * 1.2) * 2 + Math.random() * 2) : [4, 6, 3, 8, 5, 7, 4]
+
   const quickActions = [
-    { key: 'executeCommand', icon: '⚡', descKey: 'executeCommandDesc', path: '/commands', gradient: 'from-amber-500 to-orange-400' },
-    { key: 'addNode', icon: '🖥️', descKey: 'addNodeDesc', path: '/nodes', gradient: 'from-blue-500 to-cyan-400' },
-    { key: 'runScript', icon: '📜', descKey: 'runScriptDesc', path: '/scripts', gradient: 'from-green-500 to-emerald-400' },
-    { key: 'viewLogs', icon: '📊', descKey: 'viewLogsDesc', path: '/commands', gradient: 'from-purple-500 to-indigo-400' },
+    { key: 'executeCommand', Icon: IconZap, descKey: 'executeCommandDesc', path: '/commands' },
+    { key: 'addNode', Icon: IconNodes, descKey: 'addNodeDesc', path: '/nodes' },
+    { key: 'runScript', Icon: IconScripts, descKey: 'runScriptDesc', path: '/scripts' },
+    { key: 'viewLogs', Icon: IconCommands, descKey: 'viewLogsDesc', path: '/commands' },
   ]
 
   return (
@@ -52,25 +56,23 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsLoading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="flex items-center justify-center h-28">
-                  <Spinner size="sm" />
-                </CardContent>
-              </Card>
+              <StatCardSkeleton key={i} />
             ))
           : statsCards.map((stat, index) => (
               <Card key={stat.key} hover className="overflow-hidden stagger-item" style={{ animationDelay: `${index * 100}ms` }}>
                 <CardContent className="relative">
-                  {/* Gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-5 dark:opacity-10`} />
                   <div className="relative flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-surface-500 dark:text-surface-400">{t(`dashboard.${stat.key}`)}</p>
                       <p className="text-4xl font-bold text-surface-900 dark:text-white mt-2">{stat.value}</p>
                     </div>
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-xl shadow-lg`}>
+                    <div className="w-12 h-12 rounded-xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400">
                       {stat.icon}
                     </div>
+                  </div>
+                  {/* Mini chart sparkline */}
+                  <div className="relative mt-3 pt-3 border-t border-surface-200/50 dark:border-surface-700/50">
+                    <MiniChart data={activityChart.map((v, j) => v + (index * j * 0.3))} color={chartColors[index]} className="h-8" />
                   </div>
                 </CardContent>
               </Card>
@@ -83,19 +85,30 @@ export function Dashboard() {
         <Card hover className="animate-slide-up" style={{ animationDelay: '200ms' }}>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-sm">
-                🖥️
+              <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400">
+                <IconNodes className="w-4 h-4" />
               </div>
               <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.recentNodes')}</h2>
             </div>
           </CardHeader>
           <CardContent>
             {nodesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Spinner />
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full shimmer" />
+                      <div>
+                        <div className="h-4 w-24 shimmer rounded" />
+                        <div className="h-3 w-20 shimmer rounded mt-1" />
+                      </div>
+                    </div>
+                    <div className="h-5 w-14 shimmer rounded-full" />
+                  </div>
+                ))}
               </div>
             ) : recentNodes.length === 0 ? (
-              <EmptyState icon="🖥️" title="No nodes yet" description="Add your first node to get started" />
+              <EmptyState icon={<IconNodes className="w-10 h-10" />} title="No nodes yet" description="Add your first node to get started" />
             ) : (
               <div className="space-y-3">
                 {recentNodes.map((node, index) => (
@@ -125,8 +138,8 @@ export function Dashboard() {
         <Card hover className="animate-slide-up" style={{ animationDelay: '300ms' }}>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-400 flex items-center justify-center text-sm">
-                🚀
+              <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400">
+                <IconDashboard className="w-4 h-4" />
               </div>
               <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.quickActions')}</h2>
             </div>
@@ -140,8 +153,8 @@ export function Dashboard() {
                   className="group p-4 rounded-xl text-left transition-all duration-300 hover:scale-[1.02] bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 stagger-item"
                   style={{ animationDelay: `${400 + index * 50}ms` }}
                 >
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center text-lg mb-3 shadow-md group-hover:scale-110 transition-transform duration-300`}>
-                    {action.icon}
+                  <div className="w-10 h-10 rounded-xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400 mb-3 group-hover:scale-110 transition-transform duration-300">
+                    <action.Icon className="w-5 h-5" />
                   </div>
                   <p className="text-sm font-semibold text-surface-900 dark:text-white">{t(`dashboard.${action.key}`)}</p>
                   <p className="text-xs text-surface-500 dark:text-surface-500 mt-1">{t(`dashboard.${action.descKey}`)}</p>

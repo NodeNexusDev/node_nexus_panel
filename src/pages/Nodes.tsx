@@ -1,15 +1,19 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { Tooltip } from '../components/ui/Tooltip'
+import { DragDropList } from '../components/ui/DragDropList'
+import { TableSkeleton } from '../components/ui/Skeleton'
+import { IconNodes, IconGrip, IconTerminal, IconFileText } from '../components/ui/Icons'
 import { useNodes, useCreateNode, useDeleteNode } from '../hooks/useNodes'
 import { useToast } from '../components/ui/Toast'
+import type { Node } from '../api/types'
 
 export function Nodes() {
   const { t } = useTranslation()
@@ -23,6 +27,79 @@ export function Nodes() {
   const [newNode, setNewNode] = useState({ name: '', ip: '', port: '' })
 
   const nodes = data?.data || []
+  const [orderedNodes, setOrderedNodes] = useState<Node[]>([])
+  const displayNodes = orderedNodes.length > 0 ? orderedNodes : nodes
+  const [dragMode, setDragMode] = useState(false)
+
+  const handleReorder = useCallback((reordered: Node[]) => {
+    setOrderedNodes(reordered)
+  }, [])
+
+  const renderNodeRow = (node: Node, index: number) => (
+    <tr key={node.id} className="table-row-hover stagger-item" style={{ animationDelay: `${index * 50}ms` }}>
+        {dragMode && (
+          <td className="px-2 py-4 w-8">
+            <div className="flex items-center justify-center text-surface-400 dark:text-surface-500">
+              <IconGrip className="w-4 h-4" />
+            </div>
+          </td>
+        )}
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+            node.status === 'online'
+              ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400'
+              : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'
+          }`}>
+            <IconNodes className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.ip}</p>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${node.status === 'online' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
+          <Badge variant={node.status === 'online' ? 'success' : 'danger'}>{node.status}</Badge>
+        </div>
+      </td>
+      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{node.os}</td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className="w-16 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full" style={{ width: node.cpu }} />
+          </div>
+          <span className="text-sm text-surface-600 dark:text-surface-300 font-mono">{node.cpu}</span>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className="w-16 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" style={{ width: node.memory }} />
+          </div>
+          <span className="text-sm text-surface-600 dark:text-surface-300 font-mono">{node.memory}</span>
+        </div>
+      </td>
+      <td className="px-6 py-4 text-sm text-surface-500 dark:text-surface-500">{node.lastSeen}</td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-1">
+          <Tooltip content="Terminal">
+            <Button variant="ghost" size="sm"><IconTerminal className="w-4 h-4" /></Button>
+          </Tooltip>
+          <Tooltip content="Logs">
+            <Button variant="ghost" size="sm"><IconFileText className="w-4 h-4" /></Button>
+          </Tooltip>
+          <Tooltip content="Delete">
+            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: node.id, name: node.name })} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10">
+              {t('common.delete')}
+            </Button>
+          </Tooltip>
+        </div>
+      </td>
+    </tr>
+  )
 
   const handleAdd = () => {
     createNode.mutate(
@@ -51,60 +128,56 @@ export function Nodes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-slide-up">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">{t('nodes.title')}</h1>
-          <p className="text-surface-500 dark:text-surface-400">{t('nodes.description')}</p>
+          <h1 className="text-3xl font-bold gradient-text">{t('nodes.title')}</h1>
+          <p className="text-surface-500 dark:text-surface-400 mt-1">{t('nodes.description')}</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>
+        <div className="flex items-center gap-2">
+          {nodes.length > 1 && (
+            <Tooltip content={dragMode ? 'Exit reorder' : 'Reorder nodes'}>
+              <Button variant={dragMode ? 'secondary' : 'ghost'} size="sm" onClick={() => { setDragMode(!dragMode); if (dragMode) setOrderedNodes([]) }}>
+                <IconGrip className="w-4 h-4" />
+              </Button>
+            </Tooltip>
+          )}
+          <Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>
+        </div>
       </div>
 
-      <Card>
+      <Card hover>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16"><Spinner /></div>
+            <TableSkeleton rows={5} cols={7} />
           ) : nodes.length === 0 ? (
             <EmptyState
-              icon="🖥️"
+              icon={<IconNodes className="w-10 h-10" />}
               title="No nodes"
               description="Add your first node to start monitoring"
               action={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
+              <table className="w-full table-zebra">
+                <thead className="table-sticky">
                   <tr className="border-b border-surface-200 dark:border-surface-800">
+                    {dragMode && <th className="px-2 py-3 w-8" />}
                     {[t('nodes.node'), t('nodes.status'), t('nodes.os'), t('nodes.cpu'), t('nodes.memory'), t('nodes.lastSeen'), t('nodes.actions')].map((h) => (
-                      <th key={h} className="px-6 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">{h}</th>
+                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-                  {nodes.map((node) => (
-                    <tr key={node.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/50">
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-surface-900 dark:text-white">{node.name}</p>
-                        <p className="text-xs text-surface-500 dark:text-surface-500">{node.ip}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge variant={node.status === 'online' ? 'success' : 'danger'}>{node.status}</Badge>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{node.os}</td>
-                      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{node.cpu}</td>
-                      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{node.memory}</td>
-                      <td className="px-6 py-4 text-sm text-surface-500 dark:text-surface-500">{node.lastSeen}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">{t('nodes.terminal')}</Button>
-                          <Button variant="ghost" size="sm">{t('nodes.logs')}</Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: node.id, name: node.name })}>
-                            {t('common.delete')}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {dragMode ? (
+                    <DragDropList
+                      items={displayNodes}
+                      onReorder={handleReorder}
+                      keyExtractor={(n) => n.id}
+                      renderItem={(node, index) => renderNodeRow(node, index)}
+                    />
+                  ) : (
+                    displayNodes.map((node, index) => renderNodeRow(node, index))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -131,7 +204,7 @@ export function Nodes() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Delete Node"
-        message={`Are you sure you want to delete "${deleteTarget?.name}"?`}
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
         confirmLabel={t('common.delete')}
         loading={deleteNode.isPending}
       />
