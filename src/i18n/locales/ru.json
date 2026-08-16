@@ -1,0 +1,88 @@
+{
+  "nav": {
+    "dashboard": "Панель",
+    "nodes": "Ноды",
+    "commands": "Команды",
+    "scripts": "Скрипты",
+    "settings": "Настройки"
+  },
+  "dashboard": {
+    "title": "Панель",
+    "description": "Обзор нод и состояния системы",
+    "totalNodes": "Всего нод",
+    "online": "Онлайн",
+    "offline": "Офлайн",
+    "commandsToday": "Команд сегодня",
+    "recentNodes": "Последние ноды",
+    "quickActions": "Быстрые действия",
+    "executeCommand": "Выполнить команду",
+    "executeCommandDesc": "Запустить на нодах",
+    "addNode": "Добавить ноду",
+    "addNodeDesc": "Зарегистрировать новую ноду",
+    "runScript": "Запустить скрипт",
+    "runScriptDesc": "Выполнить скрипт",
+    "viewLogs": "Просмотреть логи",
+    "viewLogsDesc": "Системные логи"
+  },
+  "nodes": {
+    "title": "Ноды",
+    "description": "Управление и мониторинг подключённых нод",
+    "addNode": "Добавить ноду",
+    "node": "Нода",
+    "status": "Статус",
+    "os": "ОС",
+    "cpu": "ЦПУ",
+    "memory": "Память",
+    "lastSeen": "Последнее подключение",
+    "actions": "Действия",
+    "terminal": "Терминал",
+    "logs": "Логи"
+  },
+  "commands": {
+    "title": "Команды",
+    "description": "Выполнение команд на удалённых нодах",
+    "executeCommand": "Выполнить команду",
+    "allNodes": "Все ноды",
+    "enterCommand": "Введите команду...",
+    "execute": "Выполнить",
+    "commandHistory": "История команд",
+    "on": "на"
+  },
+  "scripts": {
+    "title": "Скрипты",
+    "description": "Создание и управление скриптами",
+    "createScript": "Создать скрипт",
+    "schedule": "Расписание",
+    "lastRun": "Последний запуск",
+    "edit": "Редактировать",
+    "run": "Запустить"
+  },
+  "settings": {
+    "title": "Настройки",
+    "description": "Конфигурация панели",
+    "profile": "Профиль",
+    "name": "Имя",
+    "email": "Email",
+    "saveChanges": "Сохранить изменения",
+    "apiKeys": "API ключи",
+    "createApiKey": "Создать API ключ",
+    "notifications": "Уведомления",
+    "nodeOfflineAlerts": "Оповещения об.offline нодах",
+    "nodeOfflineDesc": "Получать уведомления, когда нода уходит в офлайн",
+    "commandNotifications": "Уведомления о командах",
+    "commandNotificationsDesc": "Уведомлять о завершении команд",
+    "dangerZone": "Опасная зона",
+    "resetData": "Сбросить все данные",
+    "resetDataDesc": "Это навсегда удалит все ноды, скрипты и историю.",
+    "reset": "Сбросить"
+  },
+  "common": {
+    "connected": "Подключено",
+    "disconnected": "Отключено",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "loading": "Загрузка..."
+  }
+}

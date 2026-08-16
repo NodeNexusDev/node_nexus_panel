@@ -1,0 +1,88 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "nodes": "Nodes",
+    "commands": "Commands",
+    "scripts": "Scripts",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Overview of your nodes and system health",
+    "totalNodes": "Total Nodes",
+    "online": "Online",
+    "offline": "Offline",
+    "commandsToday": "Commands Today",
+    "recentNodes": "Recent Nodes",
+    "quickActions": "Quick Actions",
+    "executeCommand": "Execute Command",
+    "executeCommandDesc": "Run on nodes",
+    "addNode": "Add Node",
+    "addNodeDesc": "Register new node",
+    "runScript": "Run Script",
+    "runScriptDesc": "Execute script",
+    "viewLogs": "View Logs",
+    "viewLogsDesc": "System logs"
+  },
+  "nodes": {
+    "title": "Nodes",
+    "description": "Manage and monitor your connected nodes",
+    "addNode": "Add Node",
+    "node": "Node",
+    "status": "Status",
+    "os": "OS",
+    "cpu": "CPU",
+    "memory": "Memory",
+    "lastSeen": "Last Seen",
+    "actions": "Actions",
+    "terminal": "Terminal",
+    "logs": "Logs"
+  },
+  "commands": {
+    "title": "Commands",
+    "description": "Execute commands on remote nodes",
+    "executeCommand": "Execute Command",
+    "allNodes": "All Nodes",
+    "enterCommand": "Enter command...",
+    "execute": "Execute",
+    "commandHistory": "Command History",
+    "on": "on"
+  },
+  "scripts": {
+    "title": "Scripts",
+    "description": "Create and manage reusable scripts",
+    "createScript": "Create Script",
+    "schedule": "Schedule",
+    "lastRun": "Last run",
+    "edit": "Edit",
+    "run": "Run"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Configure your panel settings",
+    "profile": "Profile",
+    "name": "Name",
+    "email": "Email",
+    "saveChanges": "Save Changes",
+    "apiKeys": "API Keys",
+    "createApiKey": "Create API Key",
+    "notifications": "Notifications",
+    "nodeOfflineAlerts": "Node Offline Alerts",
+    "nodeOfflineDesc": "Get notified when a node goes offline",
+    "commandNotifications": "Command Notifications",
+    "commandNotificationsDesc": "Notify when commands complete",
+    "dangerZone": "Danger Zone",
+    "resetData": "Reset all data",
+    "resetDataDesc": "This will permanently delete all nodes, scripts, and history.",
+    "reset": "Reset"
+  },
+  "common": {
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading..."
+  }
+}
