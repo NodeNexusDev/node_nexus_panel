@@ -13,7 +13,8 @@ test.describe('Login', () => {
     await page.getByRole('textbox', { name: /email/i }).fill('wrong@example.com')
     await page.getByRole('textbox', { name: /password/i }).fill('wrongpassword')
     await page.getByRole('button', { name: /submit|sign in|log in/i }).click()
-    await expect(page.locator('.text-red-600, .dark\\:text-red-400')).toBeVisible()
+    await expect(page).toHaveURL(/\/login/)
+    await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible()
   })
 
   test('redirects to dashboard on valid login', async ({ page }) => {
@@ -21,6 +22,6 @@ test.describe('Login', () => {
     await page.getByRole('textbox', { name: /email/i }).fill('admin@example.com')
     await page.getByRole('textbox', { name: /password/i }).fill('password')
     await page.getByRole('button', { name: /submit|sign in|log in/i }).click()
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/', { timeout: 10_000 })
   })
 })

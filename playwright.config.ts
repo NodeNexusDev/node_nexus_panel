@@ -12,6 +12,9 @@ export default defineConfig({
     baseURL: 'http://localhost:5173',
     actionTimeout: 0,
     trace: 'on-first-retry',
+    launchOptions: {
+      args: ['--no-sandbox'],
+    },
   },
   projects: [
     {
