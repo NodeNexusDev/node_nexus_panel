@@ -65,7 +65,7 @@ function NodeList() {
   const { data, isLoading, error } = useNodes()
   const deleteNode = useDeleteNode()
 
-  if (isLoading) return <Spinner />
+  if (isLoading) return <TableSkeleton rows={5} cols={3} />
   if (error) return <ErrorMessage error={error} />
 
   return (
