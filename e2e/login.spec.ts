@@ -18,6 +18,18 @@ test.describe('Login', () => {
   })
 
   test('redirects to dashboard on valid login', async ({ page }) => {
+    await page.route('**/api/auth/login', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: {
+            token: 'e2e-test-token',
+            user: { id: '1', email: 'admin@example.com', name: 'Admin', role: 'admin' },
+          },
+        }),
+      }),
+    )
     await page.goto('/login')
     await page.getByRole('textbox', { name: /email/i }).fill('admin@example.com')
     await page.getByRole('textbox', { name: /password/i }).fill('password')
