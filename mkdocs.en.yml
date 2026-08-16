@@ -1,0 +1,55 @@
+INHERIT: mkdocs.base.yml
+
+site_name: NodeNexus Panel — Documentation
+site_url: https://nodenexusdev.github.io/node_nexus_panel/en/
+
+docs_dir: docs/en
+site_dir: site/en
+
+theme:
+  language: en
+
+extra_javascript:
+  - assets/javascripts/language-switcher.js
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - getting-started/index.md
+      - Installation: getting-started/installation.md
+      - Configuration: getting-started/configuration.md
+      - Authentication: getting-started/authentication.md
+  - Guides:
+      - guides/index.md
+      - Dashboard: guides/dashboard.md
+      - Nodes: guides/nodes.md
+      - Commands: guides/commands.md
+      - Scripts: guides/scripts.md
+      - Settings: guides/settings.md
+      - WebSocket: guides/websocket.md
+      - Troubleshooting: guides/troubleshooting.md
+      - FAQ: guides/faq.md
+  - Operations:
+      - operations/index.md
+      - Deployment: operations/deployment.md
+      - Environment: operations/environment.md
+      - Security: operations/security.md
+  - Development:
+      - development/index.md
+      - Local Setup: development/local-setup.md
+      - Workflow: development/workflow.md
+      - Testing: development/testing.md
+      - Components: development/components.md
+      - Documentation: development/documentation.md
+  - Architecture:
+      - architecture/index.md
+      - Overview: architecture/overview.md
+      - State Management: architecture/state-management.md
+      - API Integration: architecture/api-integration.md
+      - Design System: architecture/design-system.md
+  - Reference:
+      - reference/index.md
+      - Configuration: reference/configuration.md
+      - Error Catalog: reference/error-catalog.md
+      - Cheat Sheet: reference/cheat-sheet.md
+      - Glossary: reference/glossary.md

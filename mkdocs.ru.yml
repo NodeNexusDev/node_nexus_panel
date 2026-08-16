@@ -1,0 +1,61 @@
+INHERIT: mkdocs.base.yml
+
+site_name: NodeNexus Panel — Документация
+site_url: https://nodenexusdev.github.io/node_nexus_panel/ru/
+
+docs_dir: docs/ru
+site_dir: site/ru
+
+theme:
+  language: ru
+
+plugins:
+  - search:
+      lang:
+        - ru
+        - en
+
+extra_javascript:
+  - assets/javascripts/language-switcher.js
+
+nav:
+  - Домой: index.md
+  - Начало работы:
+      - getting-started/index.md
+      - Установка: getting-started/installation.md
+      - Конфигурация: getting-started/configuration.md
+      - Авторизация: getting-started/authentication.md
+  - Гайды:
+      - guides/index.md
+      - Панель управления: guides/dashboard.md
+      - Ноды: guides/nodes.md
+      - Команды: guides/commands.md
+      - Скрипты: guides/scripts.md
+      - Настройки: guides/settings.md
+      - WebSocket: guides/websocket.md
+      - Решение проблем: guides/troubleshooting.md
+      - FAQ: guides/faq.md
+  - Операции:
+      - operations/index.md
+      - Деплой: operations/deployment.md
+      - Переменные окружения: operations/environment.md
+      - Безопасность: operations/security.md
+  - Разработка:
+      - development/index.md
+      - Локальная разработка: development/local-setup.md
+      - Workflow: development/workflow.md
+      - Тестирование: development/testing.md
+      - Компоненты: development/components.md
+      - Документация: development/documentation.md
+  - Архитектура:
+      - architecture/index.md
+      - Обзор: architecture/overview.md
+      - Управление состоянием: architecture/state-management.md
+      - Интеграция с API: architecture/api-integration.md
+      - Дизайн-система: architecture/design-system.md
+  - Справочник:
+      - reference/index.md
+      - Конфигурация: reference/configuration.md
+      - Каталог ошибок: reference/error-catalog.md
+      - Шпаргалка: reference/cheat-sheet.md
+      - Глоссарий: reference/glossary.md
