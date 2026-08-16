@@ -1,5 +1,6 @@
 AGENTS.md
 site/
+.env
 # Logs
 logs
 *.log

@@ -1,1 +1,51 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+}
+
+:root {
+  --bg-primary: var(--color-surface-50);
+  --bg-secondary: #ffffff;
+  --bg-tertiary: var(--color-surface-100);
+  --text-primary: var(--color-surface-900);
+  --text-secondary: var(--color-surface-600);
+  --text-muted: var(--color-surface-400);
+  --border-color: var(--color-surface-200);
+  --ring-color: var(--color-surface-300);
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+}
+
+.dark {
+  --bg-primary: var(--color-surface-950);
+  --bg-secondary: var(--color-surface-900);
+  --bg-tertiary: var(--color-surface-800);
+  --text-primary: var(--color-surface-50);
+  --text-secondary: var(--color-surface-400);
+  --text-muted: var(--color-surface-500);
+  --border-color: var(--color-surface-800);
+  --ring-color: var(--color-surface-700);
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

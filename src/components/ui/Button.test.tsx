@@ -22,15 +22,25 @@ describe('Button', () => {
     expect(screen.getByRole('button')).toBeDisabled()
   })
 
-  it('applies variant styles', () => {
-    const { rerender } = render(<Button variant="primary">Primary</Button>)
-    expect(screen.getByRole('button')).toHaveClass('bg-indigo-600')
+  it('applies primary variant styles', () => {
+    render(<Button variant="primary">Primary</Button>)
+    const btn = screen.getByRole('button')
+    expect(btn).toHaveClass('bg-indigo-600')
+    expect(btn).toHaveClass('dark:bg-indigo-500')
+  })
 
-    rerender(<Button variant="danger">Danger</Button>)
-    expect(screen.getByRole('button')).toHaveClass('bg-red-600')
+  it('applies danger variant styles', () => {
+    render(<Button variant="danger">Danger</Button>)
+    const btn = screen.getByRole('button')
+    expect(btn).toHaveClass('bg-red-600')
+    expect(btn).toHaveClass('dark:bg-red-500')
+  })
 
-    rerender(<Button variant="ghost">Ghost</Button>)
-    expect(screen.getByRole('button')).toHaveClass('bg-transparent')
+  it('applies ghost variant styles', () => {
+    render(<Button variant="ghost">Ghost</Button>)
+    const btn = screen.getByRole('button')
+    expect(btn).toHaveClass('bg-transparent')
+    expect(btn).toHaveClass('dark:text-surface-300')
   })
 
   it('applies size styles', () => {

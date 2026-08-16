@@ -95,6 +95,7 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "logout": "Logout"
   }
 }

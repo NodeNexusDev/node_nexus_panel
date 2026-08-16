@@ -12,14 +12,14 @@ export function Select({ label, error, options, className = '', id, ...props }: 
   return (
     <div className="space-y-1">
       {label && (
-        <label htmlFor={selectId} className="block text-sm text-gray-400">
+        <label htmlFor={selectId} className="block text-sm font-medium text-surface-600 dark:text-surface-400">
           {label}
         </label>
       )}
       <select
         id={selectId}
-        className={`w-full px-4 py-2 bg-gray-800 border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-          error ? 'border-red-500' : 'border-gray-700'
+        className={`w-full px-4 py-2 bg-white border rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white ${
+          error ? 'border-red-500' : 'border-surface-300 dark:border-surface-700'
         } ${className}`}
         {...props}
       >
@@ -29,7 +29,7 @@ export function Select({ label, error, options, className = '', id, ...props }: 
           </option>
         ))}
       </select>
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
     </div>
   )
 }

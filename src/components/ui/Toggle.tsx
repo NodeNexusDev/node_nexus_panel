@@ -8,11 +8,11 @@ interface ToggleProps {
 
 export function Toggle({ checked, onChange, label, description, disabled = false }: ToggleProps) {
   return (
-    <label className={`flex items-center justify-between p-3 bg-gray-800/50 rounded-lg ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+    <label className={`flex items-center justify-between p-3 bg-surface-50 rounded-lg dark:bg-surface-800/50 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
       {(label || description) && (
         <div>
-          {label && <p className="text-sm font-medium text-white">{label}</p>}
-          {description && <p className="text-xs text-gray-500">{description}</p>}
+          {label && <p className="text-sm font-medium text-surface-900 dark:text-white">{label}</p>}
+          {description && <p className="text-xs text-surface-500 dark:text-surface-500">{description}</p>}
         </div>
       )}
       <button
@@ -22,7 +22,7 @@ export function Toggle({ checked, onChange, label, description, disabled = false
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-indigo-600' : 'bg-gray-700'
+          checked ? 'bg-indigo-600' : 'bg-surface-300 dark:bg-surface-600'
         }`}
       >
         <span

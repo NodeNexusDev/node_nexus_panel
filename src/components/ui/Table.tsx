@@ -20,7 +20,7 @@ interface TableHeadProps {
 export function TableHead({ children }: TableHeadProps) {
   return (
     <thead>
-      <tr className="border-b border-gray-800">{children}</tr>
+      <tr className="border-b border-surface-200 dark:border-surface-800">{children}</tr>
     </thead>
   )
 }
@@ -32,7 +32,7 @@ interface TableHeaderCellProps {
 
 export function TableHeaderCell({ children, className = '' }: TableHeaderCellProps) {
   return (
-    <th className={`px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider ${className}`}>
+    <th className={`px-6 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider ${className}`}>
       {children}
     </th>
   )
@@ -43,7 +43,7 @@ interface TableBodyProps {
 }
 
 export function TableBody({ children }: TableBodyProps) {
-  return <tbody className="divide-y divide-gray-800">{children}</tbody>
+  return <tbody className="divide-y divide-surface-200 dark:divide-surface-800">{children}</tbody>
 }
 
 interface TableRowProps {
@@ -52,7 +52,7 @@ interface TableRowProps {
 }
 
 export function TableRow({ children, className = '' }: TableRowProps) {
-  return <tr className={`hover:bg-gray-800/50 ${className}`}>{children}</tr>
+  return <tr className={`hover:bg-surface-50 dark:hover:bg-surface-800/50 ${className}`}>{children}</tr>
 }
 
 interface TableCellProps {

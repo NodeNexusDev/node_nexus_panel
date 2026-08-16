@@ -7,20 +7,15 @@ export function ThemeToggle() {
 
   const cycleTheme = () => {
     const currentIndex = themes.indexOf(theme)
-    const nextTheme = themes[(currentIndex + 1) % themes.length]
-    setTheme(nextTheme)
+    setTheme(themes[(currentIndex + 1) % themes.length])
   }
 
-  const icons: Record<string, string> = {
-    dark: '🌙',
-    light: '☀️',
-    system: '💻',
-  }
+  const icons: Record<string, string> = { dark: '🌙', light: '☀️', system: '💻' }
 
   return (
     <button
       onClick={cycleTheme}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800/50 hover:text-white transition-colors"
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-surface-500 hover:bg-surface-50 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-colors"
       title={`Theme: ${theme}`}
     >
       <span className="text-lg">{icons[theme]}</span>
