@@ -6,6 +6,18 @@
     "scripts": "Scripts",
     "settings": "Settings"
   },
+  "login": {
+    "subtitle": "Sign in to your account",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign In",
+    "error": "Invalid email or password"
+  },
+  "notFound": {
+    "title": "Not Found",
+    "description": "The page you're looking for doesn't exist.",
+    "backToHome": "Back to Home"
+  },
   "dashboard": {
     "title": "Dashboard",
     "description": "Overview of your nodes and system health",

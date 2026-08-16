@@ -1,24 +1,47 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Spinner } from './components/ui/Spinner'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
+import { AuthGuard } from './components/guards/AuthGuard'
 import { MainLayout } from './layouts/MainLayout'
-import { Dashboard } from './pages/Dashboard'
-import { Nodes } from './pages/Nodes'
-import { Commands } from './pages/Commands'
-import { Scripts } from './pages/Scripts'
-import { Settings } from './pages/Settings'
+
+const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })))
+const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })))
+const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })))
+const Nodes = lazy(() => import('./pages/Nodes').then((m) => ({ default: m.Nodes })))
+const Commands = lazy(() => import('./pages/Commands').then((m) => ({ default: m.Commands })))
+const Scripts = lazy(() => import('./pages/Scripts').then((m) => ({ default: m.Scripts })))
+const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })))
+
+function Loading() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <Spinner size="lg" />
+    </div>
+  )
+}
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/nodes" element={<Nodes />} />
-          <Route path="/commands" element={<Commands />} />
-          <Route path="/scripts" element={<Scripts />} />
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route element={<AuthGuard />}>
+              <Route element={<MainLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/nodes" element={<Nodes />} />
+                <Route path="/commands" element={<Commands />} />
+                <Route path="/scripts" element={<Scripts />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

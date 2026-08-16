@@ -6,6 +6,18 @@
     "scripts": "Скрипты",
     "settings": "Настройки"
   },
+  "login": {
+    "subtitle": "Войдите в свой аккаунт",
+    "email": "Email",
+    "password": "Пароль",
+    "submit": "Войти",
+    "error": "Неверный email или пароль"
+  },
+  "notFound": {
+    "title": "Не найдено",
+    "description": "Страница, которую вы ищете, не существует.",
+    "backToHome": "На главную"
+  },
   "dashboard": {
     "title": "Панель",
     "description": "Обзор нод и состояния системы",
@@ -67,7 +79,7 @@
     "apiKeys": "API ключи",
     "createApiKey": "Создать API ключ",
     "notifications": "Уведомления",
-    "nodeOfflineAlerts": "Оповещения об.offline нодах",
+    "nodeOfflineAlerts": "Оповещения об offline нодах",
     "nodeOfflineDesc": "Получать уведомления, когда нода уходит в офлайн",
     "commandNotifications": "Уведомления о командах",
     "commandNotificationsDesc": "Уведомлять о завершении команд",
