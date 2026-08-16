@@ -2,7 +2,9 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../stores/auth-store'
 import { useUiStore } from '../stores/ui-store'
+import { useConnectionStore } from '../stores/connection-store'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
+import { CommandPalette } from '../components/ui/CommandPalette'
 
 const navItems = [
   { to: '/', key: 'nav.dashboard', icon: '📊' },
@@ -18,6 +20,7 @@ export function MainLayout() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const { sidebarOpen, setSidebarOpen } = useUiStore()
+  const wsConnected = useConnectionStore((s) => s.wsConnected)
 
   const toggleLanguage = () => {
     i18n.changeLanguage(i18n.language === 'en' ? 'ru' : 'en')
@@ -118,9 +121,14 @@ export function MainLayout() {
           <div className="flex-1" />
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-sm text-surface-500 dark:text-surface-400">{t('common.connected')}</span>
+              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm text-surface-500 dark:text-surface-400">
+                {wsConnected ? t('common.connected') : t('common.disconnected', 'Disconnected')}
+              </span>
             </div>
+            <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs text-surface-400 bg-surface-100 dark:bg-surface-800 rounded cursor-pointer" onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}>
+              Ctrl+K
+            </kbd>
           </div>
         </header>
 
@@ -128,6 +136,7 @@ export function MainLayout() {
           <Outlet />
         </main>
       </div>
+      <CommandPalette />
     </div>
   )
 }
