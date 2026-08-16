@@ -15,4 +15,11 @@ export default defineConfig({
       exclude: ['src/test/**', 'src/**/*.d.ts', 'src/main.tsx', 'src/vite-env.d.ts'],
     },
   },
+  esbuild: {
+    tsconfigRaw: {
+      compilerOptions: {
+        types: ['vitest/globals'],
+      },
+    },
+  },
 })
