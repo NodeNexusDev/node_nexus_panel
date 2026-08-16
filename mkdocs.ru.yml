@@ -31,6 +31,8 @@ nav:
       - Ноды: guides/nodes.md
       - Команды: guides/commands.md
       - Скрипты: guides/scripts.md
+      - Формы: guides/forms.md
+      - Темизация: guides/theming.md
       - Настройки: guides/settings.md
       - WebSocket: guides/websocket.md
       - Решение проблем: guides/troubleshooting.md

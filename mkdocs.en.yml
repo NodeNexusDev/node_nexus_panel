@@ -25,6 +25,8 @@ nav:
       - Nodes: guides/nodes.md
       - Commands: guides/commands.md
       - Scripts: guides/scripts.md
+      - Forms: guides/forms.md
+      - Theming: guides/theming.md
       - Settings: guides/settings.md
       - WebSocket: guides/websocket.md
       - Troubleshooting: guides/troubleshooting.md
