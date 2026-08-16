@@ -58,9 +58,6 @@ markdown_extensions:
 
 plugins:
   - search
-  - search:
-      lang:
-        - en
 
 validation:
   nav:
