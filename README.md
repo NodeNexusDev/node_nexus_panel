@@ -26,6 +26,8 @@ npm run dev
 
 ## Documentation
 
+📖 **[Documentation](https://nodenexusdev.github.io/node_nexus_panel/)**
+
 Docs are built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) and deployed to GitHub Pages.
 
 ```bash
