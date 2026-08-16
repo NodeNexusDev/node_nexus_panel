@@ -15,7 +15,7 @@ export function useLoginForm() {
   })
 
   const onSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data)
+    return loginMutation.mutateAsync(data)
   }
 
   return {
