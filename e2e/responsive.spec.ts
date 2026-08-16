@@ -1,0 +1,51 @@
+import { test, expect } from '@playwright/test'
+
+const AUTH_STORAGE = {
+  state: { token: 'e2e-test-token', user: { id: '1', email: 'admin@example.com', name: 'Admin' }, isAuthenticated: true },
+  version: 0,
+}
+
+const UI_STORAGE_MOBILE = {
+  state: { theme: 'light', sidebarOpen: false, activeModal: null },
+  version: 0,
+}
+
+test.describe('Responsive', () => {
+  test('mobile menu toggle', async ({ page }) => {
+    await page.goto('/login')
+    await page.evaluate(({ auth, ui }) => {
+      localStorage.setItem('auth-storage', JSON.stringify(auth))
+      localStorage.setItem('ui-storage', JSON.stringify(ui))
+    }, { auth: AUTH_STORAGE, ui: UI_STORAGE_MOBILE })
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/')
+    await page.waitForFunction(() => {
+      const aside = document.querySelector('aside')
+      return aside && aside.classList.contains('-translate-x-full')
+    }, null, { timeout: 10000 })
+
+    const sidebar = page.locator('aside')
+    await expect(sidebar).toHaveClass(/-translate-x-full/)
+
+    const menuButton = page.locator('header button').first()
+    await menuButton.click()
+
+    await expect(sidebar).toHaveClass(/translate-x-0/)
+
+    // Click the backdrop to the right of the sidebar (which is z-30, behind sidebar z-40)
+    await page.locator('.fixed.inset-0.z-30').click({ position: { x: 350, y: 400 } })
+    await expect(sidebar).toHaveClass(/-translate-x-full/)
+  })
+
+  test('content adapts to mobile', async ({ page }) => {
+    await page.goto('/login')
+    await page.evaluate((auth) => {
+      localStorage.setItem('auth-storage', JSON.stringify(auth))
+    }, AUTH_STORAGE)
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/')
+    await page.waitForSelector('main h1')
+
+    await expect(page.locator('main')).toBeVisible()
+  })
+})

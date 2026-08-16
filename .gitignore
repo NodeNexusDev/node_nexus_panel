@@ -1,4 +1,8 @@
 AGENTS.md
+site/
+.env
+playwright-report
+test-results
 
 # Logs
 logs
