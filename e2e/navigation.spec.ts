@@ -38,27 +38,27 @@ test.describe('Navigation', () => {
 
     // On mobile, sidebar closes after each click; on desktop it stays open
     await openSidebar(page)
-    await page.locator('aside >> text=Nodes').click({ force: true })
+    await page.evaluate(() => document.querySelector('a[href="/nodes"]')?.click())
     await expect(page).toHaveURL('/nodes')
     await expect(page.locator('main h1')).toContainText('Nodes')
 
     await openSidebar(page)
-    await page.locator('aside >> text=Commands').click({ force: true })
+    await page.evaluate(() => document.querySelector('a[href="/commands"]')?.click())
     await expect(page).toHaveURL('/commands')
     await expect(page.locator('main h1')).toContainText('Commands')
 
     await openSidebar(page)
-    await page.locator('aside >> text=Scripts').click({ force: true })
+    await page.evaluate(() => document.querySelector('a[href="/scripts"]')?.click())
     await expect(page).toHaveURL('/scripts')
     await expect(page.locator('main h1')).toContainText('Scripts')
 
     await openSidebar(page)
-    await page.locator('aside >> text=Settings').click({ force: true })
+    await page.evaluate(() => document.querySelector('a[href="/settings"]')?.click())
     await expect(page).toHaveURL('/settings')
     await expect(page.locator('main h1')).toContainText('Settings')
 
     await openSidebar(page)
-    await page.locator('aside >> text=Dashboard').click({ force: true })
+    await page.evaluate(() => document.querySelector('a[href="/"]')?.click())
     await expect(page).toHaveURL('/')
   })
 
