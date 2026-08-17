@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
+import { Spinner } from '../components/ui/Spinner'
 import { useAuthStore } from '../stores/auth-store'
 import { env } from '../lib/env'
 
@@ -14,20 +15,25 @@ export function Login() {
   const [panelLogin, setPanelLogin] = useState('')
   const [panelPassword, setPanelPassword] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSubmitting(true)
 
-    const envLogin = env.VITE_PANEL_LOGIN
-    const envPassword = env.VITE_PANEL_PASSWORD
+    setTimeout(() => {
+      const envLogin = env.VITE_PANEL_LOGIN
+      const envPassword = env.VITE_PANEL_PASSWORD
 
-    if (panelLogin === envLogin && panelPassword === envPassword) {
-      login()
-      navigate('/')
-    } else {
-      setError(t('login.error'))
-    }
+      if (panelLogin === envLogin && panelPassword === envPassword) {
+        login()
+        navigate('/')
+      } else {
+        setError(t('login.error'))
+        setSubmitting(false)
+      }
+    }, 400)
   }
 
   return (
@@ -40,7 +46,7 @@ export function Login() {
       </div>
 
       <div className="relative w-full max-w-md mx-4 animate-scale-in">
-        <div className="glass rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 p-8 border border-white/20 dark:border-surface-700/50">
+        <div key={error} className={`glass rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 p-8 border border-white/20 dark:border-surface-700/50 ${error ? 'animate-shake' : ''}`}>
           <div className="text-center mb-8">
             <img src="/logo.png" alt="NodeNexus" className="w-16 h-16 mx-auto mb-4" />
             <h1 className="text-3xl font-bold gradient-text">NodeNexus</h1>
@@ -55,12 +61,25 @@ export function Login() {
             )}
 
             <div className="space-y-4">
-              <Input label={t('login.login')} placeholder="admin" value={panelLogin} onChange={(e) => setPanelLogin(e.target.value)} />
-              <Input label={t('login.password')} type="password" placeholder="••••••" value={panelPassword} onChange={(e) => setPanelPassword(e.target.value)} />
+              <Input
+                label={t('login.login')}
+                placeholder="admin"
+                value={panelLogin}
+                onChange={(e) => { setPanelLogin(e.target.value); setError('') }}
+                disabled={submitting}
+              />
+              <Input
+                label={t('login.password')}
+                type="password"
+                placeholder="••••••"
+                value={panelPassword}
+                onChange={(e) => { setPanelPassword(e.target.value); setError('') }}
+                disabled={submitting}
+              />
             </div>
 
-            <Button type="submit" className="w-full">
-              {t('login.submit')}
+            <Button type="submit" className="w-full" disabled={submitting || !panelLogin || !panelPassword}>
+              {submitting ? <Spinner size="sm" /> : t('login.submit')}
             </Button>
           </form>
         </div>
