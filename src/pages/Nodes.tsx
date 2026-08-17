@@ -10,7 +10,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tooltip } from '../components/ui/Tooltip'
 import { DragDropList } from '../components/ui/DragDropList'
 import { TableSkeleton } from '../components/ui/Skeleton'
-import { IconNodes, IconGrip, IconTerminal, IconFileText } from '../components/ui/Icons'
+import { IconNodes, IconGrip, IconCommands, IconFileText } from '../components/ui/Icons'
 import { useNodes, useCreateNode, useDeleteNode } from '../hooks/useNodes'
 import { useToast } from '../components/ui/Toast'
 import type { Node } from '../api/types'
@@ -86,7 +86,7 @@ export function Nodes() {
       <td className="px-6 py-4">
         <div className="flex items-center gap-1">
           <Tooltip content="Terminal">
-            <Button variant="ghost" size="sm"><IconTerminal className="w-4 h-4" /></Button>
+            <Button variant="ghost" size="sm"><IconCommands className="w-4 h-4" /></Button>
           </Tooltip>
           <Tooltip content="Logs">
             <Button variant="ghost" size="sm"><IconFileText className="w-4 h-4" /></Button>

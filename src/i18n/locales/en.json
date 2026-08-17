@@ -97,5 +97,10 @@
     "edit": "Edit",
     "loading": "Loading...",
     "logout": "Logout"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "fallback": "An unexpected error occurred",
+    "retry": "Try again"
   }
 }

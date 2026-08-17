@@ -7,6 +7,7 @@ import { useConnectionStore } from '../stores/connection-store'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
 import { IconDashboard, IconNodes, IconCommands, IconScripts, IconSettings, IconGlobe, IconLogout } from '../components/ui/Icons'
+import { APP_VERSION } from '../lib/version'
 
 const navItems = [
   { to: '/', key: 'nav.dashboard', Icon: IconDashboard },
@@ -105,7 +106,7 @@ export function MainLayout() {
             </div>
             <div>
               <h1 className="text-xl font-bold gradient-text">NodeNexus</h1>
-              <p className="text-xs text-surface-500 dark:text-surface-500">Panel v0.4.0</p>
+              <p className="text-xs text-surface-500 dark:text-surface-500">Panel v{APP_VERSION}</p>
             </div>
           </div>
         </div>
