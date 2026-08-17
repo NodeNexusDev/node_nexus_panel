@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { useAuthStore } from '../stores/auth-store'
+import { env } from '../lib/env'
 
 export function Login() {
   const { t } = useTranslation()
@@ -18,8 +19,8 @@ export function Login() {
     e.preventDefault()
     setError('')
 
-    const envLogin = import.meta.env.VITE_PANEL_LOGIN
-    const envPassword = import.meta.env.VITE_PANEL_PASSWORD
+    const envLogin = env.VITE_PANEL_LOGIN
+    const envPassword = env.VITE_PANEL_PASSWORD
 
     if (panelLogin === envLogin && panelPassword === envPassword) {
       login()

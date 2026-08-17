@@ -4,4 +4,10 @@ services:
     container_name: node-nexus-panel
     ports:
       - "8080:8080"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+      - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:8000}
+      - VITE_API_KEY=${VITE_API_KEY:-}
+      - VITE_PANEL_LOGIN=${VITE_PANEL_LOGIN:-admin}
+      - VITE_PANEL_PASSWORD=${VITE_PANEL_PASSWORD:-password}
     restart: unless-stopped
