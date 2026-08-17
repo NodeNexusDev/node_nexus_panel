@@ -51,8 +51,8 @@ export function MainLayout() {
     <div className="flex h-screen overflow-hidden">
       {/* Background layer — z-10 is below content but above body */}
       <div className="fixed inset-0 -z-10 bg-surface-50 dark:bg-surface-950">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 dark:from-indigo-500/10 dark:via-transparent dark:to-purple-500/10" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute inset-0 bg-gradient-to-br from-accent-500/5 via-transparent to-purple-500/5 dark:from-accent-500/10 dark:via-transparent dark:to-purple-500/10" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
         {/* Animated grid dots */}
         <div className="absolute inset-0 opacity-[0.07] dark:opacity-[0.1] text-surface-900 dark:text-white" style={{
@@ -102,9 +102,7 @@ export function MainLayout() {
         {/* Logo */}
         <div className="px-6 py-5 border-b border-surface-200/50 dark:border-surface-800/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <span className="text-white font-bold text-lg">N</span>
-            </div>
+            <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" />
             <div>
               <h1 className="text-xl font-bold gradient-text">NodeNexus</h1>
               <p className="text-xs text-surface-500 dark:text-surface-500">Panel v{APP_VERSION}</p>
@@ -123,7 +121,7 @@ export function MainLayout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all duration-200 stagger-item ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-600 dark:from-indigo-500/20 dark:to-purple-500/20 dark:text-indigo-400 shadow-sm'
+                    ? 'bg-gradient-to-r from-accent-500/10 to-purple-500/10 text-accent-600 dark:from-accent-500/20 dark:to-purple-500/20 dark:text-accent-400 shadow-sm'
                     : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white'
                 }`
               }
@@ -187,7 +185,7 @@ export function MainLayout() {
             {/* User + Logout */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center text-sm font-bold text-white shadow-md shadow-indigo-500/25">
+                <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center text-sm font-bold text-white shadow-md shadow-accent-500/25">
                   {user?.name?.[0] || 'A'}
                 </div>
                 <div className="hidden md:block">

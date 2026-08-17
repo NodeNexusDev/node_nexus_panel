@@ -18,7 +18,7 @@ export function Select({ label, error, options, className = '', id, ...props }: 
       )}
       <select
         id={selectId}
-        className={`w-full px-4 py-2 bg-white border rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 dark:bg-surface-800 dark:border-surface-700 dark:text-white ${
+        className={`w-full px-4 py-2 bg-white border rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 dark:bg-surface-800 dark:border-surface-700 dark:text-white ${
           error ? 'border-red-500' : 'border-surface-300 dark:border-surface-700'
         } ${className}`}
         {...props}

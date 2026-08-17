@@ -25,8 +25,8 @@ describe('Button', () => {
   it('applies primary variant styles', () => {
     render(<Button variant="primary">Primary</Button>)
     const btn = screen.getByRole('button')
-    expect(btn).toHaveClass('bg-indigo-600')
-    expect(btn).toHaveClass('dark:bg-indigo-500')
+    expect(btn).toHaveClass('bg-accent-600')
+    expect(btn).toHaveClass('dark:bg-accent-500')
   })
 
   it('applies danger variant styles', () => {

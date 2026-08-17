@@ -36,7 +36,7 @@ describe('Pagination', () => {
 
   it('highlights current page', () => {
     render(<Pagination page={2} totalPages={5} onPageChange={vi.fn()} />)
-    expect(screen.getByText('2')).toHaveClass('bg-indigo-600')
+    expect(screen.getByText('2')).toHaveClass('bg-accent-600')
   })
 
   it('shows ellipsis for many pages', () => {

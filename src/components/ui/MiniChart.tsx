@@ -4,7 +4,7 @@ interface MiniChartProps {
   className?: string
 }
 
-export function MiniChart({ data, color = 'bg-indigo-500', className = '' }: MiniChartProps) {
+export function MiniChart({ data, color = 'bg-accent-500', className = '' }: MiniChartProps) {
   const max = Math.max(...data, 1)
 
   return (

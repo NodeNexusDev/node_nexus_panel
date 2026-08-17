@@ -35,7 +35,7 @@ export function Typewriter({ text, speed = 30, className = '', onComplete }: Typ
   return (
     <span className={`font-mono ${className}`}>
       {displayedText}
-      {!isComplete && <span className="text-indigo-500 animate-blink">|</span>}
+      {!isComplete && <span className="text-accent-500 animate-blink">|</span>}
     </span>
   )
 }
