@@ -1,10 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-const AUTH_STORAGE = {
-  state: { token: 'e2e-test-token', user: { id: '1', email: 'admin@example.com', name: 'Admin' }, isAuthenticated: true },
-  version: 0,
-}
-
 const UI_STORAGE_LIGHT = {
   state: { theme: 'light', sidebarOpen: false, activeModal: null },
   version: 0,
@@ -13,10 +8,10 @@ const UI_STORAGE_LIGHT = {
 test.describe('Theme', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login')
-    await page.evaluate(({ auth, ui }) => {
-      localStorage.setItem('auth-storage', JSON.stringify(auth))
+    await page.evaluate((ui) => {
+      sessionStorage.setItem('authenticated', 'true')
       localStorage.setItem('ui-storage', JSON.stringify(ui))
-    }, { auth: AUTH_STORAGE, ui: UI_STORAGE_LIGHT })
+    }, UI_STORAGE_LIGHT)
   })
 
   test('toggles between dark and light themes', async ({ page }) => {

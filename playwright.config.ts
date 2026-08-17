@@ -30,5 +30,9 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
+    env: {
+      VITE_PANEL_LOGIN: process.env.VITE_PANEL_LOGIN || 'admin',
+      VITE_PANEL_PASSWORD: process.env.VITE_PANEL_PASSWORD || 'password',
+    },
   },
 })

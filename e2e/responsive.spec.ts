@@ -1,10 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-const AUTH_STORAGE = {
-  state: { token: 'e2e-test-token', user: { id: '1', email: 'admin@example.com', name: 'Admin' }, isAuthenticated: true },
-  version: 0,
-}
-
 const UI_STORAGE_MOBILE = {
   state: { theme: 'light', sidebarOpen: false, activeModal: null },
   version: 0,
@@ -13,10 +8,10 @@ const UI_STORAGE_MOBILE = {
 test.describe('Responsive', () => {
   test('mobile menu toggle', async ({ page }) => {
     await page.goto('/login')
-    await page.evaluate(({ auth, ui }) => {
-      localStorage.setItem('auth-storage', JSON.stringify(auth))
+    await page.evaluate((ui) => {
+      sessionStorage.setItem('authenticated', 'true')
       localStorage.setItem('ui-storage', JSON.stringify(ui))
-    }, { auth: AUTH_STORAGE, ui: UI_STORAGE_MOBILE })
+    }, UI_STORAGE_MOBILE)
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/')
     await page.waitForFunction(() => {
@@ -39,9 +34,7 @@ test.describe('Responsive', () => {
 
   test('content adapts to mobile', async ({ page }) => {
     await page.goto('/login')
-    await page.evaluate((auth) => {
-      localStorage.setItem('auth-storage', JSON.stringify(auth))
-    }, AUTH_STORAGE)
+    await page.evaluate(() => sessionStorage.setItem('authenticated', 'true'))
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/')
     await page.waitForSelector('main h1')

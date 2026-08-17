@@ -1,16 +1,9 @@
 import { test, expect } from '@playwright/test'
 
-const AUTH_STORAGE = {
-  state: { token: 'e2e-test-token', user: { id: '1', email: 'admin@example.com', name: 'Admin' }, isAuthenticated: true },
-  version: 0,
-}
-
 test.describe('Nodes', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login')
-    await page.evaluate((auth) => {
-      localStorage.setItem('auth-storage', JSON.stringify(auth))
-    }, AUTH_STORAGE)
+    await page.evaluate(() => sessionStorage.setItem('authenticated', 'true'))
     await page.goto('/')
     await page.waitForSelector('main h1')
     await page.click('aside >> text=Nodes')
