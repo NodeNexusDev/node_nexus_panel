@@ -2,7 +2,7 @@
 title: Theming
 status: stable
 translation_key: guides.theming
-source_revision: 2026-08-16
+source_revision: 2026-08-17
 ---
 
 # Theming
@@ -36,6 +36,8 @@ import { ThemeToggle } from './components/layout/ThemeToggle'
 
 <ThemeToggle /> // Cycles through dark → light → system
 ```
+
+The ThemeToggle is rendered in the header alongside the language switcher, connection status, command palette trigger, and user profile with logout button. The sidebar contains only the logo and navigation links.
 
 ## Color Palette
 
