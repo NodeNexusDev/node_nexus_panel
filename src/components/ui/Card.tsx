@@ -15,7 +15,7 @@ export function Card({ children, className = '', hover = false, gradient = false
     : gradient
       ? 'gradient-subtle border-surface-200/50 dark:border-surface-700/50'
       : 'bg-white border-surface-200 dark:bg-surface-900 dark:border-surface-800'
-  const hoverClass = hover ? 'card-hover cursor-pointer' : ''
+  const hoverClass = hover ? 'card-hover' : ''
   const shadow = glass ? 'shadow-lg shadow-surface-200/20 dark:shadow-surface-900/30' : 'shadow-sm'
 
   return (
