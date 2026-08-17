@@ -5,7 +5,7 @@ import type { Node, PaginatedResponse } from '../api/types'
 export function useNodes(page = 1, pageSize = 20) {
   return useQuery<PaginatedResponse<Node>>({
     queryKey: ['nodes', page, pageSize],
-    queryFn: () => nodesApi.getAll().then((res) => res as unknown as PaginatedResponse<Node>),
+    queryFn: () => nodesApi.getAll(),
   })
 }
 

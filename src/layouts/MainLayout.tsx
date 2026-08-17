@@ -22,7 +22,8 @@ export function MainLayout() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
-  const { sidebarOpen, setSidebarOpen } = useUiStore()
+  const sidebarOpen = useUiStore((s) => s.sidebarOpen)
+  const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
   const wsConnected = useConnectionStore((s) => s.wsConnected)
 
   const toggleLanguage = () => {

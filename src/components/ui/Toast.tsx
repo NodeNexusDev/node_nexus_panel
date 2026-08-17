@@ -1,4 +1,4 @@
-import { useState, useCallback, createContext, useContext, type ReactNode } from 'react'
+import { useState, useCallback, useRef, useEffect, createContext, useContext, type ReactNode } from 'react'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 
@@ -22,13 +22,24 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  useEffect(() => {
+    const timers = timersRef.current
+    return () => {
+      timers.forEach(clearTimeout)
+      timers.clear()
+    }
+  }, [])
 
   const toast = useCallback((type: ToastType, message: string) => {
     const id = Math.random().toString(36).slice(2)
     setToasts((prev) => [...prev, { id, type, message }])
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
+      timersRef.current.delete(id)
     }, 4000)
+    timersRef.current.set(id, timer)
   }, [])
 
   const removeToast = useCallback((id: string) => {
@@ -38,7 +49,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2" role="status" aria-live="polite">
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onRemove={() => removeToast(t.id)} />
         ))}
@@ -91,7 +102,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
     >
       <span className="text-current shrink-0">{typeIcons[toast.type]}</span>
       <span className="text-sm flex-1 font-medium">{toast.message}</span>
-      <button onClick={onRemove} className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0">
+      <button onClick={onRemove} aria-label="Close" className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>

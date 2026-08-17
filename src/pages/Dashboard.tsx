@@ -35,7 +35,9 @@ export function Dashboard() {
   const recentNodes = nodesData?.data?.slice(0, 4) || []
 
   const chartColors = ['bg-surface-400', 'bg-surface-500', 'bg-surface-400', 'bg-surface-500']
-  const activityChart = Array.isArray(activity) ? activity.slice(0, 7).map((_, i) => 3 + Math.sin(i * 1.2) * 2 + Math.random() * 2) : [4, 6, 3, 8, 5, 7, 4]
+  const activityChart = Array.isArray(activity)
+    ? activity.slice(0, 7).map((_, i) => 3 + Math.sin(i * 1.2) * 2 + ((i * 7 + 3) % 5) * 0.4)
+    : [4, 6, 3, 8, 5, 7, 4]
 
   const quickActions = [
     { key: 'executeCommand', Icon: IconZap, descKey: 'executeCommandDesc', path: '/commands' },

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../api/auth'
 import { useAuthStore } from '../stores/auth-store'
+import type { ApiResponse, AuthResponse } from '../api/types'
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -8,8 +9,8 @@ export function useLogin() {
   return useMutation({
     mutationFn: (data: { email: string; password: string }) =>
       authApi.login(data),
-    onSuccess: (response) => {
-      const { data } = response as { data: { token: string; user: { id: string; name: string; email: string; role: 'admin' | 'user' } } }
+    onSuccess: (response: ApiResponse<AuthResponse>) => {
+      const { data } = response
       setAuth(data.token, data.user)
     },
   })

@@ -25,6 +25,7 @@ export class WebSocketClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
   private _isConnected = false
+  private _token: string | undefined
 
   constructor(url: string = WS_URL) {
     this.url = url
@@ -37,13 +38,16 @@ export class WebSocketClient {
   connect(token?: string) {
     if (this.ws?.readyState === WebSocket.OPEN) return
 
-    const url = token ? `${this.url}?token=${token}` : this.url
-    this.ws = new WebSocket(url)
+    if (token) this._token = token
+    this.ws = new WebSocket(this.url)
 
     this.ws.onopen = () => {
       this._isConnected = true
       this.reconnectAttempt = 0
       this.startHeartbeat()
+      if (this._token) {
+        this.ws?.send(JSON.stringify({ type: 'auth', token: this._token }))
+      }
       this.emit('system:alert', { message: 'Connected' })
     }
 

@@ -104,7 +104,7 @@ export function CommandPalette() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search pages... (Ctrl+K)"
+            placeholder={t('commandPalette.placeholder')}
             className="flex-1 py-3 bg-transparent text-surface-900 dark:text-white placeholder-surface-400 focus:outline-none text-sm"
           />
           <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs text-surface-400 bg-surface-100 dark:bg-surface-800 rounded">
@@ -115,7 +115,7 @@ export function CommandPalette() {
         <div ref={listRef} className="max-h-64 overflow-y-auto p-2">
           {filtered.length === 0 ? (
             <div className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">
-              No results found
+              {t('commandPalette.noResults')}
             </div>
           ) : (
             filtered.map((cmd, i) => (

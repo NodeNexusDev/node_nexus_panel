@@ -67,11 +67,13 @@ export function Login() {
           </form>
 
           {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-surface-400 dark:text-surface-500">
-              Default: admin@example.com / password
-            </p>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="mt-6 text-center">
+              <p className="text-xs text-surface-400 dark:text-surface-500">
+                Default: admin@example.com / password
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

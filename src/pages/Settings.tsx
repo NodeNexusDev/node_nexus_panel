@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { Toggle } from '../components/ui/Toggle'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Modal } from '../components/ui/Modal'
 import { FormSkeleton } from '../components/ui/Skeleton'
@@ -33,6 +34,13 @@ export function Settings() {
   const [showKeyModal, setShowKeyModal] = useState(false)
   const [deleteKeyTarget, setDeleteKeyTarget] = useState<{ id: string; name: string } | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name)
+      setEmail(user.email)
+    }
+  }, [user])
 
   const apiKeys = apiKeysData?.data || []
 
@@ -108,7 +116,7 @@ export function Settings() {
                         <p className="text-xs text-surface-500 dark:text-surface-500">Created {new Date(key.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <code className="text-xs text-surface-500 dark:text-surface-400 font-mono">{key.key}</code>
+                        <code className="text-xs text-surface-500 dark:text-surface-400 font-mono">{key.key.slice(0, 4)}...{key.key.slice(-4)}</code>
                         <Button variant="ghost" size="sm" onClick={() => setDeleteKeyTarget({ id: key.id, name: key.name })}>{t('common.delete')}</Button>
                       </div>
                     </div>
@@ -128,17 +136,13 @@ export function Settings() {
                 { key: 'nodeOfflineAlerts' as const, label: t('settings.nodeOfflineAlerts'), desc: t('settings.nodeOfflineDesc') },
                 { key: 'commandNotifications' as const, label: t('settings.commandNotifications'), desc: t('settings.commandNotificationsDesc') },
               ].map((item) => (
-                <label key={item.key} className="flex items-center justify-between p-3 bg-surface-50 rounded-lg cursor-pointer dark:bg-surface-800/50">
-                  <div>
-                    <p className="text-sm font-medium text-surface-900 dark:text-white">{item.label}</p>
-                    <p className="text-xs text-surface-500 dark:text-surface-500">{item.desc}</p>
-                  </div>
-                  <div className="relative">
-                    <input type="checkbox" checked={notifData?.data?.[item.key] ?? true} onChange={() => toggleNotif(item.key)} className="sr-only" />
-                    <div className={`w-10 h-6 rounded-full shadow-inner transition-colors ${notifData?.data?.[item.key] ? 'bg-indigo-600' : 'bg-surface-300 dark:bg-surface-600'}`} />
-                    <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform ${notifData?.data?.[item.key] ? 'translate-x-4' : ''}`} />
-                  </div>
-                </label>
+                <Toggle
+                  key={item.key}
+                  checked={notifData?.data?.[item.key] ?? true}
+                  onChange={() => toggleNotif(item.key)}
+                  label={item.label}
+                  description={item.desc}
+                />
               ))}
             </div>
           </CardContent>
