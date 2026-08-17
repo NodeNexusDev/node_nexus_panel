@@ -55,8 +55,8 @@ export function Login() {
             )}
 
             <div className="space-y-4">
-              <Input label={t('login.login')} placeholder="admin" value={panelLogin} onChange={(e) => setPanelLogin(e.target.value)} />
-              <Input label={t('login.password')} type="password" placeholder="••••••" value={panelPassword} onChange={(e) => setPanelPassword(e.target.value)} />
+              <Input label={t('login.login')} placeholder="admin" value={panelLogin} onChange={(e) => { setPanelLogin(e.target.value); setError('') }} />
+              <Input label={t('login.password')} type="password" placeholder="••••••" value={panelPassword} onChange={(e) => { setPanelPassword(e.target.value); setError('') }} />
             </div>
 
             <Button type="submit" className="w-full">
