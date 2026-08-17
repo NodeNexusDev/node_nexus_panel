@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
+import { Button } from '../components/ui/Button'
 import { StatCardSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { MiniChart } from '../components/ui/MiniChart'
@@ -110,7 +111,7 @@ export function Dashboard() {
                 ))}
               </div>
             ) : recentNodes.length === 0 ? (
-              <EmptyState icon={<IconNodes className="w-10 h-10" />} title={t('dashboard.emptyTitle')} description={t('dashboard.emptyDesc')} />
+              <EmptyState icon={<IconNodes className="w-10 h-10" />} title={t('dashboard.emptyTitle')} description={t('dashboard.emptyDesc')} action={<Button onClick={() => window.location.href = '/nodes'}>{t('nodes.addNode')}</Button>} />
             ) : (
               <div className="space-y-3">
                 {recentNodes.map((node, index) => (

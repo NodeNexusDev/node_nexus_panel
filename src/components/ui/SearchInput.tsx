@@ -50,7 +50,7 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', deboun
         value={localValue}
         onChange={handleChange}
         placeholder={placeholder}
-        className="w-full pl-10 pr-9 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
+        className="w-full pl-10 pr-9 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
       />
       {localValue && (
         <button

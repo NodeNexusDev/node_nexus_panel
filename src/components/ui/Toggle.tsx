@@ -21,7 +21,7 @@ export function Toggle({ checked, onChange, label, description, disabled = false
         aria-checked={checked}
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
           checked ? 'bg-indigo-600' : 'bg-surface-300 dark:bg-surface-600'
         }`}
       >

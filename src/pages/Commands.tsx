@@ -54,7 +54,7 @@ export function Commands() {
             <select
               value={selectedNode}
               onChange={(e) => setSelectedNode(e.target.value)}
-              className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[160px] dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+              className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 min-w-[160px] dark:bg-surface-800 dark:border-surface-700 dark:text-white"
             >
               <option value="all">{t('commands.allNodes')}</option>
               {nodes.map((node) => (
@@ -67,7 +67,7 @@ export function Commands() {
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleExecute()}
               placeholder={t('commands.enterCommand')}
-              className="flex-1 px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
+              className="flex-1 px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
             />
             <Button onClick={handleExecute} disabled={executeCommand.isPending || !command.trim()}>
               {executeCommand.isPending ? <Spinner size="sm" /> : t('commands.execute')}
@@ -95,7 +95,7 @@ export function Commands() {
               ))}
             </div>
           ) : history.length === 0 ? (
-            <EmptyState icon={<IconCommands className="w-10 h-10" />} title={t('commands.emptyTitle')} description={t('commands.emptyDesc')} />
+            <EmptyState icon={<IconCommands className="w-10 h-10" />} title={t('commands.emptyTitle')} description={t('commands.emptyDesc')} action={<Button onClick={() => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus()}>{t('commands.execute')}</Button>} />
           ) : (
             <div className="divide-y divide-surface-200 dark:divide-surface-800">
               {history.map((item, index) => (

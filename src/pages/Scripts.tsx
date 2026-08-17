@@ -152,7 +152,7 @@ export function Scripts() {
               onChange={(e) => setNewScript({ ...newScript, content: e.target.value })}
               placeholder="#!/bin/bash&#10;echo 'Hello'"
               rows={8}
-              className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono resize-none dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
+              className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 font-mono resize-none dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">
