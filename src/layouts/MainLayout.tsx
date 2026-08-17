@@ -171,7 +171,7 @@ export function MainLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header with glassmorphism */}
-        <header className="h-16 glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0">
+        <header className="h-[84px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
