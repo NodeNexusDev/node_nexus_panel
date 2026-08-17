@@ -1,6 +1,7 @@
 import type { ApiError } from './types'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_KEY = import.meta.env.VITE_API_KEY || ''
 
 class ApiClient {
   private baseUrl: string
@@ -9,23 +10,17 @@ class ApiClient {
     this.baseUrl = baseUrl
   }
 
-  private getToken(): string | null {
-    return localStorage.getItem('auth_token')
-  }
-
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<T> {
-    const token = this.getToken()
-
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     }
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
+    if (API_KEY) {
+      headers['X-API-Key'] = API_KEY
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -38,10 +33,6 @@ class ApiClient {
         code: 'UNKNOWN_ERROR',
         message: response.statusText,
       }))
-
-      if (response.status === 401) {
-        window.location.href = '/login'
-      }
 
       throw new ApiRequestError(response.status, error)
     }
