@@ -12,7 +12,7 @@ import { DragDropList } from '../components/ui/DragDropList'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconNodes, IconGrip, IconCommands, IconFileText } from '../components/ui/Icons'
 import { useNodes, useCreateNode, useDeleteNode } from '../hooks/useNodes'
-import { useToast } from '../components/ui/Toast'
+import { useToast } from '../components/ui/useToast'
 import type { Node } from '../api/types'
 
 export function Nodes() {
