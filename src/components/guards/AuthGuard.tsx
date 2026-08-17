@@ -3,9 +3,8 @@ import { useAuthStore } from '../../stores/auth-store'
 
 export function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const token = useAuthStore((s) => s.token)
 
-  if (!isAuthenticated || !token) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 

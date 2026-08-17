@@ -8,10 +8,10 @@
   },
   "login": {
     "subtitle": "Войдите в свой аккаунт",
-    "email": "Email",
+    "login": "Логин",
     "password": "Пароль",
     "submit": "Войти",
-    "error": "Неверный email или пароль"
+    "error": "Неверный логин или пароль"
   },
   "notFound": {
     "title": "Не найдено",

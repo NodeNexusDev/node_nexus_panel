@@ -8,10 +8,10 @@
   },
   "login": {
     "subtitle": "Sign in to your account",
-    "email": "Email",
+    "login": "Login",
     "password": "Password",
     "submit": "Sign In",
-    "error": "Invalid email or password"
+    "error": "Invalid login or password"
   },
   "notFound": {
     "title": "Not Found",

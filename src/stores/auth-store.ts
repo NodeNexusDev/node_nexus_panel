@@ -1,40 +1,23 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import type { User } from '../api/types'
 
 interface AuthState {
-  token: string | null
-  user: User | null
   isAuthenticated: boolean
-  setAuth: (token: string, user: User) => void
+  login: () => void
   logout: () => void
-  setUser: (user: User) => void
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      token: null,
-      user: null,
-      isAuthenticated: false,
-      setAuth: (token, user) => {
-        localStorage.setItem('auth_token', token)
-        set({ token, user, isAuthenticated: true })
-      },
-      logout: () => {
-        localStorage.removeItem('auth_token')
-        useAuthStore.persist.clearStorage()
-        set({ token: null, user: null, isAuthenticated: false })
-      },
-      setUser: (user) => set({ user }),
-    }),
-    {
-      name: 'auth-storage',
-      partialize: (state) => ({
-        token: state.token,
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-      }),
-    },
-  ),
-)
+function checkSession(): boolean {
+  return sessionStorage.getItem('authenticated') === 'true'
+}
+
+export const useAuthStore = create<AuthState>()((set) => ({
+  isAuthenticated: checkSession(),
+  login: () => {
+    sessionStorage.setItem('authenticated', 'true')
+    set({ isAuthenticated: true })
+  },
+  logout: () => {
+    sessionStorage.removeItem('authenticated')
+    set({ isAuthenticated: false })
+  },
+}))

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -8,7 +8,6 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Modal } from '../components/ui/Modal'
 import { FormSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/Toast'
-import { useAuthStore } from '../stores/auth-store'
 import {
   useProfile, useUpdateProfile, useApiKeys, useCreateApiKey, useDeleteApiKey,
   useNotificationSettings, useUpdateNotificationSettings, useResetAllData,
@@ -17,7 +16,6 @@ import {
 export function Settings() {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const user = useAuthStore((s) => s.user)
 
   const { isLoading: profileLoading } = useProfile()
   const updateProfile = useUpdateProfile()
@@ -28,19 +26,12 @@ export function Settings() {
   const updateNotifs = useUpdateNotificationSettings()
   const resetAll = useResetAllData()
 
-  const [name, setName] = useState(user?.name || 'Admin')
-  const [email, setEmail] = useState(user?.email || 'admin@example.com')
+  const [name, setName] = useState('Admin')
+  const [email, setEmail] = useState('admin@example.com')
   const [newKeyName, setNewKeyName] = useState('')
   const [showKeyModal, setShowKeyModal] = useState(false)
   const [deleteKeyTarget, setDeleteKeyTarget] = useState<{ id: string; name: string } | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name)
-      setEmail(user.email)
-    }
-  }, [user])
 
   const apiKeys = apiKeysData?.data || []
 

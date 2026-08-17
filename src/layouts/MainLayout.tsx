@@ -20,7 +20,6 @@ const navItems = [
 export function MainLayout() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const sidebarOpen = useUiStore((s) => s.sidebarOpen)
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
@@ -182,25 +181,14 @@ export function MainLayout() {
             {/* Divider */}
             <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
 
-            {/* User + Logout */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center text-sm font-bold text-white shadow-md shadow-accent-500/25">
-                  {user?.name?.[0] || 'A'}
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-semibold text-surface-900 dark:text-white leading-tight">{user?.name || 'Admin'}</p>
-                  <p className="text-xs text-surface-500 dark:text-surface-500 leading-tight">{user?.email || 'admin@example.com'}</p>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
-                title={t('common.logout')}
-              >
-                <IconLogout className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
+              title={t('common.logout')}
+            >
+              <IconLogout className="w-4 h-4" />
+            </button>
           </div>
         </header>
 
