@@ -30,10 +30,10 @@ export function Commands() {
       { command, nodeId: selectedNode },
       {
         onSuccess: () => {
-          toast('success', `Command executed on ${selectedNode === 'all' ? 'all nodes' : selectedNode}`)
+          toast('success', t('commands.toastExecuted', { target: selectedNode === 'all' ? t('commands.allNodes') : selectedNode }))
           setCommand('')
         },
-        onError: () => toast('error', 'Failed to execute command'),
+        onError: () => toast('error', t('commands.toastFailed')),
       },
     )
   }
@@ -54,7 +54,7 @@ export function Commands() {
             <select
               value={selectedNode}
               onChange={(e) => setSelectedNode(e.target.value)}
-              className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[160px] dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+              className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 min-w-[160px] dark:bg-surface-800 dark:border-surface-700 dark:text-white"
             >
               <option value="all">{t('commands.allNodes')}</option>
               {nodes.map((node) => (
@@ -67,7 +67,7 @@ export function Commands() {
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleExecute()}
               placeholder={t('commands.enterCommand')}
-              className="flex-1 px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
+              className="flex-1 px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
             />
             <Button onClick={handleExecute} disabled={executeCommand.isPending || !command.trim()}>
               {executeCommand.isPending ? <Spinner size="sm" /> : t('commands.execute')}
@@ -95,14 +95,14 @@ export function Commands() {
               ))}
             </div>
           ) : history.length === 0 ? (
-            <EmptyState icon={<IconCommands className="w-10 h-10" />} title="No commands yet" description="Execute your first command above" />
+            <EmptyState icon={<IconCommands className="w-10 h-10" />} title={t('commands.emptyTitle')} description={t('commands.emptyDesc')} action={<Button onClick={() => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus()}>{t('commands.execute')}</Button>} />
           ) : (
             <div className="divide-y divide-surface-200 dark:divide-surface-800">
               {history.map((item, index) => (
                 <div key={item.id} className="px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors stagger-item" style={{ animationDelay: `${300 + index * 50}ms` }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <code className="text-sm text-indigo-600 dark:text-indigo-400 font-mono">{item.command}</code>
+                      <code className="text-sm text-accent-600 dark:text-accent-400 font-mono">{item.command}</code>
                       <span className="text-xs text-surface-500 dark:text-surface-500">{t('commands.on')} {item.node}</span>
                     </div>
                     <div className="flex items-center gap-3">

@@ -2,7 +2,7 @@
 title: Темизация
 status: stable
 translation_key: guides.theming
-source_revision: 2026-08-16
+source_revision: 2026-08-17
 ---
 
 # Темизация
@@ -36,6 +36,8 @@ import { ThemeToggle } from './components/layout/ThemeToggle'
 
 <ThemeToggle /> // Переключает dark → light → system
 ```
+
+Компонент ThemeToggle размещается в хедере рядом с переключателем языка, индикатором连接, триггером Command Palette и профилем пользователя с кнопкой выхода. В сайдбаре находятся только логотип и ссылки навигации.
 
 ## Цветовая палитра
 

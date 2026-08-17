@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Modal } from './Modal'
 import { Button } from './Button'
 
@@ -19,18 +20,20 @@ export function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'danger',
   loading = false,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation()
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
       <div className="space-y-4">
         <p className="text-surface-600 dark:text-surface-400 text-sm">{message}</p>
         <div className="flex items-center justify-end gap-3">
           <Button variant="ghost" onClick={onClose} disabled={loading}>
-            {cancelLabel}
+            {cancelLabel ?? t('common.cancel')}
           </Button>
           <Button variant={variant} onClick={onConfirm} disabled={loading}>
             {loading ? (
@@ -39,9 +42,9 @@ export function ConfirmDialog({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                Loading...
+                {t('common.loading')}
               </span>
-            ) : confirmLabel}
+            ) : confirmLabel ?? t('common.confirm')}
           </Button>
         </div>
       </div>

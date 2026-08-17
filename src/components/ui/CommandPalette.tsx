@@ -22,11 +22,11 @@ export function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null)
 
   const commands: CommandItem[] = useMemo(() => [
-    { id: 'dashboard', label: t('nav.dashboard'), description: 'View system overview', path: '/', icon: <IconDashboard className="w-5 h-5" /> },
-    { id: 'nodes', label: t('nav.nodes'), description: 'Manage server nodes', path: '/nodes', icon: <IconNodes className="w-5 h-5" /> },
-    { id: 'commands', label: t('nav.commands'), description: 'Execute commands', path: '/commands', icon: <IconCommands className="w-5 h-5" /> },
-    { id: 'scripts', label: t('nav.scripts'), description: 'Manage scripts', path: '/scripts', icon: <IconScripts className="w-5 h-5" /> },
-    { id: 'settings', label: t('nav.settings'), description: 'System settings', path: '/settings', icon: <IconSettings className="w-5 h-5" /> },
+    { id: 'dashboard', label: t('nav.dashboard'), description: t('commandPalette.descDashboard'), path: '/', icon: <IconDashboard className="w-5 h-5" /> },
+    { id: 'nodes', label: t('nav.nodes'), description: t('commandPalette.descNodes'), path: '/nodes', icon: <IconNodes className="w-5 h-5" /> },
+    { id: 'commands', label: t('nav.commands'), description: t('commandPalette.descCommands'), path: '/commands', icon: <IconCommands className="w-5 h-5" /> },
+    { id: 'scripts', label: t('nav.scripts'), description: t('commandPalette.descScripts'), path: '/scripts', icon: <IconScripts className="w-5 h-5" /> },
+    { id: 'settings', label: t('nav.settings'), description: t('commandPalette.descSettings'), path: '/settings', icon: <IconSettings className="w-5 h-5" /> },
   ], [t])
 
   const filtered = useMemo(() => {
@@ -104,7 +104,7 @@ export function CommandPalette() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search pages... (Ctrl+K)"
+            placeholder={t('commandPalette.placeholder')}
             className="flex-1 py-3 bg-transparent text-surface-900 dark:text-white placeholder-surface-400 focus:outline-none text-sm"
           />
           <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs text-surface-400 bg-surface-100 dark:bg-surface-800 rounded">
@@ -115,14 +115,14 @@ export function CommandPalette() {
         <div ref={listRef} className="max-h-64 overflow-y-auto p-2">
           {filtered.length === 0 ? (
             <div className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">
-              No results found
+              {t('commandPalette.noResults')}
             </div>
           ) : (
             filtered.map((cmd, i) => (
               <button
                 key={cmd.id}
                 onClick={() => select(cmd.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer ${
                   i === selectedIndex
                     ? 'bg-surface-100 dark:bg-surface-800'
                     : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'

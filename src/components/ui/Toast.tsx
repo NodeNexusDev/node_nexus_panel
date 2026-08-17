@@ -1,4 +1,4 @@
-import { useState, useCallback, createContext, useContext, type ReactNode } from 'react'
+import { useState, useCallback, useRef, useEffect, createContext, useContext, type ReactNode } from 'react'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 
@@ -6,6 +6,7 @@ interface Toast {
   id: string
   type: ToastType
   message: string
+  exiting: boolean
 }
 
 interface ToastContextValue {
@@ -13,6 +14,9 @@ interface ToastContextValue {
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null)
+const MAX_TOASTS = 5
+const DISMISS_DURATION = 4000
+const EXIT_DURATION = 300
 
 export function useToast() {
   const context = useContext(ToastContext)
@@ -22,25 +26,68 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  useEffect(() => {
+    const timers = timersRef.current
+    return () => {
+      timers.forEach(clearTimeout)
+      timers.clear()
+    }
+  }, [])
+
+  const startTimer = useCallback((id: string) => {
+    const timer = setTimeout(() => {
+      setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t))
+      const exitTimer = setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id))
+        timersRef.current.delete(id)
+      }, EXIT_DURATION)
+      timersRef.current.set(`${id}-exit`, exitTimer)
+    }, DISMISS_DURATION)
+    timersRef.current.set(id, timer)
+  }, [])
 
   const toast = useCallback((type: ToastType, message: string) => {
     const id = Math.random().toString(36).slice(2)
-    setToasts((prev) => [...prev, { id, type, message }])
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 4000)
+    setToasts((prev) => {
+      const next = [...prev, { id, type, message, exiting: false }]
+      return next.length > MAX_TOASTS ? next.slice(-MAX_TOASTS) : next
+    })
+    startTimer(id)
+  }, [startTimer])
+
+  const pauseToast = useCallback((id: string) => {
+    const timer = timersRef.current.get(id)
+    if (timer) {
+      clearTimeout(timer)
+      timersRef.current.delete(id)
+    }
   }, [])
 
+  const resumeToast = useCallback((id: string) => {
+    startTimer(id)
+  }, [startTimer])
+
   const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
+    setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t))
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, EXIT_DURATION)
   }, [])
 
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2" role="status" aria-live="polite">
         {toasts.map((t) => (
-          <ToastItem key={t.id} toast={t} onRemove={() => removeToast(t.id)} />
+          <ToastItem
+            key={t.id}
+            toast={t}
+            onRemove={() => removeToast(t.id)}
+            onPause={() => pauseToast(t.id)}
+            onResume={() => resumeToast(t.id)}
+          />
         ))}
       </div>
     </ToastContext.Provider>
@@ -84,14 +131,18 @@ const typeIcons: Record<ToastType, ReactNode> = {
   ),
 }
 
-function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) {
+function ToastItem({ toast, onRemove, onPause, onResume }: { toast: Toast; onRemove: () => void; onPause: () => void; onResume: () => void }) {
   return (
     <div
-      className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm spring shadow-lg ${typeStyles[toast.type]}`}
+      className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm shadow-lg transition-all duration-300 ${
+        toast.exiting ? 'opacity-0 translate-x-4 scale-95' : 'spring'
+      } ${typeStyles[toast.type]}`}
+      onMouseEnter={onPause}
+      onMouseLeave={onResume}
     >
       <span className="text-current shrink-0">{typeIcons[toast.type]}</span>
       <span className="text-sm flex-1 font-medium">{toast.message}</span>
-      <button onClick={onRemove} className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0">
+      <button onClick={onRemove} aria-label="Close" className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>

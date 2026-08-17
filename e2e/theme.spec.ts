@@ -6,7 +6,7 @@ const AUTH_STORAGE = {
 }
 
 const UI_STORAGE_LIGHT = {
-  state: { theme: 'light', sidebarOpen: true, activeModal: null },
+  state: { theme: 'light', sidebarOpen: false, activeModal: null },
   version: 0,
 }
 

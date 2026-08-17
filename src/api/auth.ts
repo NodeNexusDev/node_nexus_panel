@@ -6,18 +6,17 @@ import type {
   ApiResponse,
 } from './types'
 
-const MOCK_EMAIL = import.meta.env.VITE_MOCK_EMAIL
-const MOCK_PASSWORD = import.meta.env.VITE_MOCK_PASSWORD
-
 function mockLogin(data: LoginRequest): ApiResponse<AuthResponse> {
-  if (data.email === MOCK_EMAIL && data.password === MOCK_PASSWORD) {
+  const email = import.meta.env.VITE_MOCK_EMAIL
+  const password = import.meta.env.VITE_MOCK_PASSWORD
+  if (data.email === email && data.password === password) {
     return {
       data: {
         token: 'mock-jwt-token',
         user: {
           id: '1',
           name: 'Admin',
-          email: MOCK_EMAIL,
+          email,
           role: 'admin',
         },
       },
@@ -31,10 +30,7 @@ export const authApi = {
     try {
       return await api.post<ApiResponse<AuthResponse>>('/api/auth/login', data)
     } catch (error) {
-      if (error instanceof ApiRequestError && error.status >= 500) {
-        return mockLogin(data)
-      }
-      if (error instanceof TypeError) {
+      if (import.meta.env.DEV && (error instanceof ApiRequestError && error.status >= 500 || error instanceof TypeError)) {
         return mockLogin(data)
       }
       throw error
@@ -48,14 +44,14 @@ export const authApi = {
     try {
       return await api.get<ApiResponse<User>>('/api/auth/me')
     } catch (error) {
-      if (error instanceof TypeError) {
+      if (import.meta.env.DEV && error instanceof TypeError) {
         const token = localStorage.getItem('auth_token')
-        if (token === 'mock-jwt-token' && MOCK_EMAIL) {
+        if (token === 'mock-jwt-token' && import.meta.env.VITE_MOCK_EMAIL) {
           return {
             data: {
               id: '1',
               name: 'Admin',
-              email: MOCK_EMAIL,
+              email: import.meta.env.VITE_MOCK_EMAIL,
               role: 'admin',
             },
           }

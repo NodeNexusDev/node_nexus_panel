@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
+import { Button } from '../components/ui/Button'
 import { StatCardSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { MiniChart } from '../components/ui/MiniChart'
@@ -35,7 +36,9 @@ export function Dashboard() {
   const recentNodes = nodesData?.data?.slice(0, 4) || []
 
   const chartColors = ['bg-surface-400', 'bg-surface-500', 'bg-surface-400', 'bg-surface-500']
-  const activityChart = Array.isArray(activity) ? activity.slice(0, 7).map((_, i) => 3 + Math.sin(i * 1.2) * 2 + Math.random() * 2) : [4, 6, 3, 8, 5, 7, 4]
+  const activityChart = Array.isArray(activity)
+    ? activity.slice(0, 7).map((_, i) => 3 + Math.sin(i * 1.2) * 2 + ((i * 7 + 3) % 5) * 0.4)
+    : [4, 6, 3, 8, 5, 7, 4]
 
   const quickActions = [
     { key: 'executeCommand', Icon: IconZap, descKey: 'executeCommandDesc', path: '/commands' },
@@ -108,7 +111,7 @@ export function Dashboard() {
                 ))}
               </div>
             ) : recentNodes.length === 0 ? (
-              <EmptyState icon={<IconNodes className="w-10 h-10" />} title="No nodes yet" description="Add your first node to get started" />
+              <EmptyState icon={<IconNodes className="w-10 h-10" />} title={t('dashboard.emptyTitle')} description={t('dashboard.emptyDesc')} action={<Button onClick={() => window.location.href = '/nodes'}>{t('nodes.addNode')}</Button>} />
             ) : (
               <div className="space-y-3">
                 {recentNodes.map((node, index) => (
@@ -150,7 +153,7 @@ export function Dashboard() {
                 <button
                   key={action.key}
                   onClick={() => navigate(action.path)}
-                  className="group p-4 rounded-xl text-left transition-all duration-300 hover:scale-[1.02] bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 stagger-item"
+                  className="group p-4 rounded-xl text-left transition-all duration-300 hover:scale-[1.02] bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 stagger-item cursor-pointer"
                   style={{ animationDelay: `${400 + index * 50}ms` }}
                 >
                   <div className="w-10 h-10 rounded-xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400 mb-3 group-hover:scale-110 transition-transform duration-300">

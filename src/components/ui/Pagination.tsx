@@ -36,6 +36,7 @@ export function Pagination({ page, totalPages, onPageChange, className = '' }: P
         size="sm"
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
+        aria-label="Previous page"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -51,9 +52,9 @@ export function Pagination({ page, totalPages, onPageChange, className = '' }: P
           <button
             key={p}
             onClick={() => onPageChange(p)}
-            className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               p === page
-                ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                ? 'bg-accent-600 text-white dark:bg-accent-500'
                 : 'text-surface-600 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800'
             }`}
           >
@@ -67,6 +68,7 @@ export function Pagination({ page, totalPages, onPageChange, className = '' }: P
         size="sm"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
+        aria-label="Next page"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

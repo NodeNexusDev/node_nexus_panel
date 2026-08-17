@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface UseHotkeyOptions {
   ctrl?: boolean
@@ -12,6 +12,9 @@ export function useHotkey(
   callback: () => void,
   { ctrl = false, shift = false, alt = false, preventDefault = true }: UseHotkeyOptions = {},
 ) {
+  const callbackRef = useRef(callback)
+  callbackRef.current = callback
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (ctrl && !e.ctrlKey && !e.metaKey) return
@@ -22,10 +25,10 @@ export function useHotkey(
       if (preventDefault) {
         e.preventDefault()
       }
-      callback()
+      callbackRef.current()
     }
 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [key, callback, ctrl, shift, alt, preventDefault])
+  }, [key, ctrl, shift, alt, preventDefault])
 }

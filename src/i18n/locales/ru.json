@@ -1,6 +1,6 @@
 {
   "nav": {
-    "dashboard": "Панель",
+    "dashboard": "Обзор",
     "nodes": "Ноды",
     "commands": "Команды",
     "scripts": "Скрипты",
@@ -19,13 +19,13 @@
     "backToHome": "На главную"
   },
   "dashboard": {
-    "title": "Панель",
-    "description": "Обзор нод и состояния системы",
+    "title": "Обзор",
+    "description": "Обзор ваших нод и состояния системы",
     "totalNodes": "Всего нод",
     "online": "Онлайн",
-    "offline": "Офлайн",
+    "offline": "Оффлайн",
     "commandsToday": "Команд сегодня",
-    "recentNodes": "Последние ноды",
+    "recentNodes": "Недавние ноды",
     "quickActions": "Быстрые действия",
     "executeCommand": "Выполнить команду",
     "executeCommandDesc": "Запустить на нодах",
@@ -33,8 +33,10 @@
     "addNodeDesc": "Зарегистрировать новую ноду",
     "runScript": "Запустить скрипт",
     "runScriptDesc": "Выполнить скрипт",
-    "viewLogs": "Просмотреть логи",
-    "viewLogsDesc": "Системные логи"
+    "viewLogs": "Логи",
+    "viewLogsDesc": "Системные логи",
+    "emptyTitle": "Нод пока нет",
+    "emptyDesc": "Добавьте первую ноду для начала работы"
   },
   "nodes": {
     "title": "Ноды",
@@ -43,12 +45,24 @@
     "node": "Нода",
     "status": "Статус",
     "os": "ОС",
-    "cpu": "ЦПУ",
-    "memory": "Память",
-    "lastSeen": "Последнее подключение",
+    "cpu": "CPU",
+    "memory": "RAM",
+    "lastSeen": "Последний раз",
     "actions": "Действия",
     "terminal": "Терминал",
-    "logs": "Логи"
+    "logs": "Логи",
+    "ip": "IP",
+    "port": "Порт (необязательно)",
+    "emptyTitle": "Нод нет",
+    "emptyDesc": "Добавьте первую ноду для мониторинга",
+    "deleteTitle": "Удалить ноду",
+    "deleteMsg": "Вы уверены, что хотите удалить \"{{name}}\"? Это действие необратимо.",
+    "toastAdded": "Нода \"{{name}}\" добавлена",
+    "toastAddFailed": "Не удалось добавить ноду",
+    "toastDeleted": "Нода \"{{name}}\" удалена",
+    "toastDeleteFailed": "Не удалось удалить ноду",
+    "reorder": "Переставить ноды",
+    "exitReorder": "Выйти из режима перестановки"
   },
   "commands": {
     "title": "Команды",
@@ -58,35 +72,69 @@
     "enterCommand": "Введите команду...",
     "execute": "Выполнить",
     "commandHistory": "История команд",
-    "on": "на"
+    "on": "на",
+    "emptyTitle": "Команд пока нет",
+    "emptyDesc": "Выполните первую команду выше",
+    "toastExecuted": "Команда выполнена на {{target}}",
+    "toastFailed": "Не удалось выполнить команду"
   },
   "scripts": {
     "title": "Скрипты",
-    "description": "Создание и управление скриптами",
+    "description": "Создание и управление повторяемыми скриптами",
     "createScript": "Создать скрипт",
     "schedule": "Расписание",
     "lastRun": "Последний запуск",
     "edit": "Редактировать",
-    "run": "Запустить"
+    "run": "Запустить",
+    "content": "Содержимое",
+    "emptyTitle": "Скриптов нет",
+    "emptyDesc": "Создайте первый скрипт для автоматизации задач",
+    "deleteTitle": "Удалить скрипт",
+    "deleteMsg": "Вы уверены, что хотите удалить \"{{name}}\"?",
+    "toastCreated": "Скрипт \"{{name}}\" создан",
+    "toastCreateFailed": "Не удалось создать скрипт",
+    "toastDeleted": "Скрипт \"{{name}}\" удалён",
+    "toastDeleteFailed": "Не удалось удалить скрипт",
+    "toastStarted": "Скрипт \"{{name}}\" запущен",
+    "toastRunFailed": "Не удалось запустить скрипт \"{{name}}\"",
+    "reorder": "Переставить скрипты",
+    "exitReorder": "Выйти из режима перестановки"
   },
   "settings": {
     "title": "Настройки",
-    "description": "Конфигурация панели",
+    "description": "Настройки панели управления",
     "profile": "Профиль",
     "name": "Имя",
     "email": "Email",
     "saveChanges": "Сохранить изменения",
     "apiKeys": "API ключи",
     "createApiKey": "Создать API ключ",
+    "keyName": "Имя ключа",
+    "noKeys": "API ключей пока нет",
+    "created": "Создан",
+    "deleteTitle": "Удалить API ключ",
+    "deleteMsg": "Удалить \"{{name}}\"? Это действие необратимо.",
     "notifications": "Уведомления",
-    "nodeOfflineAlerts": "Оповещения об offline нодах",
-    "nodeOfflineDesc": "Получать уведомления, когда нода уходит в офлайн",
+    "nodeOfflineAlerts": "Оффлайн ноды",
+    "nodeOfflineDesc": "Уведомлять, когда нода уходит в оффлайн",
     "commandNotifications": "Уведомления о командах",
-    "commandNotificationsDesc": "Уведомлять о завершении команд",
+    "commandNotificationsDesc": "Уведомлять об окончании выполнения команд",
     "dangerZone": "Опасная зона",
     "resetData": "Сбросить все данные",
     "resetDataDesc": "Это навсегда удалит все ноды, скрипты и историю.",
-    "reset": "Сбросить"
+    "reset": "Сбросить",
+    "themeDark": "Тёмная",
+    "themeLight": "Светлая",
+    "themeSystem": "Системная",
+    "themeTitle": "Тема: {{theme}}",
+    "toastProfileUpdated": "Профиль обновлён",
+    "toastProfileFailed": "Не удалось обновить профиль",
+    "toastKeyCreated": "API ключ создан",
+    "toastKeyCreateFailed": "Не удалось создать API ключ",
+    "toastKeyDeleted": "API ключ удалён",
+    "toastKeyDeleteFailed": "Не удалось удалить API ключ",
+    "toastResetDone": "Все данные сброшены",
+    "toastResetFailed": "Не удалось сбросить данные"
   },
   "common": {
     "connected": "Подключено",
@@ -96,6 +144,30 @@
     "delete": "Удалить",
     "edit": "Редактировать",
     "loading": "Загрузка...",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "confirm": "Подтвердить",
+    "retry": "Повторить"
+  },
+  "errorBoundary": {
+    "title": "Что-то пошло не так",
+    "fallback": "Произошла непредвиденная ошибка",
+    "retry": "Попробовать снова"
+  },
+  "commandPalette": {
+    "placeholder": "Поиск страниц... (Ctrl+K)",
+    "noResults": "Ничего не найдено",
+    "descDashboard": "Обзор системы",
+    "descNodes": "Управление нодами",
+    "descCommands": "Выполнение команд",
+    "descScripts": "Управление скриптами",
+    "descSettings": "Настройки системы"
+  },
+  "errorPage": {
+    "notFound": "Страница не найдена",
+    "accessDenied": "Доступ запрещён",
+    "generic": "Что-то пошло не так",
+    "notFoundMsg": "Страница, которую вы ищете, не существует.",
+    "accessDeniedMsg": "У вас нет прав для доступа к этому ресурсу.",
+    "genericMsg": "Произошла непредвиденная ошибка. Попробуйте снова."
   }
 }

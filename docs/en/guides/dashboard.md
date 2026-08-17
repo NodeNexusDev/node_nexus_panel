@@ -24,3 +24,9 @@ The dashboard provides an overview of your nodes and system health.
 - Dot grid overlay pattern
 - Gradient orbs (indigo/purple) with float animation
 - Glassmorphism on sidebar and header
+
+## Layout
+
+The dashboard is rendered inside the `MainLayout` which provides:
+- **Sidebar** (left): Logo and navigation links only
+- **Header** (top): Language switcher (RU/EN), theme toggle, WebSocket connection status, command palette trigger (Ctrl+K), user avatar with name/email, and logout button

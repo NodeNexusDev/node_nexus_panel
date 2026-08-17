@@ -1,10 +1,11 @@
 import { QueryClient } from '@tanstack/react-query'
 import { ApiRequestError } from '../api/client'
+import { useAuthStore } from '../stores/auth-store'
 
 function handleServerError(error: Error) {
   if (error instanceof ApiRequestError) {
     if (error.status === 401) {
-      localStorage.removeItem('auth_token')
+      useAuthStore.getState().logout()
       window.location.href = '/login'
     }
   }
@@ -23,7 +24,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
     mutations: {
-      onError: (error) => handleServerError(error as Error),
+      onError: (error) => handleServerError(error),
     },
   },
 })

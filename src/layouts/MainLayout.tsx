@@ -7,6 +7,7 @@ import { useConnectionStore } from '../stores/connection-store'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
 import { IconDashboard, IconNodes, IconCommands, IconScripts, IconSettings, IconGlobe, IconLogout } from '../components/ui/Icons'
+import { APP_VERSION } from '../lib/version'
 
 const navItems = [
   { to: '/', key: 'nav.dashboard', Icon: IconDashboard },
@@ -21,7 +22,8 @@ export function MainLayout() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
-  const { sidebarOpen, setSidebarOpen } = useUiStore()
+  const sidebarOpen = useUiStore((s) => s.sidebarOpen)
+  const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
   const wsConnected = useConnectionStore((s) => s.wsConnected)
 
   const toggleLanguage = () => {
@@ -49,8 +51,8 @@ export function MainLayout() {
     <div className="flex h-screen overflow-hidden">
       {/* Background layer — z-10 is below content but above body */}
       <div className="fixed inset-0 -z-10 bg-surface-50 dark:bg-surface-950">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 dark:from-indigo-500/10 dark:via-transparent dark:to-purple-500/10" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute inset-0 bg-gradient-to-br from-accent-500/5 via-transparent to-purple-500/5 dark:from-accent-500/10 dark:via-transparent dark:to-purple-500/10" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
         {/* Animated grid dots */}
         <div className="absolute inset-0 opacity-[0.07] dark:opacity-[0.1] text-surface-900 dark:text-white" style={{
@@ -100,12 +102,10 @@ export function MainLayout() {
         {/* Logo */}
         <div className="px-6 py-5 border-b border-surface-200/50 dark:border-surface-800/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <span className="text-white font-bold text-lg">N</span>
-            </div>
+            <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" />
             <div>
               <h1 className="text-xl font-bold gradient-text">NodeNexus</h1>
-              <p className="text-xs text-surface-500 dark:text-surface-500">Panel v0.4.0</p>
+              <p className="text-xs text-surface-500 dark:text-surface-500">Panel v{APP_VERSION}</p>
             </div>
           </div>
         </div>
@@ -119,9 +119,9 @@ export function MainLayout() {
               end={item.to === '/'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 stagger-item ${
+                `flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all duration-200 stagger-item ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-600 dark:from-indigo-500/20 dark:to-purple-500/20 dark:text-indigo-400 shadow-sm'
+                    ? 'bg-gradient-to-r from-accent-500/10 to-purple-500/10 text-accent-600 dark:from-accent-500/20 dark:to-purple-500/20 dark:text-accent-400 shadow-sm'
                     : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white'
                 }`
               }
@@ -132,54 +132,34 @@ export function MainLayout() {
             </NavLink>
           ))}
         </nav>
-
-        {/* Bottom section */}
-        <div className="px-3 py-4 border-t border-surface-200/50 dark:border-surface-800/50 space-y-1">
-          <button
-            onClick={toggleLanguage}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200"
-          >
-            <span className="text-lg"><IconGlobe className="w-5 h-5" /></span>
-            {i18n.language === 'en' ? 'Русский' : 'English'}
-          </button>
-
-          <ThemeToggle />
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-red-50 hover:text-red-600 dark:text-surface-400 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-all duration-200"
-          >
-            <span className="text-lg"><IconLogout className="w-5 h-5" /></span>
-            {t('common.logout', 'Logout')}
-          </button>
-
-          {/* User profile */}
-          <div className="flex items-center gap-3 px-3 py-2 mt-2 rounded-xl bg-surface-50/50 dark:bg-surface-800/30">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center text-sm font-bold text-white shadow-md shadow-indigo-500/25">
-              {user?.name?.[0] || 'A'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{user?.name || 'Admin'}</p>
-              <p className="text-xs text-surface-500 dark:text-surface-500 truncate">{user?.email || 'admin@example.com'}</p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header with glassmorphism */}
-        <header className="h-16 glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0">
+        <header className="h-[84px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200"
+            className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
           <div className="flex-1" />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {/* Language toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
+            >
+              <IconGlobe className="w-4 h-4" />
+              {i18n.language === 'en' ? 'РУ' : 'EN'}
+            </button>
+
+            {/* Theme toggle */}
+            <ThemeToggle />
+
             {/* Connection status */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50">
               <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
@@ -187,16 +167,40 @@ export function MainLayout() {
                 {wsConnected ? t('common.connected') : t('common.disconnected', 'Disconnected')}
               </span>
             </div>
+
             {/* Command palette trigger */}
             <button
               onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <kbd className="hidden sm:inline-flex text-xs">Ctrl+K</kbd>
             </button>
+
+            {/* Divider */}
+            <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
+
+            {/* User + Logout */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center text-sm font-bold text-white shadow-md shadow-accent-500/25">
+                  {user?.name?.[0] || 'A'}
+                </div>
+                <div className="hidden md:block">
+                  <p className="text-sm font-semibold text-surface-900 dark:text-white leading-tight">{user?.name || 'Admin'}</p>
+                  <p className="text-xs text-surface-500 dark:text-surface-500 leading-tight">{user?.email || 'admin@example.com'}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
+                title={t('common.logout')}
+              >
+                <IconLogout className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </header>
 

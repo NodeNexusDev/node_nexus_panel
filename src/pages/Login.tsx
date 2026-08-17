@@ -12,7 +12,7 @@ export function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Animated background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-surface-950 dark:via-surface-900 dark:to-surface-950">
+      <div className="absolute inset-0 bg-gradient-to-br from-accent-500 via-purple-500 to-pink-500 dark:from-surface-950 dark:via-surface-900 dark:to-surface-950">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50" />
         {/* Floating orbs */}
         <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-float" />
@@ -25,9 +25,7 @@ export function Login() {
         <div className="glass rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 p-8 border border-white/20 dark:border-surface-700/50">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-4">
-              <span className="text-white font-bold text-2xl">N</span>
-            </div>
+            <img src="/logo.png" alt="NodeNexus" className="w-16 h-16 mx-auto shadow-lg shadow-cyan-500/30 mb-4" />
             <h1 className="text-3xl font-bold gradient-text">NodeNexus</h1>
             <p className="text-surface-500 dark:text-surface-400 mt-2">{t('login.subtitle')}</p>
           </div>
@@ -67,11 +65,13 @@ export function Login() {
           </form>
 
           {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-surface-400 dark:text-surface-500">
-              Default: admin@example.com / password
-            </p>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="mt-6 text-center">
+              <p className="text-xs text-surface-400 dark:text-surface-500">
+                Default: admin@example.com / password
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
