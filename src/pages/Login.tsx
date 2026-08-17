@@ -66,7 +66,6 @@ export function Login() {
                 placeholder="admin"
                 value={panelLogin}
                 onChange={(e) => { setPanelLogin(e.target.value); setError('') }}
-                error={error || undefined}
                 disabled={submitting}
               />
               <Input
@@ -75,7 +74,6 @@ export function Login() {
                 placeholder="••••••"
                 value={panelPassword}
                 onChange={(e) => { setPanelPassword(e.target.value); setError('') }}
-                error={error || undefined}
                 disabled={submitting}
               />
             </div>
