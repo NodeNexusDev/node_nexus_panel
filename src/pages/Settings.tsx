@@ -46,30 +46,30 @@ export function Settings() {
 
   const handleSaveProfile = () => {
     updateProfile.mutate({ name, email }, {
-      onSuccess: () => toast('success', 'Profile updated'),
-      onError: () => toast('error', 'Failed to update profile'),
+      onSuccess: () => toast('success', t('settings.toastProfileUpdated')),
+      onError: () => toast('error', t('settings.toastProfileFailed')),
     })
   }
 
   const handleCreateKey = () => {
     createApiKey.mutate({ name: newKeyName }, {
-      onSuccess: () => { toast('success', 'API key created'); setShowKeyModal(false); setNewKeyName('') },
-      onError: () => toast('error', 'Failed to create API key'),
+      onSuccess: () => { toast('success', t('settings.toastKeyCreated')); setShowKeyModal(false); setNewKeyName('') },
+      onError: () => toast('error', t('settings.toastKeyCreateFailed')),
     })
   }
 
   const handleDeleteKey = () => {
     if (!deleteKeyTarget) return
     deleteApiKey.mutate(deleteKeyTarget.id, {
-      onSuccess: () => { toast('success', 'API key deleted'); setDeleteKeyTarget(null) },
-      onError: () => toast('error', 'Failed to delete API key'),
+      onSuccess: () => { toast('success', t('settings.toastKeyDeleted')); setDeleteKeyTarget(null) },
+      onError: () => toast('error', t('settings.toastKeyDeleteFailed')),
     })
   }
 
   const handleReset = () => {
     resetAll.mutate(undefined, {
-      onSuccess: () => { toast('success', 'All data has been reset'); setShowResetConfirm(false) },
-      onError: () => toast('error', 'Failed to reset data'),
+      onSuccess: () => { toast('success', t('settings.toastResetDone')); setShowResetConfirm(false) },
+      onError: () => toast('error', t('settings.toastResetFailed')),
     })
   }
 
@@ -107,13 +107,13 @@ export function Settings() {
             {keysLoading ? <FormSkeleton fields={2} /> : (
               <div className="space-y-4">
                 {apiKeys.length === 0 ? (
-                  <p className="text-sm text-surface-500 dark:text-surface-500">No API keys yet</p>
+                  <p className="text-sm text-surface-500 dark:text-surface-500">{t('settings.noKeys')}</p>
                 ) : apiKeys.map((key) => (
                   <div key={key.id} className="p-3 bg-surface-50 rounded-lg dark:bg-surface-800/50">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-surface-900 dark:text-white">{key.name}</p>
-                        <p className="text-xs text-surface-500 dark:text-surface-500">Created {new Date(key.createdAt).toLocaleDateString()}</p>
+                        <p className="text-xs text-surface-500 dark:text-surface-500">{t('settings.created')} {new Date(key.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <code className="text-xs text-surface-500 dark:text-surface-400 font-mono">{key.key.slice(0, 4)}...{key.key.slice(-4)}</code>
@@ -162,7 +162,7 @@ export function Settings() {
 
       <Modal isOpen={showKeyModal} onClose={() => setShowKeyModal(false)} title={t('settings.createApiKey')} size="sm">
         <div className="space-y-4">
-          <Input label="Key name" placeholder="my-api-key" value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} />
+          <Input label={t('settings.keyName')} placeholder="my-api-key" value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} />
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowKeyModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreateKey} disabled={createApiKey.isPending || !newKeyName}>
@@ -172,7 +172,7 @@ export function Settings() {
         </div>
       </Modal>
 
-      <ConfirmDialog isOpen={!!deleteKeyTarget} onClose={() => setDeleteKeyTarget(null)} onConfirm={handleDeleteKey} title="Delete API Key" message={`Delete "${deleteKeyTarget?.name}"? This cannot be undone.`} confirmLabel={t('common.delete')} loading={deleteApiKey.isPending} />
+      <ConfirmDialog isOpen={!!deleteKeyTarget} onClose={() => setDeleteKeyTarget(null)} onConfirm={handleDeleteKey} title={t('settings.deleteTitle')} message={t('settings.deleteMsg', { name: deleteKeyTarget?.name })} confirmLabel={t('common.delete')} loading={deleteApiKey.isPending} />
       <ConfirmDialog isOpen={showResetConfirm} onClose={() => setShowResetConfirm(false)} onConfirm={handleReset} title={t('settings.resetData')} message={t('settings.resetDataDesc')} confirmLabel={t('settings.reset')} loading={resetAll.isPending} />
     </div>
   )

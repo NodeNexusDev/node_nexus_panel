@@ -34,7 +34,9 @@
     "runScript": "Run Script",
     "runScriptDesc": "Execute script",
     "viewLogs": "View Logs",
-    "viewLogsDesc": "System logs"
+    "viewLogsDesc": "System logs",
+    "emptyTitle": "No nodes yet",
+    "emptyDesc": "Add your first node to get started"
   },
   "nodes": {
     "title": "Nodes",
@@ -48,7 +50,19 @@
     "lastSeen": "Last Seen",
     "actions": "Actions",
     "terminal": "Terminal",
-    "logs": "Logs"
+    "logs": "Logs",
+    "ip": "IP",
+    "port": "Port (optional)",
+    "emptyTitle": "No nodes",
+    "emptyDesc": "Add your first node to start monitoring",
+    "deleteTitle": "Delete Node",
+    "deleteMsg": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "toastAdded": "Node \"{{name}}\" added",
+    "toastAddFailed": "Failed to add node",
+    "toastDeleted": "Node \"{{name}}\" deleted",
+    "toastDeleteFailed": "Failed to delete node",
+    "reorder": "Reorder nodes",
+    "exitReorder": "Exit reorder"
   },
   "commands": {
     "title": "Commands",
@@ -58,7 +72,11 @@
     "enterCommand": "Enter command...",
     "execute": "Execute",
     "commandHistory": "Command History",
-    "on": "on"
+    "on": "on",
+    "emptyTitle": "No commands yet",
+    "emptyDesc": "Execute your first command above",
+    "toastExecuted": "Command executed on {{target}}",
+    "toastFailed": "Failed to execute command"
   },
   "scripts": {
     "title": "Scripts",
@@ -67,7 +85,20 @@
     "schedule": "Schedule",
     "lastRun": "Last run",
     "edit": "Edit",
-    "run": "Run"
+    "run": "Run",
+    "content": "Content",
+    "emptyTitle": "No scripts",
+    "emptyDesc": "Create your first script to automate tasks",
+    "deleteTitle": "Delete Script",
+    "deleteMsg": "Are you sure you want to delete \"{{name}}\"?",
+    "toastCreated": "Script \"{{name}}\" created",
+    "toastCreateFailed": "Failed to create script",
+    "toastDeleted": "Script \"{{name}}\" deleted",
+    "toastDeleteFailed": "Failed to delete script",
+    "toastStarted": "Script \"{{name}}\" started",
+    "toastRunFailed": "Failed to run script \"{{name}}\"",
+    "reorder": "Reorder scripts",
+    "exitReorder": "Exit reorder"
   },
   "settings": {
     "title": "Settings",
@@ -78,6 +109,11 @@
     "saveChanges": "Save Changes",
     "apiKeys": "API Keys",
     "createApiKey": "Create API Key",
+    "keyName": "Key name",
+    "noKeys": "No API keys yet",
+    "created": "Created",
+    "deleteTitle": "Delete API Key",
+    "deleteMsg": "Delete \"{{name}}\"? This cannot be undone.",
     "notifications": "Notifications",
     "nodeOfflineAlerts": "Node Offline Alerts",
     "nodeOfflineDesc": "Get notified when a node goes offline",
@@ -86,7 +122,15 @@
     "dangerZone": "Danger Zone",
     "resetData": "Reset all data",
     "resetDataDesc": "This will permanently delete all nodes, scripts, and history.",
-    "reset": "Reset"
+    "reset": "Reset",
+    "toastProfileUpdated": "Profile updated",
+    "toastProfileFailed": "Failed to update profile",
+    "toastKeyCreated": "API key created",
+    "toastKeyCreateFailed": "Failed to create API key",
+    "toastKeyDeleted": "API key deleted",
+    "toastKeyDeleteFailed": "Failed to delete API key",
+    "toastResetDone": "All data has been reset",
+    "toastResetFailed": "Failed to reset data"
   },
   "common": {
     "connected": "Connected",
@@ -96,7 +140,9 @@
     "delete": "Delete",
     "edit": "Edit",
     "loading": "Loading...",
-    "logout": "Logout"
+    "logout": "Logout",
+    "confirm": "Confirm",
+    "retry": "Try Again"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -105,6 +151,19 @@
   },
   "commandPalette": {
     "placeholder": "Search pages... (Ctrl+K)",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "descDashboard": "View system overview",
+    "descNodes": "Manage server nodes",
+    "descCommands": "Execute commands",
+    "descScripts": "Manage scripts",
+    "descSettings": "System settings"
+  },
+  "errorPage": {
+    "notFound": "Page Not Found",
+    "accessDenied": "Access Denied",
+    "generic": "Something went wrong",
+    "notFoundMsg": "The page you are looking for does not exist.",
+    "accessDeniedMsg": "You do not have permission to access this resource.",
+    "genericMsg": "An unexpected error occurred. Please try again."
   }
 }

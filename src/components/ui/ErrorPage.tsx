@@ -12,16 +12,16 @@ export function ErrorPage({ statusCode, title, message, onRetry }: ErrorPageProp
   const { t } = useTranslation()
 
   const defaultTitle = statusCode === 404
-    ? 'Page Not Found'
+    ? t('errorPage.notFound')
     : statusCode === 403
-      ? 'Access Denied'
-      : 'Something went wrong'
+      ? t('errorPage.accessDenied')
+      : t('errorPage.generic')
 
   const defaultMessage = statusCode === 404
-    ? 'The page you are looking for does not exist.'
+    ? t('errorPage.notFoundMsg')
     : statusCode === 403
-      ? 'You do not have permission to access this resource.'
-      : 'An unexpected error occurred. Please try again.'
+      ? t('errorPage.accessDeniedMsg')
+      : t('errorPage.genericMsg')
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-50 dark:bg-surface-950 px-4">

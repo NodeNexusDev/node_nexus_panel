@@ -47,7 +47,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       }}
     >
       {/* Backdrop with blur */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer" />
       {/* Modal content with spring animation */}
       <div
         className={`relative w-full ${sizeClasses[size]} spring`}

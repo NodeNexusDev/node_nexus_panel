@@ -110,7 +110,7 @@ export function Dashboard() {
                 ))}
               </div>
             ) : recentNodes.length === 0 ? (
-              <EmptyState icon={<IconNodes className="w-10 h-10" />} title="No nodes yet" description="Add your first node to get started" />
+              <EmptyState icon={<IconNodes className="w-10 h-10" />} title={t('dashboard.emptyTitle')} description={t('dashboard.emptyDesc')} />
             ) : (
               <div className="space-y-3">
                 {recentNodes.map((node, index) => (

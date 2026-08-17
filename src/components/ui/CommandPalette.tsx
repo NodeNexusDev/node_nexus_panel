@@ -22,11 +22,11 @@ export function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null)
 
   const commands: CommandItem[] = useMemo(() => [
-    { id: 'dashboard', label: t('nav.dashboard'), description: 'View system overview', path: '/', icon: <IconDashboard className="w-5 h-5" /> },
-    { id: 'nodes', label: t('nav.nodes'), description: 'Manage server nodes', path: '/nodes', icon: <IconNodes className="w-5 h-5" /> },
-    { id: 'commands', label: t('nav.commands'), description: 'Execute commands', path: '/commands', icon: <IconCommands className="w-5 h-5" /> },
-    { id: 'scripts', label: t('nav.scripts'), description: 'Manage scripts', path: '/scripts', icon: <IconScripts className="w-5 h-5" /> },
-    { id: 'settings', label: t('nav.settings'), description: 'System settings', path: '/settings', icon: <IconSettings className="w-5 h-5" /> },
+    { id: 'dashboard', label: t('nav.dashboard'), description: t('commandPalette.descDashboard'), path: '/', icon: <IconDashboard className="w-5 h-5" /> },
+    { id: 'nodes', label: t('nav.nodes'), description: t('commandPalette.descNodes'), path: '/nodes', icon: <IconNodes className="w-5 h-5" /> },
+    { id: 'commands', label: t('nav.commands'), description: t('commandPalette.descCommands'), path: '/commands', icon: <IconCommands className="w-5 h-5" /> },
+    { id: 'scripts', label: t('nav.scripts'), description: t('commandPalette.descScripts'), path: '/scripts', icon: <IconScripts className="w-5 h-5" /> },
+    { id: 'settings', label: t('nav.settings'), description: t('commandPalette.descSettings'), path: '/settings', icon: <IconSettings className="w-5 h-5" /> },
   ], [t])
 
   const filtered = useMemo(() => {

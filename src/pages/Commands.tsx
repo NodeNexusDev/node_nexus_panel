@@ -30,10 +30,10 @@ export function Commands() {
       { command, nodeId: selectedNode },
       {
         onSuccess: () => {
-          toast('success', `Command executed on ${selectedNode === 'all' ? 'all nodes' : selectedNode}`)
+          toast('success', t('commands.toastExecuted', { target: selectedNode === 'all' ? t('commands.allNodes') : selectedNode }))
           setCommand('')
         },
-        onError: () => toast('error', 'Failed to execute command'),
+        onError: () => toast('error', t('commands.toastFailed')),
       },
     )
   }
@@ -95,7 +95,7 @@ export function Commands() {
               ))}
             </div>
           ) : history.length === 0 ? (
-            <EmptyState icon={<IconCommands className="w-10 h-10" />} title="No commands yet" description="Execute your first command above" />
+            <EmptyState icon={<IconCommands className="w-10 h-10" />} title={t('commands.emptyTitle')} description={t('commands.emptyDesc')} />
           ) : (
             <div className="divide-y divide-surface-200 dark:divide-surface-800">
               {history.map((item, index) => (

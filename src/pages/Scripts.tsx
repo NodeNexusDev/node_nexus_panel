@@ -77,19 +77,19 @@ export function Scripts() {
   const handleCreate = () => {
     createScript.mutate(newScript, {
       onSuccess: () => {
-        toast('success', `Script "${newScript.name}" created`)
+        toast('success', t('scripts.toastCreated', { name: newScript.name }))
         setShowCreateModal(false)
         setNewScript({ name: '', description: '', content: '' })
       },
-      onError: () => toast('error', 'Failed to create script'),
+      onError: () => toast('error', t('scripts.toastCreateFailed')),
     })
   }
 
   const handleDelete = () => {
     if (!deleteTarget) return
     deleteScript.mutate(deleteTarget.id, {
-      onSuccess: () => { toast('success', `Script "${deleteTarget.name}" deleted`); setDeleteTarget(null) },
-      onError: () => toast('error', 'Failed to delete script'),
+      onSuccess: () => { toast('success', t('scripts.toastDeleted', { name: deleteTarget.name })); setDeleteTarget(null) },
+      onError: () => toast('error', t('scripts.toastDeleteFailed')),
     })
   }
 
@@ -97,8 +97,8 @@ export function Scripts() {
     runScript.mutate(
       { id },
       {
-        onSuccess: () => toast('success', `Script "${name}" started`),
-        onError: () => toast('error', `Failed to run script "${name}"`),
+        onSuccess: () => toast('success', t('scripts.toastStarted', { name })),
+        onError: () => toast('error', t('scripts.toastRunFailed', { name })),
       },
     )
   }
@@ -112,7 +112,7 @@ export function Scripts() {
         </div>
         <div className="flex items-center gap-2">
           {scripts.length > 1 && (
-            <Tooltip content={dragMode ? 'Exit reorder' : 'Reorder scripts'}>
+            <Tooltip content={dragMode ? t('scripts.exitReorder') : t('scripts.reorder')}>
               <Button variant={dragMode ? 'secondary' : 'ghost'} size="sm" onClick={() => { setDragMode(!dragMode); if (dragMode) setOrderedScripts([]) }}>
                 <IconGrip className="w-4 h-4" />
               </Button>
@@ -125,7 +125,7 @@ export function Scripts() {
       {isLoading ? (
         <CardListSkeleton count={4} />
       ) : scripts.length === 0 ? (
-        <EmptyState icon={<IconScripts className="w-10 h-10" />} title="No scripts" description="Create your first script to automate tasks" action={<Button onClick={() => setShowCreateModal(true)}>{t('scripts.createScript')}</Button>} />
+        <EmptyState icon={<IconScripts className="w-10 h-10" />} title={t('scripts.emptyTitle')} description={t('scripts.emptyDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('scripts.createScript')}</Button>} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {dragMode ? (
@@ -146,7 +146,7 @@ export function Scripts() {
           <Input label={t('scripts.title')} placeholder="backup-db.sh" value={newScript.name} onChange={(e) => setNewScript({ ...newScript, name: e.target.value })} />
           <Input label={t('scripts.description')} placeholder="Backup PostgreSQL database" value={newScript.description} onChange={(e) => setNewScript({ ...newScript, description: e.target.value })} />
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">Content</label>
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.content')}</label>
             <textarea
               value={newScript.content}
               onChange={(e) => setNewScript({ ...newScript, content: e.target.value })}
@@ -164,7 +164,7 @@ export function Scripts() {
         </div>
       </Modal>
 
-      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title="Delete Script" message={`Are you sure you want to delete "${deleteTarget?.name}"?`} confirmLabel={t('common.delete')} loading={deleteScript.isPending} />
+      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteScript.isPending} />
     </div>
   )
 }

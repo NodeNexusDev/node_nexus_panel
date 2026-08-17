@@ -85,13 +85,13 @@ export function Nodes() {
       <td className="px-6 py-4 text-sm text-surface-500 dark:text-surface-500">{node.lastSeen}</td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-1">
-          <Tooltip content="Terminal">
+          <Tooltip content={t('nodes.terminal')}>
             <Button variant="ghost" size="sm"><IconCommands className="w-4 h-4" /></Button>
           </Tooltip>
-          <Tooltip content="Logs">
+          <Tooltip content={t('nodes.logs')}>
             <Button variant="ghost" size="sm"><IconFileText className="w-4 h-4" /></Button>
           </Tooltip>
-          <Tooltip content="Delete">
+          <Tooltip content={t('common.delete')}>
             <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: node.id, name: node.name })} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10">
               {t('common.delete')}
             </Button>
@@ -106,11 +106,11 @@ export function Nodes() {
       { name: newNode.name, ip: newNode.ip, port: newNode.port ? Number(newNode.port) : undefined },
       {
         onSuccess: () => {
-          toast('success', `Node "${newNode.name}" added`)
+          toast('success', t('nodes.toastAdded', { name: newNode.name }))
           setShowAddModal(false)
           setNewNode({ name: '', ip: '', port: '' })
         },
-        onError: () => toast('error', 'Failed to add node'),
+        onError: () => toast('error', t('nodes.toastAddFailed')),
       },
     )
   }
@@ -119,10 +119,10 @@ export function Nodes() {
     if (!deleteTarget) return
     deleteNode.mutate(deleteTarget.id, {
       onSuccess: () => {
-        toast('success', `Node "${deleteTarget.name}" deleted`)
+        toast('success', t('nodes.toastDeleted', { name: deleteTarget.name }))
         setDeleteTarget(null)
       },
-      onError: () => toast('error', 'Failed to delete node'),
+      onError: () => toast('error', t('nodes.toastDeleteFailed')),
     })
   }
 
@@ -135,7 +135,7 @@ export function Nodes() {
         </div>
         <div className="flex items-center gap-2">
           {nodes.length > 1 && (
-            <Tooltip content={dragMode ? 'Exit reorder' : 'Reorder nodes'}>
+            <Tooltip content={dragMode ? t('nodes.exitReorder') : t('nodes.reorder')}>
               <Button variant={dragMode ? 'secondary' : 'ghost'} size="sm" onClick={() => { setDragMode(!dragMode); if (dragMode) setOrderedNodes([]) }}>
                 <IconGrip className="w-4 h-4" />
               </Button>
@@ -152,8 +152,8 @@ export function Nodes() {
           ) : nodes.length === 0 ? (
             <EmptyState
               icon={<IconNodes className="w-10 h-10" />}
-              title="No nodes"
-              description="Add your first node to start monitoring"
+              title={t('nodes.emptyTitle')}
+              description={t('nodes.emptyDesc')}
               action={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
             />
           ) : (
@@ -188,8 +188,8 @@ export function Nodes() {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={t('nodes.addNode')}>
         <div className="space-y-4">
           <Input label={t('nodes.node')} placeholder="prod-server-05" value={newNode.name} onChange={(e) => setNewNode({ ...newNode, name: e.target.value })} />
-          <Input label="IP" placeholder="192.168.1.105" value={newNode.ip} onChange={(e) => setNewNode({ ...newNode, ip: e.target.value })} />
-          <Input label="Port (optional)" placeholder="22" type="number" value={newNode.port} onChange={(e) => setNewNode({ ...newNode, port: e.target.value })} />
+          <Input label={t('nodes.ip')} placeholder="192.168.1.105" value={newNode.ip} onChange={(e) => setNewNode({ ...newNode, ip: e.target.value })} />
+          <Input label={t('nodes.port')} placeholder="22" type="number" value={newNode.port} onChange={(e) => setNewNode({ ...newNode, port: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowAddModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleAdd} disabled={createNode.isPending || !newNode.name || !newNode.ip}>
@@ -203,8 +203,8 @@ export function Nodes() {
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Delete Node"
-        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        title={t('nodes.deleteTitle')}
+        message={t('nodes.deleteMsg', { name: deleteTarget?.name })}
         confirmLabel={t('common.delete')}
         loading={deleteNode.isPending}
       />
