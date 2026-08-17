@@ -122,7 +122,7 @@ export function CommandPalette() {
               <button
                 key={cmd.id}
                 onClick={() => select(cmd.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer ${
                   i === selectedIndex
                     ? 'bg-surface-100 dark:bg-surface-800'
                     : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'
