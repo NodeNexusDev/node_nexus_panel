@@ -20,4 +20,16 @@ declare global {
   }
 }
 
-export const env: Env = { ...defaults, ...window.__ENV__ }
+function isUnset(v: string | undefined): boolean {
+  return !v || /^\$\{/.test(v)
+}
+
+function resolveEnv(): Env {
+  const raw = window.__ENV__ ?? {}
+  const resolved = Object.fromEntries(
+    Object.entries(raw).filter(([, v]) => !isUnset(v as string)),
+  ) as Partial<Env>
+  return { ...defaults, ...resolved }
+}
+
+export const env: Env = resolveEnv()
