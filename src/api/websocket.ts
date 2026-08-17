@@ -12,7 +12,9 @@ interface WebSocketEvent {
 
 type EventHandler = (payload: unknown) => void
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000'
+import { env } from '../lib/env'
+
+const WS_URL = env.VITE_WS_URL
 
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000]
 const HEARTBEAT_INTERVAL = 30000

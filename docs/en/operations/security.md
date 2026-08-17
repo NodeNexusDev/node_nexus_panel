@@ -2,7 +2,7 @@
 title: Security
 status: stable
 translation_key: operations.security
-source_revision: 2026-08-16
+source_revision: 2026-08-17
 ---
 
 # Security
@@ -15,9 +15,13 @@ Always use HTTPS in production.
 
 Configure the API server to allow your panel domain.
 
-## Token Storage
+## Session Storage
 
-JWT tokens are stored in `localStorage`. For sensitive environments, consider additional encryption.
+Authentication state is stored in `sessionStorage`, which is cleared when the browser tab is closed. This is more secure than `localStorage` for session data.
+
+## Environment Variables
+
+Login credentials (`VITE_PANEL_LOGIN`, `VITE_PANEL_PASSWORD`) are injected at runtime in Docker, not baked into the JS bundle. See [Environment Variables](./environment.md).
 
 ## CSP
 

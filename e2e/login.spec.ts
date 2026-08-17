@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { loadEnv } from 'vite'
+
+const env = loadEnv('development', process.cwd(), '')
+const PANEL_LOGIN = process.env.VITE_PANEL_LOGIN || env.VITE_PANEL_LOGIN || 'admin'
+const PANEL_PASSWORD = process.env.VITE_PANEL_PASSWORD || env.VITE_PANEL_PASSWORD || 'password'
 
 test.describe('Login', () => {
   test('shows login form', async ({ page }) => {
@@ -19,8 +24,8 @@ test.describe('Login', () => {
 
   test('redirects to dashboard on valid login', async ({ page }) => {
     await page.goto('/login')
-    await page.getByRole('textbox', { name: /login/i }).fill('admin')
-    await page.getByRole('textbox', { name: /password/i }).fill('password')
+    await page.getByRole('textbox', { name: /login/i }).fill(PANEL_LOGIN)
+    await page.getByRole('textbox', { name: /password/i }).fill(PANEL_PASSWORD)
     await page.getByRole('button', { name: /submit|sign in|log in/i }).click()
     await expect(page).toHaveURL('/', { timeout: 10_000 })
   })

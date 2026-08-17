@@ -2,7 +2,7 @@
 title: Конфигурация
 status: stable
 translation_key: getting_started.configuration
-source_revision: 2026-08-16
+source_revision: 2026-08-17
 ---
 
 # Конфигурация
@@ -14,7 +14,12 @@ source_revision: 2026-08-16
 ```bash
 VITE_API_URL=http://localhost:8000
 VITE_WS_URL=ws://localhost:8000
+VITE_API_KEY=
+VITE_PANEL_LOGIN=admin
+VITE_PANEL_PASSWORD=password
 ```
+
+В Docker переменные инжектируются при запуске через `docker/entrypoint.sh`. Подробности в [Переменные окружения](../operations/environment.md).
 
 ## Конфигурация Vite
 

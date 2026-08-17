@@ -7,6 +7,15 @@
     <title>node_nexus_panel</title>
   </head>
   <body>
+    <script>
+      window.__ENV__ = {
+        VITE_API_URL: '${VITE_API_URL}',
+        VITE_WS_URL: '${VITE_WS_URL}',
+        VITE_API_KEY: '${VITE_API_KEY}',
+        VITE_PANEL_LOGIN: '${VITE_PANEL_LOGIN}',
+        VITE_PANEL_PASSWORD: '${VITE_PANEL_PASSWORD}'
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

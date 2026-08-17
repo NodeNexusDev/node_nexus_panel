@@ -2,18 +2,51 @@
 title: Переменные окружения
 status: stable
 translation_key: operations.environment
-source_revision: 2026-08-16
+source_revision: 2026-08-17
 ---
 
 # Переменные окружения
 
 ## Runtime переменные
 
+Переменные инжектируются при запуске контейнера через `docker/entrypoint.sh` (Docker) или `window.__ENV__` (браузер).
+
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
 | `VITE_API_URL` | URL Backend API | `http://localhost:8000` |
 | `VITE_WS_URL` | URL WebSocket | `ws://localhost:8000` |
+| `VITE_API_KEY` | API ключ для заголовка X-API-Key | *(пусто)* |
+| `VITE_PANEL_LOGIN` | Логин для входа в панель | `admin` |
+| `VITE_PANEL_PASSWORD` | Пароль для входа в панель | `password` |
 
-## Build-time переменные
+## Как это работает
 
-Переменные должны начинаться с `VITE_` для доступа из клиентского бандла.
+В Docker entrypoint-скрипт выполняет `envsubst`, который подставляет плейсхолдеры `${VITE_*}` в `index.html` значениями переменных окружения при старте контейнера.
+
+В локальной разработке (`npm run dev`) Vite читает переменные напрямую из `.env` файлов.
+
+## Использование в Docker
+
+Задайте переменные через `docker-compose.yml` или `docker run`:
+
+```yaml
+services:
+  panel:
+    image: ghcr.io/nodenexusdev/node_nexus_panel:latest
+    environment:
+      - VITE_API_URL=https://api.example.com
+      - VITE_WS_URL=wss://api.example.com
+      - VITE_PANEL_LOGIN=myuser
+      - VITE_PANEL_PASSWORD=mypassword
+```
+
+## Локальная разработка
+
+Создайте файл `.env` в корне проекта:
+
+```bash
+VITE_API_URL=http://localhost:8000
+VITE_WS_URL=ws://localhost:8000
+VITE_PANEL_LOGIN=admin
+VITE_PANEL_PASSWORD=password
+```
