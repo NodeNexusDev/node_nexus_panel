@@ -121,7 +121,7 @@ export function MainLayout() {
               end={item.to === '/'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 stagger-item ${
+                `flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all duration-200 stagger-item ${
                   isActive
                     ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-600 dark:from-indigo-500/20 dark:to-purple-500/20 dark:text-indigo-400 shadow-sm'
                     : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white'
@@ -134,38 +134,6 @@ export function MainLayout() {
             </NavLink>
           ))}
         </nav>
-
-        {/* Bottom section */}
-        <div className="px-3 py-4 border-t border-surface-200/50 dark:border-surface-800/50 space-y-1">
-          <button
-            onClick={toggleLanguage}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
-          >
-            <span className="text-lg"><IconGlobe className="w-5 h-5" /></span>
-            {i18n.language === 'en' ? 'Русский' : 'English'}
-          </button>
-
-          <ThemeToggle />
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-red-50 hover:text-red-600 dark:text-surface-400 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-all duration-200 cursor-pointer"
-          >
-            <span className="text-lg"><IconLogout className="w-5 h-5" /></span>
-            {t('common.logout', 'Logout')}
-          </button>
-
-          {/* User profile */}
-          <div className="flex items-center gap-3 px-3 py-2 mt-2 rounded-xl bg-surface-50/50 dark:bg-surface-800/30">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center text-sm font-bold text-white shadow-md shadow-indigo-500/25">
-              {user?.name?.[0] || 'A'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{user?.name || 'Admin'}</p>
-              <p className="text-xs text-surface-500 dark:text-surface-500 truncate">{user?.email || 'admin@example.com'}</p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main content */}
@@ -181,7 +149,19 @@ export function MainLayout() {
             </svg>
           </button>
           <div className="flex-1" />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {/* Language toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
+            >
+              <IconGlobe className="w-4 h-4" />
+              {i18n.language === 'en' ? 'РУ' : 'EN'}
+            </button>
+
+            {/* Theme toggle */}
+            <ThemeToggle />
+
             {/* Connection status */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50">
               <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
@@ -189,6 +169,7 @@ export function MainLayout() {
                 {wsConnected ? t('common.connected') : t('common.disconnected', 'Disconnected')}
               </span>
             </div>
+
             {/* Command palette trigger */}
             <button
               onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
@@ -199,6 +180,29 @@ export function MainLayout() {
               </svg>
               <kbd className="hidden sm:inline-flex text-xs">Ctrl+K</kbd>
             </button>
+
+            {/* Divider */}
+            <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
+
+            {/* User + Logout */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center text-sm font-bold text-white shadow-md shadow-indigo-500/25">
+                  {user?.name?.[0] || 'A'}
+                </div>
+                <div className="hidden md:block">
+                  <p className="text-sm font-semibold text-surface-900 dark:text-white leading-tight">{user?.name || 'Admin'}</p>
+                  <p className="text-xs text-surface-500 dark:text-surface-500 leading-tight">{user?.email || 'admin@example.com'}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
+                title={t('common.logout')}
+              >
+                <IconLogout className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </header>
 
