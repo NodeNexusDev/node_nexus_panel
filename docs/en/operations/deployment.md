@@ -2,7 +2,7 @@
 title: Deployment
 status: stable
 translation_key: operations.deployment
-source_revision: 2026-08-16
+source_revision: 2026-08-17
 ---
 
 # Deployment
@@ -12,6 +12,39 @@ source_revision: 2026-08-16
 ```bash
 npm run build
 ```
+
+## Docker
+
+Pull and run the pre-built image:
+
+```bash
+docker pull ghcr.io/nodenexusdev/node_nexus_panel:latest
+docker run -d \
+  -p 8080:8080 \
+  -e VITE_API_URL=https://api.example.com \
+  -e VITE_WS_URL=wss://api.example.com \
+  -e VITE_PANEL_LOGIN=admin \
+  -e VITE_PANEL_PASSWORD=secret \
+  ghcr.io/nodenexusdev/node_nexus_panel:latest
+```
+
+Or use docker-compose:
+
+```yaml
+services:
+  panel:
+    image: ghcr.io/nodenexusdev/node_nexus_panel:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - VITE_API_URL=https://api.example.com
+      - VITE_WS_URL=wss://api.example.com
+      - VITE_PANEL_LOGIN=admin
+      - VITE_PANEL_PASSWORD=secret
+    restart: unless-stopped
+```
+
+See [Environment Variables](./environment.md) for all available options.
 
 ## Static Hosting
 
