@@ -7,7 +7,7 @@ import { Toggle } from '../components/ui/Toggle'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Modal } from '../components/ui/Modal'
 import { FormSkeleton } from '../components/ui/Skeleton'
-import { useToast } from '../components/ui/Toast'
+import { useToast } from '../components/ui/useToast'
 import {
   useProfile, useUpdateProfile, useApiKeys, useCreateApiKey, useDeleteApiKey,
   useNotificationSettings, useUpdateNotificationSettings, useResetAllData,

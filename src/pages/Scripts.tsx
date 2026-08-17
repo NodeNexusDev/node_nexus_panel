@@ -13,7 +13,7 @@ import { DragDropList } from '../components/ui/DragDropList'
 import { CardListSkeleton } from '../components/ui/Skeleton'
 import { IconScripts, IconGrip } from '../components/ui/Icons'
 import { useScripts, useCreateScript, useDeleteScript, useRunScript } from '../hooks/useScripts'
-import { useToast } from '../components/ui/Toast'
+import { useToast } from '../components/ui/useToast'
 import type { Script } from '../api/types'
 
 export function Scripts() {

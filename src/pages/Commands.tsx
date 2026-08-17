@@ -9,7 +9,7 @@ import { Skeleton } from '../components/ui/Skeleton'
 import { IconCommands } from '../components/ui/Icons'
 import { useNodes } from '../hooks/useNodes'
 import { useCommandHistory, useExecuteCommand } from '../hooks/useCommands'
-import { useToast } from '../components/ui/Toast'
+import { useToast } from '../components/ui/useToast'
 
 export function Commands() {
   const { t } = useTranslation()
