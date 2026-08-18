@@ -1,12 +1,15 @@
 import { useMemo } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useIsFetching } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/auth-store'
 import { useUiStore } from '../stores/ui-store'
 import { useConnectionStore } from '../stores/connection-store'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
-import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings, IconGlobe, IconLogout, IconTag, IconStar } from '../components/ui/Icons'
+import { Tooltip } from '../components/ui/Tooltip'
+import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings, IconGlobe, IconLogout, IconTag, IconStar, IconRefresh } from '../components/ui/Icons'
+import { queryClient } from '../lib/query-client'
 import { APP_VERSION } from '../lib/version'
 
 const navItems = [
@@ -28,6 +31,7 @@ export function MainLayout() {
   const sidebarOpen = useUiStore((s) => s.sidebarOpen)
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
   const wsConnected = useConnectionStore((s) => s.wsConnected)
+  const isFetching = useIsFetching() > 0
 
   const toggleLanguage = () => {
     i18n.changeLanguage(i18n.language === 'en' ? 'ru' : 'en')
@@ -162,6 +166,18 @@ export function MainLayout() {
 
             {/* Theme toggle */}
             <ThemeToggle />
+
+            {/* Refresh */}
+            <Tooltip content={t('common.refresh')}>
+              <button
+                onClick={() => queryClient.invalidateQueries()}
+                disabled={isFetching}
+                aria-label={t('common.refresh')}
+                className={`p-2 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 ${isFetching ? '' : 'cursor-pointer'}`}
+              >
+                <IconRefresh className={`w-4 h-4 ${isFetching ? 'animate-spin text-accent-500' : ''}`} />
+              </button>
+            </Tooltip>
 
             {/* Connection status */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50">
