@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useHotkey } from '../../hooks/useHotkey'
-import { IconDashboard, IconNodes, IconCommands, IconScripts, IconSettings } from './Icons'
+import { useSearch } from '../../hooks/useSearch'
+import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings } from './Icons'
+import { Spinner } from './Spinner'
 
 interface CommandItem {
   id: string
@@ -26,6 +28,8 @@ export function CommandPalette() {
     { id: 'nodes', label: t('nav.nodes'), description: t('commandPalette.descNodes'), path: '/nodes', icon: <IconNodes className="w-5 h-5" /> },
     { id: 'commands', label: t('nav.commands'), description: t('commandPalette.descCommands'), path: '/commands', icon: <IconCommands className="w-5 h-5" /> },
     { id: 'scripts', label: t('nav.scripts'), description: t('commandPalette.descScripts'), path: '/scripts', icon: <IconScripts className="w-5 h-5" /> },
+    { id: 'docker', label: t('nav.docker'), description: t('commandPalette.descDocker'), path: '/docker', icon: <IconDocker className="w-5 h-5" /> },
+    { id: 'audit', label: t('nav.audit'), description: t('commandPalette.descAudit'), path: '/audit', icon: <IconAudit className="w-5 h-5" /> },
     { id: 'settings', label: t('nav.settings'), description: t('commandPalette.descSettings'), path: '/settings', icon: <IconSettings className="w-5 h-5" /> },
   ], [t])
 
@@ -36,6 +40,20 @@ export function CommandPalette() {
       (c) => c.label.toLowerCase().includes(lower) || c.description.toLowerCase().includes(lower),
     )
   }, [commands, query])
+
+  const { data: searchResults, isLoading: searchLoading } = useSearch(query)
+
+  const totalSearchResults = searchResults
+    ? searchResults.nodes.length + searchResults.commands.length + searchResults.scripts.length
+    : 0
+
+  const flatSearchResults = searchResults
+    ? [
+        ...searchResults.nodes.map((r) => ({ ...r, entity_type: 'node' as const })),
+        ...searchResults.commands.map((r) => ({ ...r, entity_type: 'command' as const })),
+        ...searchResults.scripts.map((r) => ({ ...r, entity_type: 'script' as const })),
+      ]
+    : []
 
   useHotkey('k', () => setIsOpen(true), { ctrl: true })
 
@@ -66,11 +84,11 @@ export function CommandPalette() {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedIndex((i) => (i + 1) % filtered.length)
+        setSelectedIndex((i) => filtered.length > 0 ? (i + 1) % filtered.length : 0)
         break
       case 'ArrowUp':
         e.preventDefault()
-        setSelectedIndex((i) => (i - 1 + filtered.length) % filtered.length)
+        setSelectedIndex((i) => filtered.length > 0 ? (i - 1 + filtered.length) % filtered.length : 0)
         break
       case 'Enter':
         e.preventDefault()
@@ -113,31 +131,61 @@ export function CommandPalette() {
         </div>
 
         <div ref={listRef} className="max-h-64 overflow-y-auto p-2">
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && !searchLoading && !(totalSearchResults > 0) ? (
             <div className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">
               {t('commandPalette.noResults')}
             </div>
           ) : (
-            filtered.map((cmd, i) => (
-              <button
-                key={cmd.id}
-                onClick={() => select(cmd.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer ${
-                  i === selectedIndex
-                    ? 'bg-surface-100 dark:bg-surface-800'
-                    : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'
-                }`}
-              >
-                <span className="text-surface-500 dark:text-surface-400">{cmd.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{cmd.label}</p>
-                  <p className="text-xs text-surface-500 dark:text-surface-400 truncate">{cmd.description}</p>
+            <>
+              {filtered.map((cmd, i) => (
+                <button
+                  key={cmd.id}
+                  onClick={() => select(cmd.path)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer ${
+                    i === selectedIndex
+                      ? 'bg-surface-100 dark:bg-surface-800'
+                      : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'
+                  }`}
+                >
+                  <span className="text-surface-500 dark:text-surface-400">{cmd.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{cmd.label}</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 truncate">{cmd.description}</p>
+                  </div>
+                  <svg className="w-4 h-4 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ))}
+              {query.length >= 2 && (
+                <div className="border-t border-surface-200 dark:border-surface-800 mt-2 pt-2">
+                  <p className="px-3 py-1 text-xs font-medium text-surface-500 uppercase">{t('common.searchResults')}</p>
+                  {searchLoading ? (
+                    <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
+                  ) : flatSearchResults.length > 0 ? (
+                    flatSearchResults.slice(0, 5).map((result) => (
+                      <button
+                        key={`${result.entity_type}-${result.id}`}
+                        onClick={() => {
+                          if (result.entity_type === 'node') select(`/nodes/${result.id}`)
+                          else if (result.entity_type === 'script') select(`/scripts/${result.id}`)
+                          else if (result.entity_type === 'command') select(`/commands/${result.id}`)
+                          else select('/')
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50"
+                      >
+                        <span className="text-surface-400 text-xs uppercase font-mono w-12">{result.entity_type}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{result.name || result.id}</p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-4 text-sm text-surface-500 text-center">{t('common.noResults')}</p>
+                  )}
                 </div>
-                <svg className="w-4 h-4 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            ))
+              )}
+            </>
           )}
         </div>
       </div>

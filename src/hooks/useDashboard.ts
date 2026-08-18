@@ -1,25 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '../api/dashboard'
-import type { NodeStats } from '../api/types'
-import type { DashboardActivity } from '../api/dashboard'
+import type { DashboardResponse, DashboardMetricsResponse } from '../api/types'
 
-export function useDashboardStats() {
-  return useQuery<NodeStats>({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: () => dashboardApi.getStats().then((res) => res.data),
+export function useDashboard() {
+  return useQuery<DashboardResponse>({
+    queryKey: ['dashboard'],
+    queryFn: () => dashboardApi.getStats(),
   })
 }
 
-export function useRecentActivity(limit = 10) {
-  return useQuery<DashboardActivity[]>({
-    queryKey: ['dashboard', 'activity', limit],
-    queryFn: () => dashboardApi.getRecentActivity(limit).then((res) => res.data),
-  })
-}
-
-export function useRecentCommands(limit = 5) {
-  return useQuery({
-    queryKey: ['dashboard', 'commands', limit],
-    queryFn: () => dashboardApi.getRecentCommands(limit),
+export function useDashboardMetrics(params?: { date_from?: string; date_to?: string; group_by?: string }) {
+  return useQuery<DashboardMetricsResponse>({
+    queryKey: ['dashboard', 'metrics', params],
+    queryFn: () => dashboardApi.getMetrics(params),
   })
 }

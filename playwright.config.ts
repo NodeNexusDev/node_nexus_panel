@@ -36,6 +36,7 @@ export default defineConfig({
     env: {
       VITE_PANEL_LOGIN: process.env.VITE_PANEL_LOGIN || env.VITE_PANEL_LOGIN || 'admin',
       VITE_PANEL_PASSWORD: process.env.VITE_PANEL_PASSWORD || env.VITE_PANEL_PASSWORD || 'password',
+      VITE_ENABLE_MOCKS: 'true',
     },
   },
 })

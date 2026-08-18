@@ -1,0 +1,9 @@
+services:
+  panel:
+    image: ghcr.io/nodenexusdev/node_nexus_panel:latest
+    container_name: node-nexus-panel
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    restart: unless-stopped

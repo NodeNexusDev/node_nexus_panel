@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { setupAuth } from './helpers'
 
 test.describe('Nodes', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login')
-    await page.evaluate(() => sessionStorage.setItem('authenticated', 'true'))
+    await setupAuth(page)
     await page.goto('/')
     await page.waitForSelector('main h1')
     await page.click('aside >> text=Nodes')
@@ -16,13 +16,13 @@ test.describe('Nodes', () => {
 
   test('opens add node modal', async ({ page }) => {
     await page.click('text=Add Node')
-    await expect(page.locator('.spring').first()).toBeVisible()
+    await expect(page.locator('[role="dialog"]')).toBeVisible()
   })
 
   test('closes modal on cancel', async ({ page }) => {
     await page.click('text=Add Node')
-    await expect(page.locator('.spring').first()).toBeVisible()
-    await page.click('text=Cancel')
-    await expect(page.locator('.spring').first()).not.toBeVisible()
+    await expect(page.locator('[role="dialog"]')).toBeVisible()
+    await page.click('[role="dialog"] >> text=Cancel')
+    await expect(page.locator('[role="dialog"]')).not.toBeVisible()
   })
 })

@@ -1,0 +1,86 @@
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Modal } from '../ui/Modal'
+import { Button } from '../ui/Button'
+import { useNodes } from '../../hooks/useNodes'
+import { useExecuteCommand } from '../../hooks/useCommands'
+import { useToast } from '../ui/useToast'
+import { getDefaultParams } from './command-form-utils'
+import { CommandParamInputs } from './CommandParamInputs'
+import type { Command } from '../../api/types'
+
+interface CommandExecuteModalProps {
+  command: Command | null
+  onClose: () => void
+}
+
+export function CommandExecuteModal({ command, onClose }: CommandExecuteModalProps) {
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const { data: nodesData } = useNodes()
+  const nodes = nodesData?.items || []
+  const executeCommand = useExecuteCommand()
+
+  const [selectedNode, setSelectedNode] = useState('')
+  const [commandParams, setCommandParams] = useState<Record<string, unknown>>({})
+
+  useEffect(() => {
+    if (command) {
+      setCommandParams(getDefaultParams(command.parameters))
+      setSelectedNode('')
+    }
+  }, [command])
+
+  const handleExecute = () => {
+    if (!command || !selectedNode) return
+    const params: Record<string, unknown> = {}
+    for (const p of command.parameters || []) {
+      const raw = commandParams[p.name]
+      if (raw === '' || raw === undefined || raw === null) continue
+      if (p.type === 'integer') params[p.name] = Number(raw)
+      else if (p.type === 'boolean') params[p.name] = !!raw
+      else params[p.name] = raw
+    }
+    executeCommand.mutate(
+      { id: command.id, data: { node_id: selectedNode, params: Object.keys(params).length > 0 ? params : undefined } },
+      {
+        onSuccess: () => {
+          const target = nodes.find((n) => n.id === selectedNode)?.name ?? selectedNode
+          toast('success', t('commands.toastExecuted', { target }))
+          onClose()
+        },
+        onError: () => toast('error', t('commands.toastFailed')),
+      },
+    )
+  }
+
+  return (
+    <Modal
+      isOpen={!!command}
+      onClose={onClose}
+      title={command ? `${t('commands.execute')}: ${command.name}` : t('commands.execute')}
+    >
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('commands.selectNode')}</label>
+          <select value={selectedNode} onChange={(e) => setSelectedNode(e.target.value)} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+            <option value="">{t('commands.selectNode')}</option>
+            {nodes.map((node) => (<option key={node.id} value={node.id}>{node.name}</option>))}
+          </select>
+        </div>
+        {command && command.parameters && command.parameters.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-surface-600 dark:text-surface-400">{t('commands.parameters', 'Parameters')}</p>
+            <CommandParamInputs parameters={command.parameters} values={commandParams} onChange={(name, value) => setCommandParams((prev) => ({ ...prev, [name]: value }))} />
+          </div>
+        )}
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={handleExecute} disabled={!selectedNode || executeCommand.isPending}>
+            {executeCommand.isPending ? t('common.loading') : t('commands.execute')}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}

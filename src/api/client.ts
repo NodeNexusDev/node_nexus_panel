@@ -8,7 +8,7 @@ class ApiClient {
   private baseUrl: string
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl
+    this.baseUrl = `${baseUrl}/api/v1`
   }
 
   private async request<T>(
@@ -70,8 +70,11 @@ class ApiClient {
     })
   }
 
-  async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' })
+  async delete<T>(endpoint: string, options?: { body?: unknown }): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+    })
   }
 }
 

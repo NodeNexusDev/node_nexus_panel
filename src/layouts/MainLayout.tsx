@@ -1,12 +1,19 @@
 import { useMemo } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useIsFetching } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/auth-store'
 import { useUiStore } from '../stores/ui-store'
-import { useConnectionStore } from '../stores/connection-store'
+import { useSse } from '../hooks/useSse'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useNode } from '../hooks/useNodes'
+import { useCommand } from '../hooks/useCommands'
+import { useScript } from '../hooks/useScripts'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
-import { IconDashboard, IconNodes, IconCommands, IconScripts, IconSettings, IconGlobe, IconLogout } from '../components/ui/Icons'
+import { Tooltip } from '../components/ui/Tooltip'
+import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings, IconGlobe, IconLogout, IconTag, IconStar, IconRefresh } from '../components/ui/Icons'
+import { queryClient } from '../lib/query-client'
 import { APP_VERSION } from '../lib/version'
 
 const navItems = [
@@ -14,6 +21,10 @@ const navItems = [
   { to: '/nodes', key: 'nav.nodes', Icon: IconNodes },
   { to: '/commands', key: 'nav.commands', Icon: IconCommands },
   { to: '/scripts', key: 'nav.scripts', Icon: IconScripts },
+  { to: '/docker', key: 'nav.docker', Icon: IconDocker },
+  { to: '/tags', key: 'nav.tags', Icon: IconTag },
+  { to: '/favorites', key: 'nav.favorites', Icon: IconStar },
+  { to: '/audit', key: 'nav.audit', Icon: IconAudit },
   { to: '/settings', key: 'nav.settings', Icon: IconSettings },
 ]
 
@@ -23,7 +34,35 @@ export function MainLayout() {
   const logout = useAuthStore((s) => s.logout)
   const sidebarOpen = useUiStore((s) => s.sidebarOpen)
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
-  const wsConnected = useConnectionStore((s) => s.wsConnected)
+  const wsConnected = useSse().isConnected
+  const isFetching = useIsFetching() > 0
+
+  const location = useLocation()
+  const nodeId = location.pathname.match(/^\/nodes\/([^/]+)$/)?.[1]
+  const commandId = location.pathname.match(/^\/commands\/([^/]+)$/)?.[1]
+  const scriptId = location.pathname.match(/^\/scripts\/([^/]+)$/)?.[1]
+  const { data: node } = useNode(nodeId ?? '')
+  const { data: command } = useCommand(commandId ?? '')
+  const { data: script } = useScript(scriptId ?? '')
+
+  const staticTitles: Record<string, string> = {
+    '/': 'dashboard.title',
+    '/nodes': 'nodes.title',
+    '/commands': 'commands.title',
+    '/scripts': 'scripts.title',
+    '/docker': 'docker.title',
+    '/audit': 'audit.title',
+    '/settings': 'settings.title',
+    '/tags': 'tags.title',
+    '/favorites': 'favorites.title',
+  }
+
+  const titleKey = staticTitles[location.pathname]
+  const documentTitle = titleKey
+    ? t(titleKey)
+    : nodeId ? node?.name : commandId ? command?.name : scriptId ? script?.name : undefined
+
+  useDocumentTitle(documentTitle)
 
   const toggleLanguage = () => {
     i18n.changeLanguage(i18n.language === 'en' ? 'ru' : 'en')
@@ -159,11 +198,23 @@ export function MainLayout() {
             {/* Theme toggle */}
             <ThemeToggle />
 
+            {/* Refresh */}
+            <Tooltip content={t('common.refresh')}>
+              <button
+                onClick={() => queryClient.invalidateQueries()}
+                disabled={isFetching}
+                aria-label={t('common.refresh')}
+                className={`p-2 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 ${isFetching ? '' : 'cursor-pointer'}`}
+              >
+                <IconRefresh className={`w-4 h-4 ${isFetching ? 'animate-spin text-accent-500' : ''}`} />
+              </button>
+            </Tooltip>
+
             {/* Connection status */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50">
               <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
               <span className="text-xs font-medium text-surface-500 dark:text-surface-400">
-                {wsConnected ? t('common.connected') : t('common.disconnected', 'Disconnected')}
+                {wsConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}
               </span>
             </div>
 

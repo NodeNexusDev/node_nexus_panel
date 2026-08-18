@@ -1,29 +1,16 @@
 import { api } from './client'
-import type {
-  NodeStats,
-  Command,
-  ApiResponse,
-} from './types'
-
-export interface DashboardActivity {
-  id: string
-  type: 'command' | 'node_offline' | 'node_online' | 'script_run'
-  message: string
-  timestamp: string
-  metadata?: Record<string, string>
-}
+import type { DashboardResponse, DashboardMetricsResponse } from './types'
 
 export const dashboardApi = {
   getStats: () =>
-    api.get<ApiResponse<NodeStats>>('/api/dashboard/stats'),
+    api.get<DashboardResponse>('/dashboard/'),
 
-  getRecentActivity: (limit?: number) => {
-    const qs = limit ? `?limit=${limit}` : ''
-    return api.get<ApiResponse<DashboardActivity[]>>(`/api/dashboard/activity${qs}`)
-  },
-
-  getRecentCommands: (limit?: number) => {
-    const qs = limit ? `?limit=${limit}` : ''
-    return api.get<ApiResponse<Command[]>>(`/api/dashboard/commands${qs}`)
+  getMetrics: (params?: { date_from?: string; date_to?: string; group_by?: string }) => {
+    const query = new URLSearchParams()
+    if (params?.date_from) query.set('date_from', params.date_from)
+    if (params?.date_to) query.set('date_to', params.date_to)
+    if (params?.group_by) query.set('group_by', params.group_by)
+    const qs = query.toString()
+    return api.get<DashboardMetricsResponse>(`/dashboard/metrics${qs ? `?${qs}` : ''}`)
   },
 }

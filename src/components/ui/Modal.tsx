@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useCallback, type ReactNode } from 'react'
 
 interface ModalProps {
   isOpen: boolean
@@ -15,21 +15,61 @@ const sizeClasses = {
 }
 
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  const handleBackdropClick = useCallback(() => {
+    onClose()
+  }, [onClose])
 
   useEffect(() => {
     if (!isOpen) return
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+    previousFocusRef.current = document.activeElement as HTMLElement
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+
+      if (e.key === 'Tab' && contentRef.current) {
+        const focusable = contentRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusable.length === 0) return
+
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault()
+            last.focus()
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault()
+            first.focus()
+          }
+        }
+      }
     }
 
-    document.addEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', handleKeyDown)
     document.body.style.overflow = 'hidden'
 
+    requestAnimationFrame(() => {
+      const focusable = contentRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      focusable?.[0]?.focus()
+    })
+
     return () => {
-      document.removeEventListener('keydown', handleEscape)
+      document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = ''
+      previousFocusRef.current?.focus()
     }
   }, [isOpen, onClose])
 
@@ -37,19 +77,18 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
 
   return (
     <div
-      ref={overlayRef}
       role="dialog"
       aria-modal="true"
       aria-label={title}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === overlayRef.current) onClose()
-      }}
     >
-      {/* Backdrop with blur */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer" />
-      {/* Modal content with spring animation */}
       <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
+        data-modal-backdrop
+        onClick={handleBackdropClick}
+      />
+      <div
+        ref={contentRef}
         className={`relative w-full ${sizeClasses[size]} spring`}
       >
         <div className="bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800 rounded-2xl shadow-2xl overflow-hidden">

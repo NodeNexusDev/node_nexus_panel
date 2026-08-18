@@ -11,10 +11,10 @@ describe('Settings', () => {
     })
   })
 
-  it('shows profile section', async () => {
+  it('shows API keys section', async () => {
     renderWithProviders(<Settings />)
     await waitFor(() => {
-      expect(screen.getByText(/profile/i)).toBeInTheDocument()
+      expect(screen.getByText(/api keys/i)).toBeInTheDocument()
     })
   })
 })

@@ -31,7 +31,7 @@ export const useUiStore = create<UiState>()(
   persist(
     (set) => ({
       theme: 'dark',
-      sidebarOpen: true,
+      sidebarOpen: false,
       activeModal: null,
       setTheme: (theme) => {
         applyTheme(theme)

@@ -1,126 +1,377 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Card, CardHeader, CardContent } from '../components/ui/Card'
+import { useNavigate } from 'react-router-dom'
+import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Card, CardContent } from '../components/ui/Card'
+import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
-import { Typewriter } from '../components/ui/Typewriter'
-import { Skeleton } from '../components/ui/Skeleton'
-import { IconCommands } from '../components/ui/Icons'
-import { useNodes } from '../hooks/useNodes'
-import { useCommandHistory, useExecuteCommand } from '../hooks/useCommands'
+import { Modal } from '../components/ui/Modal'
+import { Input } from '../components/ui/Input'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { TableSkeleton } from '../components/ui/Skeleton'
+import { Pagination } from '../components/ui/Pagination'
+import { PageHeader } from '../components/ui/PageHeader'
+import { FilterBar } from '../components/ui/FilterBar'
+import { SortableHeader, type SortState } from '../components/ui/SortableHeader'
+import { ResponsiveTable } from '../components/ui/ResponsiveTable'
+import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
+import { IconCommands, IconZap } from '../components/ui/Icons'
+import { FavoriteButton } from '../components/ui/FavoriteButton'
+import {
+  useCommands,
+  useCommandTags,
+  useCreateCommand,
+  useUpdateCommand,
+  useCloneCommand,
+  useDeleteCommand,
+} from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
+import type { Command, CommandCreate, CommandUpdate } from '../api/types'
+import type { Column } from '../components/ui/table-types'
+import { ParameterEditor } from '../components/commands/CommandFormEditor'
+import { CommandExecuteModal } from '../components/commands/CommandExecuteModal'
+import { normalizeParameters } from '../components/commands/command-form-utils'
+import {
+  commandCreateSchema,
+  commandUpdateSchema,
+  type CommandCreateFormValues,
+  type CommandUpdateFormValues,
+} from '../lib/validators/command-schema'
+
+type SortKey = 'name' | 'updated_at'
 
 export function Commands() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes()
-  const { data: historyData, isLoading: historyLoading } = useCommandHistory()
-  const executeCommand = useExecuteCommand()
+  const [search, setSearch] = useState('')
+  const [tagFilter, setTagFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<SortState<SortKey> | null>(null)
+  const pageSize = 20
 
-  const [command, setCommand] = useState('')
-  const [selectedNode, setSelectedNode] = useState('all')
+  const { data: commandsData, isLoading } = useCommands({
+    page,
+    size: pageSize,
+    search: search || undefined,
+    tag: tagFilter || undefined,
+  })
+  const { data: tags } = useCommandTags()
+  const createCommand = useCreateCommand()
+  const updateCommand = useUpdateCommand()
+  const cloneCommand = useCloneCommand()
+  const deleteCommand = useDeleteCommand()
 
-  const nodes = nodesData?.data || []
-  const history = historyData?.data || []
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editTarget, setEditTarget] = useState<Command | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [executeTarget, setExecuteTarget] = useState<Command | null>(null)
 
-  const handleExecute = () => {
-    if (!command.trim()) return
-    executeCommand.mutate(
-      { command, nodeId: selectedNode },
+  const createForm = useForm<CommandCreateFormValues>({
+    resolver: zodResolver(commandCreateSchema) as Resolver<CommandCreateFormValues>,
+    defaultValues: { name: '', command: '', description: '', tags: [], parameters: [] },
+  })
+
+  const editForm = useForm<CommandUpdateFormValues>({
+    resolver: zodResolver(commandUpdateSchema) as Resolver<CommandUpdateFormValues>,
+  })
+
+  const commands = commandsData?.items || []
+
+  const sortedCommands = sort
+    ? [...commands].sort((a, b) => {
+        const dir = sort.dir === 'asc' ? 1 : -1
+        return String(a[sort.key] ?? '').localeCompare(String(b[sort.key] ?? '')) * dir
+      })
+    : commands
+
+  const toggleSort = (key: SortKey) => {
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: 'asc' }
+      if (prev.dir === 'asc') return { key, dir: 'desc' }
+      return null
+    })
+  }
+
+  const openCreate = () => {
+    createForm.reset({ name: '', command: '', description: '', tags: [], parameters: [] })
+    setShowCreateModal(true)
+  }
+
+  const openEdit = (cmd: Command) => {
+    setEditTarget(cmd)
+    editForm.reset({
+      name: cmd.name,
+      command: cmd.command,
+      description: cmd.description ?? '',
+      tags: cmd.tags,
+      parameters:
+        cmd.parameters?.map((p) => ({
+          name: p.name,
+          type: p.type,
+          required: p.required,
+          default: p.default ?? '',
+          description: p.description ?? '',
+        })) ?? [],
+    })
+  }
+
+  const onCreateSubmit = (values: CommandCreateFormValues) => {
+    const data: CommandCreate = {
+      name: values.name,
+      command: values.command,
+      description: values.description || undefined,
+      parameters: normalizeParameters(values.parameters),
+      tags: values.tags,
+    }
+    createCommand.mutate(data, {
+      onSuccess: () => { toast('success', t('commands.toastCreated')); setShowCreateModal(false); createForm.reset() },
+      onError: () => toast('error', t('commands.toastCreateFailed')),
+    })
+  }
+
+  const onEditSubmit = (values: CommandUpdateFormValues) => {
+    if (!editTarget) return
+    const data: CommandUpdate = {
+      name: values.name,
+      command: values.command,
+      description: values.description || undefined,
+      parameters: normalizeParameters(values.parameters),
+      tags: values.tags,
+    }
+    updateCommand.mutate(
+      { id: editTarget.id, data },
       {
-        onSuccess: () => {
-          toast('success', t('commands.toastExecuted', { target: selectedNode === 'all' ? t('commands.allNodes') : selectedNode }))
-          setCommand('')
-        },
-        onError: () => toast('error', t('commands.toastFailed')),
+        onSuccess: () => { toast('success', t('commands.toastUpdated')); setEditTarget(null); editForm.reset() },
+        onError: () => toast('error', t('commands.toastUpdateFailed')),
       },
     )
   }
 
+  const handleClone = (cmd: Command) => {
+    cloneCommand.mutate(
+      { id: cmd.id, newName: `${cmd.name} (copy)` },
+      { onSuccess: () => toast('success', t('commands.toastCloned')), onError: () => toast('error', t('commands.toastCloneFailed')) },
+    )
+  }
+
+  const handleDelete = () => {
+    if (!deleteTarget) return
+    deleteCommand.mutate(deleteTarget.id, {
+      onSuccess: () => { toast('success', t('commands.toastDeleted')); setDeleteTarget(null) },
+      onError: () => toast('error', t('commands.toastDeleteFailed')),
+    })
+  }
+
+  const commandMenu = (cmd: Command): DropdownMenuItem[] => [
+    { key: 'edit', label: t('common.edit'), onClick: () => openEdit(cmd) },
+    { key: 'clone', label: t('commands.clone'), onClick: () => handleClone(cmd) },
+    { key: 'sep', label: '', onClick: () => {}, separator: true },
+    { key: 'delete', label: t('common.delete'), danger: true, onClick: () => setDeleteTarget({ id: cmd.id, name: cmd.name }) },
+  ]
+
+  const columns: Column<Command>[] = [
+    {
+      key: 'name',
+      header: <SortableHeader label={t('common.name')} sortKey="name" sort={sort} onSort={toggleSort} />,
+      render: (cmd) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent-500/10 text-accent-600 dark:bg-accent-500/20 dark:text-accent-400 flex items-center justify-center shrink-0">
+            <IconCommands className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{cmd.name}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{cmd.command}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'tags',
+      header: t('commands.tagsLabel'),
+      render: (cmd) => (
+        <div className="flex flex-wrap gap-1">
+          {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
+            <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
+              <Badge variant="default">{tag}</Badge>
+            </button>
+          )) : <span className="text-surface-400">—</span>}
+        </div>
+      ),
+    },
+    {
+      key: 'updated',
+      header: <SortableHeader label={t('commands.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
+      render: (cmd) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(cmd.updated_at).toLocaleDateString()}</span>,
+    },
+    {
+      key: 'actions',
+      header: t('common.actions'),
+      render: (cmd) => (
+        <div className="flex items-center gap-1">
+          <FavoriteButton targetType="command" targetId={cmd.id} size="sm" />
+          <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setExecuteTarget(cmd) }}>
+            <IconZap className="w-4 h-4 mr-1" />
+            {t('commands.execute')}
+          </Button>
+          <DropdownMenu items={commandMenu(cmd)} ariaLabel={`${cmd.name} actions`} />
+        </div>
+      ),
+    },
+  ]
+
+  const renderMobileCommand = (cmd: Command) => (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-accent-500/10 text-accent-600 dark:bg-accent-500/20 dark:text-accent-400 flex items-center justify-center shrink-0">
+          <IconCommands className="w-5 h-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{cmd.name}</p>
+          <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{cmd.command}</p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
+          <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
+            <Badge variant="default">{tag}</Badge>
+          </button>
+        )) : <span className="text-surface-400">—</span>}
+      </div>
+      <div className="flex items-center gap-1">
+        <FavoriteButton targetType="command" targetId={cmd.id} size="sm" />
+        <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setExecuteTarget(cmd) }}>
+          <IconZap className="w-4 h-4 mr-1" />
+          {t('commands.execute')}
+        </Button>
+        <DropdownMenu items={commandMenu(cmd)} ariaLabel={`${cmd.name} actions`} />
+      </div>
+    </div>
+  )
+
   return (
     <div className="space-y-6">
-      <div className="animate-slide-up">
-        <h1 className="text-3xl font-bold gradient-text">{t('commands.title')}</h1>
-        <p className="text-surface-500 dark:text-surface-400 mt-1">{t('commands.description')}</p>
-      </div>
+      <PageHeader
+        title={t('commands.title')}
+        description={t('commands.description')}
+        actions={<Button onClick={openCreate}>{t('commands.createCommand')}</Button>}
+      />
 
-      <Card className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('commands.executeCommand')}</h2>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <select
-              value={selectedNode}
-              onChange={(e) => setSelectedNode(e.target.value)}
-              className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 min-w-[160px] dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-            >
-              <option value="all">{t('commands.allNodes')}</option>
-              {nodes.map((node) => (
-                <option key={node.id} value={node.id}>{node.name}</option>
-              ))}
-            </select>
-            <input
-              type="text"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleExecute()}
-              placeholder={t('commands.enterCommand')}
-              className="flex-1 px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
-            />
-            <Button onClick={handleExecute} disabled={executeCommand.isPending || !command.trim()}>
-              {executeCommand.isPending ? <Spinner size="sm" /> : t('commands.execute')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <FilterBar search={search} onSearch={setSearch} searchPlaceholder={t('commands.searchPlaceholder', 'Search commands...')}>
+        <select
+          value={tagFilter}
+          onChange={(e) => setTagFilter(e.target.value)}
+          className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+        >
+          <option value="">{t('commands.allTags', 'All tags')}</option>
+          {tags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
+        </select>
+      </FilterBar>
 
-      <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('commands.commandHistory')}</h2>
-        </CardHeader>
+      <Card hover className="stagger-item">
         <CardContent className="p-0">
-          {historyLoading ? (
-            <div className="space-y-4 p-6">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="space-y-2 stagger-item" style={{ animationDelay: `${i * 50}ms` }}>
-                  <div className="flex items-center gap-3">
-                    <Skeleton variant="text" className="w-32" />
-                    <Skeleton variant="text" className="w-16" />
-                    <Skeleton variant="text" className="w-20 ml-auto" />
-                  </div>
-                  <Skeleton variant="rectangular" className="w-full h-16" />
-                </div>
-              ))}
-            </div>
-          ) : history.length === 0 ? (
-            <EmptyState icon={<IconCommands className="w-10 h-10" />} title={t('commands.emptyTitle')} description={t('commands.emptyDesc')} action={<Button onClick={() => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus()}>{t('commands.execute')}</Button>} />
+          {isLoading ? (
+            <TableSkeleton rows={5} cols={4} />
+          ) : commands.length === 0 ? (
+            <EmptyState
+              icon={<IconCommands className="w-10 h-10" />}
+              title={t('commands.emptyTitle')}
+              description={t('commands.emptyDesc')}
+              action={<Button onClick={openCreate}>{t('commands.createCommand')}</Button>}
+            />
           ) : (
-            <div className="divide-y divide-surface-200 dark:divide-surface-800">
-              {history.map((item, index) => (
-                <div key={item.id} className="px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors stagger-item" style={{ animationDelay: `${300 + index * 50}ms` }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <code className="text-sm text-accent-600 dark:text-accent-400 font-mono">{item.command}</code>
-                      <span className="text-xs text-surface-500 dark:text-surface-500">{t('commands.on')} {item.node}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-surface-500 dark:text-surface-500">{item.timestamp}</span>
-                      <span className={`text-xs ${item.status === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {item.status}
-                      </span>
-                    </div>
-                  </div>
-                  <pre className="text-sm text-surface-700 bg-surface-50 rounded p-3 overflow-x-auto font-mono dark:text-surface-300 dark:bg-surface-800/50">
-                    <Typewriter text={item.output} speed={10} />
-                  </pre>
-                </div>
-              ))}
+            <ResponsiveTable
+              data={sortedCommands}
+              columns={columns}
+              renderMobileItem={renderMobileCommand}
+              keyExtractor={(c) => c.id}
+              emptyMessage={t('commands.emptyTitle')}
+              onRowClick={(cmd) => navigate(`/commands/${cmd.id}`)}
+            />
+          )}
+          {commandsData && commandsData.total > pageSize && (
+            <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
+              <Pagination page={page} totalPages={Math.ceil(commandsData.total / pageSize)} onPageChange={setPage} />
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('commands.createCommand')} size="lg">
+        <FormProvider {...createForm}>
+          <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4">
+            <Input label={t('commands.name')} placeholder="check-disk" {...createForm.register('name')} error={createForm.formState.errors.name?.message} />
+            <Input label={t('commands.command')} placeholder="df -h" {...createForm.register('command')} error={createForm.formState.errors.command?.message} />
+            <Controller
+              name="description"
+              control={createForm.control}
+              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder="Check disk usage" {...field} value={field.value ?? ''} />}
+            />
+            <Controller
+              name="tags"
+              control={createForm.control}
+              render={({ field }) => (
+                <Input
+                  label={t('commands.tagsLabel')}
+                  placeholder="disk, system"
+                  value={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                  onChange={(e) => field.onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                />
+              )}
+            />
+            <ParameterEditor />
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" disabled={createCommand.isPending}>{createCommand.isPending ? t('common.loading') : t('common.save')}</Button>
+            </div>
+          </form>
+        </FormProvider>
+      </Modal>
+
+      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title={t('commands.editCommand', 'Edit Command')} size="lg">
+        <FormProvider {...editForm}>
+          <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+            <Input label={t('commands.name')} placeholder="check-disk" {...editForm.register('name')} error={editForm.formState.errors.name?.message} />
+            <Input label={t('commands.command')} placeholder="df -h" {...editForm.register('command')} error={editForm.formState.errors.command?.message} />
+            <Controller
+              name="description"
+              control={editForm.control}
+              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder="Check disk usage" {...field} value={field.value ?? ''} />}
+            />
+            <Controller
+              name="tags"
+              control={editForm.control}
+              render={({ field }) => (
+                <Input
+                  label={t('commands.tagsLabel')}
+                  placeholder="disk, system"
+                  value={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                  onChange={(e) => field.onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                />
+              )}
+            />
+            <ParameterEditor />
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
+              <Button type="submit" disabled={updateCommand.isPending}>{updateCommand.isPending ? t('common.loading') : t('common.save')}</Button>
+            </div>
+          </form>
+        </FormProvider>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title={t('commands.deleteTitle', 'Delete Command')}
+        message={t('commands.deleteMsg', { name: deleteTarget?.name })}
+        confirmLabel={t('common.delete')}
+        loading={deleteCommand.isPending}
+      />
+
+      <CommandExecuteModal command={executeTarget} onClose={() => setExecuteTarget(null)} />
     </div>
   )
 }

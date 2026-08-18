@@ -1,26 +1,55 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { nodesApi } from '../api/nodes'
-import type { Node, PaginatedResponse } from '../api/types'
+import type {
+  Node,
+  NodeCreate,
+  NodeUpdate,
+  NodeValidateRequest,
+  NodeMetrics,
+  ExecutionStatsResponse,
+  NodeStatusHistoryItem,
+  BulkCommandHistoryItem,
+  CommandHistoryResponse,
+  PaginatedResponse,
+} from '../api/types'
 
-export function useNodes(page = 1, pageSize = 20) {
+export function useNodes(params?: { page?: number; size?: number; status?: string; tags?: string; search?: string }, options?: { refetchInterval?: number }) {
   return useQuery<PaginatedResponse<Node>>({
-    queryKey: ['nodes', page, pageSize],
-    queryFn: () => nodesApi.getAll(),
+    queryKey: ['nodes', params],
+    queryFn: () => nodesApi.getAll(params),
+    refetchInterval: options?.refetchInterval,
   })
 }
 
 export function useNode(id: string) {
-  return useQuery({
+  return useQuery<Node>({
     queryKey: ['nodes', id],
     queryFn: () => nodesApi.getById(id),
     enabled: !!id,
   })
 }
 
-export function useNodeStats() {
-  return useQuery({
-    queryKey: ['nodes', 'stats'],
-    queryFn: () => nodesApi.getStats(),
+export function useNodeStats(id: string, params?: { date_from?: string; date_to?: string }) {
+  return useQuery<ExecutionStatsResponse>({
+    queryKey: ['nodes', id, 'stats', params],
+    queryFn: () => nodesApi.getStats(id, params),
+    enabled: !!id,
+  })
+}
+
+export function useNodeStatusHistory(id: string, params?: { page?: number; size?: number }) {
+  return useQuery<PaginatedResponse<NodeStatusHistoryItem>>({
+    queryKey: ['nodes', id, 'status-history', params],
+    queryFn: () => nodesApi.getStatusHistory(id, params),
+    enabled: !!id,
+  })
+}
+
+export function useBulkHistory(batchId: string, params?: { page?: number; size?: number }) {
+  return useQuery<PaginatedResponse<BulkCommandHistoryItem>>({
+    queryKey: ['nodes', 'bulk-history', batchId, params],
+    queryFn: () => nodesApi.getBulkHistory(batchId, params),
+    enabled: !!batchId,
   })
 }
 
@@ -28,11 +57,28 @@ export function useCreateNode() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { name: string; ip: string; port?: number }) =>
-      nodesApi.create(data),
+    mutationFn: (data: NodeCreate) => nodesApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
+  })
+}
+
+export function useUpdateNode() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: NodeUpdate }) => nodesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useExecuteNode() {
+  return useMutation({
+    mutationFn: ({ id, command, timeout }: { id: string; command: string; timeout?: number }) =>
+      nodesApi.execute(id, { command, timeout }),
   })
 }
 
@@ -47,11 +93,134 @@ export function useDeleteNode() {
   })
 }
 
-export function useRestartNode() {
+export function useCheckNode() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => nodesApi.restart(id),
+    mutationFn: (id: string) => nodesApi.check(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkCheck() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (nodeIds: string[]) => nodesApi.bulkCheck(nodeIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useRetryNodeCommand() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, executionId }: { nodeId: string; executionId: string }) =>
+      nodesApi.retryCommand(nodeId, executionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'commands-history'] })
+    },
+  })
+}
+
+export function useValidateCredentials() {
+  return useMutation({
+    mutationFn: (data: NodeValidateRequest) => nodesApi.validateCredentials(data),
+  })
+}
+
+export function useBulkTagsAdd() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { node_ids: string[]; tags: string[] }) => nodesApi.bulkTagsAdd(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
+    },
+  })
+}
+
+export function useBulkTagsRemove() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { node_ids: string[]; tags: string[] }) => nodesApi.bulkTagsRemove(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
+    },
+  })
+}
+
+export function useNodeMetrics(id: string) {
+  return useQuery<NodeMetrics>({
+    queryKey: ['nodes', id, 'metrics'],
+    queryFn: () => nodesApi.getMetrics(id),
+    enabled: !!id,
+  })
+}
+
+export function useNodeCommandHistory(id: string, params?: { page?: number; size?: number }) {
+  return useQuery<PaginatedResponse<CommandHistoryResponse>>({
+    queryKey: ['nodes', id, 'commands-history', params],
+    queryFn: () => nodesApi.getHistory(id, params),
+    enabled: !!id,
+  })
+}
+
+export function useNodeTags() {
+  return useQuery<string[]>({
+    queryKey: ['nodes', 'tags'],
+    queryFn: () => nodesApi.getTags(),
+  })
+}
+
+export function useAddNodeTag() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, tag }: { id: string; tag: string }) => nodesApi.addTag(id, tag),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
+    },
+  })
+}
+
+export function useRemoveNodeTag() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, tag }: { id: string; tag: string }) => nodesApi.removeTag(id, tag),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
+    },
+  })
+}
+
+export function useBulkDeleteNodes() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (nodeIds: string[]) => nodesApi.bulkDelete(nodeIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkExecuteNodes() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { command: string; node_ids?: string[]; tags?: string[] }) => nodesApi.bulkExecute(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
