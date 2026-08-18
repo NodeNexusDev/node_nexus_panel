@@ -11,8 +11,10 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tooltip } from '../components/ui/Tooltip'
 import { DragDropList } from '../components/ui/DragDropList'
 import { TableSkeleton, CardListSkeleton } from '../components/ui/Skeleton'
+import { Pagination } from '../components/ui/Pagination'
 import { IconScripts, IconGrip, IconSearch } from '../components/ui/Icons'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
+import { NotesPanel } from '../components/ui/NotesPanel'
 import {
   useScripts,
   useScriptTags,
@@ -38,7 +40,9 @@ export function Scripts() {
   const { toast } = useToast()
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState('')
-  const { data, isLoading } = useScripts({ search: search || undefined, tag: tagFilter || undefined })
+  const [page, setPage] = useState(1)
+  const pageSize = 20
+  const { data, isLoading } = useScripts({ page, size: pageSize, search: search || undefined, tag: tagFilter || undefined })
   const { data: tags } = useScriptTags()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
@@ -61,17 +65,22 @@ export function Scripts() {
 
   const [executionsScriptId, setExecutionsScriptId] = useState<string | null>(null)
   const [statsTarget, setStatsTarget] = useState<Script | null>(null)
+  const [detailsTarget, setDetailsTarget] = useState<Script | null>(null)
   const [scheduleHistoryTarget, setScheduleHistoryTarget] = useState<Script | null>(null)
   const [runTarget, setRunTarget] = useState<Script | null>(null)
   const [runNodeId, setRunNodeId] = useState('')
+  const [runTags, setRunTags] = useState('')
   const [editScript, setEditScript] = useState<Script | null>(null)
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
   const [editTags, setEditTags] = useState('')
+  const [editSteps, setEditSteps] = useState<{ label: string; type: 'inline' | 'command'; command: string; command_id: string; params: Record<string, unknown>; on_failure: 'stop' | 'continue' }[]>([])
   const [cloneTarget, setCloneTarget] = useState<{ id: string; name: string } | null>(null)
   const [scheduleTarget, setScheduleTarget] = useState<{ id: string; name: string; node_ids: string[] } | null>(null)
   const [scheduleCron, setScheduleCron] = useState('')
   const [scheduleNodeIds, setScheduleNodeIds] = useState<string[]>([])
+  const [scheduleTimezone, setScheduleTimezone] = useState('UTC')
+  const [scheduleMisfireGrace, setScheduleMisfireGrace] = useState(60)
 
   const scripts = data?.items || []
   const [orderedScripts, setOrderedScripts] = useState<Script[]>([])
@@ -114,12 +123,13 @@ export function Scripts() {
           </div>
           <div className="flex items-center gap-1 flex-wrap">
             <FavoriteButton targetType="script" targetId={script.id} size="sm" />
+            <Button variant="ghost" size="sm" onClick={() => setDetailsTarget(script)}>{t('scripts.details', 'Details')}</Button>
             <Button variant="ghost" size="sm" onClick={() => { setExecutionsScriptId(script.id) }}>{t('scripts.executions')}</Button>
             <Button variant="ghost" size="sm" onClick={() => setStatsTarget(script)}>{t('scripts.stats', 'Stats')}</Button>
             <Button variant="ghost" size="sm" onClick={() => setScheduleHistoryTarget(script)}>{t('scripts.scheduleHistory', 'Schedule History')}</Button>
             <Button variant="ghost" size="sm" onClick={() => { setCloneTarget({ id: script.id, name: script.name }) }}>{t('scripts.clone')}</Button>
-            <Button variant="ghost" size="sm" onClick={() => { setScheduleTarget({ id: script.id, name: script.name, node_ids: [] }); setScheduleCron(''); setScheduleNodeIds([]) }}>{t('scripts.schedule')}</Button>
-            <Button variant="ghost" size="sm" onClick={() => { setEditScript(script); setEditName(script.name); setEditDesc(script.description || ''); setEditTags(script.tags.join(', ')) }}>{t('scripts.edit')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setScheduleTarget({ id: script.id, name: script.name, node_ids: [] }); setScheduleCron(''); setScheduleNodeIds([]); setScheduleTimezone('UTC'); setScheduleMisfireGrace(60) }}>{t('scripts.schedule')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setEditScript(script); setEditName(script.name); setEditDesc(script.description || ''); setEditTags(script.tags.join(', ')); setEditSteps(script.steps.map((s) => ({ label: s.label, type: s.type, command: s.command || '', command_id: s.command_id || '', params: s.params || {}, on_failure: s.on_failure || 'stop' }))) }}>{t('scripts.edit')}</Button>
             <Button variant="secondary" size="sm" onClick={() => handleRun(script.id, script.name)} disabled={runScript.isPending}>
               {runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}
             </Button>
@@ -157,6 +167,7 @@ export function Scripts() {
   const handleRun = (id: string, _name: string) => {
     setRunTarget(scripts.find((s) => s.id === id) || null)
     setRunNodeId('')
+    setRunTags('')
   }
 
   const handleClone = () => {
@@ -169,7 +180,22 @@ export function Scripts() {
 
   const handleSaveEdit = () => {
     if (!editScript) return
-    updateScript.mutate({ id: editScript.id, data: { name: editName, description: editDesc, tags: editTags ? editTags.split(',').map((s) => s.trim()).filter(Boolean) : undefined } }, {
+    updateScript.mutate({
+      id: editScript.id,
+      data: {
+        name: editName,
+        description: editDesc,
+        tags: editTags ? editTags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+        steps: editSteps.map((s) => ({
+          label: s.label,
+          type: s.type,
+          command: s.type === 'inline' ? s.command || null : null,
+          command_id: s.type === 'command' ? s.command_id || null : null,
+          params: Object.keys(s.params).length > 0 ? s.params : undefined,
+          on_failure: s.on_failure,
+        })),
+      },
+    }, {
       onSuccess: () => { toast('success', t('scripts.toastUpdated')); setEditScript(null) },
       onError: () => toast('error', t('scripts.toastUpdateFailed')),
     })
@@ -183,7 +209,7 @@ export function Scripts() {
         onError: () => toast('error', t('scripts.toastScheduleFailed')),
       })
     } else {
-      setSchedule.mutate({ id: scheduleTarget.id, data: { cron: scheduleCron, node_ids: scheduleNodeIds } }, {
+      setSchedule.mutate({ id: scheduleTarget.id, data: { cron: scheduleCron, node_ids: scheduleNodeIds, timezone: scheduleTimezone, misfire_grace_seconds: scheduleMisfireGrace } }, {
         onSuccess: () => { toast('success', t('scripts.toastScheduleSet')); setScheduleTarget(null) },
         onError: () => toast('error', t('scripts.toastScheduleFailed')),
       })
@@ -241,6 +267,11 @@ export function Scripts() {
           ) : displayScripts.map((script) => renderScriptCard(script))}
         </div>
       )}
+      {data && data.total > pageSize && (
+        <div className="flex justify-center">
+          <Pagination page={page} totalPages={Math.ceil(data.total / pageSize)} onPageChange={setPage} />
+        </div>
+      )}
 
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('scripts.createScript')} size="lg">
         <div className="space-y-4">
@@ -281,14 +312,41 @@ export function Scripts() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!editScript} onClose={() => setEditScript(null)} title={`${t('scripts.edit')}: ${editScript?.name || ''}`}>
+      <Modal isOpen={!!editScript} onClose={() => setEditScript(null)} title={`${t('scripts.edit')}: ${editScript?.name || ''}`} size="lg">
         <div className="space-y-4">
           <Input label={t('settings.name')} value={editName} onChange={(e) => setEditName(e.target.value)} />
           <Input label={t('scripts.description')} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
           <Input label={t('scripts.tagsLabel', 'Tags')} placeholder="backup, database" value={editTags} onChange={(e) => setEditTags(e.target.value)} />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('scripts.steps')}</label>
+              <Button variant="ghost" size="sm" onClick={() => setEditSteps((prev) => [...prev, { label: `Step ${prev.length + 1}`, type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
+            </div>
+            {editSteps.map((step, idx) => (
+              <div key={idx} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input label="" placeholder={t('scripts.stepLabel', 'Step label')} value={step.label} onChange={(e) => { const updated = [...editSteps]; updated[idx] = { ...updated[idx], label: e.target.value }; setEditSteps(updated) }} className="flex-1" />
+                  <select value={step.type} onChange={(e) => { const updated = [...editSteps]; updated[idx] = { ...updated[idx], type: e.target.value as 'inline' | 'command' }; setEditSteps(updated) }} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+                    <option value="inline">{t('scripts.typeInline', 'Inline')}</option>
+                    <option value="command">{t('scripts.typeCommand', 'Command')}</option>
+                  </select>
+                  <select value={step.on_failure} onChange={(e) => { const updated = [...editSteps]; updated[idx] = { ...updated[idx], on_failure: e.target.value as 'stop' | 'continue' }; setEditSteps(updated) }} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+                    <option value="stop">{t('scripts.onFailureStop', 'Stop')}</option>
+                    <option value="continue">{t('scripts.onFailureContinue', 'Continue')}</option>
+                  </select>
+                  {editSteps.length > 1 && <Button variant="ghost" size="sm" onClick={() => setEditSteps((prev) => prev.filter((_, i) => i !== idx))} className="text-red-500">{t('common.delete')}</Button>}
+                </div>
+                {step.type === 'inline' ? (
+                  <textarea placeholder={t('scripts.commandPlaceholder', '#!/bin/bash\necho "Hello"')} value={step.command} onChange={(e) => { const updated = [...editSteps]; updated[idx] = { ...updated[idx], command: e.target.value }; setEditSteps(updated) }} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={3} />
+                ) : (
+                  <Input label="" placeholder={t('scripts.commandIdPlaceholder', 'Command ID')} value={step.command_id} onChange={(e) => { const updated = [...editSteps]; updated[idx] = { ...updated[idx], command_id: e.target.value }; setEditSteps(updated) }} />
+                )}
+              </div>
+            ))}
+          </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setEditScript(null)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSaveEdit}>{t('common.save')}</Button>
+            <Button onClick={handleSaveEdit} disabled={updateScript.isPending}>{updateScript.isPending ? t('common.loading') : t('common.save')}</Button>
           </div>
         </div>
       </Modal>
@@ -324,7 +382,7 @@ export function Scripts() {
 
       <ConfirmDialog isOpen={!!cloneTarget} onClose={() => setCloneTarget(null)} onConfirm={handleClone} title={t('scripts.cloneTitle')} message={t('scripts.cloneMsg', { name: cloneTarget?.name })} confirmLabel={t('scripts.clone')} />
 
-      <Modal isOpen={!!runTarget} onClose={() => { setRunTarget(null); setRunNodeId('') }} title={`${t('scripts.run')}: ${runTarget?.name || ''}`}>
+      <Modal isOpen={!!runTarget} onClose={() => { setRunTarget(null); setRunNodeId(''); setRunTags('') }} title={`${t('scripts.run')}: ${runTarget?.name || ''}`}>
         <div className="space-y-4">
           <div className="space-y-1">
             <label className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNode', 'Target Node (optional)')}</label>
@@ -333,15 +391,53 @@ export function Scripts() {
               {nodes.map((n) => (<option key={n.id} value={n.id}>{n.name}</option>))}
             </select>
           </div>
+          <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => { setRunTarget(null); setRunNodeId('') }}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (runTarget) { runScript.mutate({ id: runTarget.id, data: runNodeId ? { node_ids: [runNodeId] } : {} }, { onSuccess: () => { toast('success', t('scripts.toastStarted', { name: runTarget.name })); setRunTarget(null); setRunNodeId('') }, onError: () => toast('error', t('scripts.toastRunFailed', { name: runTarget.name })) }) } }} disabled={runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button>
+            <Button variant="ghost" onClick={() => { setRunTarget(null); setRunNodeId(''); setRunTags('') }}>{t('common.cancel')}</Button>
+            <Button onClick={() => {
+              if (runTarget) {
+                const data: { node_ids?: string[]; node_tags?: string[] } = {}
+                if (runNodeId) data.node_ids = [runNodeId]
+                if (runTags) data.node_tags = runTags.split(',').map((s) => s.trim()).filter(Boolean)
+                runScript.mutate({ id: runTarget.id, data }, { onSuccess: () => { toast('success', t('scripts.toastStarted', { name: runTarget.name })); setRunTarget(null); setRunNodeId(''); setRunTags('') }, onError: () => toast('error', t('scripts.toastRunFailed', { name: runTarget.name })) })
+              }
+            }} disabled={runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button>
           </div>
         </div>
       </Modal>
 
       <Modal isOpen={!!statsTarget} onClose={() => setStatsTarget(null)} title={`${t('scripts.stats', 'Stats')}: ${statsTarget?.name || ''}`}>
         {statsTarget && <ScriptStatsContent scriptId={statsTarget.id} />}
+      </Modal>
+
+      <Modal isOpen={!!detailsTarget} onClose={() => setDetailsTarget(null)} title={detailsTarget?.name || ''} size="lg">
+        {detailsTarget && (
+          <div className="space-y-4">
+            {detailsTarget.description && (
+              <p className="text-sm text-surface-700 dark:text-surface-300">{detailsTarget.description}</p>
+            )}
+            <div className="flex flex-wrap gap-1">
+              {detailsTarget.tags.map((tag) => <Badge key={tag} variant="default">{tag}</Badge>)}
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-surface-500 uppercase">{t('scripts.steps')}</p>
+              {detailsTarget.steps.map((step, i) => (
+                <div key={i} className="p-2 bg-surface-50 dark:bg-surface-800/50 rounded-lg text-sm">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={step.type === 'inline' ? 'info' : 'warning'}>{step.type}</Badge>
+                    <span className="font-medium text-surface-900 dark:text-white">{step.label}</span>
+                  </div>
+                  {step.type === 'inline' && step.command && (
+                    <pre className="text-xs font-mono text-surface-600 dark:text-surface-300 mt-1 whitespace-pre-wrap">{step.command}</pre>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-surface-200 dark:border-surface-800 pt-4">
+              <NotesPanel targetType="script" targetId={detailsTarget.id} />
+            </div>
+          </div>
+        )}
       </Modal>
 
       <Modal isOpen={!!scheduleHistoryTarget} onClose={() => setScheduleHistoryTarget(null)} title={`${t('scripts.scheduleHistory', 'Schedule History')}: ${scheduleHistoryTarget?.name || ''}`} size="lg">

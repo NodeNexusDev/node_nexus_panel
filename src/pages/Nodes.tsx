@@ -12,6 +12,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tooltip } from '../components/ui/Tooltip'
 import { DragDropList } from '../components/ui/DragDropList'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
+import { Pagination } from '../components/ui/Pagination'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconNodes, IconGrip, IconCommands, IconCheckCircle, IconSearch } from '../components/ui/Icons'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
@@ -31,6 +32,7 @@ import {
   useBulkDeleteNodes,
   useBulkExecuteNodes,
   useBulkTagsAdd,
+  useBulkTagsRemove,
   useRetryNodeCommand,
   useValidateCredentials,
   useNode,
@@ -48,7 +50,15 @@ export function Nodes() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [tagFilter, setTagFilter] = useState('')
-  const { data, isLoading } = useNodes({ search: search || undefined, status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined, tags: tagFilter || undefined })
+  const [page, setPage] = useState(1)
+  const pageSize = 20
+  const { data, isLoading } = useNodes({
+    page,
+    size: pageSize,
+    search: search || undefined,
+    status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined,
+    tags: tagFilter || undefined,
+  })
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
   const updateNode = useUpdateNode()
@@ -64,9 +74,9 @@ export function Nodes() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Node | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const defaultNode = { name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', docker_host: '', tags: '' }
+  const defaultNode = { name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', docker_host: '', tags: '' }
   const [newNode, setNewNode] = useState(defaultNode)
-  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', docker_host: '', tags: '' })
+  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', docker_host: '', tags: '' })
 
   const [statsNodeId, setStatsNodeId] = useState<string | null>(null)
   const [historyNodeId, setHistoryNodeId] = useState<string | null>(null)
@@ -101,6 +111,8 @@ export function Nodes() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [bulkTag, setBulkTag] = useState('')
   const [showBulkTag, setShowBulkTag] = useState(false)
+  const [showBulkTagRemove, setShowBulkTagRemove] = useState(false)
+  const [bulkRemoveTag, setBulkRemoveTag] = useState('')
 
   const handleReorder = useCallback((reordered: Node[]) => {
     setOrderedNodes(reordered)
@@ -127,6 +139,8 @@ export function Nodes() {
       port: String(node.port),
       connection_type: node.connection_type,
       username: node.username || '',
+      password: '',
+      ssh_key: '',
       docker_host: node.docker_host || '',
       tags: node.tags.join(', '),
     })
@@ -333,6 +347,8 @@ export function Nodes() {
         port: Number(newNode.port),
         connection_type: newNode.connection_type,
         username: newNode.username || undefined,
+        password: newNode.password || undefined,
+        ssh_key: newNode.ssh_key || undefined,
         docker_host: newNode.docker_host || undefined,
         tags: newNode.tags ? newNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
       },
@@ -354,6 +370,8 @@ export function Nodes() {
           port: Number(editNode.port),
           connection_type: editNode.connection_type,
           username: editNode.username || undefined,
+          password: editNode.password || undefined,
+          ssh_key: editNode.ssh_key || undefined,
           docker_host: editNode.docker_host || undefined,
           tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
@@ -387,6 +405,7 @@ export function Nodes() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-surface-500">{selectedIds.length} selected</span>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkTag(true)}>{t('nodes.bulkTags')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkTagRemove(true)}>{t('nodes.bulkRemoveTags', 'Bulk Remove Tag')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkExec(true)}>{t('nodes.bulkExec', 'Bulk Exec')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('nodes.bulkDelete', 'Bulk Delete')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
@@ -489,6 +508,11 @@ export function Nodes() {
           ) : (
             <ResponsiveTable data={displayNodes} columns={columns} renderMobileItem={renderMobileNode} keyExtractor={(n) => n.id} emptyMessage={t('nodes.emptyTitle')} />
           )}
+          {data && data.total > pageSize && (
+            <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
+              <Pagination page={page} totalPages={Math.ceil(data.total / pageSize)} onPageChange={setPage} />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -506,6 +530,11 @@ export function Nodes() {
             </select>
           </div>
           <Input label={t('nodes.username', 'Username')} placeholder="root" value={newNode.username} onChange={(e) => setNewNode({ ...newNode, username: e.target.value })} />
+          <Input label={t('nodes.password', 'Password')} type="password" placeholder="••••••" value={newNode.password} onChange={(e) => setNewNode({ ...newNode, password: e.target.value })} />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
+            <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" value={newNode.ssh_key} onChange={(e) => setNewNode({ ...newNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
+          </div>
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={newNode.docker_host} onChange={(e) => setNewNode({ ...newNode, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={newNode.tags} onChange={(e) => setNewNode({ ...newNode, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
@@ -531,6 +560,11 @@ export function Nodes() {
             </select>
           </div>
           <Input label={t('nodes.username', 'Username')} placeholder="root" value={editNode.username} onChange={(e) => setEditNode({ ...editNode, username: e.target.value })} />
+          <Input label={t('nodes.password', 'Password')} type="password" placeholder="Leave blank to keep unchanged" value={editNode.password} onChange={(e) => setEditNode({ ...editNode, password: e.target.value })} />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
+            <textarea placeholder="Leave blank to keep unchanged" value={editNode.ssh_key} onChange={(e) => setEditNode({ ...editNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
+          </div>
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={editNode.docker_host} onChange={(e) => setEditNode({ ...editNode, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={editNode.tags} onChange={(e) => setEditNode({ ...editNode, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
@@ -583,6 +617,8 @@ export function Nodes() {
       </Modal>
 
       <BulkTagsModal isOpen={showBulkTag} onClose={() => { setShowBulkTag(false); setBulkTag('') }} bulkTag={bulkTag} setBulkTag={setBulkTag} selectedIds={selectedIds} onDone={() => { setShowBulkTag(false); setBulkTag(''); setSelectedIds([]) }} />
+
+      <BulkTagsRemoveModal isOpen={showBulkTagRemove} onClose={() => { setShowBulkTagRemove(false); setBulkRemoveTag('') }} bulkTag={bulkRemoveTag} setBulkTag={setBulkRemoveTag} selectedIds={selectedIds} onDone={() => { setShowBulkTagRemove(false); setBulkRemoveTag(''); setSelectedIds([]) }} />
 
       <Modal isOpen={showBulkExec} onClose={() => { setShowBulkExec(false); setBulkExecCmd('') }} title={t('nodes.bulkExec', 'Bulk Execute')}>
         <div className="space-y-4">
@@ -675,6 +711,29 @@ function BulkTagsModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds, onDo
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsAdd.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsAdded')); onDone() } }) } }} disabled={!bulkTag || !selectedIds.length || bulkTagsAdd.isPending}>{t('nodes.addTag')}</Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+function BulkTagsRemoveModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds, onDone }: { isOpen: boolean; onClose: () => void; bulkTag: string; setBulkTag: (v: string) => void; selectedIds: string[]; onDone: () => void }) {
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const bulkTagsRemove = useBulkTagsRemove()
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={t('nodes.bulkRemoveTags', 'Bulk Remove Tag')}>
+      <div className="space-y-4">
+        <Input label={t('nodes.tag')} placeholder="tag-to-remove" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} />
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button
+            variant="danger"
+            onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsRemove.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsRemoved', 'Tags removed')); onDone() } }) } }}
+            disabled={!bulkTag || !selectedIds.length || bulkTagsRemove.isPending}
+          >
+            {t('nodes.removeTag', 'Remove Tag')}
+          </Button>
         </div>
       </div>
     </Modal>
