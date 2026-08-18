@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { Spinner } from '../components/ui/Spinner'
+import { TableSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Pagination } from '../components/ui/Pagination'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -84,9 +84,7 @@ export function Favorites() {
       <Card className="stagger-item">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Spinner size="lg" />
-            </div>
+            <TableSkeleton rows={5} cols={4} />
           ) : favorites.length === 0 ? (
             <EmptyState
               icon={<IconStar className="w-10 h-10" />}

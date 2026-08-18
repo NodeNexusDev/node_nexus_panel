@@ -11,6 +11,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { TableSkeleton } from '../components/ui/Skeleton'
+import { PageHeader } from '../components/ui/PageHeader'
 import { IconDocker } from '../components/ui/Icons'
 import { containerCreateFormSchema, type ContainerCreateFormInput } from '../lib/validators/docker-schema'
 import { formatBytes } from '../lib/format'
@@ -709,13 +710,11 @@ export function Docker() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between animate-slide-up">
-        <div>
-          <h1 className="text-3xl font-bold gradient-text">{t('docker.title')}</h1>
-          <p className="text-surface-500 dark:text-surface-400 mt-1">{t('docker.description')}</p>
-        </div>
-        <Button onClick={() => setShowPullModal(true)}>{t('docker.pullImage')}</Button>
-      </div>
+      <PageHeader
+        title={t('docker.title')}
+        description={t('docker.description')}
+        actions={<Button onClick={() => setShowPullModal(true)}>{t('docker.pullImage')}</Button>}
+      />
 
       <div className="flex items-center gap-4">
         <div className="space-y-1">
@@ -729,7 +728,7 @@ export function Docker() {
       <div className="border-b border-surface-200 dark:border-surface-800">
         <nav className="flex gap-4">
           {tabs.map((tab) => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key ? 'border-accent-500 text-accent-600 dark:text-accent-400' : 'border-transparent text-surface-500 hover:text-surface-700 dark:text-surface-400'}`}>
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key ? 'border-accent-500 text-accent-600 dark:text-accent-400' : 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-400'}`}>
               {tab.label}
             </button>
           ))}
@@ -738,7 +737,9 @@ export function Docker() {
 
       <Card className="stagger-item">
         <CardContent className="p-0">
-          {selectedNodeId && (
+          {!selectedNodeId ? (
+            <TableSkeleton rows={6} cols={6} />
+          ) : (
             <>
               {activeTab === 'containers' && <ContainersTab nodeId={selectedNodeId} />}
               {activeTab === 'images' && <ImagesTab nodeId={selectedNodeId} />}

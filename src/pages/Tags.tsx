@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { Spinner } from '../components/ui/Spinner'
+import { TableSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
@@ -82,9 +82,7 @@ export function Tags() {
       <Card className="stagger-item">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Spinner size="lg" />
-            </div>
+            <TableSkeleton rows={5} cols={3} />
           ) : tags.length === 0 ? (
             <EmptyState
               icon={<IconTag className="w-10 h-10" />}
