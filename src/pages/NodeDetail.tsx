@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent, CardHeader } from '../components/ui/Card'
@@ -16,6 +16,11 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
+import { Tabs } from '../components/ui/Tabs'
+import { StatCard, StatsGrid } from '../components/ui/StatCard'
+import { KeyValueList } from '../components/ui/KeyValueList'
+import { formatBytes } from '../lib/format'
+import { nodeStatusVariant } from '../lib/variants'
 import {
   IconNodes,
   IconCommands,
@@ -49,7 +54,15 @@ export function NodeDetail() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const { id } = useParams<{ id: string }>()
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const TAB_KEYS: Tab[] = ['overview', 'metrics', 'stats', 'status-history', 'command-history', 'tags', 'notes']
+  const tabFromUrl = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<Tab>(TAB_KEYS.includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview')
+
+  const changeTab = (key: Tab) => {
+    setActiveTab(key)
+    setSearchParams(key === 'overview' ? {} : { tab: key })
+  }
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showExecModal, setShowExecModal] = useState(false)
@@ -170,15 +183,6 @@ export function NodeDetail() {
     )
   }
 
-  const statusVariant = (status: typeof node.status) => {
-    switch (status) {
-      case 'active': return 'success'
-      case 'unreachable': return 'warning'
-      case 'error': return 'danger'
-      default: return 'default'
-    }
-  }
-
   const tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: t('nodes.overview', 'Overview') },
     { key: 'metrics', label: t('nodes.metrics', 'Metrics') },
@@ -227,30 +231,14 @@ export function NodeDetail() {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant={statusVariant(node.status)}>{node.status}</Badge>
+        <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
         <Badge variant="default">{node.connection_type}</Badge>
         {node.tags.map((tag) => (
           <Badge key={tag} variant="default">{tag}</Badge>
         ))}
       </div>
 
-      <div className="border-b border-surface-200 dark:border-surface-800">
-        <nav className="flex gap-1 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                activeTab === tab.key
-                  ? 'border-accent-500 text-accent-600 dark:text-accent-400'
-                  : 'border-transparent text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+      <Tabs tabs={tabs} active={activeTab} onChange={changeTab} />
 
       {activeTab === 'overview' && <OverviewTab node={node} />}
       {activeTab === 'metrics' && <MetricsTab nodeId={node.id} />}
@@ -358,35 +346,62 @@ function OverviewTab({ node }: { node: import('../api/types').Node }) {
   )
 }
 
+function MetricBar({ label, value, percent }: { label: string; value: string; percent: number }) {
+  const pct = Math.min(100, Math.max(0, percent))
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm text-surface-600 dark:text-surface-400">{label}</span>
+        <span className="text-sm font-medium text-surface-900 dark:text-white">{value}</span>
+      </div>
+      <div className="h-2 bg-surface-100 dark:bg-surface-800 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-accent-500'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
 function MetricsTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { data: metrics, isLoading, error, refetch } = useNodeMetrics(nodeId)
   if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
   if (error) return <ErrorState error={error} onRetry={refetch} />
   if (!metrics) return <EmptyState title={t('nodes.noMetrics', 'No metrics available')} />
-  const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-  }
-  const rows = [
-    [t('nodes.cpu', 'CPU'), `${metrics.cpu.usage_percent?.toFixed(1) ?? '—'}% (${metrics.cpu.cores} cores)`],
-    [t('nodes.memory', 'Memory'), `${formatBytes(metrics.memory.used_bytes)} / ${formatBytes(metrics.memory.total_bytes)} (${metrics.memory.percent?.toFixed(1)}%)`],
-    [t('nodes.disk', 'Disk'), `${formatBytes(metrics.disk.used_bytes)} / ${formatBytes(metrics.disk.total_bytes)} (${metrics.disk.percent?.toFixed(1)}%)`],
-    [t('nodes.uptimeSince', 'Uptime Since'), metrics.uptime_since ? new Date(metrics.uptime_since).toLocaleString() : '—'],
-  ]
+
+  const cpuPct = metrics.cpu.usage_percent ?? 0
+  const memPct = metrics.memory.percent ?? 0
+  const diskPct = metrics.disk.percent ?? 0
+
   return (
     <Card>
       <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('nodes.metrics', 'Metrics')}</h2></CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {rows.map(([key, value]) => (
-            <div key={key} className="flex justify-between py-2 border-b border-surface-200 dark:border-surface-800 last:border-0">
-              <span className="text-sm text-surface-600 dark:text-surface-400">{key}</span>
-              <span className="text-sm font-medium text-surface-900 dark:text-white">{value}</span>
-            </div>
-          ))}
+        <div className="space-y-4">
+          <MetricBar
+            label={t('nodes.cpu', 'CPU')}
+            value={`${cpuPct.toFixed(1)}% (${metrics.cpu.cores} ${t('nodes.cores', 'cores')})`}
+            percent={cpuPct}
+          />
+          <MetricBar
+            label={t('nodes.memory', 'Memory')}
+            value={`${formatBytes(metrics.memory.used_bytes)} / ${formatBytes(metrics.memory.total_bytes)} (${memPct.toFixed(1)}%)`}
+            percent={memPct}
+          />
+          <MetricBar
+            label={t('nodes.disk', 'Disk')}
+            value={`${formatBytes(metrics.disk.used_bytes)} / ${formatBytes(metrics.disk.total_bytes)} (${diskPct.toFixed(1)}%)`}
+            percent={diskPct}
+          />
+          <div className="pt-1">
+            <KeyValueList
+              rows={[
+                { label: t('nodes.uptimeSince', 'Uptime Since'), value: metrics.uptime_since ? new Date(metrics.uptime_since).toLocaleString() : '—' },
+              ]}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -414,12 +429,12 @@ function StatsTab({ nodeId }: { nodeId: string }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg"><p className="text-2xl font-bold text-surface-900 dark:text-white">{stats.total}</p><p className="text-xs text-surface-500">{t('nodes.totalExecutions')}</p></div>
-          <div className="text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg"><p className="text-2xl font-bold text-green-600">{stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'}</p><p className="text-xs text-surface-500">{t('nodes.successRate')}</p></div>
-          <div className="text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg"><p className="text-2xl font-bold text-surface-900 dark:text-white">{stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'}</p><p className="text-xs text-surface-500">{t('nodes.avgDuration')}</p></div>
-          <div className="text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg"><p className="text-2xl font-bold text-red-500">{stats.failed}</p><p className="text-xs text-surface-500">{t('nodes.failed')}</p></div>
-        </div>
+        <StatsGrid>
+          <StatCard label={t('nodes.totalExecutions')} value={stats.total} />
+          <StatCard label={t('nodes.successRate')} value={stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'} tone="success" />
+          <StatCard label={t('nodes.avgDuration')} value={stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'} />
+          <StatCard label={t('nodes.failed')} value={stats.failed} tone="danger" />
+        </StatsGrid>
       </CardContent>
     </Card>
   )

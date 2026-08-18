@@ -1,21 +1,32 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Card, CardContent, CardHeader } from '../components/ui/Card'
+import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tooltip } from '../components/ui/Tooltip'
-import { DragDropList } from '../components/ui/DragDropList'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { Pagination } from '../components/ui/Pagination'
 import { TableSkeleton } from '../components/ui/Skeleton'
-import { IconNodes, IconGrip, IconCommands, IconCheckCircle, IconSearch } from '../components/ui/Icons'
+import { PageHeader } from '../components/ui/PageHeader'
+import { SearchInput } from '../components/ui/SearchInput'
+import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
+import {
+  IconNodes,
+  IconCommands,
+  IconCheckCircle,
+  IconXCircle,
+  IconChart,
+  IconClock,
+  IconActivity,
+  IconTag,
+  IconSort,
+} from '../components/ui/Icons'
 import {
   useNodes,
   useCreateNode,
@@ -24,24 +35,29 @@ import {
   useCheckNode,
   useBulkCheck,
   useExecuteNode,
-  useNodeStats,
-  useNodeStatusHistory,
-  useNodeMetrics,
-  useNodeCommandHistory,
   useNodeTags,
   useBulkDeleteNodes,
   useBulkExecuteNodes,
   useBulkTagsAdd,
   useBulkTagsRemove,
-  useRetryNodeCommand,
   useValidateCredentials,
-  useNode,
-  useAddNodeTag,
-  useRemoveNodeTag,
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
-import type { Node } from '../api/types'
+import { nodeStatusVariant } from '../lib/variants'
+import type { Node, NodeStatus } from '../api/types'
 import type { Column } from '../components/ui/table-types'
+
+type SortKey = 'name' | 'host' | 'status' | 'connection_type'
+type SortDir = 'asc' | 'desc'
+
+function statusDot(status: NodeStatus): string {
+  switch (status) {
+    case 'active': return 'bg-green-500 status-online'
+    case 'unreachable': return 'bg-amber-500'
+    case 'error': return 'bg-red-500'
+    default: return 'bg-surface-400'
+  }
+}
 
 export function Nodes() {
   const { t } = useTranslation()
@@ -51,7 +67,9 @@ export function Nodes() {
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [tagFilter, setTagFilter] = useState('')
   const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir } | null>(null)
   const pageSize = 20
+
   const { data, isLoading } = useNodes({
     page,
     size: pageSize,
@@ -69,7 +87,6 @@ export function Nodes() {
   const bulkExecuteNodes = useBulkExecuteNodes()
   const executeNode = useExecuteNode()
   const validateCreds = useValidateCredentials()
-  const retryNodeCommand = useRetryNodeCommand()
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Node | null>(null)
@@ -78,10 +95,6 @@ export function Nodes() {
   const [newNode, setNewNode] = useState(defaultNode)
   const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', docker_host: '', tags: '' })
 
-  const [statsNodeId, setStatsNodeId] = useState<string | null>(null)
-  const [historyNodeId, setHistoryNodeId] = useState<string | null>(null)
-  const [metricsNodeId, setMetricsNodeId] = useState<string | null>(null)
-  const [cmdHistoryNodeId, setCmdHistoryNodeId] = useState<string | null>(null)
   const [execNodeId, setExecNodeId] = useState<string | null>(null)
   const [execCmd, setExecCmd] = useState('')
   const [execTimeout, setExecTimeout] = useState('')
@@ -90,23 +103,6 @@ export function Nodes() {
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
   const [bulkExecCmd, setBulkExecCmd] = useState('')
-  const [tagManageNodeId, setTagManageNodeId] = useState<string | null>(null)
-  const [newTagInput, setNewTagInput] = useState('')
-
-  const nodes = data?.items || []
-  const [orderedNodes, setOrderedNodes] = useState<Node[]>([])
-  const displayNodes = orderedNodes.length > 0 ? orderedNodes : nodes
-  const [dragMode, setDragMode] = useState(false)
-
-  useEffect(() => {
-    if (orderedNodes.length > 0 && nodes.length > 0) {
-      const nodeIds = new Set(nodes.map((n) => n.id))
-      const validOrdered = orderedNodes.filter((n) => nodeIds.has(n.id))
-      if (validOrdered.length !== orderedNodes.length) {
-        setOrderedNodes(validOrdered)
-      }
-    }
-  }, [nodes, orderedNodes])
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [bulkTag, setBulkTag] = useState('')
@@ -114,21 +110,32 @@ export function Nodes() {
   const [showBulkTagRemove, setShowBulkTagRemove] = useState(false)
   const [bulkRemoveTag, setBulkRemoveTag] = useState('')
 
-  const handleReorder = useCallback((reordered: Node[]) => {
-    setOrderedNodes(reordered)
-  }, [])
+  const nodes = data?.items || []
+  const allSelected = nodes.length > 0 && nodes.every((n) => selectedIds.includes(n.id))
 
-  const statusVariant = (status: Node['status']) => {
-    switch (status) {
-      case 'active': return 'success'
-      case 'unreachable': return 'warning'
-      case 'error': return 'danger'
-      default: return 'default'
-    }
+  const sortedNodes = sort
+    ? [...nodes].sort((a, b) => {
+        const dir = sort.dir === 'asc' ? 1 : -1
+        const av = String(a[sort.key] ?? '')
+        const bv = String(b[sort.key] ?? '')
+        return av.localeCompare(bv) * dir
+      })
+    : nodes
+
+  const toggleSort = (key: SortKey) => {
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: 'asc' }
+      if (prev.dir === 'asc') return { key, dir: 'desc' }
+      return null
+    })
   }
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }
+
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? [] : nodes.map((n) => n.id))
   }
 
   const openEdit = (node: Node) => {
@@ -146,51 +153,103 @@ export function Nodes() {
     })
   }
 
+  const handleValidate = (node: Node) => {
+    setValidateTarget(node)
+    setValidateResult(null)
+    validateCreds.mutate(
+      { host: node.host, port: node.port, connection_type: node.connection_type, username: node.username || undefined },
+      { onSuccess: (r) => setValidateResult(r), onError: () => toast('error', t('nodes.toastValidateFailed')) },
+    )
+  }
+
+  const nodeMenu = (node: Node): DropdownMenuItem[] => [
+    { key: 'edit', label: t('common.edit'), onClick: () => openEdit(node) },
+    { key: 'validate', label: t('nodes.validate'), onClick: () => handleValidate(node) },
+    { key: 'sep-1', label: '', onClick: () => {}, separator: true },
+    { key: 'metrics', label: t('nodes.metrics', 'Metrics'), icon: <IconActivity className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=metrics`) },
+    { key: 'stats', label: t('nodes.stats', 'Stats'), icon: <IconChart className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=stats`) },
+    { key: 'status-history', label: t('nodes.statusHistory', 'Status History'), icon: <IconClock className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=status-history`) },
+    { key: 'command-history', label: t('nodes.cmdHistory', 'Command History'), icon: <IconCommands className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=command-history`) },
+    { key: 'tags', label: t('nodes.manageTags', 'Manage Tags'), icon: <IconTag className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=tags`) },
+    { key: 'sep-2', label: '', onClick: () => {}, separator: true },
+    { key: 'delete', label: t('common.delete'), icon: <IconXCircle className="w-4 h-4" />, danger: true, onClick: () => setDeleteTarget({ id: node.id, name: node.name }) },
+  ]
+
+  const sortHeader = (label: string, sortKey: SortKey) => {
+    const active = sort?.key === sortKey
+    return (
+      <button
+        onClick={() => toggleSort(sortKey)}
+        className="flex items-center gap-1 uppercase tracking-wider text-xs font-medium text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 transition-colors cursor-pointer"
+        aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      >
+        {label}
+        {active ? (
+          <span className="text-accent-500">{sort!.dir === 'asc' ? '↑' : '↓'}</span>
+        ) : (
+          <IconSort className="w-3 h-3 opacity-40" />
+        )}
+      </button>
+    )
+  }
+
   const columns: Column<Node>[] = [
     {
       key: 'select',
-      header: '',
+      header: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={toggleAll}
+          aria-label="Select all"
+          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600"
+        />
+      ),
+      className: 'w-10',
       render: (node) => (
         <input
           type="checkbox"
           checked={selectedIds.includes(node.id)}
           onChange={() => toggleSelect(node.id)}
+          onClick={(e) => e.stopPropagation()}
           className="w-4 h-4 rounded border-surface-300 dark:border-surface-600"
         />
       ),
     },
     {
       key: 'node',
-      header: t('nodes.node'),
+      header: sortHeader(t('nodes.node'), 'name'),
       render: (node) => (
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/nodes/${node.id}`)}>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
             node.status === 'active'
               ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400'
-              : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'
+              : node.status === 'unreachable'
+                ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'
           }`}>
             <IconNodes className="w-5 h-5" />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}</p>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{node.name}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{node.host}:{node.port}</p>
           </div>
         </div>
       ),
     },
     {
       key: 'status',
-      header: t('nodes.status'),
+      header: sortHeader(t('nodes.status'), 'status'),
       render: (node) => (
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
-          <Badge variant={statusVariant(node.status)}>{node.status}</Badge>
+          <div className={`w-2 h-2 rounded-full ${statusDot(node.status)}`} />
+          <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
         </div>
       ),
     },
     {
       key: 'type',
-      header: t('nodes.type'),
+      header: sortHeader(t('nodes.type'), 'connection_type'),
       render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</span>,
     },
     {
@@ -208,43 +267,19 @@ export function Nodes() {
       key: 'actions',
       header: t('nodes.actions'),
       render: (node) => (
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex items-center gap-1">
           <FavoriteButton targetType="node" targetId={node.id} size="sm" />
-          <Tooltip content={t('nodes.stats')}>
-            <Button variant="ghost" size="sm" onClick={() => setStatsNodeId(statsNodeId === node.id ? null : node.id)}>
-              <IconSearch className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('nodes.statusHistory')}>
-            <Button variant="ghost" size="sm" onClick={() => setHistoryNodeId(node.id)}>
-              <IconCheckCircle className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('common.edit')}>
-            <Button variant="ghost" size="sm" onClick={() => openEdit(node)}>
-              {t('common.edit')}
-            </Button>
-          </Tooltip>
           <Tooltip content={t('nodes.checkNode')}>
-            <Button variant="ghost" size="sm" onClick={() => checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) })}>
+            <Button variant="ghost" size="sm" className="px-2" onClick={(e) => { e.stopPropagation(); checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) }) }}>
               <IconCheckCircle className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('nodes.validate')}>
-            <Button variant="ghost" size="sm" onClick={() => { setValidateTarget(node); setValidateResult(null); validateCreds.mutate({ host: node.host, port: node.port, connection_type: node.connection_type, username: node.username || undefined }, { onSuccess: (r) => setValidateResult(r), onError: () => toast('error', t('nodes.toastValidateFailed')) }) }}>
-              {t('nodes.validate')}
             </Button>
           </Tooltip>
           <Tooltip content={t('nodes.execCommand')}>
-            <Button variant="ghost" size="sm" onClick={() => { setExecNodeId(node.id); setExecCmd('') }}>
+            <Button variant="ghost" size="sm" className="px-2" onClick={(e) => { e.stopPropagation(); setExecNodeId(node.id); setExecCmd('') }}>
               <IconCommands className="w-4 h-4" />
             </Button>
           </Tooltip>
-          <Tooltip content={t('common.delete')}>
-            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: node.id, name: node.name })} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10">
-              {t('common.delete')}
-            </Button>
-          </Tooltip>
+          <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
         </div>
       ),
     },
@@ -253,11 +288,9 @@ export function Nodes() {
   const renderMobileNode = (node: Node) => (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/nodes/${node.id}`)}>
+        <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            node.status === 'active'
-              ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400'
-              : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'
+            node.status === 'active' ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400' : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'
           }`}>
             <IconNodes className="w-5 h-5" />
           </div>
@@ -266,77 +299,21 @@ export function Nodes() {
             <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}</p>
           </div>
         </div>
-        <Badge variant={statusVariant(node.status)}>{node.status}</Badge>
+        <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
       </div>
       <div className="flex flex-wrap gap-1">
         {node.tags.map((tag) => (
           <Badge key={tag} variant="default">{tag}</Badge>
         ))}
       </div>
-      <div className="flex items-center gap-2 pt-1 flex-wrap">
+      <div className="flex items-center gap-1">
         <FavoriteButton targetType="node" targetId={node.id} size="sm" />
-        <Button variant="ghost" size="sm" onClick={() => setStatsNodeId(statsNodeId === node.id ? null : node.id)}>{t('nodes.stats')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => setHistoryNodeId(node.id)}>{t('nodes.statusHistory')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => openEdit(node)}>{t('common.edit')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => { setExecNodeId(node.id); setExecCmd('') }}>
+        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setExecNodeId(node.id); setExecCmd('') }}>
           <IconCommands className="w-4 h-4 mr-1" /> {t('nodes.execCommand')}
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: node.id, name: node.name })} className="text-red-500">
-          {t('common.delete')}
-        </Button>
+        <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
       </div>
     </div>
-  )
-
-  const renderNodeRow = (node: Node, index: number) => (
-    <tr key={node.id} className="table-row-hover stagger-item" style={{ animationDelay: `${index * 50}ms` }}>
-      {dragMode && (
-        <td className="px-2 py-4 w-8">
-          <div className="flex items-center justify-center text-surface-400 dark:text-surface-500">
-            <IconGrip className="w-4 h-4" />
-          </div>
-        </td>
-      )}
-      <td className="px-6 py-4">
-        <input type="checkbox" checked={selectedIds.includes(node.id)} onChange={() => toggleSelect(node.id)} className="w-4 h-4 rounded border-surface-300 dark:border-surface-600" />
-      </td>
-      <td className="px-6 py-4 cursor-pointer" onClick={() => navigate(`/nodes/${node.id}`)}>
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${node.status === 'active' ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400' : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'}`}>
-            <IconNodes className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}</p>
-          </div>
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
-          <Badge variant={statusVariant(node.status)}>{node.status}</Badge>
-        </div>
-      </td>
-      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</td>
-      <td className="px-6 py-4">
-        <div className="flex flex-wrap gap-1">
-          {node.tags.map((tag) => (<Badge key={tag} variant="default">{tag}</Badge>))}
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-1 flex-wrap">
-          <FavoriteButton targetType="node" targetId={node.id} size="sm" />
-          <Tooltip content={t('nodes.stats')}><Button variant="ghost" size="sm" onClick={() => setStatsNodeId(statsNodeId === node.id ? null : node.id)}><IconSearch className="w-4 h-4" /></Button></Tooltip>
-          <Tooltip content={t('nodes.statusHistory')}><Button variant="ghost" size="sm" onClick={() => setHistoryNodeId(node.id)}><IconCheckCircle className="w-4 h-4" /></Button></Tooltip>
-          <Tooltip content={t('nodes.metrics', 'Metrics')}><Button variant="ghost" size="sm" onClick={() => setMetricsNodeId(node.id)}>M</Button></Tooltip>
-          <Tooltip content={t('nodes.cmdHistory', 'Command History')}><Button variant="ghost" size="sm" onClick={() => setCmdHistoryNodeId(node.id)}>CH</Button></Tooltip>
-          <Tooltip content={t('nodes.manageTags', 'Manage Tags')}><Button variant="ghost" size="sm" onClick={() => { setTagManageNodeId(node.id); setNewTagInput('') }}>T</Button></Tooltip>
-          <Tooltip content={t('common.edit')}><Button variant="ghost" size="sm" onClick={() => openEdit(node)}>{t('common.edit')}</Button></Tooltip>
-          <Tooltip content={t('nodes.execCommand')}><Button variant="ghost" size="sm" onClick={() => { setExecNodeId(node.id); setExecCmd(''); setExecTimeout('') }}><IconCommands className="w-4 h-4" /></Button></Tooltip>
-          <Tooltip content={t('common.delete')}><Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: node.id, name: node.name })} className="text-red-500 hover:text-red-600">{t('common.delete')}</Button></Tooltip>
-        </div>
-      </td>
-    </tr>
   )
 
   const handleAdd = () => {
@@ -391,94 +368,73 @@ export function Nodes() {
     })
   }
 
-  const selectedNode = nodes.find((n) => n.id === statsNodeId)
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between animate-slide-up">
-        <div>
-          <h1 className="text-3xl font-bold gradient-text">{t('nodes.title')}</h1>
-          <p className="text-surface-500 dark:text-surface-400 mt-1">{t('nodes.description')}</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeader
+        title={t('nodes.title')}
+        description={t('nodes.description')}
+        actions={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
+      />
+
+      <Card className="stagger-item">
+        <CardContent>
+          <div className="flex flex-wrap items-center gap-3">
+            <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.searchPlaceholder', 'Search nodes...')} className="flex-1 min-w-[200px] max-w-sm" />
+            <div className="flex items-center gap-1">
+              {(['active', 'unreachable', 'error'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter((prev) => {
+                    const next = new Set(prev)
+                    if (next.has(s)) next.delete(s)
+                    else next.add(s)
+                    return next
+                  })}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                    statusFilter.has(s)
+                      ? s === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : s === 'unreachable' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
+                  }`}
+                >
+                  {t(`nodes.status${s.charAt(0).toUpperCase() + s.slice(1)}`, s)}
+                </button>
+              ))}
+              {statusFilter.size > 0 && (
+                <button onClick={() => setStatusFilter(new Set())} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">×</button>
+              )}
+            </div>
+            <select
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+            >
+              <option value="">{t('nodes.allTags', 'All tags')}</option>
+              {allTags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card hover className="stagger-item">
+        <CardContent className="p-0">
           {selectedIds.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-surface-500">{selectedIds.length} selected</span>
+            <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
+              <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('nodes.selected', { count: selectedIds.length })}</span>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkTag(true)}>{t('nodes.bulkTags')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkTagRemove(true)}>{t('nodes.bulkRemoveTags', 'Bulk Remove Tag')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkExec(true)}>{t('nodes.bulkExec', 'Bulk Exec')}</Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('nodes.bulkDelete', 'Bulk Delete')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
                 bulkCheck.mutate(selectedIds, {
                   onSuccess: () => { toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
                   onError: () => toast('error', t('nodes.toastBulkCheckDone')),
                 })
               }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('nodes.bulkDelete', 'Bulk Delete')}</Button>
+              <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('nodes.clearSelection', 'Clear')}</button>
             </div>
           )}
-          {nodes.length > 1 && (
-            <Tooltip content={dragMode ? t('nodes.exitReorder') : t('nodes.reorder')}>
-              <Button variant={dragMode ? 'secondary' : 'ghost'} size="sm" onClick={() => { setDragMode(!dragMode); if (dragMode) setOrderedNodes([]) }}>
-                <IconGrip className="w-4 h-4" />
-              </Button>
-            </Tooltip>
-          )}
-          <Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
-          <input
-            type="text"
-            placeholder={t('nodes.searchPlaceholder', 'Search nodes...')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
-          />
-        </div>
-        <div className="flex items-center gap-1">
-          {(['active', 'unreachable', 'error'] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter((prev) => {
-                const next = new Set(prev)
-                if (next.has(s)) next.delete(s)
-                else next.add(s)
-                return next
-              })}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                statusFilter.has(s)
-                  ? s === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : s === 'unreachable' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
-              }`}
-            >
-              {t(`nodes.status${s.charAt(0).toUpperCase() + s.slice(1)}`, s)}
-            </button>
-          ))}
-          {statusFilter.size > 0 && (
-            <button onClick={() => setStatusFilter(new Set())} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200">×</button>
-          )}
-        </div>
-        <select
-          value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
-          className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-        >
-          <option value="">{t('nodes.allTags', 'All tags')}</option>
-          {allTags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
-        </select>
-      </div>
-
-      {statsNodeId && selectedNode && (
-        <NodeStatsPanel nodeId={statsNodeId} node={selectedNode} onClose={() => setStatsNodeId(null)} />
-      )}
-
-      <Card hover className="stagger-item">
-        <CardContent className="p-0">
           {isLoading ? (
             <TableSkeleton rows={5} cols={6} />
           ) : nodes.length === 0 ? (
@@ -488,25 +444,15 @@ export function Nodes() {
               description={t('nodes.emptyDesc')}
               action={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
             />
-          ) : dragMode ? (
-            <div className="overflow-x-auto">
-              <table className="w-full table-zebra">
-                <thead className="table-sticky">
-                  <tr className="border-b border-surface-200 dark:border-surface-800">
-                    <th className="px-2 py-3 w-8" />
-                    <th className="px-6 py-3 w-10" />
-                    {[t('nodes.node'), t('nodes.status'), t('nodes.type'), t('nodes.tags'), t('nodes.actions')].map((h) => (
-                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-                  <DragDropList items={displayNodes} onReorder={handleReorder} keyExtractor={(n) => n.id} renderItem={(node, index) => renderNodeRow(node, index)} />
-                </tbody>
-              </table>
-            </div>
           ) : (
-            <ResponsiveTable data={displayNodes} columns={columns} renderMobileItem={renderMobileNode} keyExtractor={(n) => n.id} emptyMessage={t('nodes.emptyTitle')} />
+            <ResponsiveTable
+              data={sortedNodes}
+              columns={columns}
+              renderMobileItem={renderMobileNode}
+              keyExtractor={(n) => n.id}
+              emptyMessage={t('nodes.emptyTitle')}
+              onRowClick={(node) => navigate(`/nodes/${node.id}`)}
+            />
           )}
           {data && data.total > pageSize && (
             <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
@@ -612,10 +558,6 @@ export function Nodes() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!historyNodeId} onClose={() => setHistoryNodeId(null)} title={t('nodes.statusHistory')}>
-        <NodeStatusHistoryContent nodeId={historyNodeId || ''} />
-      </Modal>
-
       <BulkTagsModal isOpen={showBulkTag} onClose={() => { setShowBulkTag(false); setBulkTag('') }} bulkTag={bulkTag} setBulkTag={setBulkTag} selectedIds={selectedIds} onDone={() => { setShowBulkTag(false); setBulkTag(''); setSelectedIds([]) }} />
 
       <BulkTagsRemoveModal isOpen={showBulkTagRemove} onClose={() => { setShowBulkTagRemove(false); setBulkRemoveTag('') }} bulkTag={bulkRemoveTag} setBulkTag={setBulkRemoveTag} selectedIds={selectedIds} onDone={() => { setShowBulkTagRemove(false); setBulkRemoveTag(''); setSelectedIds([]) }} />
@@ -633,69 +575,7 @@ export function Nodes() {
 
       <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: () => { toast('success', t('nodes.toastBulkDeleteDone')); setShowBulkDelete(false); setSelectedIds([]) } }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
 
-      <Modal isOpen={!!metricsNodeId} onClose={() => setMetricsNodeId(null)} title={t('nodes.metrics', 'Metrics')}>
-        {metricsNodeId && <NodeMetricsContent nodeId={metricsNodeId} />}
-      </Modal>
-
-      <Modal isOpen={!!cmdHistoryNodeId} onClose={() => setCmdHistoryNodeId(null)} title={t('nodes.cmdHistory', 'Command History')} size="lg">
-        {cmdHistoryNodeId && <NodeCommandHistoryContent nodeId={cmdHistoryNodeId} onRetry={(executionId) => retryNodeCommand.mutate({ nodeId: cmdHistoryNodeId, executionId }, { onSuccess: () => toast('success', t('nodes.toastRetried')) })} />}
-      </Modal>
-
-      <Modal isOpen={!!tagManageNodeId} onClose={() => setTagManageNodeId(null)} title={t('nodes.manageTags', 'Manage Tags')}>
-        {tagManageNodeId && <NodeTagManagement nodeId={tagManageNodeId} newTagInput={newTagInput} setNewTagInput={setNewTagInput} onClose={() => setTagManageNodeId(null)} />}
-      </Modal>
-
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('nodes.deleteTitle')} message={t('nodes.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteNode.isPending} />
-    </div>
-  )
-}
-
-function NodeStatsPanel({ nodeId, node, onClose }: { nodeId: string; node: Node; onClose: () => void }) {
-  const { t } = useTranslation()
-  const { data: stats, isLoading } = useNodeStats(nodeId)
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-surface-900 dark:text-white">{t('nodes.stats')} — {node.name}</h3>
-          <Button variant="ghost" size="sm" onClick={onClose}>{t('common.cancel')}</Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? <TableSkeleton rows={1} cols={4} /> : stats ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center"><p className="text-2xl font-bold text-surface-900 dark:text-white">{stats.total}</p><p className="text-xs text-surface-500">{t('nodes.totalExecutions')}</p></div>
-            <div className="text-center"><p className="text-2xl font-bold text-green-600">{stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'}</p><p className="text-xs text-surface-500">{t('nodes.successRate')}</p></div>
-            <div className="text-center"><p className="text-2xl font-bold text-surface-900 dark:text-white">{stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'}</p><p className="text-xs text-surface-500">{t('nodes.avgDuration')}</p></div>
-            <div className="text-center"><p className="text-2xl font-bold text-red-500">{stats.failed}</p><p className="text-xs text-surface-500">{t('nodes.failed')}</p></div>
-          </div>
-        ) : <p className="text-sm text-surface-500">{t('nodes.emptyTitle')}</p>}
-      </CardContent>
-    </Card>
-  )
-}
-
-function NodeStatusHistoryContent({ nodeId }: { nodeId: string }) {
-  const { t } = useTranslation()
-  const { data, isLoading } = useNodeStatusHistory(nodeId, { size: 20 })
-  const items = data?.items || []
-  return (
-    <div className="space-y-3 max-h-96 overflow-y-auto">
-      {isLoading ? <TableSkeleton rows={5} cols={4} /> : items.length === 0 ? (
-        <p className="text-sm text-surface-500 text-center py-4">{t('nodes.emptyTitle')}</p>
-      ) : items.map((item) => (
-        <div key={item.id} className="flex items-center justify-between py-2 border-b border-surface-200 dark:border-surface-800 last:border-0">
-          <div className="flex items-center gap-3">
-            {item.old_status && <Badge variant="default">{item.old_status}</Badge>}
-            {item.old_status && <span className="text-surface-400">→</span>}
-            <Badge variant={item.new_status === 'active' ? 'success' : 'danger'}>{item.new_status}</Badge>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-surface-500">{item.source}</p>
-            <p className="text-xs text-surface-400">{new Date(item.changed_at).toLocaleString()}</p>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }
@@ -726,7 +606,6 @@ function BulkTagsRemoveModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds
       <div className="space-y-4">
         <Input label={t('nodes.tag')} placeholder="tag-to-remove" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} />
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
           <Button
             variant="danger"
             onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsRemove.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsRemoved', 'Tags removed')); onDone() } }) } }}
@@ -737,84 +616,5 @@ function BulkTagsRemoveModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds
         </div>
       </div>
     </Modal>
-  )
-}
-
-function NodeMetricsContent({ nodeId }: { nodeId: string }) {
-  const { t } = useTranslation()
-  const { data: metrics, isLoading } = useNodeMetrics(nodeId)
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
-  if (!metrics) return <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noMetrics', 'No metrics available')}</p>
-  const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-  }
-  return (
-    <div className="space-y-3">
-      {[
-        [t('nodes.cpu', 'CPU'), `${metrics.cpu.usage_percent?.toFixed(1) ?? '—'}% (${metrics.cpu.cores} cores)`],
-        [t('nodes.memory', 'Memory'), `${formatBytes(metrics.memory.used_bytes)} / ${formatBytes(metrics.memory.total_bytes)} (${metrics.memory.percent?.toFixed(1)}%)`],
-        [t('nodes.disk', 'Disk'), `${formatBytes(metrics.disk.used_bytes)} / ${formatBytes(metrics.disk.total_bytes)} (${metrics.disk.percent?.toFixed(1)}%)`],
-        [t('nodes.uptimeSince', 'Uptime Since'), metrics.uptime_since ? new Date(metrics.uptime_since).toLocaleString() : '—'],
-      ].map(([key, value]) => (
-        <div key={key} className="flex justify-between py-2 border-b border-surface-200 dark:border-surface-800 last:border-0">
-          <span className="text-sm text-surface-600 dark:text-surface-400">{key}</span>
-          <span className="text-sm font-medium text-surface-900 dark:text-white">{value}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function NodeCommandHistoryContent({ nodeId, onRetry }: { nodeId: string; onRetry: (executionId: string) => void }) {
-  const { t } = useTranslation()
-  const { data, isLoading } = useNodeCommandHistory(nodeId, { size: 20 })
-  const items = data?.items || []
-  return (
-    <div className="space-y-3 max-h-96 overflow-y-auto">
-      {isLoading ? <TableSkeleton rows={5} cols={3} /> : items.length === 0 ? (
-        <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noCmdHistory', 'No command history')}</p>
-      ) : items.map((item) => (
-        <div key={item.id} className="flex items-center justify-between py-3 border-b border-surface-200 dark:border-surface-800 last:border-0">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-mono text-surface-900 dark:text-white truncate">{item.command_fingerprint}</p>
-            <p className="text-xs text-surface-500">{item.node_id || '—'} · {new Date(item.created_at).toLocaleString()}</p>
-            <Badge variant={item.exit_code === 0 ? 'success' : 'danger'}>exit {item.exit_code}</Badge>
-          </div>
-          <div className="flex items-center gap-1 ml-2">
-            {item.exit_code !== 0 && <Button variant="ghost" size="sm" onClick={() => onRetry(item.id)}>{t('common.retry')}</Button>}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function NodeTagManagement({ nodeId, newTagInput, setNewTagInput, onClose }: { nodeId: string; newTagInput: string; setNewTagInput: (v: string) => void; onClose: () => void }) {
-  const { t } = useTranslation()
-  const { toast } = useToast()
-  const { data: node } = useNode(nodeId)
-  const addTag = useAddNodeTag()
-  const removeTag = useRemoveNodeTag()
-  const tags = node?.tags || []
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {tags.map((tag) => (
-          <Badge key={tag} variant="default" className="gap-1">
-            {tag}
-            <button onClick={() => removeTag.mutate({ id: nodeId, tag }, { onSuccess: () => toast('success', t('nodes.toastTagRemoved')) })} className="ml-1 text-surface-400 hover:text-red-500">×</button>
-          </Badge>
-        ))}
-        {tags.length === 0 && <p className="text-sm text-surface-500">{t('nodes.noTags', 'No tags')}</p>}
-      </div>
-      <div className="flex gap-2">
-        <Input placeholder={t('nodes.newTag', 'New tag')} value={newTagInput} onChange={(e) => setNewTagInput(e.target.value)} />
-        <Button onClick={() => { if (newTagInput.trim()) { addTag.mutate({ id: nodeId, tag: newTagInput.trim() }, { onSuccess: () => { toast('success', t('nodes.toastTagAdded')); setNewTagInput('') } }) } }} disabled={!newTagInput.trim() || addTag.isPending}>{t('nodes.addTag')}</Button>
-      </div>
-      <div className="flex justify-end"><Button variant="ghost" onClick={onClose}>{t('common.close')}</Button></div>
-    </div>
   )
 }
