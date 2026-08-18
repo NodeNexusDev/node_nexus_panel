@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { IconStar, IconStarFilled } from './Icons'
 import { Spinner } from './Spinner'
 import { useFavorites, useAddFavorite, useRemoveFavorite } from '../../hooks/useFavorites'
@@ -10,7 +11,7 @@ interface FavoriteButtonProps {
 }
 
 export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteButtonProps) {
-  const { data: favoritesData } = useFavorites()
+  const { data: favoritesData } = useFavorites({ size: 100 })
   const addFavorite = useAddFavorite()
   const removeFavorite = useRemoveFavorite()
 
@@ -19,13 +20,14 @@ export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteBu
   const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
   const buttonClasses = size === 'sm' ? 'p-1' : 'p-1.5'
 
-  const toggle = () => {
+  const toggle = useCallback(() => {
+    if (addFavorite.isPending || removeFavorite.isPending) return
     if (isFavorited) {
       removeFavorite.mutate({ targetType, targetId })
     } else {
       addFavorite.mutate({ target_type: targetType, target_id: targetId })
     }
-  }
+  }, [isFavorited, targetType, targetId, addFavorite, removeFavorite])
 
   if (addFavorite.isPending || removeFavorite.isPending) {
     return <Spinner size="sm" />

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -51,6 +51,16 @@ export function Nodes() {
   const [orderedNodes, setOrderedNodes] = useState<Node[]>([])
   const displayNodes = orderedNodes.length > 0 ? orderedNodes : nodes
   const [dragMode, setDragMode] = useState(false)
+
+  useEffect(() => {
+    if (orderedNodes.length > 0 && nodes.length > 0) {
+      const nodeIds = new Set(nodes.map((n) => n.id))
+      const validOrdered = orderedNodes.filter((n) => nodeIds.has(n.id))
+      if (validOrdered.length !== orderedNodes.length) {
+        setOrderedNodes(validOrdered)
+      }
+    }
+  }, [nodes, orderedNodes])
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [bulkTag, setBulkTag] = useState('')
@@ -152,8 +162,8 @@ export function Nodes() {
               {t('nodes.validate')}
             </Button>
           </Tooltip>
-          <Tooltip content={t('nodes.checkNode')}>
-            <Button variant="ghost" size="sm" onClick={() => checkNode.mutate(node.id, { onSuccess: () => toast('success', 'Node checked'), onError: () => toast('error', 'Check failed') })}>
+            <Tooltip content={t('nodes.checkNode')}>
+            <Button variant="ghost" size="sm" onClick={() => checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) })}>
               <IconCheckCircle className="w-4 h-4" />
             </Button>
           </Tooltip>
@@ -288,7 +298,16 @@ export function Nodes() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-surface-500">{selectedIds.length} selected</span>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkTag(true)}>Bulk Tags</Button>
-              <Button variant="ghost" size="sm" onClick={() => { selectedIds.forEach((id) => checkNode.mutate(id)); toast('success', 'Bulk check done') }}>Bulk Check</Button>
+               <Button variant="ghost" size="sm" disabled={checkNode.isPending} onClick={() => {
+                 let done = 0
+                 const total = selectedIds.length
+                 selectedIds.forEach((id) =>
+                   checkNode.mutate(id, {
+                     onSuccess: () => { done++; if (done === total) toast('success', t('nodes.toastBulkCheckDone')) },
+                     onError: () => { done++; if (done === total) toast('error', t('nodes.toastBulkCheckDone')) },
+                   })
+                 )
+               }}>{checkNode.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
             </div>
           )}
           {nodes.length > 1 && (
@@ -374,7 +393,7 @@ export function Nodes() {
                   nodesApi.execute(execNodeId, { command: execCmd }).then((r) => {
                     toast('success', `Exit ${r.exit_code}: ${r.stdout.slice(0, 100)}`)
                     setExecNodeId(null)
-                  }).catch(() => toast('error', 'Exec failed'))
+                  }).catch(() => toast('error', t('nodes.toastExecFailed')))
                 )
               }
             }} disabled={!execCmd || !execNodeId}>{t('nodes.execCommand')}</Button>
@@ -423,22 +442,23 @@ function NodeStatsPanel({ nodeId, node, onClose }: { nodeId: string; node: Node;
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center"><p className="text-2xl font-bold text-surface-900 dark:text-white">{stats.total}</p><p className="text-xs text-surface-500">{t('nodes.totalExecutions')}</p></div>
             <div className="text-center"><p className="text-2xl font-bold text-green-600">{stats.success_rate.toFixed(1)}%</p><p className="text-xs text-surface-500">{t('nodes.successRate')}</p></div>
-            <div className="text-center"><p className="text-2xl font-bold text-surface-900 dark:text-white">{stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'}</p><p className="text-xs text-surface-500">Avg Duration</p></div>
-            <div className="text-center"><p className="text-2xl font-bold text-red-500">{stats.failed}</p><p className="text-xs text-surface-500">Failed</p></div>
+            <div className="text-center"><p className="text-2xl font-bold text-surface-900 dark:text-white">{stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'}</p><p className="text-xs text-surface-500">{t('nodes.avgDuration')}</p></div>
+            <div className="text-center"><p className="text-2xl font-bold text-red-500">{stats.failed}</p><p className="text-xs text-surface-500">{t('nodes.failed')}</p></div>
           </div>
-        ) : <p className="text-sm text-surface-500">No stats available</p>}
+        ) : <p className="text-sm text-surface-500">{t('nodes.emptyTitle')}</p>}
       </CardContent>
     </Card>
   )
 }
 
 function NodeStatusHistoryContent({ nodeId }: { nodeId: string }) {
+  const { t } = useTranslation()
   const { data, isLoading } = useNodeStatusHistory(nodeId, { size: 20 })
   const items = data?.items || []
   return (
     <div className="space-y-3 max-h-96 overflow-y-auto">
       {isLoading ? <TableSkeleton rows={5} cols={4} /> : items.length === 0 ? (
-        <p className="text-sm text-surface-500 text-center py-4">No status history</p>
+        <p className="text-sm text-surface-500 text-center py-4">{t('nodes.emptyTitle')}</p>
       ) : items.map((item) => (
         <div key={item.id} className="flex items-center justify-between py-2 border-b border-surface-200 dark:border-surface-800 last:border-0">
           <div className="flex items-center gap-3">
@@ -461,12 +481,12 @@ function BulkTagsModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds, onDo
   const { toast } = useToast()
   const bulkTagsAdd = useBulkTagsAdd()
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Bulk Tags">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('nodes.bulkTags')}>
       <div className="space-y-4">
-        <Input label="Tag" placeholder="new-tag" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} />
+        <Input label={t('nodes.tag')} placeholder="new-tag" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} />
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsAdd.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', 'Tags added'); onDone() } }) } }} disabled={!bulkTag || !selectedIds.length || bulkTagsAdd.isPending}>Add Tag</Button>
+          <Button onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsAdd.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsAdded')); onDone() } }) } }} disabled={!bulkTag || !selectedIds.length || bulkTagsAdd.isPending}>{t('nodes.addTag')}</Button>
         </div>
       </div>
     </Modal>

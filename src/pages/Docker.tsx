@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -69,6 +70,7 @@ function ContainerRow({
   selected: boolean
   onSelect: () => void
 }) {
+  const { t } = useTranslation()
   const containerName = container.Names?.split('/').pop() || container.Names
   const isRunning = container.State?.toLowerCase() === 'running'
   return (
@@ -88,13 +90,13 @@ function ContainerRow({
       <td className="px-6 py-4 text-xs text-surface-500">{container.CreatedAt}</td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-1 flex-wrap">
-          {!isRunning && <Button variant="ghost" size="sm" onClick={onStart} disabled={loading}>Start</Button>}
-          {isRunning && <Button variant="ghost" size="sm" onClick={onStop} disabled={loading}>Stop</Button>}
-          <Button variant="ghost" size="sm" onClick={onRestart} disabled={loading}>Restart</Button>
-          {isRunning && <Button variant="ghost" size="sm" onClick={onExec}>Exec</Button>}
-          <Button variant="ghost" size="sm" onClick={onLogs}>Logs</Button>
-          <Button variant="ghost" size="sm" onClick={onStats}>Stats</Button>
-          <Button variant="ghost" size="sm" onClick={onDelete} disabled={loading} className="text-red-500 hover:text-red-600">Delete</Button>
+          {!isRunning && <Button variant="ghost" size="sm" onClick={onStart} disabled={loading}>{t('common.start')}</Button>}
+          {isRunning && <Button variant="ghost" size="sm" onClick={onStop} disabled={loading}>{t('common.stop')}</Button>}
+          <Button variant="ghost" size="sm" onClick={onRestart} disabled={loading}>{t('common.restart')}</Button>
+          {isRunning && <Button variant="ghost" size="sm" onClick={onExec}>{t('nodes.execCommand')}</Button>}
+          <Button variant="ghost" size="sm" onClick={onLogs}>{t('nodes.logs')}</Button>
+          <Button variant="ghost" size="sm" onClick={onStats}>{t('nodes.stats')}</Button>
+          <Button variant="ghost" size="sm" onClick={onDelete} disabled={loading} className="text-red-500 hover:text-red-600">{t('common.delete')}</Button>
         </div>
       </td>
     </tr>
@@ -103,6 +105,7 @@ function ContainerRow({
 
 function ContainersTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const { data: containers, isLoading } = useDockerContainers(nodeId)
   const startContainer = useStartContainer()
   const stopContainer = useStopContainer()
@@ -131,7 +134,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
   }
 
   if (isLoading) return <TableSkeleton rows={5} cols={7} />
-  if (!containers?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title="No containers" description="No Docker containers found on this node" action={<Button onClick={() => setShowCreateModal(true)}>Create Container</Button>} />
+  if (!containers?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noContainers')} description={t('docker.noContainersDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createContainer')}</Button>} />
 
   const loading = startContainer.isPending || stopContainer.isPending || restartContainer.isPending
 
@@ -139,10 +142,22 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
     <>
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800">
-          <span className="text-sm text-accent-700 dark:text-accent-300">{selectedIds.size} selected</span>
-          <Button variant="ghost" size="sm" onClick={() => { for (const cid of selectedIds) bulkRestart.mutate({ container_id: cid }) }} disabled={bulkRestart.isPending}>Restart all</Button>
-          <Button variant="ghost" size="sm" onClick={() => { for (const cid of selectedIds) bulkStart.mutate({ container_id: cid }) }} disabled={bulkStart.isPending}>Start all</Button>
-          <Button variant="ghost" size="sm" onClick={() => { for (const cid of selectedIds) bulkStop.mutate({ container_id: cid }) }} disabled={bulkStop.isPending}>Stop all</Button>
+          <span className="text-sm text-accent-700 dark:text-accent-300">{t('docker.selected', { count: selectedIds.size })}</span>
+          <Button variant="ghost" size="sm" onClick={() => {
+            const ids = Array.from(selectedIds)
+            let done = 0
+            ids.forEach((cid) => bulkRestart.mutate({ container_id: cid }, { onSuccess: () => { done++; if (done === ids.length) queryClient.invalidateQueries({ queryKey: ['docker'] }) } }))
+          }} disabled={bulkRestart.isPending}>{t('docker.restartAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => {
+            const ids = Array.from(selectedIds)
+            let done = 0
+            ids.forEach((cid) => bulkStart.mutate({ container_id: cid }, { onSuccess: () => { done++; if (done === ids.length) queryClient.invalidateQueries({ queryKey: ['docker'] }) } }))
+          }} disabled={bulkStart.isPending}>{t('docker.startAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => {
+            const ids = Array.from(selectedIds)
+            let done = 0
+            ids.forEach((cid) => bulkStop.mutate({ container_id: cid }, { onSuccess: () => { done++; if (done === ids.length) queryClient.invalidateQueries({ queryKey: ['docker'] }) } }))
+          }} disabled={bulkStop.isPending}>{t('docker.stopAll')}</Button>
         </div>
       )}
       <div className="overflow-x-auto">
@@ -150,12 +165,12 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
               <th className="px-6 py-3"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} className="rounded border-surface-300 dark:border-surface-600" /></th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Image</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Ports</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Created</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.name')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.image')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.status')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.ports')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.created')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
@@ -175,7 +190,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
         </table>
       </div>
 
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Create Container" size="lg">
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('docker.createContainer')} size="lg">
         <CreateContainerForm nodeId={nodeId} form={createForm} onChange={setCreateForm} onClose={() => setShowCreateModal(false)} />
       </Modal>
 
@@ -191,7 +206,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
         {execTarget && <ExecContainerContent nodeId={nodeId} containerId={execTarget.ID} onClose={() => setExecTarget(null)} />}
       </Modal>
 
-      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={() => { if (deleteTarget) deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID }, { onSuccess: () => setDeleteTarget(null) }) }} title="Delete Container" message={`Delete "${deleteTarget?.Names?.split('/').pop()}"? This cannot be undone.`} confirmLabel={t('common.delete')} loading={deleteContainer.isPending} />
+      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={() => { if (deleteTarget) deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID }, { onSuccess: () => setDeleteTarget(null) }) }} title={t('docker.deleteContainer')} message={t('docker.deleteContainerMsg', { name: deleteTarget?.Names?.split('/').pop() })} confirmLabel={t('common.delete')} loading={deleteContainer.isPending} />
     </>
   )
 }
@@ -206,45 +221,47 @@ function CreateContainerForm({ nodeId, form, onChange, onClose }: { nodeId: stri
   }
   return (
     <div className="space-y-4">
-      <Input label="Image" placeholder="nginx:latest" value={form.image} onChange={(e) => onChange({ ...form, image: e.target.value })} />
-      <Input label="Name" placeholder="my-container" value={form.name} onChange={(e) => onChange({ ...form, name: e.target.value })} />
-      <Input label="Command" placeholder="/bin/sh -c 'echo hello'" value={form.command} onChange={(e) => onChange({ ...form, command: e.target.value })} />
-      <Input label="Ports (host:container, ...)" placeholder="8080:80, 443:443" value={form.ports} onChange={(e) => onChange({ ...form, ports: e.target.value })} />
-      <Input label="Environment (KEY=val, ...)" placeholder="NODE_ENV=production, PORT=3000" value={form.env} onChange={(e) => onChange({ ...form, env: e.target.value })} />
+      <Input label={t('docker.image')} placeholder="nginx:latest" value={form.image} onChange={(e) => onChange({ ...form, image: e.target.value })} />
+      <Input label={t('docker.name')} placeholder="my-container" value={form.name} onChange={(e) => onChange({ ...form, name: e.target.value })} />
+      <Input label={t('docker.command')} placeholder="/bin/sh -c 'echo hello'" value={form.command} onChange={(e) => onChange({ ...form, command: e.target.value })} />
+      <Input label={`${t('docker.ports')} (${t('docker.hostPort')})`} placeholder="8080:80, 443:443" value={form.ports} onChange={(e) => onChange({ ...form, ports: e.target.value })} />
+      <Input label={t('docker.environment')} placeholder="NODE_ENV=production, PORT=3000" value={form.env} onChange={(e) => onChange({ ...form, env: e.target.value })} />
       <div className="flex justify-end gap-3 pt-2">
         <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-        <Button onClick={handleCreate} disabled={createContainer.isPending || !form.image}>{createContainer.isPending ? t('common.loading') : 'Create'}</Button>
+        <Button onClick={handleCreate} disabled={createContainer.isPending || !form.image}>{createContainer.isPending ? t('common.loading') : t('docker.createContainer')}</Button>
       </div>
     </div>
   )
 }
 
 function ContainerLogsContent({ nodeId, containerId }: { nodeId: string; containerId: string }) {
+  const { t } = useTranslation()
   const { data: logs, isLoading } = useDockerContainerLogs(nodeId, containerId, 200)
   return (
     <div className="max-h-96 overflow-y-auto">
       {isLoading ? <Spinner size="lg" className="mx-auto my-8" /> : (
-        <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 whitespace-pre-wrap break-all bg-surface-50 dark:bg-surface-800/50 rounded p-4">{logs || 'No logs'}</pre>
+        <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 whitespace-pre-wrap break-all bg-surface-50 dark:bg-surface-800/50 rounded p-4">{logs || t('docker.noLogs')}</pre>
       )}
     </div>
   )
 }
 
 function ContainerStatsContent({ nodeId, containerId }: { nodeId: string; containerId: string }) {
+  const { t } = useTranslation()
   const { data: stats, isLoading } = useDockerContainerStats(nodeId, containerId)
   if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
-  if (!stats) return <p className="text-sm text-surface-500 text-center py-4">No stats available</p>
+  if (!stats) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noStats')}</p>
   return (
     <div className="space-y-3">
       {[
-        ['Container', stats.Container],
-        ['Name', stats.Name],
-        ['CPU', stats.CPUPerc],
-        ['Memory', `${stats.MemUsage} (${stats.MemPerc})`],
-        ['Net I/O', stats.NetIO],
-        ['Block I/O', stats.BlockIO],
-        ['Memory Limit', stats.MemLimit || '—'],
-        ['PIDs', stats.PIDs || '—'],
+        [t('docker.container'), stats.Container],
+        [t('docker.name'), stats.Name],
+        [t('docker.cpu'), stats.CPUPerc],
+        [t('docker.memory'), `${stats.MemUsage} (${stats.MemPerc})`],
+        [t('docker.netIO'), stats.NetIO],
+        [t('docker.blockIO'), stats.BlockIO],
+        [t('docker.memoryLimit'), stats.MemLimit || '—'],
+        [t('docker.pids'), stats.PIDs || '—'],
       ].map(([key, value]) => (
         <div key={key} className="flex justify-between py-2 border-b border-surface-200 dark:border-surface-800 last:border-0">
           <span className="text-sm text-surface-600 dark:text-surface-400">{key}</span>
@@ -268,9 +285,9 @@ function ExecContainerContent({ nodeId, containerId, onClose }: { nodeId: string
   return (
     <div className="space-y-4">
       <div className="flex gap-3">
-        <Input label="Command" placeholder="sh -c 'ls -la'" value={command} onChange={(e) => setCommand(e.target.value)} className="flex-1" />
+        <Input label={t('docker.command')} placeholder="sh -c 'ls -la'" value={command} onChange={(e) => setCommand(e.target.value)} className="flex-1" />
         <div className="flex items-end">
-          <Button onClick={handleExec} disabled={execContainer.isPending || !command}>{execContainer.isPending ? <Spinner size="sm" /> : 'Run'}</Button>
+          <Button onClick={handleExec} disabled={execContainer.isPending || !command}>{execContainer.isPending ? <Spinner size="sm" /> : t('common.start')}</Button>
         </div>
       </div>
       {output && <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 bg-surface-50 dark:bg-surface-800/50 rounded p-4 max-h-64 overflow-y-auto whitespace-pre-wrap">{output}</pre>}
@@ -293,20 +310,20 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
   const [buildTag, setBuildTag] = useState('')
 
   if (isLoading) return <TableSkeleton rows={5} cols={5} />
-  if (!images?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title="No images" description="No Docker images found on this node" action={<Button onClick={() => setShowBuildModal(true)}>Build Image</Button>} />
+  if (!images?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noImages')} description={t('docker.noImagesDesc')} action={<Button onClick={() => setShowBuildModal(true)}>{t('docker.buildImage')}</Button>} />
 
   return (
     <>
-      <div className="flex justify-end mb-4 px-4"><Button onClick={() => setShowBuildModal(true)}>Build Image</Button></div>
+      <div className="flex justify-end mb-4 px-4"><Button onClick={() => setShowBuildModal(true)}>{t('docker.buildImage')}</Button></div>
       <div className="overflow-x-auto">
         <table className="w-full table-zebra">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Repository</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Tag</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Size</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.repository')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.tag')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.id')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.size')}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
@@ -318,8 +335,8 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{img.Size}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: img.ID, tag: img.Tag })}>Tag</Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteImage.mutate({ nodeId, imageId: img.ID })} disabled={deleteImage.isPending} className="text-red-500">Delete</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: img.ID, tag: img.Tag })}>{t('docker.tag')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteImage.mutate({ nodeId, imageId: img.ID })} disabled={deleteImage.isPending} className="text-red-500">{t('common.delete')}</Button>
                   </div>
                 </td>
               </tr>
@@ -328,27 +345,27 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
         </table>
       </div>
 
-      <Modal isOpen={!!tagTarget} onClose={() => setTagTarget(null)} title={`Tag image: ${tagTarget?.tag || ''}`}>
+      <Modal isOpen={!!tagTarget} onClose={() => setTagTarget(null)} title={`${t('docker.tag')}: ${tagTarget?.tag || ''}`}>
         <div className="space-y-4">
-          <Input label="Repository" placeholder="myregistry/myimage" value={tagRepo} onChange={(e) => setTagRepo(e.target.value)} />
-          <Input label="Tag" placeholder="latest" value={tagName} onChange={(e) => setTagName(e.target.value)} />
+          <Input label={t('docker.repository')} placeholder="myregistry/myimage" value={tagRepo} onChange={(e) => setTagRepo(e.target.value)} />
+          <Input label={t('docker.tag')} placeholder="latest" value={tagName} onChange={(e) => setTagName(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setTagTarget(null)}>Cancel</Button>
-            <Button onClick={() => { if (tagTarget && tagRepo && tagName) { tagImage.mutate({ nodeId, imageId: tagTarget.id, data: { repo: tagRepo, tag: tagName } }, { onSuccess: () => setTagTarget(null) }) } }} disabled={!tagRepo || !tagName || tagImage.isPending}>{tagImage.isPending ? t('common.loading') : 'Tag'}</Button>
+            <Button variant="ghost" onClick={() => setTagTarget(null)}>{t('common.cancel')}</Button>
+            <Button onClick={() => { if (tagTarget && tagRepo && tagName) { tagImage.mutate({ nodeId, imageId: tagTarget.id, data: { repo: tagRepo, tag: tagName } }, { onSuccess: () => setTagTarget(null) }) } }} disabled={!tagRepo || !tagName || tagImage.isPending}>{tagImage.isPending ? t('common.loading') : t('docker.tag')}</Button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={showBuildModal} onClose={() => setShowBuildModal(false)} title="Build Image" size="lg">
+      <Modal isOpen={showBuildModal} onClose={() => setShowBuildModal(false)} title={t('docker.buildImage')} size="lg">
         <div className="space-y-4">
-          <Input label="Tag" placeholder="myimage:latest" value={buildTag} onChange={(e) => setBuildTag(e.target.value)} />
+          <Input label={t('docker.tag')} placeholder="myimage:latest" value={buildTag} onChange={(e) => setBuildTag(e.target.value)} />
           <div className="space-y-1">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Dockerfile</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('docker.dockerfile')}</label>
             <textarea rows={10} value={buildDockerfile} onChange={(e) => setBuildDockerfile(e.target.value)} className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" placeholder="FROM nginx:latest" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowBuildModal(false)}>Cancel</Button>
-            <Button onClick={() => { buildImage.mutate({ nodeId, data: { dockerfile: buildDockerfile, tag: buildTag } }, { onSuccess: () => setShowBuildModal(false) }) }} disabled={!buildTag || !buildDockerfile || buildImage.isPending}>{buildImage.isPending ? t('common.loading') : 'Build'}</Button>
+            <Button variant="ghost" onClick={() => setShowBuildModal(false)}>{t('common.cancel')}</Button>
+            <Button onClick={() => { buildImage.mutate({ nodeId, data: { dockerfile: buildDockerfile, tag: buildTag } }, { onSuccess: () => setShowBuildModal(false) }) }} disabled={!buildTag || !buildDockerfile || buildImage.isPending}>{buildImage.isPending ? t('common.loading') : t('docker.buildImage')}</Button>
           </div>
         </div>
       </Modal>
@@ -357,17 +374,18 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
 }
 
 function NetworksTab({ nodeId }: { nodeId: string }) {
+  const { t } = useTranslation()
   const { data: networks, isLoading } = useDockerNetworks(nodeId)
   if (isLoading) return <TableSkeleton rows={3} cols={4} />
-  if (!networks?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title="No networks" description="No Docker networks found" />
+  if (!networks?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noNetworks')} description={t('docker.noNetworksDesc')} />
   return (
     <div className="overflow-x-auto">
       <table className="w-full table-zebra">
         <thead className="table-sticky">
           <tr className="border-b border-surface-200 dark:border-surface-800">
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Name</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Driver</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Scope</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.name')}</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.driver')}</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.scope')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
@@ -385,16 +403,17 @@ function NetworksTab({ nodeId }: { nodeId: string }) {
 }
 
 function VolumesTab({ nodeId }: { nodeId: string }) {
+  const { t } = useTranslation()
   const { data: volumes, isLoading } = useDockerVolumes(nodeId)
   if (isLoading) return <TableSkeleton rows={3} cols={4} />
-  if (!volumes?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title="No volumes" description="No Docker volumes found" />
+  if (!volumes?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noVolumes')} description={t('docker.noVolumesDesc')} />
   return (
     <div className="overflow-x-auto">
       <table className="w-full table-zebra">
         <thead className="table-sticky">
           <tr className="border-b border-surface-200 dark:border-surface-800">
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Name</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Driver</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.name')}</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.driver')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
@@ -414,7 +433,13 @@ export function Docker() {
   const { t } = useTranslation()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
-  const [selectedNodeId, setSelectedNodeId] = useState(nodes[0]?.id || '')
+  const [selectedNodeId, setSelectedNodeId] = useState('')
+
+  useEffect(() => {
+    if (nodes.length > 0 && !selectedNodeId) {
+      setSelectedNodeId(nodes[0].id)
+    }
+  }, [nodes, selectedNodeId])
   const [activeTab, setActiveTab] = useState<Tab>('containers')
   const [showPullModal, setShowPullModal] = useState(false)
   const [pullImage, setPullImage] = useState('')
@@ -471,7 +496,7 @@ export function Docker() {
 
       <Modal isOpen={showPullModal} onClose={() => setShowPullModal(false)} title={t('docker.pullImage')}>
         <div className="space-y-4">
-          <Input label="Image" placeholder="nginx:latest" value={pullImage} onChange={(e) => setPullImage(e.target.value)} />
+          <Input label={t('docker.image')} placeholder="nginx:latest" value={pullImage} onChange={(e) => setPullImage(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowPullModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={() => { if (selectedNodeId && pullImage) { pullImageMutation.mutate({ nodeId: selectedNodeId, data: { image: pullImage } }, { onSuccess: () => { setShowPullModal(false); setPullImage('') } }) } }} disabled={!pullImage || !selectedNodeId || pullImageMutation.isPending}>

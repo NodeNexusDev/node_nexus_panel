@@ -34,6 +34,7 @@ function App() {
               <Route element={<MainLayout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/nodes" element={<Nodes />} />
+                <Route path="/nodes/:id" element={<Nodes />} />
                 <Route path="/commands" element={<Commands />} />
                 <Route path="/scripts" element={<Scripts />} />
                 <Route path="/docker" element={<Docker />} />

@@ -107,3 +107,27 @@ export function useRetryScriptExecution() {
     },
   })
 }
+
+export function useCloneScript() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, newName }: { id: string; newName?: string }) =>
+      scriptsApi.clone(id, newName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scripts'] })
+    },
+  })
+}
+
+export function useSetScriptSchedule() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { cron: string } }) =>
+      scriptsApi.setSchedule(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scripts'] })
+    },
+  })
+}

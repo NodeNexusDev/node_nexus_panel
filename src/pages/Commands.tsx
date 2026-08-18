@@ -45,13 +45,13 @@ export function Commands() {
   const handleCreate = () => {
     createCommand.mutate(
       { name: newCmd.name, command: newCmd.command, description: newCmd.description || undefined },
-      { onSuccess: () => { toast('success', 'Command created'); setShowCreateModal(false); setNewCmd({ name: '', command: '', description: '' }) }, onError: () => toast('error', 'Failed to create command') },
+      { onSuccess: () => { toast('success', t('commands.toastCreated')); setShowCreateModal(false); setNewCmd({ name: '', command: '', description: '' }) }, onError: () => toast('error', t('commands.toastCreateFailed')) },
     )
   }
 
   const handleDelete = () => {
     if (!deleteTarget) return
-    deleteCommand.mutate(deleteTarget.id, { onSuccess: () => { toast('success', 'Command deleted'); setDeleteTarget(null) }, onError: () => toast('error', 'Failed to delete') })
+    deleteCommand.mutate(deleteTarget.id, { onSuccess: () => { toast('success', t('commands.toastDeleted')); setDeleteTarget(null) }, onError: () => toast('error', t('commands.toastDeleteFailed')) })
   }
 
   return (
@@ -61,7 +61,7 @@ export function Commands() {
           <h1 className="text-3xl font-bold gradient-text">{t('commands.title')}</h1>
           <p className="text-surface-500 dark:text-surface-400 mt-1">{t('commands.description')}</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>Create Command</Button>
+        <Button onClick={() => setShowCreateModal(true)}>{t('commands.createCommand')}</Button>
       </div>
 
       <Card className="animate-slide-up" style={{ animationDelay: '100ms' }}>
@@ -100,7 +100,7 @@ export function Commands() {
           {commandsLoading ? (
             <div className="space-y-4 p-6">{Array.from({ length: 3 }).map((_, i) => (<div key={i} className="space-y-2 stagger-item" style={{ animationDelay: `${i * 50}ms` }}><div className="flex items-center gap-3"><Skeleton variant="text" className="w-32" /><Skeleton variant="text" className="w-16" /><Skeleton variant="text" className="w-20 ml-auto" /></div><Skeleton variant="rectangular" className="w-full h-16" /></div>))}</div>
           ) : commands.length === 0 ? (
-            <EmptyState icon={<IconCommands className="w-10 h-10" />} title={t('commands.emptyTitle')} description={t('commands.emptyDesc')} action={<Button onClick={() => setShowCreateModal(true)}>Create Command</Button>} />
+            <EmptyState icon={<IconCommands className="w-10 h-10" />} title={t('commands.emptyTitle')} description={t('commands.emptyDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('commands.createCommand')}</Button>} />
           ) : (
             <div className="divide-y divide-surface-200 dark:divide-surface-800">
               {commands.map((item, index) => (
@@ -124,11 +124,11 @@ export function Commands() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Create Command">
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('commands.executeCommand')}>
         <div className="space-y-4">
-          <Input label="Name" placeholder="check-disk" value={newCmd.name} onChange={(e) => setNewCmd({ ...newCmd, name: e.target.value })} />
-          <Input label="Command" placeholder="df -h" value={newCmd.command} onChange={(e) => setNewCmd({ ...newCmd, command: e.target.value })} />
-          <Input label="Description" placeholder="Check disk usage" value={newCmd.description} onChange={(e) => setNewCmd({ ...newCmd, description: e.target.value })} />
+          <Input label={t('settings.name')} placeholder="check-disk" value={newCmd.name} onChange={(e) => setNewCmd({ ...newCmd, name: e.target.value })} />
+          <Input label={t('docker.command')} placeholder="df -h" value={newCmd.command} onChange={(e) => setNewCmd({ ...newCmd, command: e.target.value })} />
+          <Input label={t('scripts.description')} placeholder="Check disk usage" value={newCmd.description} onChange={(e) => setNewCmd({ ...newCmd, description: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreate} disabled={createCommand.isPending || !newCmd.name || !newCmd.command}>{createCommand.isPending ? t('common.loading') : t('common.save')}</Button>
@@ -136,7 +136,7 @@ export function Commands() {
         </div>
       </Modal>
 
-      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title="Delete Command" message={`Delete "${deleteTarget?.name}"?`} confirmLabel={t('common.delete')} loading={deleteCommand.isPending} />
+      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteCommand.isPending} />
     </div>
   )
 }

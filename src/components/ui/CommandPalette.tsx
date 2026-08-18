@@ -84,11 +84,11 @@ export function CommandPalette() {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedIndex((i) => (i + 1) % filtered.length)
+        setSelectedIndex((i) => filtered.length > 0 ? (i + 1) % filtered.length : 0)
         break
       case 'ArrowUp':
         e.preventDefault()
-        setSelectedIndex((i) => (i - 1 + filtered.length) % filtered.length)
+        setSelectedIndex((i) => filtered.length > 0 ? (i - 1 + filtered.length) % filtered.length : 0)
         break
       case 'Enter':
         e.preventDefault()
@@ -159,7 +159,7 @@ export function CommandPalette() {
               ))}
               {query.length >= 2 && (
                 <div className="border-t border-surface-200 dark:border-surface-800 mt-2 pt-2">
-                  <p className="px-3 py-1 text-xs font-medium text-surface-500 uppercase">Search Results</p>
+                  <p className="px-3 py-1 text-xs font-medium text-surface-500 uppercase">{t('common.searchResults')}</p>
                   {searchLoading ? (
                     <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
                   ) : flatSearchResults.length > 0 ? (
@@ -181,7 +181,7 @@ export function CommandPalette() {
                       </button>
                     ))
                   ) : (
-                    <p className="px-3 py-4 text-sm text-surface-500 text-center">No results found</p>
+                    <p className="px-3 py-4 text-sm text-surface-500 text-center">{t('common.noResults')}</p>
                   )}
                 </div>
               )}

@@ -49,8 +49,8 @@ export function Settings() {
   const handleSaveEditKey = () => {
     if (!editKeyTarget) return
     updateApiKey.mutate({ id: editKeyTarget.id, data: { name: editKeyName, scope: editKeyScope, is_active: editKeyActive } }, {
-      onSuccess: () => { toast('success', 'API key updated'); setEditKeyTarget(null) },
-      onError: () => toast('error', 'Failed to update API key'),
+      onSuccess: () => { toast('success', t('settings.toastKeyUpdated')); setEditKeyTarget(null) },
+      onError: () => toast('error', t('settings.toastKeyUpdateFailed')),
     })
   }
 
@@ -65,10 +65,10 @@ export function Settings() {
         a.download = `node-nexus-config-${new Date().toISOString().slice(0, 10)}.json`
         a.click()
         URL.revokeObjectURL(url)
-        toast('success', 'Config exported')
+        toast('success', t('settings.toastConfigExported'))
       }
     } catch {
-      toast('error', 'Failed to export config')
+      toast('error', t('settings.toastConfigExportFailed'))
     }
   }
 
@@ -82,12 +82,12 @@ export function Settings() {
         configImport.mutate(data, {
           onSuccess: (result) => {
             const summary = [result.nodes_created, result.commands_created, result.scripts_created].filter(Boolean).join(', ')
-            toast('success', summary ? `Config imported: ${summary}` : 'Config imported')
+            toast('success', summary ? t('settings.toastConfigImported', { summary }) : t('settings.toastConfigImportNoop'))
           },
-          onError: () => toast('error', 'Failed to import config'),
+          onError: () => toast('error', t('settings.toastConfigImportFailed')),
         })
       } catch {
-        toast('error', 'Invalid JSON file')
+        toast('error', t('settings.toastInvalidJson'))
       }
     }
     reader.readAsText(file)
@@ -123,7 +123,7 @@ export function Settings() {
                       <p className="text-xs text-surface-500 dark:text-surface-500 mt-1">{t('settings.created')} {new Date(key.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => { setEditKeyTarget({ id: key.id, name: key.name, scope: key.scope, is_active: key.is_active }); setEditKeyName(key.name); setEditKeyScope(key.scope); setEditKeyActive(key.is_active) }}>Edit</Button>
+                      <Button variant="ghost" size="sm" onClick={() => { setEditKeyTarget({ id: key.id, name: key.name, scope: key.scope, is_active: key.is_active }); setEditKeyName(key.name); setEditKeyScope(key.scope); setEditKeyActive(key.is_active) }}>{t('common.edit')}</Button>
                       <Button variant="ghost" size="sm" onClick={() => setDeleteKeyTarget({ id: key.id, name: key.name })}>{t('common.delete')}</Button>
                     </div>
                   </div>
@@ -136,14 +136,14 @@ export function Settings() {
       </Card>
 
       <Card className="stagger-item" style={{ animationDelay: '200ms' }}>
-        <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">Config</h2></CardHeader>
+        <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.config')}</h2></CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleExport} disabled={configExport.isFetching}>Export Config</Button>
-            <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={configImport.isPending}>Import Config</Button>
+            <Button variant="secondary" onClick={handleExport} disabled={configExport.isFetching}>{t('settings.exportConfig')}</Button>
+            <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={configImport.isPending}>{t('settings.importConfig')}</Button>
             <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
           </div>
-          {configImport.isPending && <p className="text-sm text-surface-500 mt-2">Importing...</p>}
+          {configImport.isPending && <p className="text-sm text-surface-500 mt-2">{t('settings.importing')}</p>}
         </CardContent>
       </Card>
 
@@ -159,19 +159,19 @@ export function Settings() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!editKeyTarget} onClose={() => setEditKeyTarget(null)} title={`Edit API Key: ${editKeyTarget?.name || ''}`} size="sm">
+      <Modal isOpen={!!editKeyTarget} onClose={() => setEditKeyTarget(null)} title={`${t('common.edit')} API Key: ${editKeyTarget?.name || ''}`} size="sm">
         <div className="space-y-4">
-          <Input label="Name" value={editKeyName} onChange={(e) => setEditKeyName(e.target.value)} />
+          <Input label={t('settings.name')} value={editKeyName} onChange={(e) => setEditKeyName(e.target.value)} />
           <div className="space-y-1">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Scope</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('settings.scope')}</label>
             <select value={editKeyScope} onChange={(e) => setEditKeyScope(e.target.value as 'read-only' | 'read-write')} className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="read-only">Read Only</option>
-              <option value="read-write">Read Write</option>
+              <option value="read-only">{t('settings.readOnly')}</option>
+              <option value="read-write">{t('settings.readWrite')}</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={editKeyActive} onChange={(e) => setEditKeyActive(e.target.checked)} className="rounded border-surface-300 dark:border-surface-600" />
-            <span className="text-sm text-surface-700 dark:text-surface-300">Active</span>
+            <span className="text-sm text-surface-700 dark:text-surface-300">{t('settings.active')}</span>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setEditKeyTarget(null)}>{t('common.cancel')}</Button>

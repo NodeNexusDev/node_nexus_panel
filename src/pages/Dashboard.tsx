@@ -118,12 +118,12 @@ export function Dashboard() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400"><IconStar className="w-4 h-4" /></div>
-              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Favorites</h2>
+              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.favorites')}</h2>
             </div>
           </CardHeader>
           <CardContent>
             {favList.length === 0 ? (
-              <EmptyState icon={<IconStar className="w-10 h-10" />} title="No favorites" description="Star items to add them here" action={<Button onClick={() => navigate('/nodes')}>Browse Nodes</Button>} />
+              <EmptyState icon={<IconStar className="w-10 h-10" />} title={t('dashboard.favoritesEmpty')} description={t('dashboard.favoritesDesc')} action={<Button onClick={() => navigate('/nodes')}>{t('dashboard.browseNodes')}</Button>} />
             ) : (
               <div className="space-y-3">
                 {favList.slice(0, 6).map((fav, index) => (
@@ -166,15 +166,15 @@ export function Dashboard() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400"><IconZap className="w-4 h-4" /></div>
-              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Command Metrics (7 days)</h2>
+              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.commandMetrics')}</h2>
             </div>
           </CardHeader>
           <CardContent>
             <MiniChart data={commandChartData} color="bg-accent-500" className="h-16" />
             <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-              <div><p className="text-2xl font-bold text-surface-900 dark:text-white">{metrics?.command_metrics?.reduce((s, m) => s + m.total, 0) || 0}</p><p className="text-xs text-surface-500">Total</p></div>
-              <div><p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics?.command_metrics?.reduce((s, m) => s + m.successful, 0) || 0}</p><p className="text-xs text-surface-500">Successful</p></div>
-              <div><p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics?.command_metrics?.reduce((s, m) => s + m.failed, 0) || 0}</p><p className="text-xs text-surface-500">Failed</p></div>
+              <div><p className="text-2xl font-bold text-surface-900 dark:text-white">{metrics?.command_metrics?.reduce((s, m) => s + m.total, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.total')}</p></div>
+              <div><p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics?.command_metrics?.reduce((s, m) => s + m.successful, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.successful')}</p></div>
+              <div><p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics?.command_metrics?.reduce((s, m) => s + m.failed, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.failed')}</p></div>
             </div>
           </CardContent>
         </Card>
@@ -183,15 +183,15 @@ export function Dashboard() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400"><IconScripts className="w-4 h-4" /></div>
-              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Script Metrics (7 days)</h2>
+              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.scriptMetrics')}</h2>
             </div>
           </CardHeader>
           <CardContent>
             <MiniChart data={scriptChartData} color="bg-green-500" className="h-16" />
             <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-              <div><p className="text-2xl font-bold text-surface-900 dark:text-white">{metrics?.script_metrics?.reduce((s, m) => s + m.total, 0) || 0}</p><p className="text-xs text-surface-500">Total</p></div>
-              <div><p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics?.script_metrics?.reduce((s, m) => s + m.successful, 0) || 0}</p><p className="text-xs text-surface-500">Successful</p></div>
-              <div><p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics?.script_metrics?.reduce((s, m) => s + m.failed, 0) || 0}</p><p className="text-xs text-surface-500">Failed</p></div>
+              <div><p className="text-2xl font-bold text-surface-900 dark:text-white">{metrics?.script_metrics?.reduce((s, m) => s + m.total, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.total')}</p></div>
+              <div><p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics?.script_metrics?.reduce((s, m) => s + m.successful, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.successful')}</p></div>
+              <div><p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics?.script_metrics?.reduce((s, m) => s + m.failed, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.failed')}</p></div>
             </div>
           </CardContent>
         </Card>

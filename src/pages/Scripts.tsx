@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -18,11 +18,13 @@ import {
   useCreateScript,
   useDeleteScript,
   useRunScript,
+  useUpdateScript,
+  useCloneScript,
+  useSetScriptSchedule,
   useScriptExecutions,
   useCancelScriptExecution,
   useRetryScriptExecution,
 } from '../hooks/useScripts'
-import { scriptsApi } from '../api/scripts'
 import { useToast } from '../components/ui/useToast'
 import type { Script } from '../api/types'
 
@@ -35,6 +37,9 @@ export function Scripts() {
   const runScript = useRunScript()
   const cancelExec = useCancelScriptExecution()
   const retryExec = useRetryScriptExecution()
+  const updateScript = useUpdateScript()
+  const cloneScript = useCloneScript()
+  const setSchedule = useSetScriptSchedule()
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
@@ -53,6 +58,16 @@ export function Scripts() {
   const displayScripts = orderedScripts.length > 0 ? orderedScripts : scripts
   const [dragMode, setDragMode] = useState(false)
 
+  useEffect(() => {
+    if (orderedScripts.length > 0 && scripts.length > 0) {
+      const scriptIds = new Set(scripts.map((s) => s.id))
+      const validOrdered = orderedScripts.filter((s) => scriptIds.has(s.id))
+      if (validOrdered.length !== orderedScripts.length) {
+        setOrderedScripts(validOrdered)
+      }
+    }
+  }, [scripts, orderedScripts])
+
   const handleReorder = useCallback((reordered: Script[]) => { setOrderedScripts(reordered) }, [])
 
   const renderScriptCard = (script: Script, index: number = 0) => (
@@ -66,7 +81,7 @@ export function Scripts() {
               <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">{script.description}</p>
             </div>
           </div>
-          <Badge variant="info">{script.steps.length} steps</Badge>
+          <Badge variant="info">{script.steps.length} {t('scripts.steps')}</Badge>
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
           {script.tags.map((tag) => (<Badge key={tag} variant="default">{tag}</Badge>))}
@@ -80,7 +95,7 @@ export function Scripts() {
           <div className="flex items-center gap-1 flex-wrap">
             <FavoriteButton targetType="script" targetId={script.id} size="sm" />
             <Button variant="ghost" size="sm" onClick={() => { setExecutionsScriptId(script.id) }}>{t('scripts.executions')}</Button>
-            <Button variant="ghost" size="sm" onClick={() => { setCloneTarget({ id: script.id, name: script.name }) }}>Clone</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setCloneTarget({ id: script.id, name: script.name }) }}>{t('scripts.clone')}</Button>
             <Button variant="ghost" size="sm" onClick={() => { setScheduleTarget({ id: script.id, name: script.name }); setScheduleCron('') }}>{t('scripts.schedule')}</Button>
             <Button variant="ghost" size="sm" onClick={() => { setEditScript(script); setEditName(script.name); setEditDesc(script.description || '') }}>{t('scripts.edit')}</Button>
             <Button variant="secondary" size="sm" onClick={() => handleRun(script.id, script.name)} disabled={runScript.isPending}>
@@ -111,26 +126,26 @@ export function Scripts() {
 
   const handleClone = () => {
     if (!cloneTarget) return
-    scriptsApi.clone(cloneTarget.id).then(() => {
-      toast('success', `Cloned "${cloneTarget.name}"`)
-      setCloneTarget(null)
-    }).catch(() => toast('error', 'Clone failed'))
+    cloneScript.mutate({ id: cloneTarget.id }, {
+      onSuccess: () => { toast('success', t('scripts.toastCloned', { name: cloneTarget.name })); setCloneTarget(null) },
+      onError: () => toast('error', t('scripts.toastCloneFailed')),
+    })
   }
 
   const handleSaveEdit = () => {
     if (!editScript) return
-    scriptsApi.update(editScript.id, { name: editName, description: editDesc }).then(() => {
-      toast('success', 'Script updated')
-      setEditScript(null)
-    }).catch(() => toast('error', 'Update failed'))
+    updateScript.mutate({ id: editScript.id, data: { name: editName, description: editDesc } }, {
+      onSuccess: () => { toast('success', t('scripts.toastUpdated')); setEditScript(null) },
+      onError: () => toast('error', t('scripts.toastUpdateFailed')),
+    })
   }
 
   const handleSetSchedule = () => {
     if (!scheduleTarget) return
-    scriptsApi.setSchedule(scheduleTarget.id, { cron: scheduleCron }).then(() => {
-      toast('success', 'Schedule set')
-      setScheduleTarget(null)
-    }).catch(() => toast('error', 'Schedule failed'))
+    setSchedule.mutate({ id: scheduleTarget.id, data: { cron: scheduleCron } }, {
+      onSuccess: () => { toast('success', t('scripts.toastScheduleSet')); setScheduleTarget(null) },
+      onError: () => toast('error', t('scripts.toastScheduleFailed')),
+    })
   }
 
   return (
@@ -162,7 +177,7 @@ export function Scripts() {
 
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('scripts.createScript')} size="lg">
         <div className="space-y-4">
-          <Input label={t('scripts.title')} placeholder="backup-db.sh" value={newScript.name} onChange={(e) => setNewScript({ ...newScript, name: e.target.value })} />
+          <Input label={t('settings.name')} placeholder="backup-db.sh" value={newScript.name} onChange={(e) => setNewScript({ ...newScript, name: e.target.value })} />
           <Input label={t('scripts.description')} placeholder="Backup PostgreSQL database" value={newScript.description} onChange={(e) => setNewScript({ ...newScript, description: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
@@ -173,7 +188,7 @@ export function Scripts() {
 
       <Modal isOpen={!!editScript} onClose={() => setEditScript(null)} title={`${t('scripts.edit')}: ${editScript?.name || ''}`}>
         <div className="space-y-4">
-          <Input label={t('scripts.title')} value={editName} onChange={(e) => setEditName(e.target.value)} />
+          <Input label={t('settings.name')} value={editName} onChange={(e) => setEditName(e.target.value)} />
           <Input label={t('scripts.description')} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setEditScript(null)}>{t('common.cancel')}</Button>
@@ -188,7 +203,7 @@ export function Scripts() {
 
       <Modal isOpen={!!scheduleTarget} onClose={() => setScheduleTarget(null)} title={`${t('scripts.schedule')}: ${scheduleTarget?.name || ''}`}>
         <div className="space-y-4">
-          <Input label="Cron expression" placeholder="0 2 * * *" value={scheduleCron} onChange={(e) => setScheduleCron(e.target.value)} />
+          <Input label={t('scripts.cronExpression')} placeholder="0 2 * * *" value={scheduleCron} onChange={(e) => setScheduleCron(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setScheduleTarget(null)}>{t('common.cancel')}</Button>
             <Button onClick={handleSetSchedule}>{t('common.save')}</Button>
@@ -196,7 +211,7 @@ export function Scripts() {
         </div>
       </Modal>
 
-      <ConfirmDialog isOpen={!!cloneTarget} onClose={() => setCloneTarget(null)} onConfirm={handleClone} title="Clone Script" message={`Clone "${cloneTarget?.name}"?`} confirmLabel="Clone" />
+      <ConfirmDialog isOpen={!!cloneTarget} onClose={() => setCloneTarget(null)} onConfirm={handleClone} title={t('scripts.cloneTitle')} message={t('scripts.cloneMsg', { name: cloneTarget?.name })} confirmLabel={t('scripts.clone')} />
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteScript.isPending} />
     </div>
   )

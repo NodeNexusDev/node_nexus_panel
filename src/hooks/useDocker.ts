@@ -191,37 +191,22 @@ export function useBulkDockerExec() {
 }
 
 export function useBulkDockerRestart() {
-  const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkRestart(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-    },
   })
 }
 
 export function useBulkDockerStart() {
-  const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkStart(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-    },
   })
 }
 
 export function useBulkDockerStop() {
-  const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkStop(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-    },
   })
 }
