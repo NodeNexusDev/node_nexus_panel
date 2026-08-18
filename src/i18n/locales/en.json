@@ -4,6 +4,8 @@
     "nodes": "Nodes",
     "commands": "Commands",
     "scripts": "Scripts",
+    "docker": "Docker",
+    "audit": "Audit",
     "settings": "Settings"
   },
   "login": {
@@ -36,7 +38,10 @@
     "viewLogs": "View Logs",
     "viewLogsDesc": "System logs",
     "emptyTitle": "No nodes yet",
-    "emptyDesc": "Add your first node to get started"
+    "emptyDesc": "Add your first node to get started",
+    "favorites": "Favorites",
+    "favoritesEmpty": "No favorites yet",
+    "favoritesDesc": "Star items to see them here"
   },
   "nodes": {
     "title": "Nodes",
@@ -56,6 +61,9 @@
     "tags": "Tags",
     "connectionType": "Connection Type",
     "port": "Port",
+    "stats": "Stats",
+    "statusHistory": "Status History",
+    "validate": "Validate",
     "emptyTitle": "No nodes",
     "emptyDesc": "Add your first node to start monitoring",
     "deleteTitle": "Delete Node",
@@ -64,8 +72,18 @@
     "toastAddFailed": "Failed to add node",
     "toastDeleted": "Node \"{{name}}\" deleted",
     "toastDeleteFailed": "Failed to delete node",
+    "toastValidating": "Validating credentials...",
+    "toastValidated": "Validation: {{message}}",
+    "toastValidateFailed": "Validation failed",
     "reorder": "Reorder nodes",
-    "exitReorder": "Exit reorder"
+    "exitReorder": "Exit reorder",
+    "totalExecutions": "Total Executions",
+    "successRate": "Success Rate",
+    "lastExecuted": "Last Executed",
+    "oldStatus": "Old Status",
+    "newStatus": "New Status",
+    "source": "Source",
+    "changedAt": "Changed At"
   },
   "commands": {
     "title": "Commands",
@@ -92,8 +110,11 @@
     "run": "Run",
     "steps": "Steps",
     "updated": "Updated",
+    "executions": "Executions",
+    "cancel": "Cancel",
     "emptyTitle": "No scripts",
     "emptyDesc": "Create your first script to automate tasks",
+    "emptyExecutions": "No executions yet",
     "deleteTitle": "Delete Script",
     "deleteMsg": "Are you sure you want to delete \"{{name}}\"?",
     "toastCreated": "Script \"{{name}}\" created",
@@ -102,8 +123,40 @@
     "toastDeleteFailed": "Failed to delete script",
     "toastStarted": "Script \"{{name}}\" started",
     "toastRunFailed": "Failed to run script \"{{name}}\"",
+    "toastCancelled": "Execution cancelled",
+    "toastCancelFailed": "Failed to cancel execution",
+    "toastRetried": "Execution retried",
+    "toastRetryFailed": "Failed to retry execution",
     "reorder": "Reorder scripts",
     "exitReorder": "Exit reorder"
+  },
+  "docker": {
+    "title": "Docker",
+    "description": "Manage Docker containers, images, and resources",
+    "selectNode": "Select Node",
+    "pullImage": "Pull Image",
+    "pull": "Pull",
+    "containers": "Containers",
+    "images": "Images",
+    "networks": "Networks",
+    "volumes": "Volumes"
+  },
+  "audit": {
+    "title": "Audit",
+    "description": "View system audit logs",
+    "action": "Action",
+    "resource": "Resource",
+    "user": "User",
+    "details": "Details",
+    "time": "Time",
+    "export": "Export",
+    "clear": "Clear Logs",
+    "emptyTitle": "No audit logs",
+    "emptyDesc": "Audit events will appear here",
+    "toastExported": "Audit log exported",
+    "toastExportFailed": "Failed to export",
+    "toastCleared": "Audit logs cleared",
+    "toastClearFailed": "Failed to clear logs"
   },
   "settings": {
     "title": "Settings",
@@ -151,7 +204,10 @@
     "loading": "Loading...",
     "logout": "Logout",
     "confirm": "Confirm",
-    "retry": "Try Again"
+    "retry": "Try Again",
+    "start": "Start",
+    "stop": "Stop",
+    "restart": "Restart"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -165,6 +221,8 @@
     "descNodes": "Manage server nodes",
     "descCommands": "Execute commands",
     "descScripts": "Manage scripts",
+    "descDocker": "Manage Docker",
+    "descAudit": "View audit logs",
     "descSettings": "System settings"
   },
   "errorPage": {

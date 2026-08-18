@@ -6,7 +6,7 @@ import { useUiStore } from '../stores/ui-store'
 import { useConnectionStore } from '../stores/connection-store'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
-import { IconDashboard, IconNodes, IconCommands, IconScripts, IconSettings, IconGlobe, IconLogout } from '../components/ui/Icons'
+import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings, IconGlobe, IconLogout } from '../components/ui/Icons'
 import { APP_VERSION } from '../lib/version'
 
 const navItems = [
@@ -14,6 +14,8 @@ const navItems = [
   { to: '/nodes', key: 'nav.nodes', Icon: IconNodes },
   { to: '/commands', key: 'nav.commands', Icon: IconCommands },
   { to: '/scripts', key: 'nav.scripts', Icon: IconScripts },
+  { to: '/docker', key: 'nav.docker', Icon: IconDocker },
+  { to: '/audit', key: 'nav.audit', Icon: IconAudit },
   { to: '/settings', key: 'nav.settings', Icon: IconSettings },
 ]
 

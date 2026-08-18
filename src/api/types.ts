@@ -238,3 +238,228 @@ export interface ApiError {
   message: string
   details?: Record<string, string[]>
 }
+
+// ── Phase 1: Nodes + Scripts extensions ──────────────────────────
+
+export interface ExecutionStatsResponse {
+  total: number
+  successful: number
+  failed: number
+  success_rate: number
+  avg_duration_ms: number | null
+  min_duration_ms: number | null
+  max_duration_ms: number | null
+  last_executed_at: string | null
+}
+
+export interface NodeStatusHistoryItem {
+  id: string
+  node_id: string | null
+  old_status: string | null
+  new_status: string
+  source: string
+  changed_at: string
+}
+
+export interface ExecutionRetryResponse {
+  execution_id: string
+  status: string
+  message: string
+}
+
+export interface NodeValidateResponse {
+  status: NodeStatus
+  message: string
+}
+
+export interface BulkCommandHistoryItem {
+  id: string
+  node_id: string | null
+  command_fingerprint: string
+  exit_code: number
+  stdout: string
+  stderr: string
+  stdout_bytes: number
+  stderr_bytes: number
+  truncated: boolean
+  batch_id: string | null
+  started_at: string
+  finished_at: string | null
+  created_at: string
+}
+
+export interface BulkNodeOperationResult {
+  affected: number
+  node_ids: string[]
+}
+
+export interface ScriptExecutionResponse {
+  id: string
+  script_id: string
+  node_id: string | null
+  params: Record<string, unknown> | null
+  status: string
+  steps: Record<string, unknown>[] | null
+  started_at: string
+  finished_at: string | null
+}
+
+// ── Phase 2: Docker ─────────────────────────────────────────────
+
+export type DockerContainerState = 'running' | 'stopped' | 'paused' | 'created' | 'restarting'
+export type DockerContainerStatus = 'created' | 'restarting' | 'running' | 'removing' | 'paused' | 'exited' | 'dead'
+
+export interface DockerContainer {
+  id: string
+  name: string
+  image: string
+  state: DockerContainerState
+  status: DockerContainerStatus
+  created: string
+  ports: DockerPort[]
+  labels: Record<string, string>
+}
+
+export interface DockerPort {
+  host_port: number
+  container_port: number
+  protocol: 'tcp' | 'udp'
+}
+
+export interface DockerCreateContainerRequest {
+  name: string
+  image: string
+  ports?: DockerPort[]
+  env?: Record<string, string>
+  volumes?: string[]
+  command?: string[]
+}
+
+export interface DockerExecRequest {
+  command: string[]
+  working_dir?: string
+  user?: string
+}
+
+export interface DockerExecResponse {
+  output: string
+  exit_code: number
+}
+
+export interface DockerLogsResponse {
+  logs: string
+  tail: number
+}
+
+export interface DockerImage {
+  id: string
+  tag: string
+  size_bytes: number
+  created: string
+  labels: Record<string, string>
+}
+
+export interface DockerPullImageRequest {
+  image: string
+  tag?: string
+}
+
+export interface DockerBuildImageRequest {
+  dockerfile: string
+  tag: string
+  build_args?: Record<string, string>
+}
+
+export interface DockerTagImageRequest {
+  tag: string
+}
+
+export interface DockerNetwork {
+  id: string
+  name: string
+  driver: string
+  created: string
+  containers: string[]
+}
+
+export interface DockerVolume {
+  name: string
+  driver: string
+  mountpoint: string
+  created: string
+}
+
+// ── Phase 3: Audit + Search + Favorites ─────────────────────────
+
+export interface AuditLog {
+  id: string
+  action: string
+  resource_type: string
+  resource_id: string | null
+  user: string | null
+  details: string | null
+  created_at: string
+}
+
+export interface SearchResult {
+  id: string
+  type: 'node' | 'command' | 'script'
+  name: string
+  description: string | null
+  tags: string[]
+  score: number
+}
+
+export interface Favorite {
+  id: string
+  target_type: 'node' | 'command' | 'script'
+  target_id: string
+  created_at: string
+}
+
+export interface FavoriteCreate {
+  target_type: 'node' | 'command' | 'script'
+  target_id: string
+}
+
+// ── Phase 4: Notes + Tags + Config ─────────────────────────────
+
+export interface Note {
+  id: string
+  target_type: 'node' | 'command' | 'script'
+  target_id: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
+export interface NoteCreate {
+  content: string
+}
+
+export interface NoteUpdate {
+  content: string
+}
+
+export interface Tag {
+  name: string
+  count: number
+}
+
+// ── Phase 5: Events SSE ────────────────────────────────────────
+
+export type SseEventType =
+  | 'node:status'
+  | 'node:metrics'
+  | 'command:output'
+  | 'command:complete'
+  | 'script:complete'
+  | 'docker:container:started'
+  | 'docker:container:stopped'
+  | 'system:alert'
+
+export interface SseEvent {
+  type: SseEventType
+  payload: unknown
+  timestamp: string
+}

@@ -4,6 +4,12 @@ import type {
   NodeCreate,
   NodeUpdate,
   NodeMetrics,
+  ExecutionStatsResponse,
+  NodeStatusHistoryItem,
+  ExecutionRetryResponse,
+  NodeValidateResponse,
+  BulkCommandHistoryItem,
+  BulkNodeOperationResult,
   PaginatedResponse,
 } from './types'
 
@@ -64,4 +70,42 @@ export const nodesApi = {
 
   bulkExecute: (data: { command: string; node_ids?: string[]; tags?: string[] }) =>
     api.post<unknown>('/nodes/bulk/execute', data),
+
+  getStats: (id: string) =>
+    api.get<ExecutionStatsResponse>(`/nodes/${id}/stats`),
+
+  getStatusHistory: (id: string, params?: { page?: number; size?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.page) query.set('page', String(params.page))
+    if (params?.size) query.set('size', String(params.size))
+    const qs = query.toString()
+    return api.get<PaginatedResponse<NodeStatusHistoryItem>>(`/nodes/${id}/status-history${qs ? `?${qs}` : ''}`)
+  },
+
+  retryCommand: (id: string, executionId: string) =>
+    api.post<ExecutionRetryResponse>(`/nodes/${id}/commands/${executionId}/retry`),
+
+  validateCredentials: (data: {
+    host: string
+    port: number
+    connection_type: string
+    username?: string
+    password?: string
+    ssh_key?: string
+    docker_host?: string
+  }) => api.post<NodeValidateResponse>('/nodes/validate-credentials', data),
+
+  getBulkHistory: (params?: { page?: number; size?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.page) query.set('page', String(params.page))
+    if (params?.size) query.set('size', String(params.size))
+    const qs = query.toString()
+    return api.get<PaginatedResponse<BulkCommandHistoryItem>>(`/nodes/bulk/history${qs ? `?${qs}` : ''}`)
+  },
+
+  bulkTagsAdd: (data: { node_ids: string[]; tags: string[] }) =>
+    api.post<BulkNodeOperationResult>('/nodes/bulk/tags/add', data),
+
+  bulkTagsRemove: (data: { node_ids: string[]; tags: string[] }) =>
+    api.post<BulkNodeOperationResult>('/nodes/bulk/tags/remove', data),
 }

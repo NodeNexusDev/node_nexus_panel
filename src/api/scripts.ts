@@ -4,6 +4,7 @@ import type {
   ScriptCreate,
   ScriptUpdate,
   ScriptExecuteRequest,
+  ScriptExecutionResponse,
   PaginatedResponse,
 } from './types'
 
@@ -49,4 +50,26 @@ export const scriptsApi = {
 
   removeSchedule: (id: string) =>
     api.delete<void>(`/scripts/${id}/schedule`),
+
+  getExecutions: (id: string, params?: { page?: number; size?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.page) query.set('page', String(params.page))
+    if (params?.size) query.set('size', String(params.size))
+    const qs = query.toString()
+    return api.get<PaginatedResponse<ScriptExecutionResponse>>(`/scripts/${id}/executions${qs ? `?${qs}` : ''}`)
+  },
+
+  getScheduleHistory: (id: string, params?: { page?: number; size?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.page) query.set('page', String(params.page))
+    if (params?.size) query.set('size', String(params.size))
+    const qs = query.toString()
+    return api.get<PaginatedResponse<ScriptExecutionResponse>>(`/scripts/${id}/schedule/history${qs ? `?${qs}` : ''}`)
+  },
+
+  cancelExecution: (executionId: string) =>
+    api.post<unknown>(`/scripts/executions/${executionId}/cancel`),
+
+  retryExecution: (executionId: string) =>
+    api.post<unknown>(`/scripts/executions/${executionId}/retry`),
 }

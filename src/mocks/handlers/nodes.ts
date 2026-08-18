@@ -105,4 +105,66 @@ export const nodeHandlers = [
       failed: 0,
     })
   }),
+
+  http.get(`${API_URL}/api/v1/nodes/:id/stats`, ({ params }) => {
+    const node = mockNodes.find((n) => n.id === params.id)
+    if (!node) return new HttpResponse(null, { status: 404 })
+    return HttpResponse.json({
+      total: 42,
+      successful: 38,
+      failed: 4,
+      success_rate: 90.48,
+      avg_duration_ms: 1250,
+      min_duration_ms: 200,
+      max_duration_ms: 5400,
+      last_executed_at: '2025-08-18T10:00:00Z',
+    })
+  }),
+
+  http.get(`${API_URL}/api/v1/nodes/:id/status-history`, ({ params, request }) => {
+    const node = mockNodes.find((n) => n.id === params.id)
+    if (!node) return new HttpResponse(null, { status: 404 })
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') || '1')
+    const size = Number(url.searchParams.get('size') || '20')
+    const items = [
+      { id: 'sh1', node_id: node.id, old_status: null, new_status: 'active', source: 'health_check', changed_at: '2025-08-18T10:00:00Z' },
+      { id: 'sh2', node_id: node.id, old_status: 'active', new_status: 'unreachable', source: 'health_check', changed_at: '2025-08-17T22:00:00Z' },
+      { id: 'sh3', node_id: node.id, old_status: 'unreachable', new_status: 'active', source: 'manual', changed_at: '2025-08-17T23:30:00Z' },
+    ]
+    return HttpResponse.json({ items: items.slice((page - 1) * size, page * size), total: items.length, page, size })
+  }),
+
+  http.post(`${API_URL}/api/v1/nodes/:nodeId/commands/:executionId/retry`, () => {
+    return HttpResponse.json({
+      execution_id: 'retried-123',
+      status: 'pending',
+      message: 'Execution retried successfully',
+    })
+  }),
+
+  http.post(`${API_URL}/api/v1/nodes/validate-credentials`, async ({ request }) => {
+    const body = await request.json() as { host: string; connection_type: string }
+    if (body.host === 'invalid-host') {
+      return HttpResponse.json({ status: 'unreachable', message: 'Connection refused' })
+    }
+    return HttpResponse.json({ status: 'active', message: 'Credentials validated successfully' })
+  }),
+
+  http.get(`${API_URL}/api/v1/nodes/bulk/history`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') || '1')
+    const size = Number(url.searchParams.get('size') || '20')
+    return HttpResponse.json({ items: [], total: 0, page, size })
+  }),
+
+  http.post(`${API_URL}/api/v1/nodes/bulk/tags/add`, async ({ request }) => {
+    const body = await request.json() as { node_ids: string[]; tags: string[] }
+    return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
+  }),
+
+  http.post(`${API_URL}/api/v1/nodes/bulk/tags/remove`, async ({ request }) => {
+    const body = await request.json() as { node_ids: string[]; tags: string[] }
+    return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
+  }),
 ]

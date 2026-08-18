@@ -213,3 +213,44 @@ export function IconFileText(props: IconProps) {
     </svg>
   )
 }
+
+export function IconDocker(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <rect x="5" y="9" width="2" height="3" rx="0.5" />
+      <rect x="8" y="9" width="2" height="3" rx="0.5" />
+      <rect x="11" y="9" width="2" height="3" rx="0.5" />
+      <rect x="14" y="9" width="2" height="3" rx="0.5" />
+      <rect x="5" y="13" width="2" height="3" rx="0.5" />
+      <rect x="8" y="13" width="2" height="3" rx="0.5" />
+      <rect x="11" y="13" width="2" height="3" rx="0.5" />
+      <rect x="17" y="9" width="2" height="3" rx="0.5" />
+    </svg>
+  )
+}
+
+export function IconAudit(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <polyline points="9 12 11 14 15 10" />
+    </svg>
+  )
+}
+
+export function IconStar(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  )
+}
+
+export function IconStarFilled(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  )
+}

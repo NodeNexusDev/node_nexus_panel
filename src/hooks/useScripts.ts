@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { scriptsApi } from '../api/scripts'
-import type { Script, ScriptCreate, ScriptUpdate, ScriptExecuteRequest, PaginatedResponse } from '../api/types'
+import type {
+  Script,
+  ScriptCreate,
+  ScriptUpdate,
+  ScriptExecuteRequest,
+  ScriptExecutionResponse,
+  PaginatedResponse,
+} from '../api/types'
 
 export function useScripts(params?: { page?: number; size?: number; tag?: string }) {
   return useQuery<PaginatedResponse<Script>>({
@@ -13,6 +20,22 @@ export function useScript(id: string) {
   return useQuery<Script>({
     queryKey: ['scripts', id],
     queryFn: () => scriptsApi.getById(id),
+    enabled: !!id,
+  })
+}
+
+export function useScriptExecutions(id: string, params?: { page?: number; size?: number }) {
+  return useQuery<PaginatedResponse<ScriptExecutionResponse>>({
+    queryKey: ['scripts', id, 'executions', params],
+    queryFn: () => scriptsApi.getExecutions(id, params),
+    enabled: !!id,
+  })
+}
+
+export function useScriptScheduleHistory(id: string, params?: { page?: number; size?: number }) {
+  return useQuery<PaginatedResponse<ScriptExecutionResponse>>({
+    queryKey: ['scripts', id, 'schedule-history', params],
+    queryFn: () => scriptsApi.getScheduleHistory(id, params),
     enabled: !!id,
   })
 }
@@ -57,6 +80,28 @@ export function useRunScript() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data?: ScriptExecuteRequest }) =>
       scriptsApi.execute(id, data ?? {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scripts'] })
+    },
+  })
+}
+
+export function useCancelScriptExecution() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (executionId: string) => scriptsApi.cancelExecution(executionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scripts'] })
+    },
+  })
+}
+
+export function useRetryScriptExecution() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (executionId: string) => scriptsApi.retryExecution(executionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scripts'] })
     },

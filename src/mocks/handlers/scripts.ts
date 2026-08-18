@@ -91,4 +91,35 @@ export const scriptHandlers = [
   http.delete(`${API_URL}/api/v1/scripts/:id/schedule`, () => {
     return new HttpResponse(null, { status: 204 })
   }),
+
+  http.get(`${API_URL}/api/v1/scripts/:id/executions`, ({ params, request }) => {
+    const script = mockScripts.find((s) => s.id === params.id)
+    if (!script) return new HttpResponse(null, { status: 404 })
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') || '1')
+    const size = Number(url.searchParams.get('size') || '20')
+    const items = [
+      { id: 'e1', script_id: script.id, node_id: '1', params: null, status: 'completed', steps: [{ label: 'Step 1', status: 'completed' }], started_at: '2025-08-18T08:00:00Z', finished_at: '2025-08-18T08:01:30Z' },
+      { id: 'e2', script_id: script.id, node_id: '2', params: null, status: 'failed', steps: [{ label: 'Step 1', status: 'failed' }], started_at: '2025-08-17T14:00:00Z', finished_at: '2025-08-17T14:00:45Z' },
+      { id: 'e3', script_id: script.id, node_id: '1', params: null, status: 'running', steps: [{ label: 'Step 1', status: 'completed' }], started_at: '2025-08-18T10:00:00Z', finished_at: null },
+    ]
+    return HttpResponse.json({ items: items.slice((page - 1) * size, page * size), total: items.length, page, size })
+  }),
+
+  http.get(`${API_URL}/api/v1/scripts/:id/schedule/history`, ({ params, request }) => {
+    const script = mockScripts.find((s) => s.id === params.id)
+    if (!script) return new HttpResponse(null, { status: 404 })
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') || '1')
+    const size = Number(url.searchParams.get('size') || '20')
+    return HttpResponse.json({ items: [], total: 0, page, size })
+  }),
+
+  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/cancel`, () => {
+    return HttpResponse.json({ message: 'Execution cancelled' })
+  }),
+
+  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/retry`, () => {
+    return HttpResponse.json({ message: 'Execution retried', execution_id: 'new-exec-123' })
+  }),
 ]

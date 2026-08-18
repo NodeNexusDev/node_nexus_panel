@@ -4,6 +4,8 @@
     "nodes": "Ноды",
     "commands": "Команды",
     "scripts": "Скрипты",
+    "docker": "Docker",
+    "audit": "Аудит",
     "settings": "Настройки"
   },
   "login": {
@@ -36,7 +38,10 @@
     "viewLogs": "Логи",
     "viewLogsDesc": "Системные логи",
     "emptyTitle": "Нод пока нет",
-    "emptyDesc": "Добавьте первую ноду для начала работы"
+    "emptyDesc": "Добавьте первую ноду для начала работы",
+    "favorites": "Избранное",
+    "favoritesEmpty": "Избранного пока нет",
+    "favoritesDesc": "Добавьте звёздочку, чтобы видеть здесь"
   },
   "nodes": {
     "title": "Ноды",
@@ -56,6 +61,9 @@
     "tags": "Теги",
     "connectionType": "Тип подключения",
     "port": "Порт",
+    "stats": "Статистика",
+    "statusHistory": "История статусов",
+    "validate": "Проверить",
     "emptyTitle": "Нод нет",
     "emptyDesc": "Добавьте первую ноду для мониторинга",
     "deleteTitle": "Удалить ноду",
@@ -64,8 +72,18 @@
     "toastAddFailed": "Не удалось добавить ноду",
     "toastDeleted": "Нода \"{{name}}\" удалена",
     "toastDeleteFailed": "Не удалось удалить ноду",
+    "toastValidating": "Проверка учётных данных...",
+    "toastValidated": "Результат: {{message}}",
+    "toastValidateFailed": "Проверка не удалась",
     "reorder": "Переставить ноды",
-    "exitReorder": "Выйти из режима перестановки"
+    "exitReorder": "Выйти из режима перестановки",
+    "totalExecutions": "Всего запусков",
+    "successRate": "Процент успеха",
+    "lastExecuted": "Последний запуск",
+    "oldStatus": "Старый статус",
+    "newStatus": "Новый статус",
+    "source": "Источник",
+    "changedAt": "Изменён"
   },
   "commands": {
     "title": "Команды",
@@ -92,8 +110,11 @@
     "run": "Запустить",
     "steps": "Шаги",
     "updated": "Обновлён",
+    "executions": "Запуски",
+    "cancel": "Отменить",
     "emptyTitle": "Скриптов нет",
     "emptyDesc": "Создайте первый скрипт для автоматизации задач",
+    "emptyExecutions": "Запусков пока нет",
     "deleteTitle": "Удалить скрипт",
     "deleteMsg": "Вы уверены, что хотите удалить \"{{name}}\"?",
     "toastCreated": "Скрипт \"{{name}}\" создан",
@@ -102,8 +123,40 @@
     "toastDeleteFailed": "Не удалось удалить скрипт",
     "toastStarted": "Скрипт \"{{name}}\" запущен",
     "toastRunFailed": "Не удалось запустить скрипт \"{{name}}\"",
+    "toastCancelled": "Выполнение отменено",
+    "toastCancelFailed": "Не удалось отменить выполнение",
+    "toastRetried": "Выполнение повторено",
+    "toastRetryFailed": "Не удалось повторить выполнение",
     "reorder": "Переставить скрипты",
     "exitReorder": "Выйти из режима перестановки"
+  },
+  "docker": {
+    "title": "Docker",
+    "description": "Управление контейнерами, образами и ресурсами Docker",
+    "selectNode": "Выберите ноду",
+    "pullImage": "Скачать образ",
+    "pull": "Скачать",
+    "containers": "Контейнеры",
+    "images": "Образы",
+    "networks": "Сети",
+    "volumes": "Тома"
+  },
+  "audit": {
+    "title": "Аудит",
+    "description": "Журнал аудита системы",
+    "action": "Действие",
+    "resource": "Ресурс",
+    "user": "Пользователь",
+    "details": "Детали",
+    "time": "Время",
+    "export": "Экспорт",
+    "clear": "Очистить",
+    "emptyTitle": "Логов нет",
+    "emptyDesc": "События аудита появятся здесь",
+    "toastExported": "Аудит экспортирован",
+    "toastExportFailed": "Не удалось экспортировать",
+    "toastCleared": "Логи аудита очищены",
+    "toastClearFailed": "Не удалось очистить логи"
   },
   "settings": {
     "title": "Настройки",
@@ -151,7 +204,10 @@
     "loading": "Загрузка...",
     "logout": "Выйти",
     "confirm": "Подтвердить",
-    "retry": "Повторить"
+    "retry": "Повторить",
+    "start": "Запустить",
+    "stop": "Остановить",
+    "restart": "Перезапустить"
   },
   "errorBoundary": {
     "title": "Что-то пошло не так",
@@ -165,6 +221,8 @@
     "descNodes": "Управление нодами",
     "descCommands": "Выполнение команд",
     "descScripts": "Управление скриптами",
+    "descDocker": "Управление Docker",
+    "descAudit": "Журнал аудита",
     "descSettings": "Настройки системы"
   },
   "errorPage": {
