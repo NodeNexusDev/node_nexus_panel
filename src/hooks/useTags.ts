@@ -9,6 +9,9 @@ export function useRenameTag() {
       tagsApi.rename(oldName, newName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
+      queryClient.invalidateQueries({ queryKey: ['commands', 'tags'] })
+      queryClient.invalidateQueries({ queryKey: ['scripts', 'tags'] })
     },
   })
 }
@@ -20,6 +23,9 @@ export function useDeleteTag() {
     mutationFn: (name: string) => tagsApi.remove(name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
+      queryClient.invalidateQueries({ queryKey: ['commands', 'tags'] })
+      queryClient.invalidateQueries({ queryKey: ['scripts', 'tags'] })
     },
   })
 }

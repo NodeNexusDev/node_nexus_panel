@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -29,6 +28,7 @@ import {
   useDeleteImage,
   useBuildImage,
   useTagImage,
+  useBulkDockerExec,
   useBulkDockerRestart,
   useBulkDockerStart,
   useBulkDockerStop,
@@ -109,13 +109,13 @@ function ContainerRow({
 
 function ContainersTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const [showAll, setShowAll] = useState(false)
   const { data: containers, isLoading } = useDockerContainers(nodeId, showAll)
   const startContainer = useStartContainer()
   const stopContainer = useStopContainer()
   const restartContainer = useRestartContainer()
   const deleteContainer = useDeleteContainer()
+  const bulkExec = useBulkDockerExec()
   const bulkRestart = useBulkDockerRestart()
   const bulkStart = useBulkDockerStart()
   const bulkStop = useBulkDockerStop()
@@ -127,6 +127,9 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
   const [execTarget, setExecTarget] = useState<DockerContainer | null>(null)
   const [inspectTarget, setInspectTarget] = useState<DockerContainer | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showBulkExecModal, setShowBulkExecModal] = useState(false)
+  const [bulkExecCommand, setBulkExecCommand] = useState('')
+  const [bulkExecResult, setBulkExecResult] = useState<string>('')
   const [createForm, setCreateForm] = useState({ name: '', image: '', ports: '', env: '', command: '' })
 
   const allSelected = containers && selectedIds.size === containers.length
@@ -139,6 +142,19 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   }
 
+  const handleBulkExec = () => {
+    if (!bulkExecCommand || selectedIds.size === 0) return
+    bulkExec.mutate(
+      { container_id: Array.from(selectedIds)[0], command: bulkExecCommand, node_ids: [nodeId] },
+      {
+        onSuccess: (data) => {
+          const results = data.results.map((r) => `[${r.node_name}] ${r.status}: ${r.output || r.error}`).join('\n')
+          setBulkExecResult(results || 'No output')
+        },
+      }
+    )
+  }
+
   if (isLoading) return <TableSkeleton rows={5} cols={7} />
   if (!containers?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noContainers')} description={t('docker.noContainersDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createContainer')}</Button>} />
 
@@ -149,21 +165,10 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800">
           <span className="text-sm text-accent-700 dark:text-accent-300">{t('docker.selected', { count: selectedIds.size })}</span>
-          <Button variant="ghost" size="sm" onClick={() => {
-            const ids = Array.from(selectedIds)
-            let done = 0
-            ids.forEach((cid) => bulkRestart.mutate({ container_id: cid }, { onSuccess: () => { done++; if (done === ids.length) queryClient.invalidateQueries({ queryKey: ['docker'] }) } }))
-          }} disabled={bulkRestart.isPending}>{t('docker.restartAll')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => {
-            const ids = Array.from(selectedIds)
-            let done = 0
-            ids.forEach((cid) => bulkStart.mutate({ container_id: cid }, { onSuccess: () => { done++; if (done === ids.length) queryClient.invalidateQueries({ queryKey: ['docker'] }) } }))
-          }} disabled={bulkStart.isPending}>{t('docker.startAll')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => {
-            const ids = Array.from(selectedIds)
-            let done = 0
-            ids.forEach((cid) => bulkStop.mutate({ container_id: cid }, { onSuccess: () => { done++; if (done === ids.length) queryClient.invalidateQueries({ queryKey: ['docker'] }) } }))
-          }} disabled={bulkStop.isPending}>{t('docker.stopAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkRestart.mutate({ container_id: Array.from(selectedIds)[0], node_ids: [nodeId] })} disabled={bulkRestart.isPending}>{t('docker.restartAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkStart.mutate({ container_id: Array.from(selectedIds)[0], node_ids: [nodeId] })} disabled={bulkStart.isPending}>{t('docker.startAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ container_id: Array.from(selectedIds)[0], node_ids: [nodeId] })} disabled={bulkStop.isPending}>{t('docker.stopAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }}>{t('docker.bulkExec', 'Exec on selected')}</Button>
         </div>
       )}
       <div className="flex items-center gap-3 mb-4 px-4">
@@ -236,6 +241,20 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
           </div>
         </div>
       </Modal>
+
+      <Modal isOpen={showBulkExecModal} onClose={() => setShowBulkExecModal(false)} title={t('docker.bulkExec', 'Bulk Exec')} size="lg">
+        <div className="space-y-4">
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.bulkExecMsg', { count: selectedIds.size })}</p>
+          <Input label={t('docker.command')} placeholder="sh -c 'uptime'" value={bulkExecCommand} onChange={(e) => setBulkExecCommand(e.target.value)} />
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setShowBulkExecModal(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleBulkExec} disabled={bulkExec.isPending || !bulkExecCommand}>{bulkExec.isPending ? t('common.loading') : t('common.execute')}</Button>
+          </div>
+          {bulkExecResult && (
+            <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 bg-surface-50 dark:bg-surface-800/50 rounded p-4 max-h-64 overflow-y-auto whitespace-pre-wrap">{bulkExecResult}</pre>
+          )}
+        </div>
+      </Modal>
     </>
   )
 }
@@ -265,12 +284,27 @@ function CreateContainerForm({ nodeId, form, onChange, onClose }: { nodeId: stri
 
 function ContainerLogsContent({ nodeId, containerId }: { nodeId: string; containerId: string }) {
   const { t } = useTranslation()
-  const { data: logs, isLoading } = useDockerContainerLogs(nodeId, containerId, 200)
+  const [tail, setTail] = useState(200)
+  const [since, setSince] = useState('')
+  const { data: logs, isLoading, refetch } = useDockerContainerLogs(nodeId, containerId, tail, since || undefined)
   return (
-    <div className="max-h-96 overflow-y-auto">
-      {isLoading ? <Spinner size="lg" className="mx-auto my-8" /> : (
-        <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 whitespace-pre-wrap break-all bg-surface-50 dark:bg-surface-800/50 rounded p-4">{logs || t('docker.noLogs')}</pre>
-      )}
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-surface-600 dark:text-surface-400">{t('docker.tailLines', 'Tail lines')}</label>
+          <input type="number" value={tail} onChange={(e) => setTail(Number(e.target.value) || 100)} className="w-20 px-2 py-1 bg-white border border-surface-300 rounded text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" min={10} max={10000} />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-surface-600 dark:text-surface-400">{t('docker.since', 'Since')}</label>
+          <input type="datetime-local" value={since} onChange={(e) => setSince(e.target.value)} className="px-2 py-1 bg-white border border-surface-300 rounded text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => refetch()}>{t('common.refresh')}</Button>
+      </div>
+      <div className="max-h-96 overflow-y-auto">
+        {isLoading ? <Spinner size="lg" className="mx-auto my-8" /> : (
+          <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 whitespace-pre-wrap break-all bg-surface-50 dark:bg-surface-800/50 rounded p-4">{logs || t('docker.noLogs')}</pre>
+        )}
+      </div>
     </div>
   )
 }

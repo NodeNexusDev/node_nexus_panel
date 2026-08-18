@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
@@ -11,6 +11,7 @@ import { IconNodes, IconCheckCircle, IconXCircle, IconZap, IconCommands, IconScr
 import { useDashboard, useDashboardMetrics } from '../hooks/useDashboard'
 import { useNodes } from '../hooks/useNodes'
 import { useFavorites } from '../hooks/useFavorites'
+import { useSse } from '../hooks/useSse'
 
 export function Dashboard() {
   const { t } = useTranslation()
@@ -18,10 +19,24 @@ export function Dashboard() {
   const [metricsFrom, setMetricsFrom] = useState('')
   const [metricsTo, setMetricsTo] = useState('')
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day')
-  const { data: dashboard, isLoading: dashboardLoading } = useDashboard()
-  const { data: metrics } = useDashboardMetrics({ date_from: metricsFrom || undefined, date_to: metricsTo || undefined, group_by: groupBy })
-  const { data: nodesData, isLoading: nodesLoading } = useNodes()
+  const { data: dashboard, isLoading: dashboardLoading, refetch: refetchDashboard } = useDashboard()
+  const { data: metrics, refetch: refetchMetrics } = useDashboardMetrics({ date_from: metricsFrom || undefined, date_to: metricsTo || undefined, group_by: groupBy })
+  const { data: nodesData, isLoading: nodesLoading, refetch: refetchNodes } = useNodes()
   const { data: favorites } = useFavorites()
+  const { isConnected, on: onSseEvent } = useSse()
+
+  useEffect(() => {
+    const unsubs = [
+      onSseEvent('node:status', () => { refetchDashboard(); refetchNodes() }),
+      onSseEvent('node:metrics', () => { refetchDashboard() }),
+      onSseEvent('command:complete', () => { refetchDashboard(); refetchMetrics() }),
+      onSseEvent('script:complete', () => { refetchDashboard(); refetchMetrics() }),
+      onSseEvent('docker:container:started', () => { refetchDashboard() }),
+      onSseEvent('docker:container:stopped', () => { refetchDashboard() }),
+      onSseEvent('system:alert', () => { refetchDashboard() }),
+    ]
+    return () => { unsubs.forEach((u) => u()) }
+  }, [onSseEvent, refetchDashboard, refetchNodes, refetchMetrics])
 
   const statsCards = dashboard
     ? [
@@ -75,9 +90,17 @@ export function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="animate-slide-up">
-        <h1 className="text-3xl font-bold gradient-text">{t('dashboard.title')}</h1>
-        <p className="text-surface-500 dark:text-surface-400 mt-1">{t('dashboard.description')}</p>
+      <div className="flex items-center justify-between animate-slide-up">
+        <div>
+          <h1 className="text-3xl font-bold gradient-text">{t('dashboard.title')}</h1>
+          <p className="text-surface-500 dark:text-surface-400 mt-1">{t('dashboard.description')}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs ${isConnected ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-surface-200 text-surface-600 dark:bg-surface-700 dark:text-surface-400'}`}>
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-surface-400'}`} />
+            {isConnected ? t('dashboard.liveUpdates', 'Live') : t('dashboard.offline', 'Offline')}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

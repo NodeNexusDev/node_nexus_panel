@@ -8,9 +8,25 @@ export const nodeHandlers = [
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')
+    const tags = url.searchParams.get('tags')
+    const search = url.searchParams.get('search')
+    const status = url.searchParams.get('status')
+    let filtered = mockNodes
+    if (tags) {
+      const tagList = tags.split(',')
+      filtered = filtered.filter((n) => tagList.some((t) => n.tags.includes(t)))
+    }
+    if (search) {
+      const q = search.toLowerCase()
+      filtered = filtered.filter((n) => n.name.toLowerCase().includes(q) || n.host.toLowerCase().includes(q))
+    }
+    if (status) {
+      const statusList = status.split(',')
+      filtered = filtered.filter((n) => statusList.includes(n.status))
+    }
     const start = (page - 1) * size
-    const items = mockNodes.slice(start, start + size)
-    return HttpResponse.json({ items, total: mockNodes.length, page, size })
+    const items = filtered.slice(start, start + size)
+    return HttpResponse.json({ items, total: filtered.length, page, size })
   }),
 
   http.get(`${API_URL}/api/v1/nodes/tags`, () => {
@@ -58,7 +74,7 @@ export const nodeHandlers = [
   http.post(`${API_URL}/api/v1/nodes/:id/check`, ({ params }) => {
     const node = mockNodes.find((n) => n.id === params.id)
     if (!node) return new HttpResponse(null, { status: 404 })
-    return new HttpResponse(null, { status: 204 })
+    return HttpResponse.json({ ...node, status: 'active', updated_at: new Date().toISOString() })
   }),
 
   http.get(`${API_URL}/api/v1/nodes/:id/metrics`, ({ params }) => {
@@ -88,12 +104,14 @@ export const nodeHandlers = [
     })
   }),
 
-  http.post(`${API_URL}/api/v1/nodes/bulk/delete`, () => {
-    return new HttpResponse(null, { status: 204 })
+  http.post(`${API_URL}/api/v1/nodes/bulk/delete`, async ({ request }) => {
+    const body = await request.json() as { node_ids: string[] }
+    return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
   }),
 
-  http.post(`${API_URL}/api/v1/nodes/bulk/check`, () => {
-    return new HttpResponse(null, { status: 204 })
+  http.post(`${API_URL}/api/v1/nodes/bulk/check`, async ({ request }) => {
+    const body = await request.json() as { node_ids: string[] }
+    return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
   }),
 
   http.post(`${API_URL}/api/v1/nodes/bulk/execute`, () => {
@@ -166,5 +184,21 @@ export const nodeHandlers = [
   http.post(`${API_URL}/api/v1/nodes/bulk/tags/remove`, async ({ request }) => {
     const body = await request.json() as { node_ids: string[]; tags: string[] }
     return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
+  }),
+
+  http.post(`${API_URL}/api/v1/nodes/:id/tags`, async ({ params, request }) => {
+    const node = mockNodes.find((n) => n.id === params.id)
+    if (!node) return new HttpResponse(null, { status: 404 })
+    const body = await request.json() as { tags: string[] }
+    node.tags = [...new Set([...node.tags, ...body.tags])]
+    return HttpResponse.json(node)
+  }),
+
+  http.delete(`${API_URL}/api/v1/nodes/:id/tags`, async ({ params, request }) => {
+    const node = mockNodes.find((n) => n.id === params.id)
+    if (!node) return new HttpResponse(null, { status: 404 })
+    const body = await request.json() as { tags: string[] }
+    node.tags = node.tags.filter((t) => !body.tags.includes(t))
+    return HttpResponse.json(node)
   }),
 ]

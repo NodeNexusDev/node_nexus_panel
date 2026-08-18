@@ -46,10 +46,10 @@ export function useDockerVolumes(nodeId: string) {
   })
 }
 
-export function useDockerContainerLogs(nodeId: string, containerId: string, tail?: number) {
+export function useDockerContainerLogs(nodeId: string, containerId: string, tail?: number, since?: string) {
   return useQuery<string>({
-    queryKey: ['docker', nodeId, 'containers', containerId, 'logs', tail],
-    queryFn: () => dockerApi.getContainerLogs(nodeId, containerId, { tail }),
+    queryKey: ['docker', nodeId, 'containers', containerId, 'logs', tail, since],
+    queryFn: () => dockerApi.getContainerLogs(nodeId, containerId, { tail, since }),
     enabled: !!nodeId && !!containerId,
   })
 }
@@ -202,29 +202,53 @@ export function useTagImage() {
 }
 
 export function useBulkDockerExec() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkExec(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
   })
 }
 
 export function useBulkDockerRestart() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkRestart(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
   })
 }
 
 export function useBulkDockerStart() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkStart(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
   })
 }
 
 export function useBulkDockerStop() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkStop(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
   })
 }

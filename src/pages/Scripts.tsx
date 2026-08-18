@@ -54,7 +54,10 @@ export function Scripts() {
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const [newScript, setNewScript] = useState({ name: '', description: '' })
+  const [newScript, setNewScript] = useState({ name: '', description: '', tags: '' })
+  const [newScriptSteps, setNewScriptSteps] = useState<{ label: string; type: 'inline' | 'command'; command: string; command_id: string; params: Record<string, unknown>; on_failure: 'stop' | 'continue' }[]>([
+    { label: 'Step 1', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }
+  ])
 
   const [executionsScriptId, setExecutionsScriptId] = useState<string | null>(null)
   const [statsTarget, setStatsTarget] = useState<Script | null>(null)
@@ -64,9 +67,11 @@ export function Scripts() {
   const [editScript, setEditScript] = useState<Script | null>(null)
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
+  const [editTags, setEditTags] = useState('')
   const [cloneTarget, setCloneTarget] = useState<{ id: string; name: string } | null>(null)
-  const [scheduleTarget, setScheduleTarget] = useState<{ id: string; name: string } | null>(null)
+  const [scheduleTarget, setScheduleTarget] = useState<{ id: string; name: string; node_ids: string[] } | null>(null)
   const [scheduleCron, setScheduleCron] = useState('')
+  const [scheduleNodeIds, setScheduleNodeIds] = useState<string[]>([])
 
   const scripts = data?.items || []
   const [orderedScripts, setOrderedScripts] = useState<Script[]>([])
@@ -113,8 +118,8 @@ export function Scripts() {
             <Button variant="ghost" size="sm" onClick={() => setStatsTarget(script)}>{t('scripts.stats', 'Stats')}</Button>
             <Button variant="ghost" size="sm" onClick={() => setScheduleHistoryTarget(script)}>{t('scripts.scheduleHistory', 'Schedule History')}</Button>
             <Button variant="ghost" size="sm" onClick={() => { setCloneTarget({ id: script.id, name: script.name }) }}>{t('scripts.clone')}</Button>
-            <Button variant="ghost" size="sm" onClick={() => { setScheduleTarget({ id: script.id, name: script.name }); setScheduleCron('') }}>{t('scripts.schedule')}</Button>
-            <Button variant="ghost" size="sm" onClick={() => { setEditScript(script); setEditName(script.name); setEditDesc(script.description || '') }}>{t('scripts.edit')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setScheduleTarget({ id: script.id, name: script.name, node_ids: [] }); setScheduleCron(''); setScheduleNodeIds([]) }}>{t('scripts.schedule')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setEditScript(script); setEditName(script.name); setEditDesc(script.description || ''); setEditTags(script.tags.join(', ')) }}>{t('scripts.edit')}</Button>
             <Button variant="secondary" size="sm" onClick={() => handleRun(script.id, script.name)} disabled={runScript.isPending}>
               {runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}
             </Button>
@@ -127,8 +132,20 @@ export function Scripts() {
 
   const handleCreate = () => {
     createScript.mutate(
-      { name: newScript.name, description: newScript.description, steps: [{ label: 'Step 1', type: 'inline', command: '#!/bin/bash\necho "Hello"', command_id: null, params: {}, on_failure: 'stop' }] },
-      { onSuccess: () => { toast('success', t('scripts.toastCreated', { name: newScript.name })); setShowCreateModal(false); setNewScript({ name: '', description: '' }) }, onError: () => toast('error', t('scripts.toastCreateFailed')) },
+      {
+        name: newScript.name,
+        description: newScript.description || undefined,
+        tags: newScript.tags ? newScript.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+        steps: newScriptSteps.map((s) => ({
+          label: s.label,
+          type: s.type,
+          command: s.type === 'inline' ? s.command || null : null,
+          command_id: s.type === 'command' ? s.command_id || null : null,
+          params: Object.keys(s.params).length > 0 ? s.params : undefined,
+          on_failure: s.on_failure,
+        })),
+      },
+      { onSuccess: () => { toast('success', t('scripts.toastCreated', { name: newScript.name })); setShowCreateModal(false); setNewScript({ name: '', description: '', tags: '' }); setNewScriptSteps([{ label: 'Step 1', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }]) }, onError: () => toast('error', t('scripts.toastCreateFailed')) },
     )
   }
 
@@ -152,7 +169,7 @@ export function Scripts() {
 
   const handleSaveEdit = () => {
     if (!editScript) return
-    updateScript.mutate({ id: editScript.id, data: { name: editName, description: editDesc } }, {
+    updateScript.mutate({ id: editScript.id, data: { name: editName, description: editDesc, tags: editTags ? editTags.split(',').map((s) => s.trim()).filter(Boolean) : undefined } }, {
       onSuccess: () => { toast('success', t('scripts.toastUpdated')); setEditScript(null) },
       onError: () => toast('error', t('scripts.toastUpdateFailed')),
     })
@@ -166,7 +183,7 @@ export function Scripts() {
         onError: () => toast('error', t('scripts.toastScheduleFailed')),
       })
     } else {
-      setSchedule.mutate({ id: scheduleTarget.id, data: { cron: scheduleCron } }, {
+      setSchedule.mutate({ id: scheduleTarget.id, data: { cron: scheduleCron, node_ids: scheduleNodeIds } }, {
         onSuccess: () => { toast('success', t('scripts.toastScheduleSet')); setScheduleTarget(null) },
         onError: () => toast('error', t('scripts.toastScheduleFailed')),
       })
@@ -229,6 +246,34 @@ export function Scripts() {
         <div className="space-y-4">
           <Input label={t('settings.name')} placeholder="backup-db.sh" value={newScript.name} onChange={(e) => setNewScript({ ...newScript, name: e.target.value })} />
           <Input label={t('scripts.description')} placeholder="Backup PostgreSQL database" value={newScript.description} onChange={(e) => setNewScript({ ...newScript, description: e.target.value })} />
+          <Input label={t('scripts.tagsLabel', 'Tags')} placeholder="backup, database" value={newScript.tags} onChange={(e) => setNewScript({ ...newScript, tags: e.target.value })} />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('scripts.steps')}</label>
+              <Button variant="ghost" size="sm" onClick={() => setNewScriptSteps((prev) => [...prev, { label: `Step ${prev.length + 1}`, type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
+            </div>
+            {newScriptSteps.map((step, idx) => (
+              <div key={idx} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input label="" placeholder={t('scripts.stepLabel', 'Step label')} value={step.label} onChange={(e) => { const updated = [...newScriptSteps]; updated[idx] = { ...updated[idx], label: e.target.value }; setNewScriptSteps(updated) }} className="flex-1" />
+                  <select value={step.type} onChange={(e) => { const updated = [...newScriptSteps]; updated[idx] = { ...updated[idx], type: e.target.value as 'inline' | 'command' }; setNewScriptSteps(updated) }} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+                    <option value="inline">{t('scripts.typeInline', 'Inline')}</option>
+                    <option value="command">{t('scripts.typeCommand', 'Command')}</option>
+                  </select>
+                  <select value={step.on_failure} onChange={(e) => { const updated = [...newScriptSteps]; updated[idx] = { ...updated[idx], on_failure: e.target.value as 'stop' | 'continue' }; setNewScriptSteps(updated) }} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+                    <option value="stop">{t('scripts.onFailureStop', 'Stop')}</option>
+                    <option value="continue">{t('scripts.onFailureContinue', 'Continue')}</option>
+                  </select>
+                  {newScriptSteps.length > 1 && <Button variant="ghost" size="sm" onClick={() => setNewScriptSteps((prev) => prev.filter((_, i) => i !== idx))} className="text-red-500">{t('common.delete')}</Button>}
+                </div>
+                {step.type === 'inline' ? (
+                  <textarea placeholder={t('scripts.commandPlaceholder', '#!/bin/bash\necho "Hello"')} value={step.command} onChange={(e) => { const updated = [...newScriptSteps]; updated[idx] = { ...updated[idx], command: e.target.value }; setNewScriptSteps(updated) }} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={3} />
+                ) : (
+                  <Input label="" placeholder={t('scripts.commandIdPlaceholder', 'Command ID')} value={step.command_id} onChange={(e) => { const updated = [...newScriptSteps]; updated[idx] = { ...updated[idx], command_id: e.target.value }; setNewScriptSteps(updated) }} />
+                )}
+              </div>
+            ))}
+          </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreate} disabled={createScript.isPending || !newScript.name}>{createScript.isPending ? t('common.loading') : t('common.save')}</Button>
@@ -240,6 +285,7 @@ export function Scripts() {
         <div className="space-y-4">
           <Input label={t('settings.name')} value={editName} onChange={(e) => setEditName(e.target.value)} />
           <Input label={t('scripts.description')} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+          <Input label={t('scripts.tagsLabel', 'Tags')} placeholder="backup, database" value={editTags} onChange={(e) => setEditTags(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setEditScript(null)}>{t('common.cancel')}</Button>
             <Button onClick={handleSaveEdit}>{t('common.save')}</Button>
@@ -254,6 +300,20 @@ export function Scripts() {
       <Modal isOpen={!!scheduleTarget} onClose={() => setScheduleTarget(null)} title={`${t('scripts.schedule')}: ${scheduleTarget?.name || ''}`}>
         <div className="space-y-4">
           <Input label={t('scripts.cronExpression')} placeholder="0 2 * * *" value={scheduleCron} onChange={(e) => setScheduleCron(e.target.value)} />
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNodes', 'Target Nodes')}</label>
+            <div className="flex flex-wrap gap-2">
+              {nodes.map((n) => (
+                <label key={n.id} className="flex items-center gap-1 text-sm">
+                  <input type="checkbox" checked={scheduleNodeIds.includes(n.id)} onChange={(e) => {
+                    if (e.target.checked) setScheduleNodeIds((prev) => [...prev, n.id])
+                    else setScheduleNodeIds((prev) => prev.filter((id) => id !== n.id))
+                  }} className="rounded" />
+                  {n.name}
+                </label>
+              ))}
+            </div>
+          </div>
           <p className="text-xs text-surface-500">{t('scripts.scheduleHint', 'Leave empty to remove schedule')}</p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setScheduleTarget(null)}>{t('common.cancel')}</Button>

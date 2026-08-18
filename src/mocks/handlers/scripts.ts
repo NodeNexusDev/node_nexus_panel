@@ -8,9 +8,19 @@ export const scriptHandlers = [
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')
+    const tag = url.searchParams.get('tag')
+    const search = url.searchParams.get('search')
+    let filtered = mockScripts
+    if (tag) {
+      filtered = filtered.filter((s) => s.tags.includes(tag))
+    }
+    if (search) {
+      const q = search.toLowerCase()
+      filtered = filtered.filter((s) => s.name.toLowerCase().includes(q) || (s.description && s.description.toLowerCase().includes(q)))
+    }
     const start = (page - 1) * size
-    const items = mockScripts.slice(start, start + size)
-    return HttpResponse.json({ items, total: mockScripts.length, page, size })
+    const items = filtered.slice(start, start + size)
+    return HttpResponse.json({ items, total: filtered.length, page, size })
   }),
 
   http.get(`${API_URL}/api/v1/scripts/tags`, () => {
@@ -75,17 +85,49 @@ export const scriptHandlers = [
   http.get(`${API_URL}/api/v1/scripts/:id/stats`, ({ params }) => {
     const script = mockScripts.find((s) => s.id === params.id)
     if (!script) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json({ total_executions: 10, successful: 8, failed: 2 })
+    return HttpResponse.json({
+      total: 10,
+      successful: 8,
+      failed: 2,
+      success_rate: 80.0,
+      avg_duration_ms: 1250,
+      min_duration_ms: 200,
+      max_duration_ms: 5400,
+      last_executed_at: '2026-01-15T10:00:00Z',
+    })
   }),
 
   http.get(`${API_URL}/api/v1/scripts/:id/schedule`, ({ params }) => {
     const script = mockScripts.find((s) => s.id === params.id)
     if (!script) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json({ cron: '0 2 * * *', enabled: true })
+    return HttpResponse.json({
+      id: 'sched-1',
+      script_id: script.id,
+      cron: '0 2 * * *',
+      timezone: 'UTC',
+      enabled: true,
+      misfire_grace_seconds: 60,
+      operational_state: 'active',
+      next_run_at: '2026-01-16T02:00:00Z',
+      last_run_at: '2026-01-15T02:00:00Z',
+      last_success_at: '2026-01-15T02:00:00Z',
+      last_failure_at: null,
+      last_error_type: null,
+      node_ids: ['1', '2'],
+      params: {},
+    })
   }),
 
-  http.post(`${API_URL}/api/v1/scripts/:id/schedule`, () => {
-    return HttpResponse.json({ cron: '0 2 * * *', enabled: true })
+  http.post(`${API_URL}/api/v1/scripts/:id/schedule`, async ({ params, request }) => {
+    const script = mockScripts.find((s) => s.id === params.id)
+    if (!script) return new HttpResponse(null, { status: 404 })
+    const body = await request.json() as { cron: string; node_ids: string[]; timezone?: string }
+    return HttpResponse.json({
+      script_id: script.id,
+      cron: body.cron,
+      message: 'Script scheduled successfully',
+      timezone: body.timezone || 'UTC',
+    })
   }),
 
   http.delete(`${API_URL}/api/v1/scripts/:id/schedule`, () => {

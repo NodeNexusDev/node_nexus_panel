@@ -121,6 +121,7 @@ export function useRetryNodeCommand() {
       nodesApi.retryCommand(nodeId, executionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'commands-history'] })
     },
   })
 }
@@ -145,6 +146,7 @@ export function useBulkTagsAdd() {
     mutationFn: (data: { node_ids: string[]; tags: string[] }) => nodesApi.bulkTagsAdd(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
     },
   })
 }
@@ -156,6 +158,7 @@ export function useBulkTagsRemove() {
     mutationFn: (data: { node_ids: string[]; tags: string[] }) => nodesApi.bulkTagsRemove(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
     },
   })
 }
@@ -190,6 +193,7 @@ export function useAddNodeTag() {
     mutationFn: ({ id, tag }: { id: string; tag: string }) => nodesApi.addTag(id, tag),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
     },
   })
 }
@@ -201,6 +205,7 @@ export function useRemoveNodeTag() {
     mutationFn: ({ id, tag }: { id: string; tag: string }) => nodesApi.removeTag(id, tag),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes', 'tags'] })
     },
   })
 }

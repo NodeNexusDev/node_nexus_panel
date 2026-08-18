@@ -9,6 +9,6 @@ export const tagsHandlers = [
   }),
 
   http.delete(`${API}/api/v1/tags/:tagName`, () => {
-    return new HttpResponse(null, { status: 204 })
+    return HttpResponse.json({ message: 'Tag deleted successfully' })
   }),
 ]

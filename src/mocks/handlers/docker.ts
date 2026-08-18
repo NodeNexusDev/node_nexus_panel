@@ -94,19 +94,51 @@ export const dockerHandlers = [
     return HttpResponse.json(mockVolumes)
   }),
 
-  http.post(`${API}/api/v1/docker/bulk/exec`, () => {
-    return HttpResponse.json({ affected: 1, batch_id: 'bulk-1' })
+  http.post(`${API}/api/v1/docker/bulk/exec`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[]; command?: string }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'exec',
+      results: nodeIds.map((nid) => ({ node_id: nid, node_name: `node-${nid}`, status: 'success', output: 'command executed successfully\n', error: '' })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
   }),
 
-  http.post(`${API}/api/v1/docker/bulk/restart`, () => {
-    return HttpResponse.json({ affected: 1, batch_id: 'bulk-2' })
+  http.post(`${API}/api/v1/docker/bulk/restart`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[] }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'restart',
+      results: nodeIds.map((nid) => ({ node_id: nid, node_name: `node-${nid}`, status: 'success', output: '', error: '' })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
   }),
 
-  http.post(`${API}/api/v1/docker/bulk/start`, () => {
-    return HttpResponse.json({ affected: 1, batch_id: 'bulk-3' })
+  http.post(`${API}/api/v1/docker/bulk/start`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[] }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'start',
+      results: nodeIds.map((nid) => ({ node_id: nid, node_name: `node-${nid}`, status: 'success', output: '', error: '' })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
   }),
 
-  http.post(`${API}/api/v1/docker/bulk/stop`, () => {
-    return HttpResponse.json({ affected: 1, batch_id: 'bulk-4' })
+  http.post(`${API}/api/v1/docker/bulk/stop`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[] }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'stop',
+      results: nodeIds.map((nid) => ({ node_id: nid, node_name: `node-${nid}`, status: 'success', output: '', error: '' })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
   }),
 ]

@@ -7,7 +7,7 @@ import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '../../hoo
 import type { Note } from '../../api/types'
 
 interface NotesPanelProps {
-  targetType: string
+  targetType: 'node' | 'command' | 'script'
   targetId: string
 }
 
@@ -25,7 +25,7 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
 
   const handleCreate = () => {
     createNote.mutate(
-      { targetType, targetId, data: { content: newContent } },
+      { targetType, targetId, data: { target_type: targetType, target_id: targetId, content: newContent } },
       { onSuccess: () => setNewContent('') },
     )
   }

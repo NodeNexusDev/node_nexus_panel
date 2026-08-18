@@ -42,6 +42,7 @@ export function Commands() {
 
   const [selectedCommandId, setSelectedCommandId] = useState('')
   const [selectedNode, setSelectedNode] = useState('')
+  const [commandParams, setCommandParams] = useState<Record<string, unknown>>({})
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Command | null>(null)
   const [statsTarget, setStatsTarget] = useState<Command | null>(null)
@@ -57,8 +58,8 @@ export function Commands() {
   const handleExecute = () => {
     if (!selectedCommandId || !selectedNode) return
     executeCommand.mutate(
-      { id: selectedCommandId, data: { node_id: selectedNode } },
-      { onSuccess: () => { toast('success', t('commands.toastExecuted', { target: selectedNode })); setSelectedCommandId(''); setSelectedNode('') }, onError: () => toast('error', t('commands.toastFailed')) },
+      { id: selectedCommandId, data: { node_id: selectedNode, params: Object.keys(commandParams).length > 0 ? commandParams : undefined } },
+      { onSuccess: () => { toast('success', t('commands.toastExecuted', { target: selectedNode })); setSelectedCommandId(''); setSelectedNode(''); setCommandParams({}) }, onError: () => toast('error', t('commands.toastFailed')) },
     )
   }
 
@@ -128,7 +129,7 @@ export function Commands() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 flex-wrap">
-            <select value={selectedCommandId} onChange={(e) => setSelectedCommandId(e.target.value)} className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white min-w-[200px]">
+            <select value={selectedCommandId} onChange={(e) => { setSelectedCommandId(e.target.value); setCommandParams({}) }} className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white min-w-[200px]">
               <option value="">{t('commands.selectCommand')}</option>
               {commands.map((cmd) => (<option key={cmd.id} value={cmd.id}>{cmd.name}</option>))}
             </select>
@@ -145,6 +146,36 @@ export function Commands() {
               <p className="text-sm font-medium text-surface-700 dark:text-surface-300">{selectedCommand.name}</p>
               <pre className="text-sm text-surface-600 dark:text-surface-400 font-mono mt-1">{selectedCommand.command}</pre>
               {selectedCommand.description && <p className="text-xs text-surface-500 dark:text-surface-500 mt-1">{selectedCommand.description}</p>}
+              {selectedCommand.parameters && selectedCommand.parameters.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-medium text-surface-600 dark:text-surface-400">{t('commands.parameters', 'Parameters')}</p>
+                  {selectedCommand.parameters.map((param) => (
+                    <div key={param.name} className="flex items-center gap-2">
+                      <label className="text-xs text-surface-500 dark:text-surface-400 min-w-[100px]">
+                        {param.name}
+                        {param.required && <span className="text-red-500 ml-1">*</span>}
+                      </label>
+                      {param.type === 'boolean' ? (
+                        <input
+                          type="checkbox"
+                          checked={!!commandParams[param.name]}
+                          onChange={(e) => setCommandParams((prev) => ({ ...prev, [param.name]: e.target.checked }))}
+                          className="rounded border-surface-300 dark:border-surface-600"
+                        />
+                      ) : (
+                        <input
+                          type={param.type === 'integer' ? 'number' : 'text'}
+                          placeholder={param.description || `${param.type}${param.required ? ' (required)' : ''}`}
+                          value={String(commandParams[param.name] ?? param.default ?? '')}
+                          onChange={(e) => setCommandParams((prev) => ({ ...prev, [param.name]: e.target.value }))}
+                          className="px-3 py-1 bg-white border border-surface-300 rounded text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+                        />
+                      )}
+                      {param.description && <span className="text-xs text-surface-400">{param.description}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </CardContent>

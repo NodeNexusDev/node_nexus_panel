@@ -8,9 +8,19 @@ export const commandHandlers = [
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')
+    const tag = url.searchParams.get('tag')
+    const search = url.searchParams.get('search')
+    let filtered = mockCommands
+    if (tag) {
+      filtered = filtered.filter((c) => c.tags.includes(tag))
+    }
+    if (search) {
+      const q = search.toLowerCase()
+      filtered = filtered.filter((c) => c.name.toLowerCase().includes(q) || c.command.toLowerCase().includes(q))
+    }
     const start = (page - 1) * size
-    const items = mockCommands.slice(start, start + size)
-    return HttpResponse.json({ items, total: mockCommands.length, page, size })
+    const items = filtered.slice(start, start + size)
+    return HttpResponse.json({ items, total: filtered.length, page, size })
   }),
 
   http.get(`${API_URL}/api/v1/commands/tags`, () => {

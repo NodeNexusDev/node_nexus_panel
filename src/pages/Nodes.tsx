@@ -46,9 +46,9 @@ export function Nodes() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [tagFilter, setTagFilter] = useState('')
-  const { data, isLoading } = useNodes({ search: search || undefined, status: statusFilter || undefined, tags: tagFilter || undefined })
+  const { data, isLoading } = useNodes({ search: search || undefined, status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined, tags: tagFilter || undefined })
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
   const updateNode = useUpdateNode()
@@ -419,16 +419,31 @@ export function Nodes() {
             className="w-full pl-10 pr-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-        >
-          <option value="">{t('nodes.allStatuses', 'All statuses')}</option>
-          <option value="active">{t('nodes.statusActive', 'Active')}</option>
-          <option value="unreachable">{t('nodes.statusUnreachable', 'Unreachable')}</option>
-          <option value="error">{t('nodes.statusError', 'Error')}</option>
-        </select>
+        <div className="flex items-center gap-1">
+          {(['active', 'unreachable', 'error'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter((prev) => {
+                const next = new Set(prev)
+                if (next.has(s)) next.delete(s)
+                else next.add(s)
+                return next
+              })}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter.has(s)
+                  ? s === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : s === 'unreachable' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
+              }`}
+            >
+              {t(`nodes.status${s.charAt(0).toUpperCase() + s.slice(1)}`, s)}
+            </button>
+          ))}
+          {statusFilter.size > 0 && (
+            <button onClick={() => setStatusFilter(new Set())} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200">×</button>
+          )}
+        </div>
         <select
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}

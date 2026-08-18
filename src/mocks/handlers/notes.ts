@@ -24,9 +24,11 @@ export const notesHandlers = [
     return HttpResponse.json(note, { status: 201 })
   }),
 
-  http.put(`${API}/api/v1/notes/:noteId`, async ({ request }) => {
+  http.put(`${API}/api/v1/notes/:noteId`, async ({ params, request }) => {
+    const note = mockNotes.find((n) => n.id === params.noteId)
+    if (!note) return new HttpResponse(null, { status: 404 })
     const body = await request.json() as { content: string }
-    return HttpResponse.json({ ...mockNotes[0], ...body, updated_at: new Date().toISOString() })
+    return HttpResponse.json({ ...note, ...body, updated_at: new Date().toISOString() })
   }),
 
   http.delete(`${API}/api/v1/notes/:noteId`, () => {

@@ -28,9 +28,13 @@ export function Audit() {
   const [userFilter, setUserFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [page, setPage] = useState(1)
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json')
+  const pageSize = 20
 
   const { data, isLoading } = useAuditLogs({
-    size: 50,
+    page,
+    size: pageSize,
     node_id: nodeFilter || undefined,
     action: actionFilter || undefined,
     user: userFilter || undefined,
@@ -50,6 +54,50 @@ export function Audit() {
     setUserFilter('')
     setDateFrom('')
     setDateTo('')
+    setPage(1)
+  }
+
+  const handleExport = () => {
+    exportAudit.mutate({
+      from_date: dateFrom || undefined,
+      to_date: dateTo || undefined,
+      action: actionFilter || undefined,
+      node_id: nodeFilter || undefined,
+      fmt: exportFormat,
+    }, {
+      onSuccess: (data) => {
+        let content: string
+        let mimeType: string
+        let extension: string
+
+        if (exportFormat === 'csv') {
+          try {
+            const jsonData = JSON.parse(data)
+            const headers = ['id', 'action', 'node_id', 'user', 'details', 'created_at']
+            const rows = (jsonData.items || []).map((log: Record<string, unknown>) => headers.map((h) => `"${String(log[h] ?? '').replace(/"/g, '""')}"`).join(','))
+            content = [headers.join(','), ...rows].join('\n')
+          } catch {
+            content = data
+          }
+          mimeType = 'text/csv'
+          extension = 'csv'
+        } else {
+          content = data
+          mimeType = 'application/json'
+          extension = 'json'
+        }
+
+        const blob = new Blob([content], { type: mimeType })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.${extension}`
+        a.click()
+        URL.revokeObjectURL(url)
+        toast('success', t('audit.toastExported'))
+      },
+      onError: () => toast('error', t('audit.toastExportFailed')),
+    })
   }
 
   return (
@@ -60,19 +108,13 @@ export function Audit() {
           <p className="text-surface-500 dark:text-surface-400 mt-1">{t('audit.description')}</p>
         </div>
         <div className="flex items-center gap-2">
+          <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')} className="px-3 py-1 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+            <option value="json">JSON</option>
+            <option value="csv">CSV</option>
+          </select>
           <Button
             variant="ghost"
-            onClick={() => {
-              exportAudit.mutate({
-                from_date: dateFrom || undefined,
-                to_date: dateTo || undefined,
-                action: actionFilter || undefined,
-                node_id: nodeFilter || undefined,
-              }, {
-                onSuccess: () => toast('success', t('audit.toastExported')),
-                onError: () => toast('error', t('audit.toastExportFailed')),
-              })
-            }}
+            onClick={handleExport}
             disabled={exportAudit.isPending}
           >
             {t('audit.export')}
@@ -152,6 +194,18 @@ export function Audit() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {data && data.total > pageSize && (
+            <div className="flex items-center justify-between px-6 py-3 border-t border-surface-200 dark:border-surface-800">
+              <p className="text-sm text-surface-500">
+                {t('audit.showing', 'Showing')} {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.total)} {t('audit.of', 'of')} {data.total}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>{t('common.previous', 'Previous')}</Button>
+                <span className="text-sm text-surface-500">{page} / {Math.ceil(data.total / pageSize)}</span>
+                <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.min(Math.ceil(data.total / pageSize), p + 1))} disabled={page >= Math.ceil(data.total / pageSize)}>{t('common.next', 'Next')}</Button>
+              </div>
             </div>
           )}
         </CardContent>

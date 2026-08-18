@@ -8,9 +8,14 @@ export const favoritesHandlers = [
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')
+    const targetType = url.searchParams.get('target_type')
+    let filtered = mockFavorites
+    if (targetType) {
+      filtered = filtered.filter((f) => f.target_type === targetType)
+    }
     const start = (page - 1) * size
-    const items = mockFavorites.slice(start, start + size)
-    return HttpResponse.json({ items, total: mockFavorites.length, page, size })
+    const items = filtered.slice(start, start + size)
+    return HttpResponse.json({ items, total: filtered.length, page, size })
   }),
 
   http.post(`${API}/api/v1/favorites`, async ({ request }) => {

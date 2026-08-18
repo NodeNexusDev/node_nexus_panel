@@ -126,7 +126,7 @@ export function useSetScriptSchedule() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { cron: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { cron: string; node_ids: string[]; params?: Record<string, unknown>; timezone?: string; misfire_grace_seconds?: number } }) =>
       scriptsApi.setSchedule(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scripts'] })

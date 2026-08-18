@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiKeysApi } from '../api/settings'
 import { configApi } from '../api/config'
-import type { ApiKeyCreate, ApiKeyUpdate, ApiKeyList, ConfigExport, ConfigImport } from '../api/types'
+import type { ApiKeyCreate, ApiKeyUpdate, ApiKeyList, ConfigExport, ConfigImport, ImportResult, DryRunImportResult } from '../api/types'
 
 export function useApiKeys(params?: { page?: number; size?: number }) {
   return useQuery<ApiKeyList>({
@@ -55,7 +55,7 @@ export function useConfigImport() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: ConfigImport) => configApi.import(data),
+    mutationFn: (data: ConfigImport) => configApi.import(data) as Promise<ImportResult | DryRunImportResult>,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['config'] })
     },

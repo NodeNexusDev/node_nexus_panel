@@ -120,10 +120,10 @@ export interface CommandResult {
 export interface ScriptStep {
   label: string
   type: 'inline' | 'command'
-  command: string | null
-  command_id: string | null
-  params: Record<string, unknown>
-  on_failure: 'stop' | 'continue'
+  command?: string | null
+  command_id?: string | null
+  params?: Record<string, unknown>
+  on_failure?: 'stop' | 'continue'
 }
 
 export interface Script {
@@ -216,12 +216,13 @@ export interface ApiKey {
 export interface ApiKeyCreate {
   name: string
   scope?: 'read-only' | 'read-write'
+  expires_at?: string
 }
 
 export interface ApiKeyUpdate {
-  name?: string
-  scope?: 'read-only' | 'read-write'
-  is_active?: boolean
+  name?: string | null
+  scope?: 'read-only' | 'read-write' | null
+  is_active?: boolean | null
   expires_at?: string | null
 }
 
@@ -485,8 +486,19 @@ export interface BulkDockerRequest {
 }
 
 export interface BulkDockerResponse {
-  affected: number
-  batch_id: string | null
+  action: string
+  results: BulkDockerNodeResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+export interface BulkDockerNodeResult {
+  node_id: string
+  node_name: string
+  status: string
+  output?: string
+  error?: string
 }
 
 // ── Docker: Logs (plain string from backend) ────────────────────
@@ -528,6 +540,7 @@ export interface Favorite {
 export interface FavoriteCreate {
   target_type: 'node' | 'command' | 'script'
   target_id: string
+  note?: string | null
 }
 
 // ── Phase 4: Notes + Tags + Config ─────────────────────────────
@@ -542,6 +555,8 @@ export interface Note {
 }
 
 export interface NoteCreate {
+  target_type: 'node' | 'command' | 'script'
+  target_id: string
   content: string
 }
 
@@ -576,15 +591,17 @@ export interface ConfigExport {
 export interface NodeExport {
   name: string
   host: string
-  port?: number
-  connection_type?: string
+  port: number
+  connection_type: string
   tags?: string[]
+  username?: string | null
 }
 
 export interface CommandExport {
   name: string
-  description?: string
   command: string
+  description?: string | null
+  parameters?: Record<string, unknown>[] | null
   tags?: string[]
 }
 
@@ -613,38 +630,100 @@ export interface ImportResult {
   errors?: string[]
 }
 
+// ── Config: Dry Run Import ──────────────────────────────────────
+
+export interface DryRunImportResult {
+  dry_run?: boolean
+  would_create: DryRunWouldCreate
+  duplicates?: string[]
+  errors?: string[]
+}
+
+export interface DryRunWouldCreate {
+  nodes?: DryRunNodePreview[]
+  commands?: DryRunCommandPreview[]
+  scripts?: DryRunScriptPreview[]
+}
+
+export interface DryRunNodePreview {
+  name: string
+  host: string
+  port: number
+  connection_type: string
+  tags?: string[]
+  username?: string | null
+}
+
+export interface DryRunCommandPreview {
+  name: string
+  command: string
+  description?: string | null
+  tags?: string[]
+}
+
+export interface DryRunScriptPreview {
+  name: string
+  description?: string | null
+  tags?: string[]
+}
+
 // ── Scripts: Schedule types ─────────────────────────────────────
 
 export interface ScheduledJob {
   id: string
   script_id: string
   cron: string
-  next_run: string | null
-  last_run: string | null
+  timezone: string
   enabled: boolean
-  created_at: string
+  misfire_grace_seconds: number
+  operational_state: string
+  next_run_at: string | null
+  last_run_at: string | null
+  last_success_at: string | null
+  last_failure_at: string | null
+  last_error_type: string | null
+  node_ids: string[]
+  params?: Record<string, unknown>
 }
 
 export interface ScheduleRequest {
   cron: string
-  enabled?: boolean
+  node_ids: string[]
+  params?: Record<string, unknown>
+  timezone?: string
+  misfire_grace_seconds?: number
 }
 
 export interface ScheduleResponse {
-  id: string
   script_id: string
   cron: string
-  next_run: string | null
-  enabled: boolean
-  created_at: string
+  message?: string
+  timezone?: string
+}
+
+export interface ScriptNodeResult {
+  execution_id: string
+  node_id: string
+  node_name: string
+  status: string
+  steps: ScriptStepResult[]
+}
+
+export interface ScriptStepResult {
+  step_index: number
+  label: string
+  command_fingerprint: string
+  stdout: string
+  stderr: string
+  stdout_bytes: number
+  stderr_bytes: number
+  exit_code: number
+  truncated?: boolean
 }
 
 export interface ScriptExecutionBatchResult {
-  batch_id: string
-  total: number
-  successful: number
-  failed: number
-  executions: ScriptExecutionResponse[]
+  script_id: string
+  results: ScriptNodeResult[]
 }
 
 // ── Commands: History ───────────────────────────────────────────
