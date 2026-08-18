@@ -7,6 +7,7 @@ import type {
   ExecutionStatsResponse,
   NodeStatusHistoryItem,
   ExecutionRetryResponse,
+  NodeValidateRequest,
   NodeValidateResponse,
   BulkCommandHistoryItem,
   BulkNodeOperationResult,
@@ -95,14 +96,8 @@ export const nodesApi = {
   retryCommand: (id: string, executionId: string) =>
     api.post<ExecutionRetryResponse>(`/nodes/${id}/commands/${executionId}/retry`),
 
-  validateCredentials: (data: {
-    host: string
-    port: number
-    connection_type: string
-    username?: string
-    password?: string
-    ssh_key?: string
-  }) => api.post<NodeValidateResponse>('/nodes/validate-credentials', data),
+  validateCredentials: (data: NodeValidateRequest) =>
+    api.post<NodeValidateResponse>('/nodes/validate-credentials', data),
 
   getBulkHistory: (batchId: string, params?: { page?: number; size?: number }) => {
     const query = new URLSearchParams({ batch_id: batchId })

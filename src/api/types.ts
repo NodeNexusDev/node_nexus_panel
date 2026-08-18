@@ -27,10 +27,10 @@ export interface NodeCreate {
   host: string
   port?: number
   connection_type: ConnectionType
-  username?: string
-  password?: string
-  ssh_key?: string
-  docker_host?: string
+  username?: string | null
+  password?: string | null
+  ssh_key?: string | null
+  docker_host?: string | null
   tags?: string[]
 }
 
@@ -40,10 +40,10 @@ export interface NodeUpdate {
   port?: number
   connection_type?: ConnectionType
   status?: NodeStatus
-  username?: string
-  password?: string
-  ssh_key?: string
-  docker_host?: string
+  username?: string | null
+  password?: string | null
+  ssh_key?: string | null
+  docker_host?: string | null
   tags?: string[]
 }
 
@@ -266,6 +266,15 @@ export interface ExecutionRetryResponse {
   execution_id: string
   status: string
   message: string
+}
+
+export interface NodeValidateRequest {
+  host: string
+  port?: number
+  connection_type?: ConnectionType
+  username?: string | null
+  password?: string | null
+  ssh_key?: string | null
 }
 
 export interface NodeValidateResponse {

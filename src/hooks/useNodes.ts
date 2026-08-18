@@ -4,6 +4,7 @@ import type {
   Node,
   NodeCreate,
   NodeUpdate,
+  NodeValidateRequest,
   NodeMetrics,
   ExecutionStatsResponse,
   NodeStatusHistoryItem,
@@ -128,14 +129,7 @@ export function useRetryNodeCommand() {
 
 export function useValidateCredentials() {
   return useMutation({
-    mutationFn: (data: {
-      host: string
-      port: number
-      connection_type: string
-      username?: string
-      password?: string
-      ssh_key?: string
-    }) => nodesApi.validateCredentials(data),
+    mutationFn: (data: NodeValidateRequest) => nodesApi.validateCredentials(data),
   })
 }
 

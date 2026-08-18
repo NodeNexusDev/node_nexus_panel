@@ -24,6 +24,14 @@ export class EventsClient {
 
     this.source.onmessage = (event) => {
       this.emit('*', event)
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type) {
+          this.emit(data.type, event)
+        }
+      } catch {
+        // ignore parse errors
+      }
     }
 
     this.source.onerror = () => {
