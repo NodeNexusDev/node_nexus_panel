@@ -735,7 +735,7 @@ export function Docker() {
         </nav>
       </div>
 
-      <Card className="stagger-item">
+      <Card hover className="stagger-item">
         <CardContent className="p-0">
           {!selectedNodeId ? (
             <TableSkeleton rows={6} cols={6} />

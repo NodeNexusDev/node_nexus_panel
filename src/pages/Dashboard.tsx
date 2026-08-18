@@ -177,7 +177,7 @@ export function Dashboard() {
         </Card>
       </div>
 
-      <Card className="stagger-item">
+      <Card hover className="stagger-item">
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.metricsTitle')}</h2>
@@ -224,7 +224,7 @@ export function Dashboard() {
       </Card>
 
       {recentActivity.length > 0 && (
-        <Card className="stagger-item">
+        <Card hover className="stagger-item">
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400"><IconAudit className="w-4 h-4" /></div>

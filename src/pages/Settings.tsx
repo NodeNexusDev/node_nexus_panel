@@ -121,7 +121,7 @@ export function Settings() {
     <div className="space-y-6">
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
-      <Card className="stagger-item" style={{ animationDelay: '100ms' }}>
+      <Card hover className="stagger-item" style={{ animationDelay: '100ms' }}>
         <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.apiKeys')}</h2></CardHeader>
         <CardContent>
           {keysLoading ? <FormSkeleton fields={2} /> : (
@@ -160,7 +160,7 @@ export function Settings() {
         </CardContent>
       </Card>
 
-      <Card className="stagger-item" style={{ animationDelay: '200ms' }}>
+      <Card hover className="stagger-item" style={{ animationDelay: '200ms' }}>
         <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.config')}</h2></CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">

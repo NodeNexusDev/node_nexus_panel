@@ -81,7 +81,7 @@ export function Favorites() {
         </CardContent>
       </Card>
 
-      <Card className="stagger-item">
+      <Card hover className="stagger-item">
         <CardContent className="p-0">
           {isLoading ? (
             <TableSkeleton rows={5} cols={4} />

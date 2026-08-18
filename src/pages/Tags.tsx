@@ -79,7 +79,7 @@ export function Tags() {
     <div className="space-y-6">
       <PageHeader title={t('tags.title')} description={t('tags.description')} />
 
-      <Card className="stagger-item">
+      <Card hover className="stagger-item">
         <CardContent className="p-0">
           {isLoading ? (
             <TableSkeleton rows={5} cols={3} />
