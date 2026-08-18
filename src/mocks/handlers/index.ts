@@ -10,6 +10,7 @@ import { favoritesHandlers } from './favorites'
 import { notesHandlers } from './notes'
 import { tagsHandlers } from './tags'
 import { configHandlers } from './config'
+import { eventsHandlers } from './events'
 
 export const handlers = [
   ...nodeHandlers,
@@ -24,4 +25,5 @@ export const handlers = [
   ...notesHandlers,
   ...tagsHandlers,
   ...configHandlers,
+  ...eventsHandlers,
 ]

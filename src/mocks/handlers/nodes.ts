@@ -189,16 +189,22 @@ export const nodeHandlers = [
   http.post(`${API_URL}/api/v1/nodes/:id/tags`, async ({ params, request }) => {
     const node = mockNodes.find((n) => n.id === params.id)
     if (!node) return new HttpResponse(null, { status: 404 })
-    const body = await request.json() as { tags: string[] }
-    node.tags = [...new Set([...node.tags, ...body.tags])]
+    const body = await request.json() as { tag: string }
+    if (!body.tag || body.tag.trim().length === 0) {
+      return new HttpResponse(null, { status: 422 })
+    }
+    node.tags = [...new Set([...node.tags, body.tag.trim()])]
     return HttpResponse.json(node)
   }),
 
   http.delete(`${API_URL}/api/v1/nodes/:id/tags`, async ({ params, request }) => {
     const node = mockNodes.find((n) => n.id === params.id)
     if (!node) return new HttpResponse(null, { status: 404 })
-    const body = await request.json() as { tags: string[] }
-    node.tags = node.tags.filter((t) => !body.tags.includes(t))
+    const body = await request.json() as { tag: string }
+    if (!body.tag || body.tag.trim().length === 0) {
+      return new HttpResponse(null, { status: 422 })
+    }
+    node.tags = node.tags.filter((t) => t !== body.tag.trim())
     return HttpResponse.json(node)
   }),
 ]
