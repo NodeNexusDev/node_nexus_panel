@@ -21,7 +21,7 @@ export const queryClient = new QueryClient({
         }
         return failureCount < 3
       },
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     },
     mutations: {
       onError: (error) => handleServerError(error),

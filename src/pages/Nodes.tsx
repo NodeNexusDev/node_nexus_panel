@@ -77,7 +77,7 @@ export function Nodes() {
     search: search || undefined,
     status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined,
     tags: tagFilter || undefined,
-  })
+  }, { refetchInterval: 30_000 })
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
   const updateNode = useUpdateNode()

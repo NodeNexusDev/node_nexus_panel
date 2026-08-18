@@ -13,10 +13,11 @@ import type {
   PaginatedResponse,
 } from '../api/types'
 
-export function useNodes(params?: { page?: number; size?: number; status?: string; tags?: string; search?: string }) {
+export function useNodes(params?: { page?: number; size?: number; status?: string; tags?: string; search?: string }, options?: { refetchInterval?: number }) {
   return useQuery<PaginatedResponse<Node>>({
     queryKey: ['nodes', params],
     queryFn: () => nodesApi.getAll(params),
+    refetchInterval: options?.refetchInterval,
   })
 }
 
