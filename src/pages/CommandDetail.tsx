@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
@@ -18,17 +18,16 @@ import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { IconCommands, IconArrowLeft, IconXCircle, IconCheckCircle } from '../components/ui/Icons'
 import { useToast } from '../components/ui/useToast'
-import { useNodes } from '../hooks/useNodes'
 import {
   useCommand,
   useCommandStats,
-  useExecuteCommand,
   useUpdateCommand,
   useCloneCommand,
   useDeleteCommand,
 } from '../hooks/useCommands'
 import { ParameterEditor } from '../components/commands/CommandFormEditor'
-import { normalizeParameters, getDefaultParams } from '../components/commands/command-form-utils'
+import { CommandExecuteModal } from '../components/commands/CommandExecuteModal'
+import { normalizeParameters } from '../components/commands/command-form-utils'
 import { commandUpdateSchema, type CommandUpdateFormValues } from '../lib/validators/command-schema'
 import type { Command, CommandUpdate } from '../api/types'
 
@@ -45,27 +44,13 @@ export function CommandDetail() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const { data: command, isLoading, error, refetch } = useCommand(id || '')
-  const { data: nodesData } = useNodes()
-  const nodes = nodesData?.items || []
-  const executeCommand = useExecuteCommand()
   const updateCommand = useUpdateCommand()
   const cloneCommand = useCloneCommand()
   const deleteCommand = useDeleteCommand()
 
-  const [selectedNode, setSelectedNode] = useState('')
-  const [commandParams, setCommandParams] = useState<Record<string, unknown>>({})
-
   const editForm = useForm<CommandUpdateFormValues>({
     resolver: zodResolver(commandUpdateSchema) as Resolver<CommandUpdateFormValues>,
   })
-
-  useEffect(() => {
-    if (command) {
-      setCommandParams(getDefaultParams(command.parameters))
-    } else {
-      setCommandParams({})
-    }
-  }, [command])
 
   const openEdit = () => {
     if (!command) return
@@ -100,26 +85,6 @@ export function CommandDetail() {
       {
         onSuccess: () => { toast('success', t('commands.toastUpdated')); setShowEditModal(false) },
         onError: () => toast('error', t('commands.toastUpdateFailed')),
-      },
-    )
-  }
-
-  const handleExecute = () => {
-    if (!id || !selectedNode) return
-    const parameters = command?.parameters || []
-    const params: Record<string, unknown> = {}
-    for (const p of parameters) {
-      const raw = commandParams[p.name]
-      if (raw === '' || raw === undefined || raw === null) continue
-      if (p.type === 'integer') params[p.name] = Number(raw)
-      else if (p.type === 'boolean') params[p.name] = !!raw
-      else params[p.name] = raw
-    }
-    executeCommand.mutate(
-      { id, data: { node_id: selectedNode, params: Object.keys(params).length > 0 ? params : undefined } },
-      {
-        onSuccess: () => { toast('success', t('commands.toastExecuted', { target: selectedNode })); setShowExecModal(false); setSelectedNode('') },
-        onError: () => toast('error', t('commands.toastFailed')),
       },
     )
   }
@@ -199,56 +164,17 @@ export function CommandDetail() {
       {activeTab === 'stats' && <StatsTab commandId={command.id} />}
       {activeTab === 'notes' && <NotesTab commandId={command.id} />}
 
-      <Modal isOpen={showExecModal} onClose={() => setShowExecModal(false)} title={t('commands.execute')}>
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('commands.selectNode')}</label>
-            <select value={selectedNode} onChange={(e) => setSelectedNode(e.target.value)} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="">{t('commands.selectNode')}</option>
-              {nodes.map((node) => (<option key={node.id} value={node.id}>{node.name}</option>))}
-            </select>
-          </div>
-          {command.parameters && command.parameters.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-surface-600 dark:text-surface-400">{t('commands.parameters', 'Parameters')}</p>
-              {command.parameters.map((param) => (
-                <div key={param.name} className="flex items-center gap-2">
-                  <label className="text-xs text-surface-500 dark:text-surface-400 min-w-[100px]">
-                    {param.name}
-                    {param.required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
-                  {param.type === 'boolean' ? (
-                    <input type="checkbox" checked={!!commandParams[param.name]} onChange={(e) => setCommandParams((prev) => ({ ...prev, [param.name]: e.target.checked }))} className="rounded border-surface-300 dark:border-surface-600" />
-                  ) : (
-                    <input
-                      type={param.type === 'integer' ? 'number' : 'text'}
-                      placeholder={param.description || `${param.type}${param.required ? ' (required)' : ''}`}
-                      value={String(commandParams[param.name] ?? param.default ?? '')}
-                      onChange={(e) => setCommandParams((prev) => ({ ...prev, [param.name]: e.target.value }))}
-                      className="px-3 py-1 bg-white border border-surface-300 rounded text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-                    />
-                  )}
-                  {param.description && <span className="text-xs text-surface-400">{param.description}</span>}
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowExecModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleExecute} disabled={!selectedNode || executeCommand.isPending}>{executeCommand.isPending ? t('common.loading') : t('commands.execute')}</Button>
-          </div>
-        </div>
-      </Modal>
+      <CommandExecuteModal command={showExecModal ? command : null} onClose={() => setShowExecModal(false)} />
 
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title={t('commands.editCommand', 'Edit Command')} size="lg">
         <FormProvider {...editForm}>
           <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-            <Input label={t('commands.name', 'Name')} {...editForm.register('name')} error={editForm.formState.errors.name?.message} />
-            <Input label={t('commands.command', 'Command')} {...editForm.register('command')} error={editForm.formState.errors.command?.message} />
+            <Input label={t('commands.name', 'Name')} placeholder="check-disk" {...editForm.register('name')} error={editForm.formState.errors.name?.message} />
+            <Input label={t('commands.command', 'Command')} placeholder="df -h" {...editForm.register('command')} error={editForm.formState.errors.command?.message} />
             <Controller
               name="description"
               control={editForm.control}
-              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} {...field} value={field.value ?? ''} />}
+              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder="Check disk usage" {...field} value={field.value ?? ''} />}
             />
             <Controller
               name="tags"
@@ -256,6 +182,7 @@ export function CommandDetail() {
               render={({ field }) => (
                 <Input
                   label={t('commands.tagsLabel', 'Tags (comma separated)')}
+                  placeholder="disk, system"
                   value={Array.isArray(field.value) ? field.value.join(', ') : ''}
                   onChange={(e) => field.onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
                 />

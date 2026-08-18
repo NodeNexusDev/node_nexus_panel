@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Pagination } from '../components/ui/Pagination'
+import { PageHeader } from '../components/ui/PageHeader'
 import { IconStar } from '../components/ui/Icons'
 import { useFavorites, useRemoveFavorite } from '../hooks/useFavorites'
 import { useNodes } from '../hooks/useNodes'
@@ -49,8 +50,8 @@ export function Favorites() {
 
   const handleNavigate = (fav: Favorite) => {
     if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`)
-    else if (fav.target_type === 'command') navigate('/commands')
-    else navigate('/scripts')
+    else if (fav.target_type === 'command') navigate(`/commands/${fav.target_id}`)
+    else navigate(`/scripts/${fav.target_id}`)
   }
 
   const handleRemove = (fav: Favorite) => {
@@ -65,10 +66,7 @@ export function Favorites() {
 
   return (
     <div className="space-y-6">
-      <div className="animate-slide-up">
-        <h1 className="text-3xl font-bold gradient-text">{t('favorites.title')}</h1>
-        <p className="text-surface-500 dark:text-surface-400 mt-1">{t('favorites.description')}</p>
-      </div>
+      <PageHeader title={t('favorites.title')} description={t('favorites.description')} />
 
       <Card className="stagger-item">
         <CardContent>

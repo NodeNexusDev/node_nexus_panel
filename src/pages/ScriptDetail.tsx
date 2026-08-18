@@ -17,12 +17,14 @@ import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconScripts, IconArrowLeft, IconXCircle, IconZap } from '../components/ui/Icons'
 import { useToast } from '../components/ui/useToast'
 import { useNodes } from '../hooks/useNodes'
+import { ScriptFormModal, type ScriptFormValues } from '../components/scripts/ScriptFormModal'
 import {
   useScript,
   useScriptSchedule,
   useScriptScheduleHistory,
   useScriptExecutions,
   useRunScript,
+  useUpdateScript,
   useCloneScript,
   useDeleteScript,
   useSetScriptSchedule,
@@ -42,12 +44,14 @@ export function ScriptDetail() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [showRunModal, setShowRunModal] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const { data: script, isLoading, error, refetch } = useScript(id || '')
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
   const runScript = useRunScript()
+  const updateScript = useUpdateScript()
   const cloneScript = useCloneScript()
   const deleteScript = useDeleteScript()
   const setSchedule = useSetScriptSchedule()
@@ -140,6 +144,7 @@ export function ScriptDetail() {
             {t('scripts.run')}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => { setShowScheduleModal(true); setScheduleCron(''); setScheduleNodeIds([]); setScheduleTimezone('UTC'); setScheduleMisfireGrace(60) }}>{t('scripts.schedule')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowEditModal(true)}>{t('common.edit')}</Button>
           <Button variant="ghost" size="sm" onClick={handleClone} disabled={cloneScript.isPending}>{t('scripts.clone')}</Button>
           <Button variant="ghost" size="sm" onClick={() => setShowDeleteDialog(true)} className="text-red-500 hover:text-red-600">
             <IconXCircle className="w-4 h-4 mr-1" />
@@ -202,6 +207,21 @@ export function ScriptDetail() {
           </div>
         </div>
       </Modal>
+
+      <ScriptFormModal
+        isOpen={showEditModal}
+        title={`${t('scripts.edit')}: ${script.name}`}
+        pending={updateScript.isPending}
+        initial={{ name: script.name, description: script.description || '', tags: script.tags, steps: script.steps }}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={(values: ScriptFormValues) => {
+          if (!id) return
+          updateScript.mutate({ id, data: values }, {
+            onSuccess: () => { toast('success', t('scripts.toastUpdated')); setShowEditModal(false) },
+            onError: () => toast('error', t('scripts.toastUpdateFailed')),
+          })
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showDeleteDialog}

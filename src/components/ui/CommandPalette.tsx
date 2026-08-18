@@ -168,8 +168,8 @@ export function CommandPalette() {
                         key={`${result.entity_type}-${result.id}`}
                         onClick={() => {
                           if (result.entity_type === 'node') select(`/nodes/${result.id}`)
-                          else if (result.entity_type === 'script') select('/scripts')
-                          else if (result.entity_type === 'command') select('/commands')
+                          else if (result.entity_type === 'script') select(`/scripts/${result.id}`)
+                          else if (result.entity_type === 'command') select(`/commands/${result.id}`)
                           else select('/')
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50"

@@ -59,7 +59,7 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
               <div className="flex items-center justify-between mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <p className="text-xs text-surface-500">{new Date(note.updated_at).toLocaleDateString()}</p>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => { setEditTarget(note); setEditContent(note.content) }}>Edit</Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setEditTarget(note); setEditContent(note.content) }}>{t('common.edit')}</Button>
                   <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(note)} className="text-red-500">{t('common.delete')}</Button>
                 </div>
               </div>
@@ -86,7 +86,7 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
       {editTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-surface-900 rounded-xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4">Edit Note</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('notes.editTitle')}</h3>
             <textarea
               rows={4}
               value={editContent}
@@ -94,7 +94,7 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
               className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white resize-none"
             />
             <div className="flex justify-end gap-3 mt-4">
-              <Button variant="ghost" onClick={() => setEditTarget(null)}>Cancel</Button>
+              <Button variant="ghost" onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
               <Button onClick={handleSaveEdit} disabled={updateNote.isPending}>{t('common.save')}</Button>
             </div>
           </div>

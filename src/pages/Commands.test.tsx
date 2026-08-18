@@ -11,10 +11,10 @@ describe('Commands', () => {
     })
   })
 
-  it('shows execute button', async () => {
+  it('shows create command button', async () => {
     renderWithProviders(<Commands />)
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /execute/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /create command/i })).toBeInTheDocument()
     })
   })
 })

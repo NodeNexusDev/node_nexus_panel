@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
+import { PageHeader } from '../components/ui/PageHeader'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
@@ -118,10 +119,7 @@ export function Settings() {
 
   return (
     <div className="space-y-6">
-      <div className="animate-slide-up">
-        <h1 className="text-3xl font-bold gradient-text">{t('settings.title')}</h1>
-        <p className="text-surface-500 dark:text-surface-400 mt-1">{t('settings.description')}</p>
-      </div>
+      <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <Card className="stagger-item" style={{ animationDelay: '100ms' }}>
         <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.apiKeys')}</h2></CardHeader>

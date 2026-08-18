@@ -21,12 +21,18 @@ import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { KeyValueList } from '../components/ui/KeyValueList'
 import { formatBytes } from '../lib/format'
 import { nodeStatusVariant } from '../lib/variants'
+import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
+import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
+import { Tooltip } from '../components/ui/Tooltip'
 import {
   IconNodes,
   IconCommands,
+  IconScripts,
   IconCheckCircle,
   IconXCircle,
   IconArrowLeft,
+  IconCopy,
+  IconDocker,
 } from '../components/ui/Icons'
 import { useToast } from '../components/ui/useToast'
 import {
@@ -39,7 +45,6 @@ import {
   useUpdateNode,
   useCheckNode,
   useDeleteNode,
-  useExecuteNode,
   useAddNodeTag,
   useRemoveNodeTag,
 } from '../hooks/useNodes'
@@ -65,9 +70,8 @@ export function NodeDetail() {
   }
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showExecModal, setShowExecModal] = useState(false)
-  const [execCommand, setExecCommand] = useState('')
-  const [execTimeout, setExecTimeout] = useState('')
+  const [showCommandModal, setShowCommandModal] = useState(false)
+  const [showScriptModal, setShowScriptModal] = useState(false)
   const [statusHistoryPage, setStatusHistoryPage] = useState(1)
   const [commandHistoryPage, setCommandHistoryPage] = useState(1)
   const pageSize = 20
@@ -82,7 +86,6 @@ export function NodeDetail() {
   const updateNode = useUpdateNode()
   const deleteNode = useDeleteNode()
   const checkNode = useCheckNode()
-  const executeNode = useExecuteNode()
 
   const {
     register,
@@ -155,20 +158,9 @@ export function NodeDetail() {
     })
   }
 
-  const handleExecute = () => {
-    if (!id || !execCommand) return
-    executeNode.mutate(
-      { id, command: execCommand, timeout: execTimeout ? Number(execTimeout) : undefined },
-      {
-        onSuccess: (r) => {
-          toast('success', `Exit ${r.exit_code}: ${r.stdout.slice(0, 100)}`)
-          setShowExecModal(false)
-          setExecCommand('')
-          setExecTimeout('')
-        },
-        onError: () => toast('error', t('nodes.toastExecFailed')),
-      },
-    )
+  const handleCopyAddress = () => {
+    const address = `${node?.host ?? ''}:${node?.port ?? ''}`
+    navigator.clipboard?.writeText(address).then(() => toast('success', t('nodes.addressCopied')))
   }
 
   if (nodeLoading) return <NodeDetailSkeleton />
@@ -214,13 +206,27 @@ export function NodeDetail() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <FavoriteButton targetType="node" targetId={node.id} size="sm" />
+          <Tooltip content={t('nodes.copyAddress')}>
+            <Button variant="ghost" size="sm" className="px-2" onClick={handleCopyAddress} aria-label={t('nodes.copyAddress')}>
+              <IconCopy className="w-4 h-4" />
+            </Button>
+          </Tooltip>
+          <Tooltip content={t('nodes.openDocker')}>
+            <Button variant="ghost" size="sm" className="px-2" onClick={() => navigate(`/docker?node=${node.id}`)} aria-label={t('nodes.openDocker')}>
+              <IconDocker className="w-4 h-4" />
+            </Button>
+          </Tooltip>
           <Button variant="secondary" size="sm" onClick={handleCheck} disabled={checkNode.isPending}>
             <IconCheckCircle className="w-4 h-4 mr-1" />
             {t('nodes.checkNode')}
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => setShowExecModal(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setShowCommandModal(true)}>
             <IconCommands className="w-4 h-4 mr-1" />
             {t('nodes.execCommand')}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setShowScriptModal(true)}>
+            <IconScripts className="w-4 h-4 mr-1" />
+            {t('nodes.runScript')}
           </Button>
           <Button variant="ghost" size="sm" onClick={openEdit}>{t('common.edit')}</Button>
           <Button variant="ghost" size="sm" onClick={() => setShowDeleteDialog(true)} className="text-red-500 hover:text-red-600">
@@ -254,13 +260,13 @@ export function NodeDetail() {
 
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title={t('nodes.editNode', 'Edit Node')} size="lg">
         <form onSubmit={handleSubmit(onSubmitEdit)} className="space-y-4">
-          <Input label={t('nodes.node')} {...register('name')} error={errors.name?.message} />
-          <Input label={t('nodes.host')} {...register('host')} error={errors.host?.message} />
+          <Input label={t('nodes.node')} placeholder="prod-server-05" {...register('name')} error={errors.name?.message} />
+          <Input label={t('nodes.host')} placeholder="192.168.1.105" {...register('host')} error={errors.host?.message} />
           <Controller
             name="port"
             control={control}
             render={({ field }) => (
-              <Input label={t('nodes.port')} type="number" value={String(field.value ?? 22)} onChange={(e) => field.onChange(Number(e.target.value))} error={errors.port?.message} />
+              <Input label={t('nodes.port')} placeholder="22" type="number" value={String(field.value ?? 22)} onChange={(e) => field.onChange(Number(e.target.value))} error={errors.port?.message} />
             )}
           />
           <div className="space-y-1">
@@ -271,19 +277,19 @@ export function NodeDetail() {
               <option value="proxmox">Proxmox</option>
             </select>
           </div>
-          <Input label={t('nodes.username', 'Username')} {...register('username')} error={errors.username?.message} />
-          <Input label={t('nodes.password', 'Password')} type="password" {...register('password')} error={errors.password?.message} />
+          <Input label={t('nodes.username', 'Username')} placeholder="root" {...register('username')} error={errors.username?.message} />
+          <Input label={t('nodes.password', 'Password')} type="password" placeholder="Leave blank to keep unchanged" {...register('password')} error={errors.password?.message} />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-            <textarea {...register('ssh_key')} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            <textarea {...register('ssh_key')} placeholder={t('common.leaveBlank')} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
             {errors.ssh_key && <p className="text-xs text-red-500 mt-1">{errors.ssh_key.message}</p>}
           </div>
-          <Input label={t('nodes.dockerHost', 'Docker Host')} {...register('docker_host')} error={errors.docker_host?.message} />
+          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...register('docker_host')} error={errors.docker_host?.message} />
           <Controller
             name="tags"
             control={control}
             render={({ field }) => (
-              <Input label={t('nodes.tagsLabel', 'Tags')} value={(field.value ?? []).join(', ')} onChange={(e) => field.onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} error={errors.tags?.message} />
+              <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={(field.value ?? []).join(', ')} onChange={(e) => field.onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} error={errors.tags?.message} />
             )}
           />
           <div className="flex justify-end gap-3 pt-2">
@@ -293,17 +299,9 @@ export function NodeDetail() {
         </form>
       </Modal>
 
-      <Modal isOpen={showExecModal} onClose={() => setShowExecModal(false)} title={t('nodes.execCommand')}>
-        <div className="space-y-4">
-          <p className="text-sm text-surface-500">{t('nodes.execOnNode', { name: node.name })}</p>
-          <Input label="Command" placeholder="uptime" value={execCommand} onChange={(e) => setExecCommand(e.target.value)} />
-          <Input label={t('nodes.timeout', 'Timeout (seconds)')} placeholder="30" type="number" value={execTimeout} onChange={(e) => setExecTimeout(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowExecModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleExecute} disabled={!execCommand || executeNode.isPending}>{executeNode.isPending ? t('common.loading') : t('nodes.execCommand')}</Button>
-          </div>
-        </div>
-      </Modal>
+      <NodeCommandModal node={showCommandModal ? node : null} onClose={() => setShowCommandModal(false)} />
+
+      <NodeScriptModal node={showScriptModal ? node : null} onClose={() => setShowScriptModal(false)} />
 
       <ConfirmDialog
         isOpen={showDeleteDialog}
@@ -320,10 +318,12 @@ export function NodeDetail() {
 
 function OverviewTab({ node }: { node: import('../api/types').Node }) {
   const { t } = useTranslation()
-  const rows = [
+  const connTypeBadge = <Badge variant="info">{node.connection_type}</Badge>
+  const statusBadge = <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+  const rows: [string, React.ReactNode][] = [
     [t('nodes.host'), `${node.host}:${node.port}`],
-    [t('nodes.connectionType'), node.connection_type],
-    [t('nodes.status'), node.status],
+    [t('nodes.connectionType'), connTypeBadge],
+    [t('nodes.status'), statusBadge],
     [t('nodes.username', 'Username'), node.username || '—'],
     [t('nodes.dockerHost', 'Docker Host'), node.docker_host || '—'],
     [t('nodes.created', 'Created'), new Date(node.created_at).toLocaleString()],
@@ -337,7 +337,7 @@ function OverviewTab({ node }: { node: import('../api/types').Node }) {
           {rows.map(([label, value]) => (
             <div key={label} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
               <p className="text-xs text-surface-500 dark:text-surface-400 uppercase">{label}</p>
-              <p className="text-sm font-medium text-surface-900 dark:text-white">{value}</p>
+              <div className="text-sm font-medium text-surface-900 dark:text-white mt-0.5">{value}</div>
             </div>
           ))}
         </div>

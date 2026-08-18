@@ -83,7 +83,7 @@ export function Dashboard() {
         <div className="flex items-center gap-2">
           <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs ${isConnected ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-surface-200 text-surface-600 dark:bg-surface-700 dark:text-surface-400'}`}>
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-surface-400'}`} />
-            {isConnected ? t('dashboard.liveUpdates', 'Live') : t('dashboard.offline', 'Offline')}
+            {isConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}
           </div>
         </div>
       </div>
@@ -149,7 +149,7 @@ export function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {favList.slice(0, 6).map((fav) => (
-                  <div key={`${fav.target_type}-${fav.target_id}`} className="flex items-center gap-3 p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => { if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`); else if (fav.target_type === 'script') navigate('/scripts'); else if (fav.target_type === 'command') navigate('/commands') }}>
+                  <div key={`${fav.target_type}-${fav.target_id}`} className="flex items-center gap-3 p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => { if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`); else if (fav.target_type === 'script') navigate(`/scripts/${fav.target_id}`); else if (fav.target_type === 'command') navigate(`/commands/${fav.target_id}`) }}>
                     {favIcon(fav.target_type)}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{fav.note || fav.target_id}</p>
@@ -184,55 +184,50 @@ export function Dashboard() {
       </div>
 
       <Card className="stagger-item">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.metricsTitle')}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <input type="date" value={metricsFrom} onChange={(e) => setMetricsFrom(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+              <span className="text-surface-400">—</span>
+              <input type="date" value={metricsTo} onChange={(e) => setMetricsTo(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+              <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as 'day' | 'week' | 'month')} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+                <option value="day">{t('dashboard.byDay', 'By Day')}</option>
+                <option value="week">{t('dashboard.byWeek', 'By Week')}</option>
+                <option value="month">{t('dashboard.byMonth', 'By Month')}</option>
+              </select>
+            </div>
+          </div>
+        </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3 mb-4">
-            <input type="date" value={metricsFrom} onChange={(e) => setMetricsFrom(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
-            <span className="text-surface-400">—</span>
-            <input type="date" value={metricsTo} onChange={(e) => setMetricsTo(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
-            <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as 'day' | 'week' | 'month')} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="day">{t('dashboard.byDay', 'By Day')}</option>
-              <option value="week">{t('dashboard.byWeek', 'By Week')}</option>
-              <option value="month">{t('dashboard.byMonth', 'By Month')}</option>
-            </select>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400"><IconZap className="w-4 h-4" /></div>
+                <h3 className="font-semibold text-surface-900 dark:text-white">{t('dashboard.commandMetrics')}</h3>
+              </div>
+              <MiniChart data={commandChartData} color="bg-accent-500" className="h-16" />
+              <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+                <div><p className="text-2xl font-bold text-surface-900 dark:text-white">{metrics?.command_metrics?.reduce((s, m) => s + m.total, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.total')}</p></div>
+                <div><p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics?.command_metrics?.reduce((s, m) => s + m.successful, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.successful')}</p></div>
+                <div><p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics?.command_metrics?.reduce((s, m) => s + m.failed, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.failed')}</p></div>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400"><IconScripts className="w-4 h-4" /></div>
+                <h3 className="font-semibold text-surface-900 dark:text-white">{t('dashboard.scriptMetrics')}</h3>
+              </div>
+              <MiniChart data={scriptChartData} color="bg-green-500" className="h-16" />
+              <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+                <div><p className="text-2xl font-bold text-surface-900 dark:text-white">{metrics?.script_metrics?.reduce((s, m) => s + m.total, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.total')}</p></div>
+                <div><p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics?.script_metrics?.reduce((s, m) => s + m.successful, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.successful')}</p></div>
+                <div><p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics?.script_metrics?.reduce((s, m) => s + m.failed, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.failed')}</p></div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="stagger-item">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400"><IconZap className="w-4 h-4" /></div>
-              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.commandMetrics')}</h2>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <MiniChart data={commandChartData} color="bg-accent-500" className="h-16" />
-            <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-              <div><p className="text-2xl font-bold text-surface-900 dark:text-white">{metrics?.command_metrics?.reduce((s, m) => s + m.total, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.total')}</p></div>
-              <div><p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics?.command_metrics?.reduce((s, m) => s + m.successful, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.successful')}</p></div>
-              <div><p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics?.command_metrics?.reduce((s, m) => s + m.failed, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.failed')}</p></div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="stagger-item">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400"><IconScripts className="w-4 h-4" /></div>
-              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('dashboard.scriptMetrics')}</h2>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <MiniChart data={scriptChartData} color="bg-green-500" className="h-16" />
-            <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-              <div><p className="text-2xl font-bold text-surface-900 dark:text-white">{metrics?.script_metrics?.reduce((s, m) => s + m.total, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.total')}</p></div>
-              <div><p className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics?.script_metrics?.reduce((s, m) => s + m.successful, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.successful')}</p></div>
-              <div><p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics?.script_metrics?.reduce((s, m) => s + m.failed, 0) || 0}</p><p className="text-xs text-surface-500">{t('dashboard.failed')}</p></div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {recentActivity.length > 0 && (
         <Card className="stagger-item">

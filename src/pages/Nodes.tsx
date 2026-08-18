@@ -13,19 +13,22 @@ import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { Pagination } from '../components/ui/Pagination'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
-import { SearchInput } from '../components/ui/SearchInput'
+import { FilterBar } from '../components/ui/FilterBar'
+import { SortableHeader, type SortState } from '../components/ui/SortableHeader'
 import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
+import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
+import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import {
   IconNodes,
   IconCommands,
+  IconScripts,
   IconCheckCircle,
   IconXCircle,
   IconChart,
   IconClock,
   IconActivity,
   IconTag,
-  IconSort,
 } from '../components/ui/Icons'
 import {
   useNodes,
@@ -34,7 +37,6 @@ import {
   useDeleteNode,
   useCheckNode,
   useBulkCheck,
-  useExecuteNode,
   useNodeTags,
   useBulkDeleteNodes,
   useBulkExecuteNodes,
@@ -48,7 +50,6 @@ import type { Node, NodeStatus } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 
 type SortKey = 'name' | 'host' | 'status' | 'connection_type'
-type SortDir = 'asc' | 'desc'
 
 function statusDot(status: NodeStatus): string {
   switch (status) {
@@ -67,7 +68,7 @@ export function Nodes() {
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [tagFilter, setTagFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir } | null>(null)
+  const [sort, setSort] = useState<SortState<SortKey> | null>(null)
   const pageSize = 20
 
   const { data, isLoading } = useNodes({
@@ -85,7 +86,6 @@ export function Nodes() {
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
   const bulkExecuteNodes = useBulkExecuteNodes()
-  const executeNode = useExecuteNode()
   const validateCreds = useValidateCredentials()
 
   const [showAddModal, setShowAddModal] = useState(false)
@@ -95,9 +95,8 @@ export function Nodes() {
   const [newNode, setNewNode] = useState(defaultNode)
   const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', docker_host: '', tags: '' })
 
-  const [execNodeId, setExecNodeId] = useState<string | null>(null)
-  const [execCmd, setExecCmd] = useState('')
-  const [execTimeout, setExecTimeout] = useState('')
+  const [execTarget, setExecTarget] = useState<Node | null>(null)
+  const [scriptTarget, setScriptTarget] = useState<Node | null>(null)
   const [validateTarget, setValidateTarget] = useState<Node | null>(null)
   const [validateResult, setValidateResult] = useState<{ status: string; message: string } | null>(null)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
@@ -175,24 +174,6 @@ export function Nodes() {
     { key: 'delete', label: t('common.delete'), icon: <IconXCircle className="w-4 h-4" />, danger: true, onClick: () => setDeleteTarget({ id: node.id, name: node.name }) },
   ]
 
-  const sortHeader = (label: string, sortKey: SortKey) => {
-    const active = sort?.key === sortKey
-    return (
-      <button
-        onClick={() => toggleSort(sortKey)}
-        className="flex items-center gap-1 uppercase tracking-wider text-xs font-medium text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 transition-colors cursor-pointer"
-        aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
-      >
-        {label}
-        {active ? (
-          <span className="text-accent-500">{sort!.dir === 'asc' ? '↑' : '↓'}</span>
-        ) : (
-          <IconSort className="w-3 h-3 opacity-40" />
-        )}
-      </button>
-    )
-  }
-
   const columns: Column<Node>[] = [
     {
       key: 'select',
@@ -218,7 +199,7 @@ export function Nodes() {
     },
     {
       key: 'node',
-      header: sortHeader(t('nodes.node'), 'name'),
+      header: <SortableHeader label={t('nodes.node')} sortKey="name" sort={sort} onSort={toggleSort} />,
       render: (node) => (
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
@@ -239,7 +220,7 @@ export function Nodes() {
     },
     {
       key: 'status',
-      header: sortHeader(t('nodes.status'), 'status'),
+      header: <SortableHeader label={t('nodes.status')} sortKey="status" sort={sort} onSort={toggleSort} />,
       render: (node) => (
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${statusDot(node.status)}`} />
@@ -249,7 +230,7 @@ export function Nodes() {
     },
     {
       key: 'type',
-      header: sortHeader(t('nodes.type'), 'connection_type'),
+      header: <SortableHeader label={t('nodes.type')} sortKey="connection_type" sort={sort} onSort={toggleSort} />,
       render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</span>,
     },
     {
@@ -257,9 +238,11 @@ export function Nodes() {
       header: t('nodes.tags'),
       render: (node) => (
         <div className="flex flex-wrap gap-1">
-          {node.tags.map((tag) => (
-            <Badge key={tag} variant="default">{tag}</Badge>
-          ))}
+          {node.tags.length > 0 ? node.tags.map((tag) => (
+            <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
+              <Badge variant="default">{tag}</Badge>
+            </button>
+          )) : <span className="text-surface-400">—</span>}
         </div>
       ),
     },
@@ -275,8 +258,13 @@ export function Nodes() {
             </Button>
           </Tooltip>
           <Tooltip content={t('nodes.execCommand')}>
-            <Button variant="ghost" size="sm" className="px-2" onClick={(e) => { e.stopPropagation(); setExecNodeId(node.id); setExecCmd('') }}>
+            <Button variant="ghost" size="sm" className="px-2" onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
               <IconCommands className="w-4 h-4" />
+            </Button>
+          </Tooltip>
+          <Tooltip content={t('nodes.runScript')}>
+            <Button variant="ghost" size="sm" className="px-2" onClick={(e) => { e.stopPropagation(); setScriptTarget(node) }}>
+              <IconScripts className="w-4 h-4" />
             </Button>
           </Tooltip>
           <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
@@ -302,14 +290,19 @@ export function Nodes() {
         <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
       </div>
       <div className="flex flex-wrap gap-1">
-        {node.tags.map((tag) => (
-          <Badge key={tag} variant="default">{tag}</Badge>
-        ))}
+        {node.tags.length > 0 ? node.tags.map((tag) => (
+          <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
+            <Badge variant="default">{tag}</Badge>
+          </button>
+        )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
         <FavoriteButton targetType="node" targetId={node.id} size="sm" />
-        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setExecNodeId(node.id); setExecCmd('') }}>
+        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
           <IconCommands className="w-4 h-4 mr-1" /> {t('nodes.execCommand')}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setScriptTarget(node) }}>
+          <IconScripts className="w-4 h-4 mr-1" /> {t('nodes.runScript')}
         </Button>
         <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
       </div>
@@ -376,46 +369,41 @@ export function Nodes() {
         actions={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
       />
 
-      <Card className="stagger-item">
-        <CardContent>
-          <div className="flex flex-wrap items-center gap-3">
-            <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.searchPlaceholder', 'Search nodes...')} className="flex-1 min-w-[200px] max-w-sm" />
-            <div className="flex items-center gap-1">
-              {(['active', 'unreachable', 'error'] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter((prev) => {
-                    const next = new Set(prev)
-                    if (next.has(s)) next.delete(s)
-                    else next.add(s)
-                    return next
-                  })}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                    statusFilter.has(s)
-                      ? s === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : s === 'unreachable' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
-                  }`}
-                >
-                  {t(`nodes.status${s.charAt(0).toUpperCase() + s.slice(1)}`, s)}
-                </button>
-              ))}
-              {statusFilter.size > 0 && (
-                <button onClick={() => setStatusFilter(new Set())} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">×</button>
-              )}
-            </div>
-            <select
-              value={tagFilter}
-              onChange={(e) => setTagFilter(e.target.value)}
-              className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+      <FilterBar search={search} onSearch={setSearch} searchPlaceholder={t('nodes.searchPlaceholder', 'Search nodes...')}>
+        <div className="flex items-center gap-1">
+          {(['active', 'unreachable', 'error'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter((prev) => {
+                const next = new Set(prev)
+                if (next.has(s)) next.delete(s)
+                else next.add(s)
+                return next
+              })}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                statusFilter.has(s)
+                  ? s === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : s === 'unreachable' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
+              }`}
             >
-              <option value="">{t('nodes.allTags', 'All tags')}</option>
-              {allTags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
-            </select>
-          </div>
-        </CardContent>
-      </Card>
+              {t(`nodes.status${s.charAt(0).toUpperCase() + s.slice(1)}`, s)}
+            </button>
+          ))}
+          {statusFilter.size > 0 && (
+            <button onClick={() => setStatusFilter(new Set())} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">×</button>
+          )}
+        </div>
+        <select
+          value={tagFilter}
+          onChange={(e) => setTagFilter(e.target.value)}
+          className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+        >
+          <option value="">{t('nodes.allTags', 'All tags')}</option>
+          {allTags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
+        </select>
+      </FilterBar>
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
@@ -509,7 +497,7 @@ export function Nodes() {
           <Input label={t('nodes.password', 'Password')} type="password" placeholder="Leave blank to keep unchanged" value={editNode.password} onChange={(e) => setEditNode({ ...editNode, password: e.target.value })} />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-            <textarea placeholder="Leave blank to keep unchanged" value={editNode.ssh_key} onChange={(e) => setEditNode({ ...editNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
+            <textarea placeholder={t('common.leaveBlank')} value={editNode.ssh_key} onChange={(e) => setEditNode({ ...editNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
           </div>
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={editNode.docker_host} onChange={(e) => setEditNode({ ...editNode, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={editNode.tags} onChange={(e) => setEditNode({ ...editNode, tags: e.target.value })} />
@@ -518,28 +506,6 @@ export function Nodes() {
             <Button onClick={handleEdit} disabled={updateNode.isPending || !editNode.name || !editNode.host}>
               {updateNode.isPending ? t('common.loading') : t('common.save')}
             </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal isOpen={!!execNodeId} onClose={() => setExecNodeId(null)} title={t('nodes.execCommand')}>
-        <div className="space-y-4">
-          <p className="text-sm text-surface-500">{t('nodes.execOnNode', { name: nodes.find((n) => n.id === execNodeId)?.name })}</p>
-          <Input label="Command" placeholder="uptime" value={execCmd} onChange={(e) => setExecCmd(e.target.value)} />
-          <Input label={t('nodes.timeout', 'Timeout (seconds)')} placeholder="30" type="number" value={execTimeout} onChange={(e) => setExecTimeout(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setExecNodeId(null)}>{t('common.cancel')}</Button>
-            <Button onClick={() => {
-              if (execNodeId && execCmd) {
-                executeNode.mutate(
-                  { id: execNodeId, command: execCmd, timeout: execTimeout ? Number(execTimeout) : undefined },
-                  {
-                    onSuccess: (r) => { toast('success', `Exit ${r.exit_code}: ${r.stdout.slice(0, 100)}`); setExecNodeId(null) },
-                    onError: () => toast('error', t('nodes.toastExecFailed')),
-                  },
-                )
-              }
-            }} disabled={!execCmd || !execNodeId || executeNode.isPending}>{executeNode.isPending ? t('common.loading') : t('nodes.execCommand')}</Button>
           </div>
         </div>
       </Modal>
@@ -565,7 +531,7 @@ export function Nodes() {
       <Modal isOpen={showBulkExec} onClose={() => { setShowBulkExec(false); setBulkExecCmd('') }} title={t('nodes.bulkExec', 'Bulk Execute')}>
         <div className="space-y-4">
           <p className="text-sm text-surface-500">{t('nodes.bulkExecMsg', { count: selectedIds.length })}</p>
-          <Input label="Command" placeholder="uptime" value={bulkExecCmd} onChange={(e) => setBulkExecCmd(e.target.value)} />
+          <Input label={t('nodes.command')} placeholder="uptime" value={bulkExecCmd} onChange={(e) => setBulkExecCmd(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => { setShowBulkExec(false); setBulkExecCmd('') }}>{t('common.cancel')}</Button>
             <Button onClick={() => { if (bulkExecCmd) { bulkExecuteNodes.mutate({ command: bulkExecCmd, node_ids: selectedIds }, { onSuccess: () => { toast('success', t('nodes.toastBulkExecDone')); setShowBulkExec(false); setBulkExecCmd(''); setSelectedIds([]) } }) } }} disabled={!bulkExecCmd || bulkExecuteNodes.isPending}>{t('nodes.execCommand')}</Button>
@@ -576,6 +542,10 @@ export function Nodes() {
       <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: () => { toast('success', t('nodes.toastBulkDeleteDone')); setShowBulkDelete(false); setSelectedIds([]) } }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('nodes.deleteTitle')} message={t('nodes.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteNode.isPending} />
+
+      <NodeCommandModal node={execTarget} onClose={() => setExecTarget(null)} />
+
+      <NodeScriptModal node={scriptTarget} onClose={() => setScriptTarget(null)} />
     </div>
   )
 }

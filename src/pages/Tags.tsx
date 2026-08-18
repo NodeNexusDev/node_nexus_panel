@@ -8,6 +8,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { PageHeader } from '../components/ui/PageHeader'
 import { IconTag } from '../components/ui/Icons'
 import { useNodeTags } from '../hooks/useNodes'
 import { useCommandTags } from '../hooks/useCommands'
@@ -76,10 +77,7 @@ export function Tags() {
 
   return (
     <div className="space-y-6">
-      <div className="animate-slide-up">
-        <h1 className="text-3xl font-bold gradient-text">{t('tags.title')}</h1>
-        <p className="text-surface-500 dark:text-surface-400 mt-1">{t('tags.description')}</p>
-      </div>
+      <PageHeader title={t('tags.title')} description={t('tags.description')} />
 
       <Card className="stagger-item">
         <CardContent className="p-0">

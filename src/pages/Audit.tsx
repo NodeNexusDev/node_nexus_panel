@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
+import { PageHeader } from '../components/ui/PageHeader'
 import { IconAudit } from '../components/ui/Icons'
 import { useAuditLogs, useClearAudit, useExportAudit } from '../hooks/useAudit'
 import { useNodes } from '../hooks/useNodes'
@@ -119,38 +120,34 @@ export function Audit() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between animate-slide-up">
-        <div>
-          <h1 className="text-3xl font-bold gradient-text">{t('audit.title')}</h1>
-          <p className="text-surface-500 dark:text-surface-400 mt-1">{t('audit.description')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')} className="px-3 py-1 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-            <option value="json">JSON</option>
-            <option value="csv">CSV</option>
-          </select>
-          <Button
-            variant="ghost"
-            onClick={handleExport}
-            disabled={exportAudit.isPending}
-          >
-            {t('audit.export')}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              clearAudit.mutate(undefined, {
-                onSuccess: () => toast('success', t('audit.toastCleared')),
-                onError: () => toast('error', t('audit.toastClearFailed')),
-              })
-            }}
-            disabled={clearAudit.isPending}
-            className="text-red-500 hover:text-red-600"
-          >
-            {t('audit.clear')}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={t('audit.title')}
+        description={t('audit.description')}
+        actions={
+          <>
+            <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')} className="px-3 py-1 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+              <option value="json">JSON</option>
+              <option value="csv">CSV</option>
+            </select>
+            <Button variant="ghost" onClick={handleExport} disabled={exportAudit.isPending}>
+              {t('audit.export')}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                clearAudit.mutate(undefined, {
+                  onSuccess: () => toast('success', t('audit.toastCleared')),
+                  onError: () => toast('error', t('audit.toastClearFailed')),
+                })
+              }}
+              disabled={clearAudit.isPending}
+              className="text-red-500 hover:text-red-600"
+            >
+              {t('audit.clear')}
+            </Button>
+          </>
+        }
+      />
 
       <Card className="stagger-item">
         <CardContent>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '../components/ui/Card'
@@ -225,19 +226,19 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
         <CreateContainerForm nodeId={nodeId} onClose={() => setShowCreateModal(false)} />
       </Modal>
 
-      <Modal isOpen={!!logsTarget} onClose={() => setLogsTarget(null)} title={`Logs: ${logsTarget?.Names?.split('/').pop() || ''}`} size="lg">
+      <Modal isOpen={!!logsTarget} onClose={() => setLogsTarget(null)} title={`${t('docker.logs')}: ${logsTarget?.Names?.split('/').pop() || ''}`} size="lg">
         {logsTarget && <ContainerLogsContent nodeId={nodeId} containerId={logsTarget.ID} />}
       </Modal>
 
-      <Modal isOpen={!!statsTarget} onClose={() => setStatsTarget(null)} title={`Stats: ${statsTarget?.Names?.split('/').pop() || ''}`} size="md">
+      <Modal isOpen={!!statsTarget} onClose={() => setStatsTarget(null)} title={`${t('docker.stats')}: ${statsTarget?.Names?.split('/').pop() || ''}`} size="md">
         {statsTarget && <ContainerStatsContent nodeId={nodeId} containerId={statsTarget.ID} />}
       </Modal>
 
-      <Modal isOpen={!!execTarget} onClose={() => setExecTarget(null)} title={`Exec: ${execTarget?.Names?.split('/').pop() || ''}`} size="lg">
+      <Modal isOpen={!!execTarget} onClose={() => setExecTarget(null)} title={`${t('docker.exec')}: ${execTarget?.Names?.split('/').pop() || ''}`} size="lg">
         {execTarget && <ExecContainerContent nodeId={nodeId} containerId={execTarget.ID} onClose={() => setExecTarget(null)} />}
       </Modal>
 
-      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`Inspect: ${inspectTarget?.Names?.split('/').pop() || ''}`} size="lg">
+      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`${t('docker.inspect')}: ${inspectTarget?.Names?.split('/').pop() || ''}`} size="lg">
         {inspectTarget && <ContainerInspectContent nodeId={nodeId} containerId={inspectTarget.ID} />}
       </Modal>
 
@@ -573,7 +574,7 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
         </div>
       </Modal>
 
-      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`Inspect: ${inspectTarget?.name || ''}`} size="lg">
+      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`${t('docker.inspect')}: ${inspectTarget?.name || ''}`} size="lg">
         {inspectTarget && <ImageInspectContent nodeId={nodeId} imageId={inspectTarget.id} />}
       </Modal>
     </>
@@ -667,12 +668,13 @@ function VolumesTab({ nodeId }: { nodeId: string }) {
 
 export function Docker() {
   const { t } = useTranslation()
+  const [searchParams] = useSearchParams()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
-  const [selectedNodeId, setSelectedNodeId] = useState('')
+  const [selectedNodeId, setSelectedNodeId] = useState(() => searchParams.get('node') ?? '')
 
   useEffect(() => {
-    if (nodes.length > 0 && !selectedNodeId) {
+    if (nodes.length > 0 && !nodes.some((n) => n.id === selectedNodeId)) {
       setSelectedNodeId(nodes[0].id)
     }
   }, [nodes, selectedNodeId])
@@ -699,10 +701,10 @@ export function Docker() {
   }
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'containers', label: 'Containers' },
-    { key: 'images', label: 'Images' },
-    { key: 'networks', label: 'Networks' },
-    { key: 'volumes', label: 'Volumes' },
+    { key: 'containers', label: t('docker.containers') },
+    { key: 'images', label: t('docker.images') },
+    { key: 'networks', label: t('docker.networks') },
+    { key: 'volumes', label: t('docker.volumes') },
   ]
 
   return (
