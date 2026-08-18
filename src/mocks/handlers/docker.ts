@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockContainers, mockImages, mockNetworks, mockVolumes } from '../data/docker'
 
-const API = 'http://localhost:8000'
+const API = '*'
 
 export const dockerHandlers = [
   http.get(`${API}/api/v1/nodes/:nodeId/docker/containers`, () => {

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockFavorites } from '../data/favorites'
 
-const API = 'http://localhost:8000'
+const API = '*'
 
 export const favoritesHandlers = [
   http.get(`${API}/api/v1/favorites`, ({ request }) => {

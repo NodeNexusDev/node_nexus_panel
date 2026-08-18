@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockNodes } from '../data/nodes'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = '*'
 
 export const nodeHandlers = [
   http.get(`${API_URL}/api/v1/nodes/`, ({ request }) => {

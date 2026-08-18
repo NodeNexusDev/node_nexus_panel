@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockApiKeys } from '../data/api-keys'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = '*'
 
 export const apiKeyHandlers = [
   http.get(`${API_URL}/api/v1/api-keys/`, ({ request }) => {

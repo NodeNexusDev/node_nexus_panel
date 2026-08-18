@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockNotes } from '../data/notes'
 
-const API = 'http://localhost:8000'
+const API = '*'
 
 export const notesHandlers = [
   http.get(`${API}/api/v1/notes/:targetType/:targetId`, ({ params }) => {

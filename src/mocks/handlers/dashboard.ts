@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockDashboard } from '../data/dashboard'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = '*'
 
 export const dashboardHandlers = [
   http.get(`${API_URL}/api/v1/dashboard/`, () => {

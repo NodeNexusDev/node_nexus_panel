@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockScripts } from '../data/scripts'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = '*'
 
 export const scriptHandlers = [
   http.get(`${API_URL}/api/v1/scripts/`, ({ request }) => {

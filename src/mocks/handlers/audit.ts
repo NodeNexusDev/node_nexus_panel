@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockAuditLogs } from '../data/audit'
 
-const API = 'http://localhost:8000'
+const API = '*'
 
 export const auditHandlers = [
   http.get(`${API}/api/v1/audit/`, ({ request }) => {

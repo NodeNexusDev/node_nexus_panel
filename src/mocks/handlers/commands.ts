@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { mockCommands } from '../data/commands'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = '*'
 
 export const commandHandlers = [
   http.get(`${API_URL}/api/v1/commands/`, ({ request }) => {

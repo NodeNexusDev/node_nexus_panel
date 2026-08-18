@@ -3,7 +3,7 @@ import { mockNodes } from '../data/nodes'
 import { mockCommands } from '../data/commands'
 import { mockScripts } from '../data/scripts'
 
-const API = 'http://localhost:8000'
+const API = '*'
 
 export const configHandlers = [
   http.get(`${API}/api/v1/config/export`, () => {

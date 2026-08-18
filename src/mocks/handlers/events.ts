@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = '*'
 
 function encodeSse(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { getSearchResults } from '../data/favorites'
 
-const API = 'http://localhost:8000'
+const API = '*'
 
 export const searchHandlers = [
   http.get(`${API}/api/v1/search`, ({ request }) => {
