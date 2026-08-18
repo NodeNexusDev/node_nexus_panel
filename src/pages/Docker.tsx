@@ -25,27 +25,21 @@ import {
   useExecContainer,
   usePullImage,
   useDeleteImage,
+  useBuildImage,
+  useTagImage,
   useBulkDockerRestart,
   useBulkDockerStart,
   useBulkDockerStop,
 } from '../hooks/useDocker'
 import { useNodes } from '../hooks/useNodes'
-import { dockerApi } from '../api/docker'
 import type { DockerContainer } from '../api/types'
 
 type Tab = 'containers' | 'images' | 'networks' | 'volumes'
 
-function ContainerStatusBadge({ status }: { status: DockerContainer['status'] }) {
-  const variant = status === 'running' ? 'success' : status === 'paused' ? 'warning' : 'default'
-  return <Badge variant={variant}>{status}</Badge>
-}
-
-function formatBytes(bytes: number) {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+function ContainerStatusBadge({ state }: { state: string }) {
+  const lower = state.toLowerCase()
+  const variant = lower === 'running' ? 'success' : lower === 'paused' ? 'warning' : 'default'
+  return <Badge variant={variant}>{state}</Badge>
 }
 
 function ContainerRow({
@@ -75,6 +69,8 @@ function ContainerRow({
   selected: boolean
   onSelect: () => void
 }) {
+  const containerName = container.Names?.split('/').pop() || container.Names
+  const isRunning = container.State?.toLowerCase() === 'running'
   return (
     <tr className="table-row-hover">
       <td className="px-6 py-4">
@@ -82,20 +78,20 @@ function ContainerRow({
       </td>
       <td className="px-6 py-4">
         <div>
-          <p className="text-sm font-semibold text-surface-900 dark:text-white">{container.name}</p>
-          <p className="text-xs text-surface-500 font-mono">{container.id.slice(0, 12)}</p>
+          <p className="text-sm font-semibold text-surface-900 dark:text-white">{containerName}</p>
+          <p className="text-xs text-surface-500 font-mono">{container.ID?.slice(0, 12) || '—'}</p>
         </div>
       </td>
-      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{container.image}</td>
-      <td className="px-6 py-4"><ContainerStatusBadge status={container.status} /></td>
-      <td className="px-6 py-4 text-xs text-surface-500">{container.ports.map((p) => `${p.host_port}:${p.container_port}`).join(', ') || '—'}</td>
-      <td className="px-6 py-4 text-xs text-surface-500">{container.created}</td>
+      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{container.Image}</td>
+      <td className="px-6 py-4"><ContainerStatusBadge state={container.State} /></td>
+      <td className="px-6 py-4 text-xs text-surface-500">{container.Ports || '—'}</td>
+      <td className="px-6 py-4 text-xs text-surface-500">{container.CreatedAt}</td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-1 flex-wrap">
-          {container.status !== 'running' && <Button variant="ghost" size="sm" onClick={onStart} disabled={loading}>Start</Button>}
-          {container.status === 'running' && <Button variant="ghost" size="sm" onClick={onStop} disabled={loading}>Stop</Button>}
+          {!isRunning && <Button variant="ghost" size="sm" onClick={onStart} disabled={loading}>Start</Button>}
+          {isRunning && <Button variant="ghost" size="sm" onClick={onStop} disabled={loading}>Stop</Button>}
           <Button variant="ghost" size="sm" onClick={onRestart} disabled={loading}>Restart</Button>
-          {container.status === 'running' && <Button variant="ghost" size="sm" onClick={onExec}>Exec</Button>}
+          {isRunning && <Button variant="ghost" size="sm" onClick={onExec}>Exec</Button>}
           <Button variant="ghost" size="sm" onClick={onLogs}>Logs</Button>
           <Button variant="ghost" size="sm" onClick={onStats}>Stats</Button>
           <Button variant="ghost" size="sm" onClick={onDelete} disabled={loading} className="text-red-500 hover:text-red-600">Delete</Button>
@@ -122,13 +118,13 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
   const [statsTarget, setStatsTarget] = useState<DockerContainer | null>(null)
   const [execTarget, setExecTarget] = useState<DockerContainer | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [createForm, setCreateForm] = useState({ name: '', image: '', ports: '', env: '' })
+  const [createForm, setCreateForm] = useState({ name: '', image: '', ports: '', env: '', command: '' })
 
   const allSelected = containers && selectedIds.size === containers.length
   const toggleAll = () => {
     if (!containers) return
     if (allSelected) setSelectedIds(new Set())
-    else setSelectedIds(new Set(containers.map((c) => c.id)))
+    else setSelectedIds(new Set(containers.map((c) => c.ID)))
   }
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
@@ -144,10 +140,9 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800">
           <span className="text-sm text-accent-700 dark:text-accent-300">{selectedIds.size} selected</span>
-          <Button variant="ghost" size="sm" onClick={() => bulkRestart.mutate({ container_ids: Array.from(selectedIds) })} disabled={bulkRestart.isPending}>Restart all</Button>
-          <Button variant="ghost" size="sm" onClick={() => bulkStart.mutate({ container_ids: Array.from(selectedIds) })} disabled={bulkStart.isPending}>Start all</Button>
-          <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ container_ids: Array.from(selectedIds) })} disabled={bulkStop.isPending}>Stop all</Button>
-          <Button variant="ghost" size="sm" onClick={() => {}}>Exec all</Button>
+          <Button variant="ghost" size="sm" onClick={() => { for (const cid of selectedIds) bulkRestart.mutate({ container_id: cid }) }} disabled={bulkRestart.isPending}>Restart all</Button>
+          <Button variant="ghost" size="sm" onClick={() => { for (const cid of selectedIds) bulkStart.mutate({ container_id: cid }) }} disabled={bulkStart.isPending}>Start all</Button>
+          <Button variant="ghost" size="sm" onClick={() => { for (const cid of selectedIds) bulkStop.mutate({ container_id: cid }) }} disabled={bulkStop.isPending}>Stop all</Button>
         </div>
       )}
       <div className="overflow-x-auto">
@@ -165,15 +160,15 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {containers.map((c) => (
-              <ContainerRow key={c.id} container={c} nodeId={nodeId}
-                onStart={() => startContainer.mutate({ nodeId, containerId: c.id })}
-                onStop={() => stopContainer.mutate({ nodeId, containerId: c.id })}
-                onRestart={() => restartContainer.mutate({ nodeId, containerId: c.id })}
+              <ContainerRow key={c.ID} container={c} nodeId={nodeId}
+                onStart={() => startContainer.mutate({ nodeId, containerId: c.ID })}
+                onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID })}
+                onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID })}
                 onDelete={() => setDeleteTarget(c)}
                 onLogs={() => setLogsTarget(c)}
                 onStats={() => setStatsTarget(c)}
                 onExec={() => setExecTarget(c)}
-                loading={loading} selected={selectedIds.has(c.id)} onSelect={() => toggleOne(c.id)}
+                loading={loading} selected={selectedIds.has(c.ID)} onSelect={() => toggleOne(c.ID)}
               />
             ))}
           </tbody>
@@ -184,40 +179,41 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
         <CreateContainerForm nodeId={nodeId} form={createForm} onChange={setCreateForm} onClose={() => setShowCreateModal(false)} />
       </Modal>
 
-      <Modal isOpen={!!logsTarget} onClose={() => setLogsTarget(null)} title={`Logs: ${logsTarget?.name || ''}`} size="lg">
-        {logsTarget && <ContainerLogsContent nodeId={nodeId} containerId={logsTarget.id} />}
+      <Modal isOpen={!!logsTarget} onClose={() => setLogsTarget(null)} title={`Logs: ${logsTarget?.Names?.split('/').pop() || ''}`} size="lg">
+        {logsTarget && <ContainerLogsContent nodeId={nodeId} containerId={logsTarget.ID} />}
       </Modal>
 
-      <Modal isOpen={!!statsTarget} onClose={() => setStatsTarget(null)} title={`Stats: ${statsTarget?.name || ''}`} size="md">
-        {statsTarget && <ContainerStatsContent nodeId={nodeId} containerId={statsTarget.id} />}
+      <Modal isOpen={!!statsTarget} onClose={() => setStatsTarget(null)} title={`Stats: ${statsTarget?.Names?.split('/').pop() || ''}`} size="md">
+        {statsTarget && <ContainerStatsContent nodeId={nodeId} containerId={statsTarget.ID} />}
       </Modal>
 
-      <Modal isOpen={!!execTarget} onClose={() => setExecTarget(null)} title={`Exec: ${execTarget?.name || ''}`} size="lg">
-        {execTarget && <ExecContainerContent nodeId={nodeId} containerId={execTarget.id} onClose={() => setExecTarget(null)} />}
+      <Modal isOpen={!!execTarget} onClose={() => setExecTarget(null)} title={`Exec: ${execTarget?.Names?.split('/').pop() || ''}`} size="lg">
+        {execTarget && <ExecContainerContent nodeId={nodeId} containerId={execTarget.ID} onClose={() => setExecTarget(null)} />}
       </Modal>
 
-      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={() => { if (deleteTarget) deleteContainer.mutate({ nodeId, containerId: deleteTarget.id }, { onSuccess: () => setDeleteTarget(null) }) }} title="Delete Container" message={`Delete "${deleteTarget?.name}"? This cannot be undone.`} confirmLabel={t('common.delete')} loading={deleteContainer.isPending} />
+      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={() => { if (deleteTarget) deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID }, { onSuccess: () => setDeleteTarget(null) }) }} title="Delete Container" message={`Delete "${deleteTarget?.Names?.split('/').pop()}"? This cannot be undone.`} confirmLabel={t('common.delete')} loading={deleteContainer.isPending} />
     </>
   )
 }
 
-function CreateContainerForm({ nodeId, form, onChange, onClose }: { nodeId: string; form: { name: string; image: string; ports: string; env: string }; onChange: (f: { name: string; image: string; ports: string; env: string }) => void; onClose: () => void }) {
+function CreateContainerForm({ nodeId, form, onChange, onClose }: { nodeId: string; form: { name: string; image: string; ports: string; env: string; command: string }; onChange: (f: { name: string; image: string; ports: string; env: string; command: string }) => void; onClose: () => void }) {
   const { t } = useTranslation()
   const createContainer = useCreateContainer()
   const handleCreate = () => {
-    const ports = form.ports ? form.ports.split(',').map((p) => { const [host, container] = p.trim().split(':').map(Number); return { host_port: host, container_port: container, protocol: 'tcp' as const } }) : []
-    const env = form.env ? Object.fromEntries(form.env.split(',').map((e) => { const [k, ...v] = e.trim().split('='); return [k, v.join('=')] })) : {}
-    createContainer.mutate({ nodeId, data: { name: form.name, image: form.image, ports, env, restart_policy: 'unless-stopped' } }, { onSuccess: () => { onClose(); onChange({ name: '', image: '', ports: '', env: '' }) } })
+    const ports = form.ports ? Object.fromEntries(form.ports.split(',').map((p) => { const [host, container] = p.trim().split(':'); return [`${container}/tcp`, `${host}/tcp`] })) : undefined
+    const env = form.env ? form.env.split(',').map((e) => e.trim()) : undefined
+    createContainer.mutate({ nodeId, data: { image: form.image, name: form.name || undefined, command: form.command || undefined, ports, env, detach: true, restart_policy: 'unless-stopped' } }, { onSuccess: () => { onClose(); onChange({ name: '', image: '', ports: '', env: '', command: '' }) } })
   }
   return (
     <div className="space-y-4">
-      <Input label="Name" placeholder="my-container" value={form.name} onChange={(e) => onChange({ ...form, name: e.target.value })} />
       <Input label="Image" placeholder="nginx:latest" value={form.image} onChange={(e) => onChange({ ...form, image: e.target.value })} />
+      <Input label="Name" placeholder="my-container" value={form.name} onChange={(e) => onChange({ ...form, name: e.target.value })} />
+      <Input label="Command" placeholder="/bin/sh -c 'echo hello'" value={form.command} onChange={(e) => onChange({ ...form, command: e.target.value })} />
       <Input label="Ports (host:container, ...)" placeholder="8080:80, 443:443" value={form.ports} onChange={(e) => onChange({ ...form, ports: e.target.value })} />
       <Input label="Environment (KEY=val, ...)" placeholder="NODE_ENV=production, PORT=3000" value={form.env} onChange={(e) => onChange({ ...form, env: e.target.value })} />
       <div className="flex justify-end gap-3 pt-2">
         <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-        <Button onClick={handleCreate} disabled={createContainer.isPending || !form.name || !form.image}>{createContainer.isPending ? t('common.loading') : 'Create'}</Button>
+        <Button onClick={handleCreate} disabled={createContainer.isPending || !form.image}>{createContainer.isPending ? t('common.loading') : 'Create'}</Button>
       </div>
     </div>
   )
@@ -228,7 +224,7 @@ function ContainerLogsContent({ nodeId, containerId }: { nodeId: string; contain
   return (
     <div className="max-h-96 overflow-y-auto">
       {isLoading ? <Spinner size="lg" className="mx-auto my-8" /> : (
-        <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 whitespace-pre-wrap break-all bg-surface-50 dark:bg-surface-800/50 rounded p-4">{logs?.logs || 'No logs'}</pre>
+        <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 whitespace-pre-wrap break-all bg-surface-50 dark:bg-surface-800/50 rounded p-4">{logs || 'No logs'}</pre>
       )}
     </div>
   )
@@ -240,10 +236,19 @@ function ContainerStatsContent({ nodeId, containerId }: { nodeId: string; contai
   if (!stats) return <p className="text-sm text-surface-500 text-center py-4">No stats available</p>
   return (
     <div className="space-y-3">
-      {Object.entries(stats).map(([key, value]) => (
+      {[
+        ['Container', stats.Container],
+        ['Name', stats.Name],
+        ['CPU', stats.CPUPerc],
+        ['Memory', `${stats.MemUsage} (${stats.MemPerc})`],
+        ['Net I/O', stats.NetIO],
+        ['Block I/O', stats.BlockIO],
+        ['Memory Limit', stats.MemLimit || '—'],
+        ['PIDs', stats.PIDs || '—'],
+      ].map(([key, value]) => (
         <div key={key} className="flex justify-between py-2 border-b border-surface-200 dark:border-surface-800 last:border-0">
           <span className="text-sm text-surface-600 dark:text-surface-400">{key}</span>
-          <span className="text-sm font-medium text-surface-900 dark:text-white">{String(value)}</span>
+          <span className="text-sm font-medium text-surface-900 dark:text-white">{value}</span>
         </div>
       ))}
     </div>
@@ -254,19 +259,16 @@ function ExecContainerContent({ nodeId, containerId, onClose }: { nodeId: string
   const { t } = useTranslation()
   const execContainer = useExecContainer()
   const [command, setCommand] = useState('sh')
-  const [workingDir, setWorkingDir] = useState('')
   const [output, setOutput] = useState('')
 
   const handleExec = () => {
-    const cmd = command.split(/\s+/).filter(Boolean)
-    execContainer.mutate({ nodeId, containerId, data: { command: cmd, working_dir: workingDir || undefined } }, { onSuccess: (res) => { setOutput((prev) => prev + `\n$ ${command}\n${JSON.stringify(res, null, 2)}\n`) }, onError: (err) => { setOutput((prev) => prev + `\n$ ${command}\nError: ${err.message}\n`) } })
+    execContainer.mutate({ nodeId, containerId, data: { command } }, { onSuccess: (res) => { setOutput((prev) => prev + `\n$ ${command}\nstdout: ${res.stdout}\nstderr: ${res.stderr}\nexit_code: ${res.exit_code}\n`) }, onError: (err) => { setOutput((prev) => prev + `\n$ ${command}\nError: ${err.message}\n`) } })
   }
 
   return (
     <div className="space-y-4">
       <div className="flex gap-3">
         <Input label="Command" placeholder="sh -c 'ls -la'" value={command} onChange={(e) => setCommand(e.target.value)} className="flex-1" />
-        <Input label="Working dir" placeholder="/app" value={workingDir} onChange={(e) => setWorkingDir(e.target.value)} className="w-40" />
         <div className="flex items-end">
           <Button onClick={handleExec} disabled={execContainer.isPending || !command}>{execContainer.isPending ? <Spinner size="sm" /> : 'Run'}</Button>
         </div>
@@ -278,8 +280,11 @@ function ExecContainerContent({ nodeId, containerId, onClose }: { nodeId: string
 }
 
 function ImagesTab({ nodeId }: { nodeId: string }) {
+  const { t } = useTranslation()
   const { data: images, isLoading } = useDockerImages(nodeId)
   const deleteImage = useDeleteImage()
+  const tagImage = useTagImage()
+  const buildImage = useBuildImage()
   const [tagTarget, setTagTarget] = useState<{ id: string; tag: string } | null>(null)
   const [tagRepo, setTagRepo] = useState('')
   const [tagName, setTagName] = useState('')
@@ -297,24 +302,24 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
         <table className="w-full table-zebra">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Repository</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Tag</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">ID</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Size</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Created</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {images.map((img) => (
-              <tr key={img.id} className="table-row-hover">
-                <td className="px-6 py-4 text-sm font-mono text-surface-900 dark:text-white">{img.tag}</td>
-                <td className="px-6 py-4 text-xs text-surface-500 font-mono">{img.id.slice(0, 12)}</td>
-                <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{formatBytes(img.size_bytes)}</td>
-                <td className="px-6 py-4 text-xs text-surface-500">{img.created}</td>
+              <tr key={img.ID} className="table-row-hover">
+                <td className="px-6 py-4 text-sm font-mono text-surface-900 dark:text-white">{img.Repository}</td>
+                <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{img.Tag}</td>
+                <td className="px-6 py-4 text-xs text-surface-500 font-mono">{img.ID?.slice(0, 12) || '—'}</td>
+                <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{img.Size}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: img.id, tag: img.tag.split(':').pop() || '' })}>Tag</Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteImage.mutate({ nodeId, imageId: img.id })} disabled={deleteImage.isPending} className="text-red-500">Delete</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: img.ID, tag: img.Tag })}>Tag</Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteImage.mutate({ nodeId, imageId: img.ID })} disabled={deleteImage.isPending} className="text-red-500">Delete</Button>
                   </div>
                 </td>
               </tr>
@@ -329,7 +334,7 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
           <Input label="Tag" placeholder="latest" value={tagName} onChange={(e) => setTagName(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setTagTarget(null)}>Cancel</Button>
-            <Button onClick={() => { if (tagTarget && tagRepo && tagName) { dockerApi.tagImage(nodeId, tagTarget.id, { repository: tagRepo, tag: tagName }).then(() => setTagTarget(null)) } }} disabled={!tagRepo || !tagName}>Tag</Button>
+            <Button onClick={() => { if (tagTarget && tagRepo && tagName) { tagImage.mutate({ nodeId, imageId: tagTarget.id, data: { repo: tagRepo, tag: tagName } }, { onSuccess: () => setTagTarget(null) }) } }} disabled={!tagRepo || !tagName || tagImage.isPending}>{tagImage.isPending ? t('common.loading') : 'Tag'}</Button>
           </div>
         </div>
       </Modal>
@@ -343,7 +348,7 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowBuildModal(false)}>Cancel</Button>
-            <Button onClick={() => { dockerApi.buildImage(nodeId, { dockerfile: buildDockerfile, tag: buildTag }).then(() => setShowBuildModal(false)) }} disabled={!buildTag || !buildDockerfile}>Build</Button>
+            <Button onClick={() => { buildImage.mutate({ nodeId, data: { dockerfile: buildDockerfile, tag: buildTag } }, { onSuccess: () => setShowBuildModal(false) }) }} disabled={!buildTag || !buildDockerfile || buildImage.isPending}>{buildImage.isPending ? t('common.loading') : 'Build'}</Button>
           </div>
         </div>
       </Modal>
@@ -362,17 +367,15 @@ function NetworksTab({ nodeId }: { nodeId: string }) {
           <tr className="border-b border-surface-200 dark:border-surface-800">
             <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Name</th>
             <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Driver</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Containers</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Created</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Scope</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
           {networks.map((n) => (
-            <tr key={n.id} className="table-row-hover">
-              <td className="px-6 py-4 text-sm font-semibold text-surface-900 dark:text-white">{n.name}</td>
-              <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{n.driver}</td>
-              <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{n.containers.length}</td>
-              <td className="px-6 py-4 text-xs text-surface-500">{n.created}</td>
+            <tr key={n.ID} className="table-row-hover">
+              <td className="px-6 py-4 text-sm font-semibold text-surface-900 dark:text-white">{n.Name}</td>
+              <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{n.Driver}</td>
+              <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{n.Scope}</td>
             </tr>
           ))}
         </tbody>
@@ -392,17 +395,13 @@ function VolumesTab({ nodeId }: { nodeId: string }) {
           <tr className="border-b border-surface-200 dark:border-surface-800">
             <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Name</th>
             <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Driver</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Mountpoint</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">Created</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
           {volumes.map((v) => (
-            <tr key={v.name} className="table-row-hover">
-              <td className="px-6 py-4 text-sm font-semibold text-surface-900 dark:text-white">{v.name}</td>
-              <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{v.driver}</td>
-              <td className="px-6 py-4 text-xs text-surface-500 font-mono truncate max-w-xs">{v.mountpoint}</td>
-              <td className="px-6 py-4 text-xs text-surface-500">{v.created}</td>
+            <tr key={v.Name} className="table-row-hover">
+              <td className="px-6 py-4 text-sm font-semibold text-surface-900 dark:text-white">{v.Name}</td>
+              <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{v.Driver}</td>
             </tr>
           ))}
         </tbody>

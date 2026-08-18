@@ -5,15 +5,21 @@ import type {
   ScriptUpdate,
   ScriptExecuteRequest,
   ScriptExecutionResponse,
+  ScriptExecutionBatchResult,
+  ScheduledJob,
+  ScheduleRequest,
+  ScheduleResponse,
+  ExecutionStatsResponse,
   PaginatedResponse,
 } from './types'
 
 export const scriptsApi = {
-  getAll: (params?: { page?: number; size?: number; tag?: string }) => {
+  getAll: (params?: { page?: number; size?: number; tag?: string; search?: string }) => {
     const query = new URLSearchParams()
     if (params?.page) query.set('page', String(params.page))
     if (params?.size) query.set('size', String(params.size))
     if (params?.tag) query.set('tag', params.tag)
+    if (params?.search) query.set('search', params.search)
     const qs = query.toString()
     return api.get<PaginatedResponse<Script>>(`/scripts/${qs ? `?${qs}` : ''}`)
   },
@@ -31,22 +37,29 @@ export const scriptsApi = {
     api.delete<void>(`/scripts/${id}`),
 
   execute: (id: string, data: ScriptExecuteRequest) =>
-    api.post<unknown>(`/scripts/${id}/execute`, data),
+    api.post<ScriptExecutionBatchResult>(`/scripts/${id}/execute`, data),
 
-  clone: (id: string) =>
-    api.post<Script>(`/scripts/${id}/clone`),
+  clone: (id: string, newName?: string) => {
+    const qs = newName ? `?new_name=${encodeURIComponent(newName)}` : ''
+    return api.post<Script>(`/scripts/${id}/clone${qs}`)
+  },
 
-  getStats: (id: string) =>
-    api.get<unknown>(`/scripts/${id}/stats`),
+  getStats: (id: string, params?: { date_from?: string; date_to?: string }) => {
+    const query = new URLSearchParams()
+    if (params?.date_from) query.set('date_from', params.date_from)
+    if (params?.date_to) query.set('date_to', params.date_to)
+    const qs = query.toString()
+    return api.get<ExecutionStatsResponse>(`/scripts/${id}/stats${qs ? `?${qs}` : ''}`)
+  },
 
   getTags: () =>
     api.get<string[]>('/scripts/tags'),
 
   getSchedule: (id: string) =>
-    api.get<unknown>(`/scripts/${id}/schedule`),
+    api.get<ScheduledJob | null>(`/scripts/${id}/schedule`),
 
-  setSchedule: (id: string, data: unknown) =>
-    api.post<void>(`/scripts/${id}/schedule`, data),
+  setSchedule: (id: string, data: ScheduleRequest) =>
+    api.post<ScheduleResponse>(`/scripts/${id}/schedule`, data),
 
   removeSchedule: (id: string) =>
     api.delete<void>(`/scripts/${id}/schedule`),
@@ -68,8 +81,8 @@ export const scriptsApi = {
   },
 
   cancelExecution: (executionId: string) =>
-    api.post<unknown>(`/scripts/executions/${executionId}/cancel`),
+    api.post<ScriptExecutionResponse>(`/scripts/executions/${executionId}/cancel`),
 
   retryExecution: (executionId: string) =>
-    api.post<unknown>(`/scripts/executions/${executionId}/retry`),
+    api.post<ScriptExecutionResponse>(`/scripts/executions/${executionId}/retry`),
 }

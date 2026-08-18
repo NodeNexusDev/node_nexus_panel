@@ -1,16 +1,24 @@
 import { api } from './client'
 import type {
   DockerContainer,
+  DockerContainerInspect,
   DockerCreateContainerRequest,
+  ContainerCreatedResponse,
   DockerExecRequest,
-  DockerExecResponse,
-  DockerLogsResponse,
+  DockerExecResult,
+  DockerContainerStats,
   DockerImage,
-  DockerPullImageRequest,
-  DockerBuildImageRequest,
-  DockerTagImageRequest,
+  DockerImagePullRequest,
+  DockerPullResult,
+  DockerImageBuildRequest,
+  DockerImageBuildResponse,
+  DockerImageTagRequest,
+  DockerImageTagResponse,
+  DockerImageInspectResponse,
   DockerNetwork,
   DockerVolume,
+  BulkDockerRequest,
+  BulkDockerResponse,
 } from './types'
 
 function nodesBase(nodeId: string) {
@@ -18,55 +26,66 @@ function nodesBase(nodeId: string) {
 }
 
 export const dockerApi = {
-  getContainers: (nodeId: string) =>
-    api.get<DockerContainer[]>(`${nodesBase(nodeId)}/containers`),
+  getContainers: (nodeId: string, params?: { all?: boolean }) => {
+    const qs = params?.all ? '?all=true' : ''
+    return api.get<DockerContainer[]>(`${nodesBase(nodeId)}/containers${qs}`)
+  },
 
   createContainer: (nodeId: string, data: DockerCreateContainerRequest) =>
-    api.post<DockerContainer>(`${nodesBase(nodeId)}/containers`, data),
+    api.post<ContainerCreatedResponse>(`${nodesBase(nodeId)}/containers`, data),
 
   getContainer: (nodeId: string, containerId: string) =>
-    api.get<DockerContainer>(`${nodesBase(nodeId)}/containers/${containerId}`),
+    api.get<DockerContainerInspect>(`${nodesBase(nodeId)}/containers/${containerId}`),
 
-  deleteContainer: (nodeId: string, containerId: string) =>
-    api.delete<void>(`${nodesBase(nodeId)}/containers/${containerId}`),
+  deleteContainer: (nodeId: string, containerId: string, force?: boolean) => {
+    const qs = force ? '?force=true' : ''
+    return api.delete<void>(`${nodesBase(nodeId)}/containers/${containerId}${qs}`)
+  },
 
   startContainer: (nodeId: string, containerId: string) =>
     api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/start`),
 
-  stopContainer: (nodeId: string, containerId: string) =>
-    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/stop`),
+  stopContainer: (nodeId: string, containerId: string, timeout?: number) => {
+    const qs = timeout ? `?timeout=${timeout}` : ''
+    return api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/stop${qs}`)
+  },
 
-  restartContainer: (nodeId: string, containerId: string) =>
-    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/restart`),
+  restartContainer: (nodeId: string, containerId: string, timeout?: number) => {
+    const qs = timeout ? `?timeout=${timeout}` : ''
+    return api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/restart${qs}`)
+  },
 
   execContainer: (nodeId: string, containerId: string, data: DockerExecRequest) =>
-    api.post<DockerExecResponse>(`${nodesBase(nodeId)}/containers/${containerId}/exec`, data),
+    api.post<DockerExecResult>(`${nodesBase(nodeId)}/containers/${containerId}/exec`, data),
 
-  getContainerLogs: (nodeId: string, containerId: string, tail?: number) => {
-    const qs = tail ? `?tail=${tail}` : ''
-    return api.get<DockerLogsResponse>(`${nodesBase(nodeId)}/containers/${containerId}/logs${qs}`)
+  getContainerLogs: (nodeId: string, containerId: string, params?: { tail?: number; since?: string }) => {
+    const query = new URLSearchParams()
+    if (params?.tail) query.set('tail', String(params.tail))
+    if (params?.since) query.set('since', params.since)
+    const qs = query.toString()
+    return api.get<string>(`${nodesBase(nodeId)}/containers/${containerId}/logs${qs ? `?${qs}` : ''}`)
   },
 
   getContainerStats: (nodeId: string, containerId: string) =>
-    api.get<Record<string, unknown>>(`${nodesBase(nodeId)}/containers/${containerId}/stats`),
+    api.get<DockerContainerStats>(`${nodesBase(nodeId)}/containers/${containerId}/stats`),
 
   getImages: (nodeId: string) =>
     api.get<DockerImage[]>(`${nodesBase(nodeId)}/images`),
 
-  pullImage: (nodeId: string, data: DockerPullImageRequest) =>
-    api.post<DockerImage>(`${nodesBase(nodeId)}/images/pull`, data),
+  pullImage: (nodeId: string, data: DockerImagePullRequest) =>
+    api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/pull`, data),
 
-  buildImage: (nodeId: string, data: DockerBuildImageRequest) =>
-    api.post<DockerImage>(`${nodesBase(nodeId)}/images/build`, data),
+  buildImage: (nodeId: string, data: DockerImageBuildRequest) =>
+    api.post<DockerImageBuildResponse>(`${nodesBase(nodeId)}/images/build`, data),
 
   getImage: (nodeId: string, imageId: string) =>
-    api.get<DockerImage>(`${nodesBase(nodeId)}/images/${imageId}`),
+    api.get<DockerImageInspectResponse>(`${nodesBase(nodeId)}/images/${imageId}`),
 
   deleteImage: (nodeId: string, imageId: string) =>
     api.delete<void>(`${nodesBase(nodeId)}/images/${imageId}`),
 
-  tagImage: (nodeId: string, imageId: string, data: DockerTagImageRequest) =>
-    api.post<void>(`${nodesBase(nodeId)}/images/${imageId}/tag`, data),
+  tagImage: (nodeId: string, imageId: string, data: DockerImageTagRequest) =>
+    api.post<DockerImageTagResponse>(`${nodesBase(nodeId)}/images/${imageId}/tag`, data),
 
   getNetworks: (nodeId: string) =>
     api.get<DockerNetwork[]>(`${nodesBase(nodeId)}/networks`),
@@ -74,15 +93,15 @@ export const dockerApi = {
   getVolumes: (nodeId: string) =>
     api.get<DockerVolume[]>(`${nodesBase(nodeId)}/volumes`),
 
-  bulkExec: (data: { command: string[]; container_ids: string[] }) =>
-    api.post<unknown>('/docker/bulk/exec', data),
+  bulkExec: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/exec', data),
 
-  bulkRestart: (data: { container_ids: string[] }) =>
-    api.post<unknown>('/docker/bulk/restart', data),
+  bulkRestart: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/restart', data),
 
-  bulkStart: (data: { container_ids: string[] }) =>
-    api.post<unknown>('/docker/bulk/start', data),
+  bulkStart: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/start', data),
 
-  bulkStop: (data: { container_ids: string[] }) =>
-    api.post<unknown>('/docker/bulk/stop', data),
+  bulkStop: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/stop', data),
 }

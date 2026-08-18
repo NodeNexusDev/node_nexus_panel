@@ -16,7 +16,7 @@ export class EventsClient {
   connect() {
     if (this.source) return
 
-    this.source = new EventSource(`${BASE_URL}/events/stream`)
+    this.source = new EventSource(`${BASE_URL}/api/v1/events/stream`)
 
     this.source.onopen = () => {
       this._isConnected = true

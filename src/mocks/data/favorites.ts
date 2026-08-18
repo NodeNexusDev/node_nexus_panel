@@ -1,32 +1,41 @@
-import type { Favorite, SearchResult } from '../../api/types'
+import type { GlobalSearchResponse, SearchResultItem } from '../../api/types'
 import { mockNodes } from './nodes'
 import { mockCommands } from './commands'
 import { mockScripts } from './scripts'
 
-export const mockFavorites: Favorite[] = [
-  { id: '1', target_type: 'node', target_id: '1', created_at: '2025-08-18T10:00:00Z' },
-  { id: '2', target_type: 'command', target_id: '1', created_at: '2025-08-17T09:00:00Z' },
+export const mockFavorites = [
+  { id: '1', target_type: 'node' as const, target_id: '1', note: 'Production server', created_at: '2025-08-18T10:00:00Z' },
+  { id: '2', target_type: 'command' as const, target_id: '1', note: null, created_at: '2025-08-17T09:00:00Z' },
 ]
 
-export function getSearchResults(query: string): SearchResult[] {
+export function getSearchResults(query: string): GlobalSearchResponse {
   const q = query.toLowerCase()
-  const results: SearchResult[] = []
+  const nodes: SearchResultItem[] = []
+  const commands: SearchResultItem[] = []
+  const scripts: SearchResultItem[] = []
+  const tags: string[] = []
 
   mockNodes.forEach((n) => {
     if (n.name.toLowerCase().includes(q) || n.host.toLowerCase().includes(q)) {
-      results.push({ id: n.id, type: 'node', name: n.name, description: `${n.host}:${n.port}`, tags: n.tags, score: 1 })
+      nodes.push({ id: n.id, name: n.name, entity_type: 'node' })
     }
   })
   mockCommands.forEach((c) => {
     if (c.name.toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q)) {
-      results.push({ id: c.id, type: 'command', name: c.name, description: c.description, tags: c.tags, score: 1 })
+      commands.push({ id: c.id, name: c.name, entity_type: 'command' })
     }
   })
   mockScripts.forEach((s) => {
     if (s.name.toLowerCase().includes(q) || (s.description || '').toLowerCase().includes(q)) {
-      results.push({ id: s.id, type: 'script', name: s.name, description: s.description, tags: s.tags, score: 1 })
+      scripts.push({ id: s.id, name: s.name, entity_type: 'script' })
     }
   })
 
-  return results
+  const allTags = new Set<string>()
+  mockNodes.forEach((n) => n.tags.forEach((t) => allTags.add(t)))
+  mockCommands.forEach((c) => c.tags.forEach((t) => allTags.add(t)))
+  mockScripts.forEach((s) => s.tags.forEach((t) => allTags.add(t)))
+  allTags.forEach((t) => { if (t.toLowerCase().includes(q)) tags.push(t) })
+
+  return { nodes, commands, scripts, tags }
 }

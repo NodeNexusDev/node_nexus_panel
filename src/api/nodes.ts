@@ -10,16 +10,21 @@ import type {
   NodeValidateResponse,
   BulkCommandHistoryItem,
   BulkNodeOperationResult,
+  BulkCommandResult,
+  CommandHistoryResponse,
   PaginatedResponse,
 } from './types'
 
 export const nodesApi = {
-  getAll: (params?: { page?: number; size?: number; status?: string; tag?: string }) => {
+  getAll: (params?: { page?: number; size?: number; status?: string; tags?: string; search?: string; cursor?: string; limit?: number }) => {
     const query = new URLSearchParams()
     if (params?.page) query.set('page', String(params.page))
     if (params?.size) query.set('size', String(params.size))
     if (params?.status) query.set('status', params.status)
-    if (params?.tag) query.set('tag', params.tag)
+    if (params?.tags) query.set('tags', params.tags)
+    if (params?.search) query.set('search', params.search)
+    if (params?.cursor) query.set('cursor', params.cursor)
+    if (params?.limit) query.set('limit', String(params.limit))
     const qs = query.toString()
     return api.get<PaginatedResponse<Node>>(`/nodes/${qs ? `?${qs}` : ''}`)
   },
@@ -47,7 +52,7 @@ export const nodesApi = {
     if (params?.page) query.set('page', String(params.page))
     if (params?.size) query.set('size', String(params.size))
     const qs = query.toString()
-    return api.get<PaginatedResponse<unknown>>(`/nodes/${id}/commands/history${qs ? `?${qs}` : ''}`)
+    return api.get<PaginatedResponse<CommandHistoryResponse>>(`/nodes/${id}/commands/history${qs ? `?${qs}` : ''}`)
   },
 
   execute: (id: string, data: { command: string; timeout?: number }) =>
@@ -60,7 +65,7 @@ export const nodesApi = {
     api.post<void>(`/nodes/${id}/tags`, { tag }),
 
   removeTag: (id: string, tag: string) =>
-    api.delete<void>(`/nodes/${id}/tags?tag=${encodeURIComponent(tag)}`),
+    api.delete<Node>(`/nodes/${id}/tags`, { body: { tag } }),
 
   bulkDelete: (nodeIds: string[]) =>
     api.post<void>('/nodes/bulk/delete', { node_ids: nodeIds }),
@@ -69,10 +74,15 @@ export const nodesApi = {
     api.post<void>('/nodes/bulk/check', { node_ids: nodeIds }),
 
   bulkExecute: (data: { command: string; node_ids?: string[]; tags?: string[] }) =>
-    api.post<unknown>('/nodes/bulk/execute', data),
+    api.post<BulkCommandResult>('/nodes/bulk/execute', data),
 
-  getStats: (id: string) =>
-    api.get<ExecutionStatsResponse>(`/nodes/${id}/stats`),
+  getStats: (id: string, params?: { date_from?: string; date_to?: string }) => {
+    const query = new URLSearchParams()
+    if (params?.date_from) query.set('date_from', params.date_from)
+    if (params?.date_to) query.set('date_to', params.date_to)
+    const qs = query.toString()
+    return api.get<ExecutionStatsResponse>(`/nodes/${id}/stats${qs ? `?${qs}` : ''}`)
+  },
 
   getStatusHistory: (id: string, params?: { page?: number; size?: number }) => {
     const query = new URLSearchParams()
@@ -92,15 +102,14 @@ export const nodesApi = {
     username?: string
     password?: string
     ssh_key?: string
-    docker_host?: string
   }) => api.post<NodeValidateResponse>('/nodes/validate-credentials', data),
 
-  getBulkHistory: (params?: { page?: number; size?: number }) => {
-    const query = new URLSearchParams()
+  getBulkHistory: (batchId: string, params?: { page?: number; size?: number }) => {
+    const query = new URLSearchParams({ batch_id: batchId })
     if (params?.page) query.set('page', String(params.page))
     if (params?.size) query.set('size', String(params.size))
     const qs = query.toString()
-    return api.get<PaginatedResponse<BulkCommandHistoryItem>>(`/nodes/bulk/history${qs ? `?${qs}` : ''}`)
+    return api.get<PaginatedResponse<BulkCommandHistoryItem>>(`/nodes/bulk/history?${qs}`)
   },
 
   bulkTagsAdd: (data: { node_ids: string[]; tags: string[] }) =>

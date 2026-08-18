@@ -80,7 +80,10 @@ export function Settings() {
       try {
         const data = JSON.parse(reader.result as string)
         configImport.mutate(data, {
-          onSuccess: () => toast('success', 'Config imported'),
+          onSuccess: (result) => {
+            const summary = [result.nodes_created, result.commands_created, result.scripts_created].filter(Boolean).join(', ')
+            toast('success', summary ? `Config imported: ${summary}` : 'Config imported')
+          },
           onError: () => toast('error', 'Failed to import config'),
         })
       } catch {

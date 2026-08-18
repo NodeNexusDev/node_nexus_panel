@@ -9,7 +9,7 @@ import type {
   PaginatedResponse,
 } from '../api/types'
 
-export function useNodes(params?: { page?: number; size?: number; status?: string; tag?: string }) {
+export function useNodes(params?: { page?: number; size?: number; status?: string; tags?: string; search?: string }) {
   return useQuery<PaginatedResponse<Node>>({
     queryKey: ['nodes', params],
     queryFn: () => nodesApi.getAll(params),
@@ -24,10 +24,10 @@ export function useNode(id: string) {
   })
 }
 
-export function useNodeStats(id: string) {
+export function useNodeStats(id: string, params?: { date_from?: string; date_to?: string }) {
   return useQuery<ExecutionStatsResponse>({
-    queryKey: ['nodes', id, 'stats'],
-    queryFn: () => nodesApi.getStats(id),
+    queryKey: ['nodes', id, 'stats', params],
+    queryFn: () => nodesApi.getStats(id, params),
     enabled: !!id,
   })
 }
@@ -40,10 +40,11 @@ export function useNodeStatusHistory(id: string, params?: { page?: number; size?
   })
 }
 
-export function useBulkHistory(params?: { page?: number; size?: number }) {
+export function useBulkHistory(batchId: string, params?: { page?: number; size?: number }) {
   return useQuery<PaginatedResponse<BulkCommandHistoryItem>>({
-    queryKey: ['nodes', 'bulk-history', params],
-    queryFn: () => nodesApi.getBulkHistory(params),
+    queryKey: ['nodes', 'bulk-history', batchId, params],
+    queryFn: () => nodesApi.getBulkHistory(batchId, params),
+    enabled: !!batchId,
   })
 }
 
@@ -101,7 +102,6 @@ export function useValidateCredentials() {
       username?: string
       password?: string
       ssh_key?: string
-      docker_host?: string
     }) => nodesApi.validateCredentials(data),
   })
 }

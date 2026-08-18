@@ -293,6 +293,22 @@ export interface BulkNodeOperationResult {
   node_ids: string[]
 }
 
+export interface BulkNodeResult {
+  node_id: string
+  node_name: string
+  stdout: string
+  stderr: string
+  exit_code: number
+}
+
+export interface BulkCommandResult {
+  command: string
+  results: BulkNodeResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
 export interface ScriptExecutionResponse {
   id: string
   script_id: string
@@ -306,117 +322,206 @@ export interface ScriptExecutionResponse {
 
 // ── Phase 2: Docker ─────────────────────────────────────────────
 
-export type DockerContainerState = 'running' | 'stopped' | 'paused' | 'created' | 'restarting'
-export type DockerContainerStatus = 'created' | 'restarting' | 'running' | 'removing' | 'paused' | 'exited' | 'dead'
+// ── Docker: Container types (backend OpenAPI) ────────────────────
 
 export interface DockerContainer {
-  id: string
-  name: string
-  image: string
-  state: DockerContainerState
-  status: DockerContainerStatus
-  created: string
-  ports: DockerPort[]
-  labels: Record<string, string>
+  ID: string
+  Names: string
+  Image: string
+  Command: string
+  CreatedAt: string
+  State: string
+  Status: string
+  Ports: string | null
+  Networks: string | null
 }
 
-export interface DockerPort {
-  host_port: number
-  container_port: number
-  protocol: 'tcp' | 'udp'
+export interface DockerContainerInspect {
+  Id: string
+  Name: string
+  State: DockerContainerState
+  Config: DockerContainerConfig
+  NetworkSettings?: Record<string, unknown>
+}
+
+export interface DockerContainerState {
+  status: string
+  running: boolean
+  exit_code: number
+  started_at?: string | null
+  finished_at?: string | null
+  oom_killed?: boolean | null
+}
+
+export interface DockerContainerConfig {
+  cmd?: string[] | null
+  hostname?: string | null
+  image?: string | null
+}
+
+export interface ContainerVolumeMount {
+  bind: string
+  mode?: 'rw' | 'ro'
 }
 
 export interface DockerCreateContainerRequest {
+  image: string
+  name?: string
+  command?: string
+  detach?: boolean
+  env?: string[]
+  labels?: Record<string, string>
+  network?: string
+  ports?: Record<string, string>
+  restart_policy?: string
+  volumes?: Record<string, ContainerVolumeMount>
+}
+
+export interface ContainerCreatedResponse {
+  id: string
   name: string
   image: string
-  ports?: DockerPort[]
-  env?: Record<string, string>
-  volumes?: string[]
-  command?: string[]
-  restart_policy?: string
+  status: string
 }
 
 export interface DockerExecRequest {
-  command: string[]
-  working_dir?: string
-  user?: string
+  command: string
+  timeout?: number
 }
 
-export interface DockerExecResponse {
-  output: string
+export interface DockerExecResult {
+  stdout: string
+  stderr: string
   exit_code: number
 }
 
-export interface DockerLogsResponse {
-  logs: string
-  tail: number
+export interface DockerContainerStats {
+  Container: string
+  Name: string
+  CPUPerc: string
+  MemUsage: string
+  MemPerc: string
+  NetIO: string
+  BlockIO: string
+  MemLimit?: string | null
+  PIDs?: string | null
 }
+
+// ── Docker: Image types ──────────────────────────────────────────
 
 export interface DockerImage {
-  id: string
-  tag: string
-  size_bytes: number
-  created: string
-  labels: Record<string, string>
+  Repository: string
+  Tag: string
+  ID: string
+  Size: string
+  CreatedAt: string
 }
 
-export interface DockerPullImageRequest {
+export interface DockerImagePullRequest {
   image: string
-  tag?: string
+  timeout?: number
 }
 
-export interface DockerBuildImageRequest {
+export interface DockerPullResult {
+  image: string
+  output: string
+  success: boolean
+}
+
+export interface DockerImageBuildRequest {
   dockerfile: string
   tag: string
   build_args?: Record<string, string>
+  no_cache?: boolean
 }
 
-export interface DockerTagImageRequest {
-  repository: string
+export interface DockerImageBuildResponse {
+  image_id: string
+  tag: string
+  output: string
+}
+
+export interface DockerImageTagRequest {
+  repo: string
   tag: string
 }
 
-export interface DockerNetwork {
+export interface DockerImageTagResponse {
+  source: string
+  target: string
+}
+
+export interface DockerImageInspectResponse {
   id: string
-  name: string
-  driver: string
-  created: string
-  containers: string[]
+  architecture?: string
+  created?: string
+  os?: string
+  repo_tags?: string[]
+  size?: number
+}
+
+// ── Docker: Network & Volume types ───────────────────────────────
+
+export interface DockerNetwork {
+  ID: string
+  Name: string
+  Driver: string
+  Scope: string
 }
 
 export interface DockerVolume {
-  name: string
-  driver: string
-  mountpoint: string
-  created: string
+  Name: string
+  Driver: string
 }
+
+// ── Docker: Bulk types ───────────────────────────────────────────
+
+export interface BulkDockerRequest {
+  container_id: string
+  command?: string
+  node_ids?: string[]
+  node_tags?: string[]
+  timeout?: number
+}
+
+export interface BulkDockerResponse {
+  affected: number
+  batch_id: string | null
+}
+
+// ── Docker: Logs (plain string from backend) ────────────────────
+
+// Logs endpoint returns plain text string
 
 // ── Phase 3: Audit + Search + Favorites ─────────────────────────
 
 export interface AuditLog {
   id: string
   action: string
-  resource_type: string
-  resource_id: string | null
+  node_id: string | null
   user: string | null
   details: string | null
   created_at: string
 }
 
-export interface SearchResult {
+export interface SearchResultItem {
   id: string
-  type: 'node' | 'command' | 'script'
   name: string
-  description: string | null
+  entity_type: string
+}
+
+export interface GlobalSearchResponse {
+  nodes: SearchResultItem[]
+  commands: SearchResultItem[]
+  scripts: SearchResultItem[]
   tags: string[]
-  score: number
 }
 
 export interface Favorite {
   id: string
   target_type: 'node' | 'command' | 'script'
   target_id: string
-  label?: string
+  note: string | null
   created_at: string
 }
 
@@ -447,6 +552,116 @@ export interface NoteUpdate {
 export interface Tag {
   name: string
   count: number
+}
+
+// ── Settings: API Keys ──────────────────────────────────────────
+
+export interface ApiKeyList {
+  items: ApiKey[]
+  total: number
+}
+
+// ── Config: Export/Import ───────────────────────────────────────
+
+export interface ConfigExport {
+  exported_at: string
+  format_version?: string
+  version?: string
+  application_version?: string
+  nodes?: NodeExport[]
+  commands?: CommandExport[]
+  scripts?: ScriptExport[]
+}
+
+export interface NodeExport {
+  name: string
+  host: string
+  port?: number
+  connection_type?: string
+  tags?: string[]
+}
+
+export interface CommandExport {
+  name: string
+  description?: string
+  command: string
+  tags?: string[]
+}
+
+export interface ScriptExport {
+  name: string
+  description?: string
+  steps?: ScriptStep[]
+  tags?: string[]
+}
+
+export interface ConfigImport {
+  exported_at?: string
+  format_version?: string
+  version?: string
+  application_version?: string
+  nodes?: NodeExport[]
+  commands?: CommandExport[]
+  scripts?: ScriptExport[]
+  dry_run?: boolean
+}
+
+export interface ImportResult {
+  nodes_created?: number
+  commands_created?: number
+  scripts_created?: number
+  errors?: string[]
+}
+
+// ── Scripts: Schedule types ─────────────────────────────────────
+
+export interface ScheduledJob {
+  id: string
+  script_id: string
+  cron: string
+  next_run: string | null
+  last_run: string | null
+  enabled: boolean
+  created_at: string
+}
+
+export interface ScheduleRequest {
+  cron: string
+  enabled?: boolean
+}
+
+export interface ScheduleResponse {
+  id: string
+  script_id: string
+  cron: string
+  next_run: string | null
+  enabled: boolean
+  created_at: string
+}
+
+export interface ScriptExecutionBatchResult {
+  batch_id: string
+  total: number
+  successful: number
+  failed: number
+  executions: ScriptExecutionResponse[]
+}
+
+// ── Commands: History ───────────────────────────────────────────
+
+export interface CommandHistoryResponse {
+  id: string
+  node_id: string | null
+  command_fingerprint: string
+  exit_code: number
+  stdout: string
+  stderr: string
+  stdout_bytes: number
+  stderr_bytes: number
+  truncated: boolean
+  started_at: string
+  finished_at: string | null
+  created_at: string
 }
 
 // ── Phase 5: Events SSE ────────────────────────────────────────

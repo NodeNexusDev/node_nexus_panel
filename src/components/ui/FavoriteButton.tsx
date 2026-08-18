@@ -6,16 +6,16 @@ import type { FavoriteCreate } from '../../api/types'
 interface FavoriteButtonProps {
   targetType: FavoriteCreate['target_type']
   targetId: string
-  label?: string
   size?: 'sm' | 'md'
 }
 
-export function FavoriteButton({ targetType, targetId, label: _label, size = 'md' }: FavoriteButtonProps) {
-  const { data: favorites } = useFavorites()
+export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteButtonProps) {
+  const { data: favoritesData } = useFavorites()
   const addFavorite = useAddFavorite()
   const removeFavorite = useRemoveFavorite()
 
-  const isFavorited = favorites?.some((f) => f.target_type === targetType && f.target_id === targetId)
+  const favorites = favoritesData?.items || []
+  const isFavorited = favorites.some((f) => f.target_type === targetType && f.target_id === targetId)
   const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
   const buttonClasses = size === 'sm' ? 'p-1' : 'p-1.5'
 

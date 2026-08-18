@@ -1,7 +1,10 @@
 import { api } from './client'
-import type { SearchResult } from './types'
+import type { GlobalSearchResponse } from './types'
 
 export const searchApi = {
-  search: (query: string) =>
-    api.get<SearchResult[]>(`/search?q=${encodeURIComponent(query)}`),
+  search: (query: string, limit?: number) => {
+    const params = new URLSearchParams({ q: query })
+    if (limit) params.set('limit', String(limit))
+    return api.get<GlobalSearchResponse>(`/search?${params}`)
+  },
 }

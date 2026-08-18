@@ -9,24 +9,25 @@ export const dockerHandlers = [
   }),
 
   http.post(`${API}/api/v1/nodes/:nodeId/docker/containers`, async ({ request }) => {
-    const body = await request.json() as { name: string; image: string }
+    const body = await request.json() as { image: string; name?: string }
     const container = {
-      id: Math.random().toString(36).slice(2),
-      name: body.name,
-      image: body.image,
-      state: 'created' as const,
-      status: 'created' as const,
-      created: new Date().toISOString(),
-      ports: [],
-      labels: {},
+      ID: Math.random().toString(36).slice(2),
+      Names: `/${body.name || 'new-container'}`,
+      Image: body.image,
+      Command: '',
+      CreatedAt: new Date().toISOString(),
+      State: 'created',
+      Status: 'Created',
+      Ports: null,
+      Networks: null,
     }
-    return HttpResponse.json(container, { status: 201 })
+    return HttpResponse.json({ id: container.ID, name: container.Names, image: container.Image, status: container.State }, { status: 201 })
   }),
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/containers/:containerId`, ({ params }) => {
-    const c = mockContainers.find((c) => c.id === params.containerId)
+    const c = mockContainers.find((c) => c.ID === params.containerId)
     if (!c) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json(c)
+    return HttpResponse.json({ Id: c.ID, Name: c.Names, State: { status: c.State, running: c.State === 'running', exit_code: 0 }, Config: { image: c.Image } })
   }),
 
   http.delete(`${API}/api/v1/nodes/:nodeId/docker/containers/:containerId`, () => {
@@ -46,15 +47,15 @@ export const dockerHandlers = [
   }),
 
   http.post(`${API}/api/v1/nodes/:nodeId/docker/containers/:containerId/exec`, async () => {
-    return HttpResponse.json({ output: 'command executed successfully\n', exit_code: 0 })
+    return HttpResponse.json({ stdout: 'command executed successfully\n', stderr: '', exit_code: 0 })
   }),
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/containers/:containerId/logs`, () => {
-    return HttpResponse.json({ logs: '2025-08-18 nginx started\n2025-08-18 listening on port 80\n', tail: 2 })
+    return HttpResponse.json('2025-08-18 nginx started\n2025-08-18 listening on port 80\n')
   }),
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/containers/:containerId/stats`, () => {
-    return HttpResponse.json({ cpu_percent: 2.5, memory_usage_mb: 128, network_rx_bytes: 1024000, network_tx_bytes: 512000 })
+    return HttpResponse.json({ Container: 'c1', Name: 'nginx', CPUPerc: '2.50%', MemUsage: '128MiB / 1GiB', MemPerc: '12.50%', NetIO: '1MB / 512KB', BlockIO: '10MB / 0B', MemLimit: '1GiB', PIDs: '5' })
   }),
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/images`, () => {
@@ -62,27 +63,27 @@ export const dockerHandlers = [
   }),
 
   http.post(`${API}/api/v1/nodes/:nodeId/docker/images/pull`, async ({ request }) => {
-    const body = await request.json() as { image: string; tag?: string }
-    const tag = body.tag ? `${body.image}:${body.tag}` : body.image
-    return HttpResponse.json({ id: Math.random().toString(36).slice(2), tag, size_bytes: 100_000_000, created: new Date().toISOString(), labels: {} }, { status: 201 })
+    const body = await request.json() as { image: string; timeout?: number }
+    return HttpResponse.json({ image: body.image, output: `Pulling ${body.image}...\nDone`, success: true }, { status: 200 })
   }),
 
   http.post(`${API}/api/v1/nodes/:nodeId/docker/images/build`, async () => {
-    return HttpResponse.json({ id: Math.random().toString(36).slice(2), tag: 'custom:latest', size_bytes: 50_000_000, created: new Date().toISOString(), labels: {} }, { status: 201 })
+    return HttpResponse.json({ image_id: 'sha256:build123', tag: 'custom:latest', output: 'Building...\nDone' }, { status: 200 })
   }),
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/images/:imageId`, ({ params }) => {
-    const img = mockImages.find((i) => i.id === params.imageId)
+    const img = mockImages.find((i) => i.ID === params.imageId)
     if (!img) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json(img)
+    return HttpResponse.json({ id: img.ID, repo_tags: [`${img.Repository}:${img.Tag}`], size: 100000000 })
   }),
 
   http.delete(`${API}/api/v1/nodes/:nodeId/docker/images/:imageId`, () => {
     return new HttpResponse(null, { status: 204 })
   }),
 
-  http.post(`${API}/api/v1/nodes/:nodeId/docker/images/:imageId/tag`, () => {
-    return new HttpResponse(null, { status: 204 })
+  http.post(`${API}/api/v1/nodes/:nodeId/docker/images/:imageId/tag`, async ({ request }) => {
+    const body = await request.json() as { repo: string; tag: string }
+    return HttpResponse.json({ source: 'old', target: `${body.repo}:${body.tag}` })
   }),
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/networks`, () => {
@@ -94,18 +95,18 @@ export const dockerHandlers = [
   }),
 
   http.post(`${API}/api/v1/docker/bulk/exec`, () => {
-    return HttpResponse.json({ message: 'Bulk exec completed' })
+    return HttpResponse.json({ affected: 1, batch_id: 'bulk-1' })
   }),
 
   http.post(`${API}/api/v1/docker/bulk/restart`, () => {
-    return HttpResponse.json({ message: 'Bulk restart completed' })
+    return HttpResponse.json({ affected: 1, batch_id: 'bulk-2' })
   }),
 
   http.post(`${API}/api/v1/docker/bulk/start`, () => {
-    return HttpResponse.json({ message: 'Bulk start completed' })
+    return HttpResponse.json({ affected: 1, batch_id: 'bulk-3' })
   }),
 
   http.post(`${API}/api/v1/docker/bulk/stop`, () => {
-    return HttpResponse.json({ message: 'Bulk stop completed' })
+    return HttpResponse.json({ affected: 1, batch_id: 'bulk-4' })
   }),
 ]

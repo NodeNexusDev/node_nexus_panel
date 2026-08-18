@@ -55,7 +55,7 @@ export function Dashboard() {
     }
   }
 
-  const favList = favorites || []
+  const favList = favorites?.items || []
 
   return (
     <div className="space-y-8">
@@ -130,7 +130,7 @@ export function Dashboard() {
                   <div key={`${fav.target_type}-${fav.target_id}`} className="flex items-center gap-3 p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" style={{ animationDelay: `${index * 50}ms` }} onClick={() => { if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`); else if (fav.target_type === 'script') navigate('/scripts'); else if (fav.target_type === 'command') navigate('/commands') }}>
                     <IconStar className="w-4 h-4 text-yellow-500" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{fav.label || fav.target_id}</p>
+                      <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{fav.note || fav.target_id}</p>
                       <p className="text-xs text-surface-500 capitalize">{fav.target_type}</p>
                     </div>
                   </div>

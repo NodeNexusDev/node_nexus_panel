@@ -136,7 +136,7 @@ export function Nodes() {
       header: t('nodes.actions'),
       render: (node) => (
         <div className="flex items-center gap-1 flex-wrap">
-          <FavoriteButton targetType="node" targetId={node.id} label={node.name} size="sm" />
+          <FavoriteButton targetType="node" targetId={node.id} size="sm" />
           <Tooltip content={t('nodes.stats')}>
             <Button variant="ghost" size="sm" onClick={() => setStatsNodeId(statsNodeId === node.id ? null : node.id)}>
               <IconSearch className="w-4 h-4" />
@@ -196,7 +196,7 @@ export function Nodes() {
         ))}
       </div>
       <div className="flex items-center gap-2 pt-1 flex-wrap">
-        <FavoriteButton targetType="node" targetId={node.id} label={node.name} size="sm" />
+        <FavoriteButton targetType="node" targetId={node.id} size="sm" />
         <Button variant="ghost" size="sm" onClick={() => setStatsNodeId(statsNodeId === node.id ? null : node.id)}>{t('nodes.stats')}</Button>
         <Button variant="ghost" size="sm" onClick={() => setHistoryNodeId(node.id)}>{t('nodes.statusHistory')}</Button>
         <Button variant="ghost" size="sm" onClick={() => { setExecNodeId(node.id); setExecCmd('') }}>
@@ -246,7 +246,7 @@ export function Nodes() {
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-1 flex-wrap">
-          <FavoriteButton targetType="node" targetId={node.id} label={node.name} size="sm" />
+          <FavoriteButton targetType="node" targetId={node.id} size="sm" />
           <Tooltip content={t('nodes.stats')}><Button variant="ghost" size="sm" onClick={() => setStatsNodeId(statsNodeId === node.id ? null : node.id)}><IconSearch className="w-4 h-4" /></Button></Tooltip>
           <Tooltip content={t('nodes.statusHistory')}><Button variant="ghost" size="sm" onClick={() => setHistoryNodeId(node.id)}><IconCheckCircle className="w-4 h-4" /></Button></Tooltip>
           <Tooltip content={t('nodes.execCommand')}><Button variant="ghost" size="sm" onClick={() => { setExecNodeId(node.id); setExecCmd('') }}><IconCommands className="w-4 h-4" /></Button></Tooltip>

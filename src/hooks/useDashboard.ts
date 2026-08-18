@@ -9,9 +9,9 @@ export function useDashboard() {
   })
 }
 
-export function useDashboardMetrics() {
+export function useDashboardMetrics(params?: { date_from?: string; date_to?: string; group_by?: string }) {
   return useQuery<DashboardMetricsResponse>({
-    queryKey: ['dashboard', 'metrics'],
-    queryFn: () => dashboardApi.getMetrics(),
+    queryKey: ['dashboard', 'metrics', params],
+    queryFn: () => dashboardApi.getMetrics(params),
   })
 }

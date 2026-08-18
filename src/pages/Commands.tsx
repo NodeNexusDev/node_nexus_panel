@@ -112,7 +112,7 @@ export function Commands() {
                     </div>
                     <div className="flex items-center gap-3">
                       {item.tags.map((tag) => (<span key={tag} className="text-xs px-2 py-0.5 bg-surface-100 dark:bg-surface-800 rounded">{tag}</span>))}
-                      <FavoriteButton targetType="command" targetId={item.id} label={item.name} size="sm" />
+                      <FavoriteButton targetType="command" targetId={item.id} size="sm" />
                       <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: item.id, name: item.name })} className="text-red-500">{t('common.delete')}</Button>
                     </div>
                   </div>

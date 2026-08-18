@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { ApiKey, ApiKeyCreate, ApiKeyUpdate, ApiKeyCreated, PaginatedResponse } from './types'
+import type { ApiKey, ApiKeyCreate, ApiKeyUpdate, ApiKeyCreated, ApiKeyList } from './types'
 
 export const apiKeysApi = {
   getAll: (params?: { page?: number; size?: number }) => {
@@ -7,7 +7,7 @@ export const apiKeysApi = {
     if (params?.page) query.set('page', String(params.page))
     if (params?.size) query.set('size', String(params.size))
     const qs = query.toString()
-    return api.get<PaginatedResponse<ApiKey>>(`/api-keys/${qs ? `?${qs}` : ''}`)
+    return api.get<ApiKeyList>(`/api-keys/${qs ? `?${qs}` : ''}`)
   },
 
   create: (data: ApiKeyCreate) =>

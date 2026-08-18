@@ -1,9 +1,10 @@
 import { api } from './client'
+import type { ConfigExport, ConfigImport, ImportResult } from './types'
 
 export const configApi = {
   export: () =>
-    api.get<unknown>('/config/export'),
+    api.get<ConfigExport>('/config/export'),
 
-  import: (data: unknown) =>
-    api.post<{ message: string }>('/config/import', data),
+  import: (data: ConfigImport) =>
+    api.post<ImportResult>('/config/import', data),
 }

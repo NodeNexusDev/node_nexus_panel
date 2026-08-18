@@ -3,15 +3,19 @@ import { dockerApi } from '../api/docker'
 import type {
   DockerContainer,
   DockerCreateContainerRequest,
+  DockerContainerStats,
   DockerImage,
+  DockerImageBuildRequest,
+  DockerImageTagRequest,
   DockerNetwork,
   DockerVolume,
+  BulkDockerRequest,
 } from '../api/types'
 
-export function useDockerContainers(nodeId: string) {
+export function useDockerContainers(nodeId: string, all?: boolean) {
   return useQuery<DockerContainer[]>({
-    queryKey: ['docker', nodeId, 'containers'],
-    queryFn: () => dockerApi.getContainers(nodeId),
+    queryKey: ['docker', nodeId, 'containers', all],
+    queryFn: () => dockerApi.getContainers(nodeId, { all }),
     enabled: !!nodeId,
   })
 }
@@ -41,9 +45,9 @@ export function useDockerVolumes(nodeId: string) {
 }
 
 export function useDockerContainerLogs(nodeId: string, containerId: string, tail?: number) {
-  return useQuery({
+  return useQuery<string>({
     queryKey: ['docker', nodeId, 'containers', containerId, 'logs', tail],
-    queryFn: () => dockerApi.getContainerLogs(nodeId, containerId, tail),
+    queryFn: () => dockerApi.getContainerLogs(nodeId, containerId, { tail }),
     enabled: !!nodeId && !!containerId,
   })
 }
@@ -64,8 +68,8 @@ export function useStopContainer() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ nodeId, containerId }: { nodeId: string; containerId: string }) =>
-      dockerApi.stopContainer(nodeId, containerId),
+    mutationFn: ({ nodeId, containerId, timeout }: { nodeId: string; containerId: string; timeout?: number }) =>
+      dockerApi.stopContainer(nodeId, containerId, timeout),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
     },
@@ -76,8 +80,8 @@ export function useRestartContainer() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ nodeId, containerId }: { nodeId: string; containerId: string }) =>
-      dockerApi.restartContainer(nodeId, containerId),
+    mutationFn: ({ nodeId, containerId, timeout }: { nodeId: string; containerId: string; timeout?: number }) =>
+      dockerApi.restartContainer(nodeId, containerId, timeout),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
     },
@@ -88,8 +92,8 @@ export function useDeleteContainer() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ nodeId, containerId }: { nodeId: string; containerId: string }) =>
-      dockerApi.deleteContainer(nodeId, containerId),
+    mutationFn: ({ nodeId, containerId, force }: { nodeId: string; containerId: string; force?: boolean }) =>
+      dockerApi.deleteContainer(nodeId, containerId, force),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
     },
@@ -105,7 +109,7 @@ export function useExecContainer() {
     }: {
       nodeId: string
       containerId: string
-      data: { command: string[]; working_dir?: string; user?: string }
+      data: { command: string; timeout?: number }
     }) => dockerApi.execContainer(nodeId, containerId, data),
   })
 }
@@ -114,7 +118,7 @@ export function usePullImage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ nodeId, data }: { nodeId: string; data: { image: string; tag?: string } }) =>
+    mutationFn: ({ nodeId, data }: { nodeId: string; data: { image: string; timeout?: number } }) =>
       dockerApi.pullImage(nodeId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
@@ -147,7 +151,7 @@ export function useCreateContainer() {
 }
 
 export function useDockerContainerStats(nodeId: string, containerId: string) {
-  return useQuery<Record<string, unknown>>({
+  return useQuery<DockerContainerStats>({
     queryKey: ['docker', nodeId, 'containers', containerId, 'stats'],
     queryFn: () => dockerApi.getContainerStats(nodeId, containerId),
     enabled: !!nodeId && !!containerId,
@@ -159,7 +163,7 @@ export function useBuildImage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ nodeId, data }: { nodeId: string; data: { dockerfile: string; tag: string; build_args?: Record<string, string> } }) =>
+    mutationFn: ({ nodeId, data }: { nodeId: string; data: DockerImageBuildRequest }) =>
       dockerApi.buildImage(nodeId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
@@ -171,7 +175,7 @@ export function useTagImage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ nodeId, imageId, data }: { nodeId: string; imageId: string; data: { repository: string; tag: string } }) =>
+    mutationFn: ({ nodeId, imageId, data }: { nodeId: string; imageId: string; data: DockerImageTagRequest }) =>
       dockerApi.tagImage(nodeId, imageId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
@@ -181,7 +185,7 @@ export function useTagImage() {
 
 export function useBulkDockerExec() {
   return useMutation({
-    mutationFn: (data: { command: string[]; container_ids: string[] }) =>
+    mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkExec(data),
   })
 }
@@ -190,7 +194,7 @@ export function useBulkDockerRestart() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { container_ids: string[] }) =>
+    mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkRestart(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
@@ -202,7 +206,7 @@ export function useBulkDockerStart() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { container_ids: string[] }) =>
+    mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkStart(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
@@ -214,7 +218,7 @@ export function useBulkDockerStop() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { container_ids: string[] }) =>
+    mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkStop(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })

@@ -78,7 +78,7 @@ export function Scripts() {
             <span>{t('scripts.updated')}: {new Date(script.updated_at).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center gap-1 flex-wrap">
-            <FavoriteButton targetType="script" targetId={script.id} label={script.name} size="sm" />
+            <FavoriteButton targetType="script" targetId={script.id} size="sm" />
             <Button variant="ghost" size="sm" onClick={() => { setExecutionsScriptId(script.id) }}>{t('scripts.executions')}</Button>
             <Button variant="ghost" size="sm" onClick={() => { setCloneTarget({ id: script.id, name: script.name }) }}>Clone</Button>
             <Button variant="ghost" size="sm" onClick={() => { setScheduleTarget({ id: script.id, name: script.name }); setScheduleCron('') }}>{t('scripts.schedule')}</Button>

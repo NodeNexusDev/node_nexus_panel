@@ -43,6 +43,18 @@ export function CommandPalette() {
 
   const { data: searchResults, isLoading: searchLoading } = useSearch(query)
 
+  const totalSearchResults = searchResults
+    ? searchResults.nodes.length + searchResults.commands.length + searchResults.scripts.length
+    : 0
+
+  const flatSearchResults = searchResults
+    ? [
+        ...searchResults.nodes.map((r) => ({ ...r, entity_type: 'node' as const })),
+        ...searchResults.commands.map((r) => ({ ...r, entity_type: 'command' as const })),
+        ...searchResults.scripts.map((r) => ({ ...r, entity_type: 'script' as const })),
+      ]
+    : []
+
   useHotkey('k', () => setIsOpen(true), { ctrl: true })
 
   useEffect(() => {
@@ -119,7 +131,7 @@ export function CommandPalette() {
         </div>
 
         <div ref={listRef} className="max-h-64 overflow-y-auto p-2">
-          {filtered.length === 0 && !searchLoading && !(searchResults && searchResults.length > 0) ? (
+          {filtered.length === 0 && !searchLoading && !(totalSearchResults > 0) ? (
             <div className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">
               {t('commandPalette.noResults')}
             </div>
@@ -150,22 +162,21 @@ export function CommandPalette() {
                   <p className="px-3 py-1 text-xs font-medium text-surface-500 uppercase">Search Results</p>
                   {searchLoading ? (
                     <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
-                  ) : searchResults && searchResults.length > 0 ? (
-                    searchResults.slice(0, 5).map((result, _i) => (
+                  ) : flatSearchResults.length > 0 ? (
+                    flatSearchResults.slice(0, 5).map((result) => (
                       <button
-                        key={`${result.type}-${result.id}`}
+                        key={`${result.entity_type}-${result.id}`}
                         onClick={() => {
-                          if (result.type === 'node') select(`/nodes/${result.id}`)
-                          else if (result.type === 'script') select('/scripts')
-                          else if (result.type === 'command') select('/commands')
+                          if (result.entity_type === 'node') select(`/nodes/${result.id}`)
+                          else if (result.entity_type === 'script') select('/scripts')
+                          else if (result.entity_type === 'command') select('/commands')
                           else select('/')
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50"
                       >
-                        <span className="text-surface-400 text-xs uppercase font-mono w-12">{result.type}</span>
+                        <span className="text-surface-400 text-xs uppercase font-mono w-12">{result.entity_type}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{result.name || result.id}</p>
-                          {result.description && <p className="text-xs text-surface-500 dark:text-surface-400 truncate">{result.description}</p>}
                         </div>
                       </button>
                     ))
