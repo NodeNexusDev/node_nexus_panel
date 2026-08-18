@@ -20,7 +20,8 @@ export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteBu
   const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
   const buttonClasses = size === 'sm' ? 'p-1' : 'p-1.5'
 
-  const toggle = useCallback(() => {
+  const toggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
     if (addFavorite.isPending || removeFavorite.isPending) return
     if (isFavorited) {
       removeFavorite.mutate({ targetType, targetId })

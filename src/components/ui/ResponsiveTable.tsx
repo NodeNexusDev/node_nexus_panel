@@ -8,6 +8,7 @@ interface ResponsiveTableProps<T> {
   keyExtractor: (item: T) => string
   emptyMessage?: string
   className?: string
+  onRowClick?: (item: T) => void
 }
 
 export function ResponsiveTable<T>({
@@ -17,6 +18,7 @@ export function ResponsiveTable<T>({
   keyExtractor,
   emptyMessage = 'No data',
   className = '',
+  onRowClick,
 }: ResponsiveTableProps<T>) {
   if (data.length === 0) {
     return (
@@ -45,7 +47,11 @@ export function ResponsiveTable<T>({
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {data.map((item) => (
-              <tr key={keyExtractor(item)} className="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors">
+              <tr
+                key={keyExtractor(item)}
+                onClick={onRowClick ? () => onRowClick(item) : undefined}
+                className={`hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+              >
                 {columns.map((col) => (
                   <td key={col.key} className={`px-6 py-4 ${col.className || ''}`}>
                     {col.render(item)}
@@ -60,7 +66,11 @@ export function ResponsiveTable<T>({
       {/* Mobile cards */}
       <div className="md:hidden divide-y divide-surface-200 dark:divide-surface-800">
         {data.map((item) => (
-          <div key={keyExtractor(item)} className="p-4">
+          <div
+            key={keyExtractor(item)}
+            onClick={onRowClick ? () => onRowClick(item) : undefined}
+            className={`p-4 ${onRowClick ? 'cursor-pointer' : ''}`}
+          >
             {renderMobileItem(item)}
           </div>
         ))}
