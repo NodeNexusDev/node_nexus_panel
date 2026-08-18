@@ -6,7 +6,9 @@
     "scripts": "Scripts",
     "docker": "Docker",
     "audit": "Audit",
-    "settings": "Settings"
+    "settings": "Settings",
+    "tags": "Tags",
+    "favorites": "Favorites"
   },
   "login": {
     "subtitle": "Sign in to your account",
@@ -219,7 +221,8 @@
     "toastScheduleRemoved": "Schedule removed",
     "toastScheduleFailed": "Schedule failed",
     "reorder": "Reorder scripts",
-    "exitReorder": "Exit reorder"
+    "exitReorder": "Exit reorder",
+    "details": "Details"
   },
   "docker": {
     "title": "Docker",
@@ -284,7 +287,15 @@
     "deleteContainerMsg": "Delete \"{{name}}\"? This cannot be undone.",
     "hostPort": "host:container",
     "forceDelete": "Force delete",
-    "showAll": "Show all (including stopped)"
+    "showAll": "Show all (including stopped)",
+    "network": "Network",
+    "labels": "Labels",
+    "restartPolicy": "Restart policy",
+    "containerCreated": "Container created",
+    "pullTimeout": "Timeout (seconds)",
+    "pullSuccess": "Image pulled successfully",
+    "pullFailed": "Pull failed",
+    "bulkSingleContainer": "Bulk operations apply to one container across multiple nodes. Select a single container to proceed."
   },
   "audit": {
     "title": "Audit",
@@ -307,7 +318,8 @@
     "toastExported": "Audit log exported",
     "toastExportFailed": "Failed to export",
     "toastCleared": "Audit logs cleared",
-    "toastClearFailed": "Failed to clear logs"
+    "toastClearFailed": "Failed to clear logs",
+    "allActions": "All actions"
   },
   "settings": {
     "title": "Settings",
@@ -358,7 +370,8 @@
     "toastInvalidJson": "Invalid JSON file",
     "scope": "Scope",
     "readOnly": "Read Only",
-    "readWrite": "Read Write"
+    "readWrite": "Read Write",
+    "lastUsed": "Last used"
   },
   "common": {
     "connected": "Connected",
@@ -408,5 +421,35 @@
     "notFoundMsg": "The page you are looking for does not exist.",
     "accessDeniedMsg": "You do not have permission to access this resource.",
     "genericMsg": "An unexpected error occurred. Please try again."
+  },
+  "tags": {
+    "title": "Tags",
+    "description": "Manage tags across nodes, commands and scripts",
+    "name": "Name",
+    "usedIn": "Used in",
+    "actions": "Actions",
+    "emptyTitle": "No tags",
+    "emptyDesc": "Tags will appear here when added to nodes, commands or scripts",
+    "renameTitle": "Rename tag {{name}}",
+    "newName": "New name",
+    "deleteTitle": "Delete Tag",
+    "deleteMsg": "Delete tag \"{{name}}\"? It will be removed from all resources.",
+    "toastRenamed": "Tag renamed",
+    "toastRenameFailed": "Failed to rename tag",
+    "toastDeleted": "Tag deleted",
+    "toastDeleteFailed": "Failed to delete tag"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "description": "Your favorite nodes, commands and scripts",
+    "allTypes": "All types",
+    "node": "Node",
+    "command": "Command",
+    "script": "Script",
+    "emptyTitle": "No favorites",
+    "emptyDesc": "Mark resources as favorites to see them here",
+    "open": "Open",
+    "toastRemoved": "Removed from favorites",
+    "toastRemoveFailed": "Failed to remove favorite"
   }
 }
