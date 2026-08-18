@@ -24,7 +24,7 @@ export function Dashboard() {
   const { data: metrics, refetch: refetchMetrics } = useDashboardMetrics({ date_from: metricsFrom || undefined, date_to: metricsTo || undefined, group_by: groupBy })
   const { data: nodesData, isLoading: nodesLoading, refetch: refetchNodes } = useNodes()
   const { data: favorites } = useFavorites()
-  const { isConnected, on: onSseEvent } = useSse()
+  const { on: onSseEvent } = useSse()
 
   useEffect(() => {
     const unsubs = [
@@ -79,12 +79,6 @@ export function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold gradient-text">{t('dashboard.title')}</h1>
           <p className="text-surface-500 dark:text-surface-400 mt-1">{t('dashboard.description')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs ${isConnected ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-surface-200 text-surface-600 dark:bg-surface-700 dark:text-surface-400'}`}>
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-surface-400'}`} />
-            {isConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}
-          </div>
         </div>
       </div>
 

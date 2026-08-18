@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useIsFetching } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/auth-store'
 import { useUiStore } from '../stores/ui-store'
-import { useConnectionStore } from '../stores/connection-store'
+import { useSse } from '../hooks/useSse'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
 import { Tooltip } from '../components/ui/Tooltip'
@@ -30,7 +30,7 @@ export function MainLayout() {
   const logout = useAuthStore((s) => s.logout)
   const sidebarOpen = useUiStore((s) => s.sidebarOpen)
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
-  const wsConnected = useConnectionStore((s) => s.wsConnected)
+  const wsConnected = useSse().isConnected
   const isFetching = useIsFetching() > 0
 
   const toggleLanguage = () => {
@@ -183,7 +183,7 @@ export function MainLayout() {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50">
               <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
               <span className="text-xs font-medium text-surface-500 dark:text-surface-400">
-                {wsConnected ? t('common.connected') : t('common.disconnected', 'Disconnected')}
+                {wsConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}
               </span>
             </div>
 
