@@ -17,6 +17,27 @@ function actionVariant(action: string) {
   return 'default'
 }
 
+const COMMON_ACTIONS = [
+  'node.create',
+  'node.update',
+  'node.delete',
+  'node.check',
+  'command.create',
+  'command.execute',
+  'command.delete',
+  'script.create',
+  'script.execute',
+  'script.schedule',
+  'api_key.create',
+  'api_key.revoke',
+  'tag.rename',
+  'tag.delete',
+  'config.export',
+  'config.import',
+  'favorite.add',
+  'favorite.remove',
+]
+
 export function Audit() {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -71,18 +92,20 @@ export function Audit() {
         let extension: string
 
         if (exportFormat === 'csv') {
-          try {
-            const jsonData = JSON.parse(data)
+          const record = data as { csv?: string; items?: Record<string, unknown>[] }
+          if (typeof record?.csv === 'string') {
+            content = record.csv
+          } else if (Array.isArray(record?.items)) {
             const headers = ['id', 'action', 'node_id', 'user', 'details', 'created_at']
-            const rows = (jsonData.items || []).map((log: Record<string, unknown>) => headers.map((h) => `"${String(log[h] ?? '').replace(/"/g, '""')}"`).join(','))
+            const rows = record.items.map((log) => headers.map((h) => `"${String(log[h] ?? '').replace(/"/g, '""')}"`).join(','))
             content = [headers.join(','), ...rows].join('\n')
-          } catch {
-            content = data
+          } else {
+            content = typeof data === 'string' ? data : JSON.stringify(data ?? {}, null, 2)
           }
           mimeType = 'text/csv'
           extension = 'csv'
         } else {
-          content = data
+          content = typeof data === 'string' ? data : JSON.stringify(data ?? {}, null, 2)
           mimeType = 'application/json'
           extension = 'json'
         }
@@ -142,7 +165,10 @@ export function Audit() {
               <option value="">{t('audit.allNodes', 'All nodes')}</option>
               {nodes.map((n) => (<option key={n.id} value={n.id}>{n.name}</option>))}
             </select>
-            <input type="text" placeholder={t('audit.actionPlaceholder', 'Filter by action')} value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500" />
+            <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+              <option value="">{t('audit.allActions', 'All actions')}</option>
+              {COMMON_ACTIONS.map((action) => (<option key={action} value={action}>{action}</option>))}
+            </select>
             <input type="text" placeholder={t('audit.userPlaceholder', 'Filter by user')} value={userFilter} onChange={(e) => setUserFilter(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500" />
             <div className="flex items-center gap-2">
               <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="flex-1 px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />

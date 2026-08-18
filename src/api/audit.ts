@@ -26,6 +26,6 @@ export const auditApi = {
     if (params?.node_id) query.set('node_id', params.node_id)
     if (params?.fmt) query.set('fmt', params.fmt)
     const qs = query.toString()
-    return api.get<string>(`/audit/export${qs ? `?${qs}` : ''}`)
+    return api.get<unknown>(`/audit/export${qs ? `?${qs}` : ''}`)
   },
 }

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useForm, type Resolver } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -9,6 +11,7 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconDocker } from '../components/ui/Icons'
+import { containerCreateFormSchema, type ContainerCreateFormInput } from '../lib/validators/docker-schema'
 import {
   useDockerContainers,
   useDockerImages,
@@ -34,7 +37,7 @@ import {
   useBulkDockerStop,
 } from '../hooks/useDocker'
 import { useNodes } from '../hooks/useNodes'
-import type { DockerContainer } from '../api/types'
+import type { DockerContainer, DockerPullResult, ContainerCreatedResponse } from '../api/types'
 
 type Tab = 'containers' | 'images' | 'networks' | 'volumes'
 
@@ -130,7 +133,6 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
   const [showBulkExecModal, setShowBulkExecModal] = useState(false)
   const [bulkExecCommand, setBulkExecCommand] = useState('')
   const [bulkExecResult, setBulkExecResult] = useState<string>('')
-  const [createForm, setCreateForm] = useState({ name: '', image: '', ports: '', env: '', command: '' })
 
   const allSelected = containers && selectedIds.size === containers.length
   const toggleAll = () => {
@@ -142,10 +144,15 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   }
 
+  // Bulk operations target a single container_id across many nodes. Selecting
+  // multiple different containers in one bulk request is not supported by the API.
+  const bulkContainerId = selectedIds.size === 1 ? Array.from(selectedIds)[0] : undefined
+  const bulkDisabled = !bulkContainerId
+
   const handleBulkExec = () => {
-    if (!bulkExecCommand || selectedIds.size === 0) return
+    if (!bulkExecCommand || !bulkContainerId) return
     bulkExec.mutate(
-      { container_id: Array.from(selectedIds)[0], command: bulkExecCommand, node_ids: [nodeId] },
+      { container_id: bulkContainerId, command: bulkExecCommand, node_ids: [nodeId] },
       {
         onSuccess: (data) => {
           const results = data.results.map((r) => `[${r.node_name}] ${r.status}: ${r.output || r.error}`).join('\n')
@@ -165,11 +172,16 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800">
           <span className="text-sm text-accent-700 dark:text-accent-300">{t('docker.selected', { count: selectedIds.size })}</span>
-          <Button variant="ghost" size="sm" onClick={() => bulkRestart.mutate({ container_id: Array.from(selectedIds)[0], node_ids: [nodeId] })} disabled={bulkRestart.isPending}>{t('docker.restartAll')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => bulkStart.mutate({ container_id: Array.from(selectedIds)[0], node_ids: [nodeId] })} disabled={bulkStart.isPending}>{t('docker.startAll')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ container_id: Array.from(selectedIds)[0], node_ids: [nodeId] })} disabled={bulkStop.isPending}>{t('docker.stopAll')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }}>{t('docker.bulkExec', 'Exec on selected')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkRestart.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkRestart.isPending}>{t('docker.restartAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkStart.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkStart.isPending}>{t('docker.startAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkStop.isPending}>{t('docker.stopAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }} disabled={bulkDisabled}>{t('docker.bulkExec', 'Exec on selected')}</Button>
         </div>
+      )}
+      {bulkDisabled && selectedIds.size > 0 && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 px-4 -mt-2">
+          {t('docker.bulkSingleContainer', 'Bulk operations apply to one container across multiple nodes. Select a single container to proceed.')}
+        </p>
       )}
       <div className="flex items-center gap-3 mb-4 px-4">
         <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-300">
@@ -209,7 +221,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
       </div>
 
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('docker.createContainer')} size="lg">
-        <CreateContainerForm nodeId={nodeId} form={createForm} onChange={setCreateForm} onClose={() => setShowCreateModal(false)} />
+        <CreateContainerForm nodeId={nodeId} onClose={() => setShowCreateModal(false)} />
       </Modal>
 
       <Modal isOpen={!!logsTarget} onClose={() => setLogsTarget(null)} title={`Logs: ${logsTarget?.Names?.split('/').pop() || ''}`} size="lg">
@@ -259,26 +271,118 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
   )
 }
 
-function CreateContainerForm({ nodeId, form, onChange, onClose }: { nodeId: string; form: { name: string; image: string; ports: string; env: string; command: string }; onChange: (f: { name: string; image: string; ports: string; env: string; command: string }) => void; onClose: () => void }) {
+function CreateContainerForm({ nodeId, onClose }: { nodeId: string; onClose: () => void }) {
   const { t } = useTranslation()
   const createContainer = useCreateContainer()
-  const handleCreate = () => {
-    const ports = form.ports ? Object.fromEntries(form.ports.split(',').map((p) => { const [host, container] = p.trim().split(':'); return [`${container}/tcp`, `${host}/tcp`] })) : undefined
-    const env = form.env ? form.env.split(',').map((e) => e.trim()) : undefined
-    createContainer.mutate({ nodeId, data: { image: form.image, name: form.name || undefined, command: form.command || undefined, ports, env, detach: true, restart_policy: 'unless-stopped' } }, { onSuccess: () => { onClose(); onChange({ name: '', image: '', ports: '', env: '', command: '' }) } })
+  const [result, setResult] = useState<ContainerCreatedResponse | null>(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<ContainerCreateFormInput>({
+    resolver: zodResolver(containerCreateFormSchema) as Resolver<ContainerCreateFormInput>,
+    defaultValues: {
+      image: '',
+      name: '',
+      command: '',
+      ports: '',
+      env: '',
+      volumes: '',
+      network: '',
+      labels: '',
+      restart_policy: 'unless-stopped',
+    },
+  })
+
+  const parsePorts = (value: string): Record<string, string> | undefined => {
+    const entries = value.split(',').map((p) => p.trim()).filter(Boolean)
+    if (entries.length === 0) return undefined
+    const result: Record<string, string> = {}
+    for (const entry of entries) {
+      const [host, container] = entry.split(':').map((s) => s.trim())
+      if (host && container) result[`${container}/tcp`] = `${host}/tcp`
+    }
+    return Object.keys(result).length > 0 ? result : undefined
   }
+
+  const parseVolumes = (value: string): Record<string, { bind: string; mode?: 'rw' | 'ro' }> | undefined => {
+    const entries = value.split(',').map((p) => p.trim()).filter(Boolean)
+    if (entries.length === 0) return undefined
+    const result: Record<string, { bind: string; mode?: 'rw' | 'ro' }> = {}
+    for (const entry of entries) {
+      const parts = entry.split(':').map((s) => s.trim())
+      const [host, container] = parts
+      if (!host || !container) continue
+      const mode = parts[2] === 'ro' ? 'ro' as const : 'rw' as const
+      result[container] = { bind: host, mode }
+    }
+    return Object.keys(result).length > 0 ? result : undefined
+  }
+
+  const parseLabels = (value: string): Record<string, string> | undefined => {
+    const entries = value.split(',').map((p) => p.trim()).filter(Boolean)
+    if (entries.length === 0) return undefined
+    const result: Record<string, string> = {}
+    for (const entry of entries) {
+      const eq = entry.indexOf('=')
+      if (eq === -1) continue
+      result[entry.slice(0, eq).trim()] = entry.slice(eq + 1).trim()
+    }
+    return Object.keys(result).length > 0 ? result : undefined
+  }
+
+  const onSubmit = (values: ContainerCreateFormInput) => {
+    setResult(null)
+    createContainer.mutate(
+      {
+        nodeId,
+        data: {
+          image: values.image,
+          name: values.name.trim() || undefined,
+          command: values.command.trim() || undefined,
+          ports: parsePorts(values.ports),
+          env: values.env ? values.env.split(',').map((e) => e.trim()).filter(Boolean) : undefined,
+          volumes: parseVolumes(values.volumes),
+          network: values.network.trim() || undefined,
+          labels: parseLabels(values.labels),
+          detach: true,
+          restart_policy: values.restart_policy.trim() || undefined,
+        },
+      },
+      {
+        onSuccess: (data) => {
+          setResult(data)
+          reset()
+        },
+      },
+    )
+  }
+
   return (
-    <div className="space-y-4">
-      <Input label={t('docker.image')} placeholder="nginx:latest" value={form.image} onChange={(e) => onChange({ ...form, image: e.target.value })} />
-      <Input label={t('docker.name')} placeholder="my-container" value={form.name} onChange={(e) => onChange({ ...form, name: e.target.value })} />
-      <Input label={t('docker.command')} placeholder="/bin/sh -c 'echo hello'" value={form.command} onChange={(e) => onChange({ ...form, command: e.target.value })} />
-      <Input label={`${t('docker.ports')} (${t('docker.hostPort')})`} placeholder="8080:80, 443:443" value={form.ports} onChange={(e) => onChange({ ...form, ports: e.target.value })} />
-      <Input label={t('docker.environment')} placeholder="NODE_ENV=production, PORT=3000" value={form.env} onChange={(e) => onChange({ ...form, env: e.target.value })} />
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {result && (
+        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 text-sm">
+          <p className="font-medium text-green-800 dark:text-green-300">{t('docker.containerCreated', 'Container created')}</p>
+          <p className="text-green-700 dark:text-green-400 font-mono text-xs mt-1">
+            id: {result.id.slice(0, 12)} · name: {result.name} · image: {result.image} · status: {result.status}
+          </p>
+        </div>
+      )}
+      <Input label={t('docker.image')} placeholder="nginx:latest" {...register('image')} error={errors.image?.message} />
+      <Input label={t('docker.name')} placeholder="my-container" {...register('name')} error={errors.name?.message} />
+      <Input label={t('docker.command')} placeholder="/bin/sh -c 'echo hello'" {...register('command')} error={errors.command?.message} />
+      <Input label={`${t('docker.ports')} (${t('docker.hostPort')})`} placeholder="8080:80, 443:443" {...register('ports')} />
+      <Input label={t('docker.environment')} placeholder="NODE_ENV=production, PORT=3000" {...register('env')} />
+      <Input label={t('docker.volumes', 'Volumes')} placeholder="/host/path:/container/path:rw" {...register('volumes')} />
+      <Input label={t('docker.network', 'Network')} placeholder="bridge" {...register('network')} error={errors.network?.message} />
+      <Input label={t('docker.labels', 'Labels')} placeholder="env=prod, app=web" {...register('labels')} />
+      <Input label={t('docker.restartPolicy', 'Restart policy')} placeholder="unless-stopped" {...register('restart_policy')} />
       <div className="flex justify-end gap-3 pt-2">
-        <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-        <Button onClick={handleCreate} disabled={createContainer.isPending || !form.image}>{createContainer.isPending ? t('common.loading') : t('docker.createContainer')}</Button>
+        <Button type="button" variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+        <Button type="submit" disabled={createContainer.isPending}>{createContainer.isPending ? t('common.loading') : t('docker.createContainer')}</Button>
       </div>
-    </div>
+    </form>
   )
 }
 
@@ -511,6 +615,8 @@ function NetworksTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { data: networks, isLoading } = useDockerNetworks(nodeId)
   if (isLoading) return <TableSkeleton rows={3} cols={4} />
+  // List-only: the OpenAPI spec only exposes GET /nodes/{id}/docker/networks.
+  // Create/delete endpoints for networks do not exist, so no such actions are offered.
   if (!networks?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noNetworks')} description={t('docker.noNetworksDesc')} />
   return (
     <div className="overflow-x-auto">
@@ -540,6 +646,8 @@ function VolumesTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { data: volumes, isLoading } = useDockerVolumes(nodeId)
   if (isLoading) return <TableSkeleton rows={3} cols={4} />
+  // List-only: the OpenAPI spec only exposes GET /nodes/{id}/docker/volumes.
+  // Create/delete endpoints for volumes do not exist, so no such actions are offered.
   if (!volumes?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noVolumes')} description={t('docker.noVolumesDesc')} />
   return (
     <div className="overflow-x-auto">
@@ -577,7 +685,24 @@ export function Docker() {
   const [activeTab, setActiveTab] = useState<Tab>('containers')
   const [showPullModal, setShowPullModal] = useState(false)
   const [pullImage, setPullImage] = useState('')
+  const [pullTimeout, setPullTimeout] = useState(300)
+  const [pullResult, setPullResult] = useState<DockerPullResult | null>(null)
   const pullImageMutation = usePullImage()
+
+  const handlePull = () => {
+    if (!selectedNodeId || !pullImage) return
+    setPullResult(null)
+    pullImageMutation.mutate(
+      { nodeId: selectedNodeId, data: { image: pullImage, timeout: pullTimeout } },
+      {
+        onSuccess: (data) => {
+          setPullResult(data)
+          setPullImage('')
+          setPullTimeout(300)
+        },
+      },
+    )
+  }
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'containers', label: 'Containers' },
@@ -628,12 +753,21 @@ export function Docker() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={showPullModal} onClose={() => setShowPullModal(false)} title={t('docker.pullImage')}>
+      <Modal isOpen={showPullModal} onClose={() => { setShowPullModal(false); setPullResult(null) }} title={t('docker.pullImage')}>
         <div className="space-y-4">
           <Input label={t('docker.image')} placeholder="nginx:latest" value={pullImage} onChange={(e) => setPullImage(e.target.value)} />
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('docker.pullTimeout', 'Timeout (seconds)')}</label>
+            <input type="number" min={1} max={3600} value={pullTimeout} onChange={(e) => setPullTimeout(Number(e.target.value) || 300)} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+          </div>
+          {pullResult && (
+            <div className={`p-3 rounded-lg border text-xs font-mono max-h-56 overflow-y-auto whitespace-pre-wrap ${pullResult.success ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'}`}>
+              {pullResult.output || (pullResult.success ? t('docker.pullSuccess', 'Image pulled successfully') : t('docker.pullFailed', 'Pull failed'))}
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowPullModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (selectedNodeId && pullImage) { pullImageMutation.mutate({ nodeId: selectedNodeId, data: { image: pullImage } }, { onSuccess: () => { setShowPullModal(false); setPullImage('') } }) } }} disabled={!pullImage || !selectedNodeId || pullImageMutation.isPending}>
+            <Button variant="ghost" onClick={() => { setShowPullModal(false); setPullResult(null) }}>{t('common.cancel')}</Button>
+            <Button onClick={handlePull} disabled={!pullImage || !selectedNodeId || pullImageMutation.isPending}>
               {pullImageMutation.isPending ? t('common.loading') : t('docker.pull')}
             </Button>
           </div>

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Modal } from '../components/ui/Modal'
@@ -139,9 +140,14 @@ export function Settings() {
                         <span className={`text-xs px-2 py-0.5 rounded ${key.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-surface-200 text-surface-600 dark:bg-surface-700 dark:text-surface-400'}`}>
                           {key.is_active ? t('settings.active') : t('settings.inactive')}
                         </span>
-                        <span className="text-xs text-surface-500 dark:text-surface-500">{key.scope}</span>
+                        <Badge variant={key.scope === 'read-write' ? 'warning' : 'info'}>{key.scope}</Badge>
                       </div>
-                      <p className="text-xs text-surface-500 dark:text-surface-500 mt-1">{t('settings.created')} {new Date(key.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-surface-500 dark:text-surface-500 mt-1">
+                        {t('settings.created')} {new Date(key.created_at).toLocaleDateString()}
+                        {key.last_used_at && (
+                          <> · {t('settings.lastUsed', 'Last used')} {new Date(key.last_used_at).toLocaleString()}</>
+                        )}
+                      </p>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="sm" onClick={() => { setEditKeyTarget({ id: key.id, name: key.name, scope: key.scope, is_active: key.is_active, expires_at: key.expires_at }); setEditKeyName(key.name); setEditKeyScope(key.scope); setEditKeyActive(key.is_active); setEditKeyExpiresAt(key.expires_at ? new Date(key.expires_at).toISOString().slice(0, 16) : '') }}>{t('common.edit')}</Button>

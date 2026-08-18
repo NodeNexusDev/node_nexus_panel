@@ -38,7 +38,28 @@ export const auditHandlers = [
     return HttpResponse.json({ deleted: mockAuditLogs.length })
   }),
 
-  http.get(`${API}/api/v1/audit/export`, () => {
-    return HttpResponse.json({ message: 'Export generated', format: 'json' })
+  http.get(`${API}/api/v1/audit/export`, ({ request }) => {
+    const url = new URL(request.url)
+    const fmt = url.searchParams.get('fmt') || 'csv'
+    const nodeId = url.searchParams.get('node_id')
+    const action = url.searchParams.get('action')
+    const fromDate = url.searchParams.get('from_date')
+    const toDate = url.searchParams.get('to_date')
+
+    let filtered = mockAuditLogs
+    if (nodeId) filtered = filtered.filter((l) => l.node_id === nodeId)
+    if (action) filtered = filtered.filter((l) => l.action.includes(action))
+    if (fromDate) filtered = filtered.filter((l) => l.created_at >= fromDate)
+    if (toDate) filtered = filtered.filter((l) => l.created_at <= toDate)
+
+    if (fmt === 'csv') {
+      const headers = ['id', 'action', 'node_id', 'user', 'details', 'created_at']
+      const rows = filtered.map((l) =>
+        headers.map((h) => `"${String((l as unknown as Record<string, unknown>)[h] ?? '').replace(/"/g, '""')}"`).join(','),
+      )
+      return HttpResponse.json({ csv: [headers.join(','), ...rows].join('\n') })
+    }
+
+    return HttpResponse.json({ items: filtered, total: filtered.length })
   }),
 ]
