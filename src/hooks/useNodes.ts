@@ -1,26 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { nodesApi } from '../api/nodes'
-import type { Node, PaginatedResponse } from '../api/types'
+import type { Node, NodeCreate, PaginatedResponse } from '../api/types'
 
-export function useNodes(page = 1, pageSize = 20) {
+export function useNodes(params?: { page?: number; size?: number; status?: string; tag?: string }) {
   return useQuery<PaginatedResponse<Node>>({
-    queryKey: ['nodes', page, pageSize],
-    queryFn: () => nodesApi.getAll(),
+    queryKey: ['nodes', params],
+    queryFn: () => nodesApi.getAll(params),
   })
 }
 
 export function useNode(id: string) {
-  return useQuery({
+  return useQuery<Node>({
     queryKey: ['nodes', id],
     queryFn: () => nodesApi.getById(id),
     enabled: !!id,
-  })
-}
-
-export function useNodeStats() {
-  return useQuery({
-    queryKey: ['nodes', 'stats'],
-    queryFn: () => nodesApi.getStats(),
   })
 }
 
@@ -28,8 +21,7 @@ export function useCreateNode() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { name: string; ip: string; port?: number }) =>
-      nodesApi.create(data),
+    mutationFn: (data: NodeCreate) => nodesApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
@@ -47,11 +39,11 @@ export function useDeleteNode() {
   })
 }
 
-export function useRestartNode() {
+export function useCheckNode() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => nodesApi.restart(id),
+    mutationFn: (id: string) => nodesApi.check(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },

@@ -26,9 +26,9 @@ export function Nodes() {
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const [newNode, setNewNode] = useState({ name: '', ip: '', port: '' })
+  const [newNode, setNewNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox' })
 
-  const nodes = data?.data || []
+  const nodes = data?.items || []
   const [orderedNodes, setOrderedNodes] = useState<Node[]>([])
   const displayNodes = orderedNodes.length > 0 ? orderedNodes : nodes
   const [dragMode, setDragMode] = useState(false)
@@ -37,6 +37,15 @@ export function Nodes() {
     setOrderedNodes(reordered)
   }, [])
 
+  const statusVariant = (status: Node['status']) => {
+    switch (status) {
+      case 'active': return 'success'
+      case 'unreachable': return 'warning'
+      case 'error': return 'danger'
+      default: return 'default'
+    }
+  }
+
   const columns: Column<Node>[] = [
     {
       key: 'node',
@@ -44,7 +53,7 @@ export function Nodes() {
       render: (node) => (
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            node.status === 'online'
+            node.status === 'active'
               ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400'
               : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'
           }`}>
@@ -52,7 +61,7 @@ export function Nodes() {
           </div>
           <div>
             <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.ip}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}</p>
           </div>
         </div>
       ),
@@ -62,44 +71,26 @@ export function Nodes() {
       header: t('nodes.status'),
       render: (node) => (
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${node.status === 'online' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
-          <Badge variant={node.status === 'online' ? 'success' : 'danger'}>{node.status}</Badge>
+          <div className={`w-2 h-2 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
+          <Badge variant={statusVariant(node.status)}>{node.status}</Badge>
         </div>
       ),
     },
     {
-      key: 'os',
-      header: t('nodes.os'),
-      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{node.os}</span>,
+      key: 'type',
+      header: t('nodes.type'),
+      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</span>,
     },
     {
-      key: 'cpu',
-      header: t('nodes.cpu'),
+      key: 'tags',
+      header: t('nodes.tags'),
       render: (node) => (
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full" style={{ width: node.cpu }} />
-          </div>
-          <span className="text-sm text-surface-600 dark:text-surface-300 font-mono">{node.cpu}</span>
+        <div className="flex flex-wrap gap-1">
+          {node.tags.map((tag) => (
+            <Badge key={tag} variant="default">{tag}</Badge>
+          ))}
         </div>
       ),
-    },
-    {
-      key: 'memory',
-      header: t('nodes.memory'),
-      render: (node) => (
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" style={{ width: node.memory }} />
-          </div>
-          <span className="text-sm text-surface-600 dark:text-surface-300 font-mono">{node.memory}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'lastSeen',
-      header: t('nodes.lastSeen'),
-      render: (node) => <span className="text-sm text-surface-500 dark:text-surface-500">{node.lastSeen}</span>,
     },
     {
       key: 'actions',
@@ -127,7 +118,7 @@ export function Nodes() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            node.status === 'online'
+            node.status === 'active'
               ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400'
               : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'
           }`}>
@@ -135,38 +126,16 @@ export function Nodes() {
           </div>
           <div>
             <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.ip}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}</p>
           </div>
         </div>
-        <Badge variant={node.status === 'online' ? 'success' : 'danger'}>{node.status}</Badge>
+        <Badge variant={statusVariant(node.status)}>{node.status}</Badge>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div>
-          <span className="text-surface-500 dark:text-surface-400">{t('nodes.os')}</span>
-          <p className="text-surface-700 dark:text-surface-300">{node.os}</p>
-        </div>
-        <div>
-          <span className="text-surface-500 dark:text-surface-400">{t('nodes.lastSeen')}</span>
-          <p className="text-surface-700 dark:text-surface-300">{node.lastSeen}</p>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-surface-500 dark:text-surface-400 w-10">{t('nodes.cpu')}</span>
-          <div className="flex-1 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full" style={{ width: node.cpu }} />
-          </div>
-          <span className="text-xs text-surface-600 dark:text-surface-300 font-mono w-10 text-right">{node.cpu}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-surface-500 dark:text-surface-400 w-10">{t('nodes.memory')}</span>
-          <div className="flex-1 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" style={{ width: node.memory }} />
-          </div>
-          <span className="text-xs text-surface-600 dark:text-surface-300 font-mono w-10 text-right">{node.memory}</span>
-        </div>
+      <div className="flex flex-wrap gap-1">
+        {node.tags.map((tag) => (
+          <Badge key={tag} variant="default">{tag}</Badge>
+        ))}
       </div>
 
       <div className="flex items-center gap-2 pt-1">
@@ -195,7 +164,7 @@ export function Nodes() {
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            node.status === 'online'
+            node.status === 'active'
               ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400'
               : 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400'
           }`}>
@@ -203,34 +172,24 @@ export function Nodes() {
           </div>
           <div>
             <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.ip}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}</p>
           </div>
         </div>
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${node.status === 'online' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
-          <Badge variant={node.status === 'online' ? 'success' : 'danger'}>{node.status}</Badge>
+          <div className={`w-2 h-2 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
+          <Badge variant={statusVariant(node.status)}>{node.status}</Badge>
         </div>
       </td>
-      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{node.os}</td>
+      <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</td>
       <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full" style={{ width: node.cpu }} />
-          </div>
-          <span className="text-sm text-surface-600 dark:text-surface-300 font-mono">{node.cpu}</span>
+        <div className="flex flex-wrap gap-1">
+          {node.tags.map((tag) => (
+            <Badge key={tag} variant="default">{tag}</Badge>
+          ))}
         </div>
       </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" style={{ width: node.memory }} />
-          </div>
-          <span className="text-sm text-surface-600 dark:text-surface-300 font-mono">{node.memory}</span>
-        </div>
-      </td>
-      <td className="px-6 py-4 text-sm text-surface-500 dark:text-surface-500">{node.lastSeen}</td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-1">
           <Tooltip content={t('nodes.terminal')}>
@@ -251,12 +210,12 @@ export function Nodes() {
 
   const handleAdd = () => {
     createNode.mutate(
-      { name: newNode.name, ip: newNode.ip, port: newNode.port ? Number(newNode.port) : undefined },
+      { name: newNode.name, host: newNode.host, port: Number(newNode.port), connection_type: newNode.connection_type },
       {
         onSuccess: () => {
           toast('success', t('nodes.toastAdded', { name: newNode.name }))
           setShowAddModal(false)
-          setNewNode({ name: '', ip: '', port: '' })
+          setNewNode({ name: '', host: '', port: '22', connection_type: 'ssh' })
         },
         onError: () => toast('error', t('nodes.toastAddFailed')),
       },
@@ -296,7 +255,7 @@ export function Nodes() {
       <Card hover>
         <CardContent className="p-0">
           {isLoading ? (
-            <TableSkeleton rows={5} cols={7} />
+            <TableSkeleton rows={5} cols={5} />
           ) : nodes.length === 0 ? (
             <EmptyState
               icon={<IconNodes className="w-10 h-10" />}
@@ -310,7 +269,7 @@ export function Nodes() {
                 <thead className="table-sticky">
                   <tr className="border-b border-surface-200 dark:border-surface-800">
                     <th className="px-2 py-3 w-8" />
-                    {[t('nodes.node'), t('nodes.status'), t('nodes.os'), t('nodes.cpu'), t('nodes.memory'), t('nodes.lastSeen'), t('nodes.actions')].map((h) => (
+                    {[t('nodes.node'), t('nodes.status'), t('nodes.type'), t('nodes.tags'), t('nodes.actions')].map((h) => (
                       <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
@@ -340,11 +299,23 @@ export function Nodes() {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={t('nodes.addNode')}>
         <div className="space-y-4">
           <Input label={t('nodes.node')} placeholder="prod-server-05" value={newNode.name} onChange={(e) => setNewNode({ ...newNode, name: e.target.value })} />
-          <Input label={t('nodes.ip')} placeholder="192.168.1.105" value={newNode.ip} onChange={(e) => setNewNode({ ...newNode, ip: e.target.value })} />
+          <Input label={t('nodes.host')} placeholder="192.168.1.105" value={newNode.host} onChange={(e) => setNewNode({ ...newNode, host: e.target.value })} />
           <Input label={t('nodes.port')} placeholder="22" type="number" value={newNode.port} onChange={(e) => setNewNode({ ...newNode, port: e.target.value })} />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.connectionType')}</label>
+            <select
+              value={newNode.connection_type}
+              onChange={(e) => setNewNode({ ...newNode, connection_type: e.target.value as 'ssh' | 'docker' | 'proxmox' })}
+              className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+            >
+              <option value="ssh">SSH</option>
+              <option value="docker">Docker</option>
+              <option value="proxmox">Proxmox</option>
+            </select>
+          </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowAddModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleAdd} disabled={createNode.isPending || !newNode.name || !newNode.ip}>
+            <Button onClick={handleAdd} disabled={createNode.isPending || !newNode.name || !newNode.host}>
               {createNode.isPending ? t('common.loading') : t('common.save')}
             </Button>
           </div>

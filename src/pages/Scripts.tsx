@@ -26,9 +26,9 @@ export function Scripts() {
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const [newScript, setNewScript] = useState({ name: '', description: '', content: '' })
+  const [newScript, setNewScript] = useState({ name: '', description: '' })
 
-  const scripts = data?.data || []
+  const scripts = data?.items || []
   const [orderedScripts, setOrderedScripts] = useState<Script[]>([])
   const displayScripts = orderedScripts.length > 0 ? orderedScripts : scripts
   const [dragMode, setDragMode] = useState(false)
@@ -52,13 +52,18 @@ export function Scripts() {
               <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">{script.description}</p>
             </div>
           </div>
-          <Badge variant={script.status === 'success' ? 'success' : script.status === 'manual' ? 'info' : 'default'}>{script.status}</Badge>
+          <Badge variant="info">{script.steps.length} steps</Badge>
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {script.tags.map((tag) => (
+            <Badge key={tag} variant="default">{tag}</Badge>
+          ))}
         </div>
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-surface-200 dark:border-surface-800">
           <div className="text-xs text-surface-500 dark:text-surface-500">
-            <span>{t('scripts.schedule')}: {script.schedule}</span>
+            <span>{t('scripts.steps')}: {script.steps.length}</span>
             <span className="mx-2">·</span>
-            <span>{t('scripts.lastRun')}: {script.lastRun}</span>
+            <span>{t('scripts.updated')}: {new Date(script.updated_at).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm">{t('scripts.edit')}</Button>
@@ -75,14 +80,21 @@ export function Scripts() {
   )
 
   const handleCreate = () => {
-    createScript.mutate(newScript, {
-      onSuccess: () => {
-        toast('success', t('scripts.toastCreated', { name: newScript.name }))
-        setShowCreateModal(false)
-        setNewScript({ name: '', description: '', content: '' })
+    createScript.mutate(
+      {
+        name: newScript.name,
+        description: newScript.description,
+        steps: [{ label: 'Step 1', type: 'inline', command: '#!/bin/bash\necho "Hello"', command_id: null, params: {}, on_failure: 'stop' }],
       },
-      onError: () => toast('error', t('scripts.toastCreateFailed')),
-    })
+      {
+        onSuccess: () => {
+          toast('success', t('scripts.toastCreated', { name: newScript.name }))
+          setShowCreateModal(false)
+          setNewScript({ name: '', description: '' })
+        },
+        onError: () => toast('error', t('scripts.toastCreateFailed')),
+      },
+    )
   }
 
   const handleDelete = () => {
@@ -95,7 +107,7 @@ export function Scripts() {
 
   const handleRun = (id: string, name: string) => {
     runScript.mutate(
-      { id },
+      { id, data: {} },
       {
         onSuccess: () => toast('success', t('scripts.toastStarted', { name })),
         onError: () => toast('error', t('scripts.toastRunFailed', { name })),
@@ -145,16 +157,6 @@ export function Scripts() {
         <div className="space-y-4">
           <Input label={t('scripts.title')} placeholder="backup-db.sh" value={newScript.name} onChange={(e) => setNewScript({ ...newScript, name: e.target.value })} />
           <Input label={t('scripts.description')} placeholder="Backup PostgreSQL database" value={newScript.description} onChange={(e) => setNewScript({ ...newScript, description: e.target.value })} />
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.content')}</label>
-            <textarea
-              value={newScript.content}
-              onChange={(e) => setNewScript({ ...newScript, content: e.target.value })}
-              placeholder="#!/bin/bash&#10;echo 'Hello'"
-              rows={8}
-              className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 font-mono resize-none dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
-            />
-          </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreate} disabled={createScript.isPending || !newScript.name}>

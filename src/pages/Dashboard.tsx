@@ -7,37 +7,30 @@ import { StatCardSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { MiniChart } from '../components/ui/MiniChart'
 import { IconNodes, IconCheckCircle, IconXCircle, IconZap, IconCommands, IconScripts, IconDashboard } from '../components/ui/Icons'
-import { useDashboardStats, useRecentActivity } from '../hooks/useDashboard'
+import { useDashboard } from '../hooks/useDashboard'
 import { useNodes } from '../hooks/useNodes'
-
-const statIcons = [
-  <IconNodes key="nodes" className="w-5 h-5" />,
-  <IconCheckCircle key="online" className="w-5 h-5" />,
-  <IconXCircle key="offline" className="w-5 h-5" />,
-  <IconZap key="commands" className="w-5 h-5" />,
-]
 
 export function Dashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { data: stats, isLoading: statsLoading } = useDashboardStats()
+  const { data: dashboard, isLoading: dashboardLoading } = useDashboard()
   const { data: nodesData, isLoading: nodesLoading } = useNodes()
-  const { data: activity } = useRecentActivity(14)
 
-  const statsCards = stats
+  const statsCards = dashboard
     ? [
-        { key: 'totalNodes', value: String(stats.totalNodes), icon: statIcons[0] },
-        { key: 'online', value: String(stats.online), icon: statIcons[1] },
-        { key: 'offline', value: String(stats.offline), icon: statIcons[2] },
-        { key: 'commandsToday', value: String(stats.commandsToday), icon: statIcons[3] },
+        { key: 'totalNodes', value: String(dashboard.nodes.total), icon: <IconNodes className="w-5 h-5" /> },
+        { key: 'online', value: String(dashboard.nodes.active), icon: <IconCheckCircle className="w-5 h-5" /> },
+        { key: 'offline', value: String(dashboard.nodes.unreachable), icon: <IconXCircle className="w-5 h-5" /> },
+        { key: 'commandsToday', value: String(dashboard.commands.total), icon: <IconZap className="w-5 h-5" /> },
       ]
     : []
 
-  const recentNodes = nodesData?.data?.slice(0, 4) || []
+  const recentNodes = nodesData?.items?.slice(0, 4) || []
+  const recentActivity = dashboard?.recent_activity?.slice(0, 5) || []
 
   const chartColors = ['bg-surface-400', 'bg-surface-500', 'bg-surface-400', 'bg-surface-500']
-  const activityChart = Array.isArray(activity)
-    ? activity.slice(0, 7).map((_, i) => 3 + Math.sin(i * 1.2) * 2 + ((i * 7 + 3) % 5) * 0.4)
+  const activityChart = recentActivity.length > 0
+    ? recentActivity.slice(0, 7).map((_, i) => 3 + Math.sin(i * 1.2) * 2 + ((i * 7 + 3) % 5) * 0.4)
     : [4, 6, 3, 8, 5, 7, 4]
 
   const quickActions = [
@@ -47,17 +40,24 @@ export function Dashboard() {
     { key: 'viewLogs', Icon: IconCommands, descKey: 'viewLogsDesc', path: '/commands' },
   ]
 
+  const statusVariant = (status: string) => {
+    switch (status) {
+      case 'active': return 'success'
+      case 'unreachable': return 'warning'
+      case 'error': return 'danger'
+      default: return 'default'
+    }
+  }
+
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="animate-slide-up">
         <h1 className="text-3xl font-bold gradient-text">{t('dashboard.title')}</h1>
         <p className="text-surface-500 dark:text-surface-400 mt-1">{t('dashboard.description')}</p>
       </div>
 
-      {/* Stat cards with gradients */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsLoading
+        {dashboardLoading
           ? Array.from({ length: 4 }).map((_, i) => (
               <StatCardSkeleton key={i} />
             ))
@@ -73,7 +73,6 @@ export function Dashboard() {
                       {stat.icon}
                     </div>
                   </div>
-                  {/* Mini chart sparkline */}
                   <div className="relative mt-3 pt-3 border-t border-surface-200/50 dark:border-surface-700/50">
                     <MiniChart data={activityChart.map((v, j) => v + (index * j * 0.3))} color={chartColors[index]} className="h-8" />
                   </div>
@@ -82,9 +81,7 @@ export function Dashboard() {
             ))}
       </div>
 
-      {/* Content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent nodes */}
         <Card hover className="animate-slide-up" style={{ animationDelay: '200ms' }}>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -121,13 +118,13 @@ export function Dashboard() {
                     style={{ animationDelay: `${300 + index * 50}ms` }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${node.status === 'online' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
+                      <div className={`w-3 h-3 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
                       <div>
                         <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
-                        <p className="text-xs text-surface-500 dark:text-surface-500">{node.ip}</p>
+                        <p className="text-xs text-surface-500 dark:text-surface-500">{node.host}</p>
                       </div>
                     </div>
-                    <Badge variant={node.status === 'online' ? 'success' : 'danger'}>
+                    <Badge variant={statusVariant(node.status)}>
                       {node.status}
                     </Badge>
                   </div>
@@ -137,7 +134,6 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick actions */}
         <Card hover className="animate-slide-up" style={{ animationDelay: '300ms' }}>
           <CardHeader>
             <div className="flex items-center gap-2">

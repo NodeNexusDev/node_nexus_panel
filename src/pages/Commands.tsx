@@ -8,30 +8,33 @@ import { Typewriter } from '../components/ui/Typewriter'
 import { Skeleton } from '../components/ui/Skeleton'
 import { IconCommands } from '../components/ui/Icons'
 import { useNodes } from '../hooks/useNodes'
-import { useCommandHistory, useExecuteCommand } from '../hooks/useCommands'
+import { useCommands, useExecuteCommand } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
 
 export function Commands() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { data: nodesData } = useNodes()
-  const { data: historyData, isLoading: historyLoading } = useCommandHistory()
+  const { data: commandsData, isLoading: commandsLoading } = useCommands()
   const executeCommand = useExecuteCommand()
 
-  const [command, setCommand] = useState('')
-  const [selectedNode, setSelectedNode] = useState('all')
+  const [selectedCommandId, setSelectedCommandId] = useState('')
+  const [selectedNode, setSelectedNode] = useState('')
 
-  const nodes = nodesData?.data || []
-  const history = historyData?.data || []
+  const nodes = nodesData?.items || []
+  const commands = commandsData?.items || []
+
+  const selectedCommand = commands.find((c) => c.id === selectedCommandId)
 
   const handleExecute = () => {
-    if (!command.trim()) return
+    if (!selectedCommandId || !selectedNode) return
     executeCommand.mutate(
-      { command, nodeId: selectedNode },
+      { id: selectedCommandId, data: { node_id: selectedNode } },
       {
         onSuccess: () => {
-          toast('success', t('commands.toastExecuted', { target: selectedNode === 'all' ? t('commands.allNodes') : selectedNode }))
-          setCommand('')
+          toast('success', t('commands.toastExecuted', { target: selectedNode }))
+          setSelectedCommandId('')
+          setSelectedNode('')
         },
         onError: () => toast('error', t('commands.toastFailed')),
       },
@@ -52,27 +55,38 @@ export function Commands() {
         <CardContent>
           <div className="flex gap-4">
             <select
+              value={selectedCommandId}
+              onChange={(e) => setSelectedCommandId(e.target.value)}
+              className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 min-w-[200px] dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+            >
+              <option value="">{t('commands.selectCommand')}</option>
+              {commands.map((cmd) => (
+                <option key={cmd.id} value={cmd.id}>{cmd.name}</option>
+              ))}
+            </select>
+            <select
               value={selectedNode}
               onChange={(e) => setSelectedNode(e.target.value)}
               className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 min-w-[160px] dark:bg-surface-800 dark:border-surface-700 dark:text-white"
             >
-              <option value="all">{t('commands.allNodes')}</option>
+              <option value="">{t('commands.selectNode')}</option>
               {nodes.map((node) => (
                 <option key={node.id} value={node.id}>{node.name}</option>
               ))}
             </select>
-            <input
-              type="text"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleExecute()}
-              placeholder={t('commands.enterCommand')}
-              className="flex-1 px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
-            />
-            <Button onClick={handleExecute} disabled={executeCommand.isPending || !command.trim()}>
+            <Button onClick={handleExecute} disabled={executeCommand.isPending || !selectedCommandId || !selectedNode}>
               {executeCommand.isPending ? <Spinner size="sm" /> : t('commands.execute')}
             </Button>
           </div>
+          {selectedCommand && (
+            <div className="mt-4 p-3 bg-surface-50 rounded-lg dark:bg-surface-800/50">
+              <p className="text-sm font-medium text-surface-700 dark:text-surface-300">{selectedCommand.name}</p>
+              <pre className="text-sm text-surface-600 dark:text-surface-400 font-mono mt-1">{selectedCommand.command}</pre>
+              {selectedCommand.description && (
+                <p className="text-xs text-surface-500 dark:text-surface-500 mt-1">{selectedCommand.description}</p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -81,7 +95,7 @@ export function Commands() {
           <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('commands.commandHistory')}</h2>
         </CardHeader>
         <CardContent className="p-0">
-          {historyLoading ? (
+          {commandsLoading ? (
             <div className="space-y-4 p-6">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="space-y-2 stagger-item" style={{ animationDelay: `${i * 50}ms` }}>
@@ -94,26 +108,25 @@ export function Commands() {
                 </div>
               ))}
             </div>
-          ) : history.length === 0 ? (
+          ) : commands.length === 0 ? (
             <EmptyState icon={<IconCommands className="w-10 h-10" />} title={t('commands.emptyTitle')} description={t('commands.emptyDesc')} action={<Button onClick={() => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus()}>{t('commands.execute')}</Button>} />
           ) : (
             <div className="divide-y divide-surface-200 dark:divide-surface-800">
-              {history.map((item, index) => (
+              {commands.map((item, index) => (
                 <div key={item.id} className="px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors stagger-item" style={{ animationDelay: `${300 + index * 50}ms` }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <code className="text-sm text-accent-600 dark:text-accent-400 font-mono">{item.command}</code>
-                      <span className="text-xs text-surface-500 dark:text-surface-500">{t('commands.on')} {item.node}</span>
+                      <code className="text-sm text-accent-600 dark:text-accent-400 font-mono">{item.name}</code>
+                      <span className="text-xs text-surface-500 dark:text-surface-500">{item.command}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-surface-500 dark:text-surface-500">{item.timestamp}</span>
-                      <span className={`text-xs ${item.status === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {item.status}
-                      </span>
+                      {item.tags.map((tag) => (
+                        <span key={tag} className="text-xs px-2 py-0.5 bg-surface-100 dark:bg-surface-800 rounded">{tag}</span>
+                      ))}
                     </div>
                   </div>
                   <pre className="text-sm text-surface-700 bg-surface-50 rounded p-3 overflow-x-auto font-mono dark:text-surface-300 dark:bg-surface-800/50">
-                    <Typewriter text={item.output} speed={10} />
+                    <Typewriter text={item.command} speed={10} />
                   </pre>
                 </div>
               ))}

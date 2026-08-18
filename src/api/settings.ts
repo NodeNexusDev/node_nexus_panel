@@ -1,36 +1,21 @@
 import { api } from './client'
-import type {
-  User,
-  ApiKey,
-  NotificationSettings,
-  ApiResponse,
-} from './types'
+import type { ApiKey, ApiKeyCreate, ApiKeyUpdate, ApiKeyCreated, PaginatedResponse } from './types'
 
-export const settingsApi = {
-  getProfile: () =>
-    api.get<ApiResponse<User>>('/api/settings/profile'),
+export const apiKeysApi = {
+  getAll: (params?: { page?: number; size?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.page) query.set('page', String(params.page))
+    if (params?.size) query.set('size', String(params.size))
+    const qs = query.toString()
+    return api.get<PaginatedResponse<ApiKey>>(`/api-keys/${qs ? `?${qs}` : ''}`)
+  },
 
-  updateProfile: (data: { name: string; email: string }) =>
-    api.put<ApiResponse<User>>('/api/settings/profile', data),
+  create: (data: ApiKeyCreate) =>
+    api.post<ApiKeyCreated>('/api-keys/', data),
 
-  changePassword: (data: { currentPassword: string; newPassword: string }) =>
-    api.put<void>('/api/settings/password', data),
+  remove: (id: string) =>
+    api.delete<void>(`/api-keys/${id}`),
 
-  getApiKeys: () =>
-    api.get<ApiResponse<ApiKey[]>>('/api/settings/api-keys'),
-
-  createApiKey: (data: { name: string }) =>
-    api.post<ApiResponse<ApiKey>>('/api/settings/api-keys', data),
-
-  deleteApiKey: (id: string) =>
-    api.delete<void>(`/api/settings/api-keys/${id}`),
-
-  getNotificationSettings: () =>
-    api.get<ApiResponse<NotificationSettings>>('/api/settings/notifications'),
-
-  updateNotificationSettings: (data: NotificationSettings) =>
-    api.put<ApiResponse<NotificationSettings>>('/api/settings/notifications', data),
-
-  resetAllData: () =>
-    api.delete<void>('/api/settings/reset'),
+  update: (id: string, data: ApiKeyUpdate) =>
+    api.patch<ApiKey>(`/api-keys/${id}`, data),
 }

@@ -1,0 +1,90 @@
+import type { Script } from '../../api/types'
+
+export const mockScripts: Script[] = [
+  {
+    id: '1',
+    name: 'backup-db.sh',
+    description: 'Backup PostgreSQL database and upload to S3',
+    steps: [
+      {
+        label: 'Dump database',
+        type: 'inline',
+        command: 'pg_dump -U postgres mydb | gzip > /tmp/backup.sql.gz',
+        command_id: null,
+        params: {},
+        on_failure: 'stop',
+      },
+      {
+        label: 'Upload to S3',
+        type: 'inline',
+        command: 'aws s3 cp /tmp/backup.sql.gz s3://backups/db-$(date +%Y%m%d).sql.gz',
+        command_id: null,
+        params: {},
+        on_failure: 'stop',
+      },
+    ],
+    tags: ['backup', 'database'],
+    created_at: '2026-01-10T08:00:00Z',
+    updated_at: '2026-01-15T02:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'deploy-app.sh',
+    description: 'Deploy application to production servers',
+    steps: [
+      {
+        label: 'Pull latest code',
+        type: 'inline',
+        command: 'cd /opt/app && git pull',
+        command_id: null,
+        params: {},
+        on_failure: 'stop',
+      },
+      {
+        label: 'Install dependencies',
+        type: 'inline',
+        command: 'npm install --production',
+        command_id: null,
+        params: {},
+        on_failure: 'stop',
+      },
+      {
+        label: 'Restart application',
+        type: 'inline',
+        command: 'pm2 restart all',
+        command_id: null,
+        params: {},
+        on_failure: 'continue',
+      },
+    ],
+    tags: ['deployment'],
+    created_at: '2026-01-08T12:00:00Z',
+    updated_at: '2026-01-13T14:30:00Z',
+  },
+  {
+    id: '3',
+    name: 'health-check.sh',
+    description: 'Check disk space, memory and service status',
+    steps: [
+      {
+        label: 'Check disk',
+        type: 'command',
+        command: null,
+        command_id: '1',
+        params: {},
+        on_failure: 'continue',
+      },
+      {
+        label: 'Check memory',
+        type: 'inline',
+        command: 'free -h',
+        command_id: null,
+        params: {},
+        on_failure: 'continue',
+      },
+    ],
+    tags: ['monitoring', 'health'],
+    created_at: '2026-01-05T10:00:00Z',
+    updated_at: '2026-01-15T10:00:00Z',
+  },
+]
