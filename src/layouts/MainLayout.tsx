@@ -1,10 +1,14 @@
 import { useMemo } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useIsFetching } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/auth-store'
 import { useUiStore } from '../stores/ui-store'
 import { useSse } from '../hooks/useSse'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useNode } from '../hooks/useNodes'
+import { useCommand } from '../hooks/useCommands'
+import { useScript } from '../hooks/useScripts'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
 import { Tooltip } from '../components/ui/Tooltip'
@@ -32,6 +36,33 @@ export function MainLayout() {
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
   const wsConnected = useSse().isConnected
   const isFetching = useIsFetching() > 0
+
+  const location = useLocation()
+  const nodeId = location.pathname.match(/^\/nodes\/([^/]+)$/)?.[1]
+  const commandId = location.pathname.match(/^\/commands\/([^/]+)$/)?.[1]
+  const scriptId = location.pathname.match(/^\/scripts\/([^/]+)$/)?.[1]
+  const { data: node } = useNode(nodeId ?? '')
+  const { data: command } = useCommand(commandId ?? '')
+  const { data: script } = useScript(scriptId ?? '')
+
+  const staticTitles: Record<string, string> = {
+    '/': 'dashboard.title',
+    '/nodes': 'nodes.title',
+    '/commands': 'commands.title',
+    '/scripts': 'scripts.title',
+    '/docker': 'docker.title',
+    '/audit': 'audit.title',
+    '/settings': 'settings.title',
+    '/tags': 'tags.title',
+    '/favorites': 'favorites.title',
+  }
+
+  const titleKey = staticTitles[location.pathname]
+  const documentTitle = titleKey
+    ? t(titleKey)
+    : nodeId ? node?.name : commandId ? command?.name : scriptId ? script?.name : undefined
+
+  useDocumentTitle(documentTitle)
 
   const toggleLanguage = () => {
     i18n.changeLanguage(i18n.language === 'en' ? 'ru' : 'en')
