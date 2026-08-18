@@ -1,23 +1,5 @@
 import { test, expect } from '@playwright/test'
-
-async function setupAuth(page: import('@playwright/test').Page) {
-  await page.goto('/login')
-  await page.evaluate(() => sessionStorage.setItem('authenticated', 'true'))
-}
-
-async function openSidebar(page: import('@playwright/test').Page) {
-  const sidebar = page.locator('aside')
-  // On desktop (lg+), sidebar is always visible via lg:translate-x-0
-  // On mobile, we need to click the hamburger button
-  const isHidden = await sidebar.evaluate((el) => el.classList.contains('-translate-x-full'))
-  if (isHidden) {
-    const menuButton = page.locator('header button').first()
-    if (await menuButton.isVisible()) {
-      await menuButton.click()
-      await expect(sidebar).toHaveClass(/translate-x-0/)
-    }
-  }
-}
+import { setupAuth, openSidebar } from './helpers'
 
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
@@ -29,7 +11,6 @@ test.describe('Navigation', () => {
   test('navigates to all pages via sidebar', async ({ page }) => {
     await expect(page.locator('main h1')).toContainText('Dashboard')
 
-    // On mobile, sidebar closes after each click; on desktop it stays open
     await openSidebar(page)
     await page.evaluate(() => document.querySelector('a[href="/nodes"]')?.click())
     await expect(page).toHaveURL('/nodes')

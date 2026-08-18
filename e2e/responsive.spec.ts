@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { setupAuth } from './helpers'
 
 const UI_STORAGE_MOBILE = {
   state: { theme: 'light', sidebarOpen: false, activeModal: null },
@@ -33,8 +34,7 @@ test.describe('Responsive', () => {
   })
 
   test('content adapts to mobile', async ({ page }) => {
-    await page.goto('/login')
-    await page.evaluate(() => sessionStorage.setItem('authenticated', 'true'))
+    await setupAuth(page)
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/')
     await page.waitForSelector('main h1')

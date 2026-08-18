@@ -1,26 +1,26 @@
 import { test, expect } from '@playwright/test'
 import { setupAuth } from './helpers'
 
-test.describe('Nodes', () => {
+test.describe('Scripts', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page)
     await page.goto('/')
-    await page.waitForSelector('main h1')
-    await page.click('aside >> text=Nodes')
-    await page.waitForSelector('main h1:has-text("Nodes")')
+    await page.waitForSelector('h1')
+    await page.click('text=Scripts')
+    await page.waitForSelector('h1:has-text("Scripts")')
   })
 
-  test('displays nodes page with add button', async ({ page }) => {
-    await expect(page.getByRole('button', { name: /Add Node/i })).toBeVisible()
+  test('displays scripts page with create button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Create Script/i })).toBeVisible()
   })
 
-  test('opens add node modal', async ({ page }) => {
-    await page.click('text=Add Node')
+  test('opens create script modal', async ({ page }) => {
+    await page.click('text=Create Script')
     await expect(page.locator('[role="dialog"]')).toBeVisible()
   })
 
   test('closes modal on cancel', async ({ page }) => {
-    await page.click('text=Add Node')
+    await page.click('text=Create Script')
     await expect(page.locator('[role="dialog"]')).toBeVisible()
     await page.click('[role="dialog"] >> text=Cancel')
     await expect(page.locator('[role="dialog"]')).not.toBeVisible()
