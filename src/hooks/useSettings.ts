@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiKeysApi } from '../api/settings'
-import type { ApiKey, ApiKeyCreate, PaginatedResponse } from '../api/types'
+import { configApi } from '../api/config'
+import type { ApiKey, ApiKeyCreate, ApiKeyUpdate, PaginatedResponse } from '../api/types'
 
 export function useApiKeys(params?: { page?: number; size?: number }) {
   return useQuery<PaginatedResponse<ApiKey>>({
@@ -20,6 +21,17 @@ export function useCreateApiKey() {
   })
 }
 
+export function useUpdateApiKey() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ApiKeyUpdate }) => apiKeysApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] })
+    },
+  })
+}
+
 export function useDeleteApiKey() {
   const queryClient = useQueryClient()
 
@@ -27,6 +39,25 @@ export function useDeleteApiKey() {
     mutationFn: (id: string) => apiKeysApi.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['api-keys'] })
+    },
+  })
+}
+
+export function useConfigExport() {
+  return useQuery<unknown>({
+    queryKey: ['config', 'export'],
+    queryFn: () => configApi.export(),
+    enabled: false,
+  })
+}
+
+export function useConfigImport() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: unknown) => configApi.import(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['config'] })
     },
   })
 }

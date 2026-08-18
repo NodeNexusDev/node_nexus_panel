@@ -51,7 +51,7 @@ export const nodesApi = {
   },
 
   execute: (id: string, data: { command: string; timeout?: number }) =>
-    api.post<unknown>(`/nodes/${id}/execute`, data),
+    api.post<{ exit_code: number; stdout: string; stderr: string }>(`/nodes/${id}/execute`, data),
 
   getTags: () =>
     api.get<string[]>('/nodes/tags'),

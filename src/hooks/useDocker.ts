@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dockerApi } from '../api/docker'
 import type {
   DockerContainer,
+  DockerCreateContainerRequest,
   DockerImage,
   DockerNetwork,
   DockerVolume,
@@ -127,6 +128,94 @@ export function useDeleteImage() {
   return useMutation({
     mutationFn: ({ nodeId, imageId }: { nodeId: string; imageId: string }) =>
       dockerApi.deleteImage(nodeId, imageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useCreateContainer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, data }: { nodeId: string; data: DockerCreateContainerRequest }) =>
+      dockerApi.createContainer(nodeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useDockerContainerStats(nodeId: string, containerId: string) {
+  return useQuery<Record<string, unknown>>({
+    queryKey: ['docker', nodeId, 'containers', containerId, 'stats'],
+    queryFn: () => dockerApi.getContainerStats(nodeId, containerId),
+    enabled: !!nodeId && !!containerId,
+    refetchInterval: 5000,
+  })
+}
+
+export function useBuildImage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, data }: { nodeId: string; data: { dockerfile: string; tag: string; build_args?: Record<string, string> } }) =>
+      dockerApi.buildImage(nodeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useTagImage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, imageId, data }: { nodeId: string; imageId: string; data: { repository: string; tag: string } }) =>
+      dockerApi.tagImage(nodeId, imageId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useBulkDockerExec() {
+  return useMutation({
+    mutationFn: (data: { command: string[]; container_ids: string[] }) =>
+      dockerApi.bulkExec(data),
+  })
+}
+
+export function useBulkDockerRestart() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { container_ids: string[] }) =>
+      dockerApi.bulkRestart(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useBulkDockerStart() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { container_ids: string[] }) =>
+      dockerApi.bulkStart(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useBulkDockerStop() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { container_ids: string[] }) =>
+      dockerApi.bulkStop(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
     },

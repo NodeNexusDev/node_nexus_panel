@@ -333,6 +333,7 @@ export interface DockerCreateContainerRequest {
   env?: Record<string, string>
   volumes?: string[]
   command?: string[]
+  restart_policy?: string
 }
 
 export interface DockerExecRequest {
@@ -371,6 +372,7 @@ export interface DockerBuildImageRequest {
 }
 
 export interface DockerTagImageRequest {
+  repository: string
   tag: string
 }
 
@@ -414,6 +416,7 @@ export interface Favorite {
   id: string
   target_type: 'node' | 'command' | 'script'
   target_id: string
+  label?: string
   created_at: string
 }
 

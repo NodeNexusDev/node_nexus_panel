@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useHotkey } from '../../hooks/useHotkey'
+import { useSearch } from '../../hooks/useSearch'
 import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings } from './Icons'
+import { Spinner } from './Spinner'
 
 interface CommandItem {
   id: string
@@ -38,6 +40,8 @@ export function CommandPalette() {
       (c) => c.label.toLowerCase().includes(lower) || c.description.toLowerCase().includes(lower),
     )
   }, [commands, query])
+
+  const { data: searchResults, isLoading: searchLoading } = useSearch(query)
 
   useHotkey('k', () => setIsOpen(true), { ctrl: true })
 
@@ -115,31 +119,62 @@ export function CommandPalette() {
         </div>
 
         <div ref={listRef} className="max-h-64 overflow-y-auto p-2">
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && !searchLoading && !(searchResults && searchResults.length > 0) ? (
             <div className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">
               {t('commandPalette.noResults')}
             </div>
           ) : (
-            filtered.map((cmd, i) => (
-              <button
-                key={cmd.id}
-                onClick={() => select(cmd.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer ${
-                  i === selectedIndex
-                    ? 'bg-surface-100 dark:bg-surface-800'
-                    : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'
-                }`}
-              >
-                <span className="text-surface-500 dark:text-surface-400">{cmd.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{cmd.label}</p>
-                  <p className="text-xs text-surface-500 dark:text-surface-400 truncate">{cmd.description}</p>
+            <>
+              {filtered.map((cmd, i) => (
+                <button
+                  key={cmd.id}
+                  onClick={() => select(cmd.path)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer ${
+                    i === selectedIndex
+                      ? 'bg-surface-100 dark:bg-surface-800'
+                      : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'
+                  }`}
+                >
+                  <span className="text-surface-500 dark:text-surface-400">{cmd.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{cmd.label}</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 truncate">{cmd.description}</p>
+                  </div>
+                  <svg className="w-4 h-4 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ))}
+              {query.length >= 2 && (
+                <div className="border-t border-surface-200 dark:border-surface-800 mt-2 pt-2">
+                  <p className="px-3 py-1 text-xs font-medium text-surface-500 uppercase">Search Results</p>
+                  {searchLoading ? (
+                    <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
+                  ) : searchResults && searchResults.length > 0 ? (
+                    searchResults.slice(0, 5).map((result, _i) => (
+                      <button
+                        key={`${result.type}-${result.id}`}
+                        onClick={() => {
+                          if (result.type === 'node') select(`/nodes/${result.id}`)
+                          else if (result.type === 'script') select('/scripts')
+                          else if (result.type === 'command') select('/commands')
+                          else select('/')
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50"
+                      >
+                        <span className="text-surface-400 text-xs uppercase font-mono w-12">{result.type}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{result.name || result.id}</p>
+                          {result.description && <p className="text-xs text-surface-500 dark:text-surface-400 truncate">{result.description}</p>}
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-4 text-sm text-surface-500 text-center">No results found</p>
+                  )}
                 </div>
-                <svg className="w-4 h-4 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            ))
+              )}
+            </>
           )}
         </div>
       </div>
