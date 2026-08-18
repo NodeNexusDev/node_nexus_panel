@@ -130,7 +130,11 @@
     "bulkExecuteMsg": "Execute command on selected nodes",
     "bulkDelete": "Bulk Delete",
     "bulkDeleteMsg": "Delete selected nodes? This cannot be undone.",
-    "allTags": "All tags"
+    "allTags": "All tags",
+    "selected": "{{count}} selected",
+    "clearSelection": "Clear",
+    "manageTags": "Manage Tags",
+    "cores": "cores"
   },
   "commands": {
     "title": "Commands",
@@ -175,7 +179,11 @@
     "noPredefined": "No predefined commands",
     "noHistory": "No command history yet",
     "output": "Output",
-    "node": "Node"
+    "node": "Node",
+    "overview": "Overview",
+    "created": "Created",
+    "updated": "Updated",
+    "notFound": "Command not found"
   },
   "scripts": {
     "title": "Scripts",
@@ -222,7 +230,13 @@
     "toastScheduleFailed": "Schedule failed",
     "reorder": "Reorder scripts",
     "exitReorder": "Exit reorder",
-    "details": "Details"
+    "details": "Details",
+    "overview": "Overview",
+    "created": "Created",
+    "notFound": "Script not found",
+    "noSteps": "No steps",
+    "noSchedule": "No schedule set",
+    "timezone": "Timezone"
   },
   "docker": {
     "title": "Docker",

@@ -12,6 +12,7 @@ import { useDashboard, useDashboardMetrics } from '../hooks/useDashboard'
 import { useNodes } from '../hooks/useNodes'
 import { useFavorites } from '../hooks/useFavorites'
 import { useSse } from '../hooks/useSse'
+import { nodeStatusVariant, activityVariant } from '../lib/variants'
 
 export function Dashboard() {
   const { t } = useTranslation()
@@ -60,22 +61,6 @@ export function Dashboard() {
     { key: 'runScript', Icon: IconScripts, descKey: 'runScriptDesc', path: '/scripts' },
     { key: 'viewLogs', Icon: IconAudit, descKey: 'viewLogsDesc', path: '/audit' },
   ]
-
-  const statusVariant = (status: string) => {
-    switch (status) {
-      case 'active': return 'success'
-      case 'unreachable': return 'warning'
-      case 'error': return 'danger'
-      default: return 'default'
-    }
-  }
-
-  const activityVariant = (action: string) => {
-    if (action.includes('create') || action.includes('add') || action.includes('online')) return 'success'
-    if (action.includes('delete') || action.includes('remove') || action.includes('offline')) return 'danger'
-    if (action.includes('update') || action.includes('edit')) return 'warning'
-    return 'default'
-  }
 
   const favIcon = (type: string) => {
     switch (type) {
@@ -143,7 +128,7 @@ export function Dashboard() {
                       <div className={`w-3 h-3 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
                       <div><p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p><p className="text-xs text-surface-500 dark:text-surface-500">{node.host}</p></div>
                     </div>
-                    <Badge variant={statusVariant(node.status)}>{node.status}</Badge>
+                    <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
                   </div>
                 ))}
               </div>

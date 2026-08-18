@@ -12,6 +12,7 @@ import { Input } from '../components/ui/Input'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconDocker } from '../components/ui/Icons'
 import { containerCreateFormSchema, type ContainerCreateFormInput } from '../lib/validators/docker-schema'
+import { formatBytes } from '../lib/format'
 import {
   useDockerContainers,
   useDockerImages,
@@ -584,18 +585,11 @@ function ImageInspectContent({ nodeId, imageId }: { nodeId: string; imageId: str
   const { data: inspect, isLoading } = useDockerImageInspect(nodeId, imageId)
   if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
   if (!inspect) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noData')}</p>
-  const formatSize = (bytes?: number) => {
-    if (!bytes) return '—'
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-  }
   const rows: [string, string][] = [
     [t('docker.id'), inspect.id?.slice(0, 12) || '—'],
     [t('docker.architecture', 'Architecture'), inspect.architecture || '—'],
     [t('docker.os', 'OS'), inspect.os || '—'],
-    [t('docker.size'), formatSize(inspect.size)],
+    [t('docker.size'), formatBytes(inspect.size)],
     [t('docker.created'), inspect.created ? new Date(inspect.created).toLocaleString() : '—'],
     [t('docker.tags', 'Tags'), inspect.repo_tags?.join(', ') || '—'],
   ]

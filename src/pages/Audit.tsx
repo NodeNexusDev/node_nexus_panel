@@ -9,13 +9,7 @@ import { IconAudit } from '../components/ui/Icons'
 import { useAuditLogs, useClearAudit, useExportAudit } from '../hooks/useAudit'
 import { useNodes } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
-
-function actionVariant(action: string) {
-  if (action.includes('create') || action.includes('add')) return 'success'
-  if (action.includes('delete') || action.includes('remove')) return 'danger'
-  if (action.includes('update') || action.includes('edit')) return 'warning'
-  return 'default'
-}
+import { activityVariant } from '../lib/variants'
 
 const COMMON_ACTIONS = [
   'node.create',
@@ -208,7 +202,7 @@ export function Audit() {
                   {logs.map((log, i) => (
                     <tr key={log.id} className="table-row-hover stagger-item" style={{ animationDelay: `${i * 30}ms` }}>
                       <td className="px-6 py-4">
-                        <Badge variant={actionVariant(log.action)}>{log.action}</Badge>
+                        <Badge variant={activityVariant(log.action)}>{log.action}</Badge>
                       </td>
                       <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">
                         <span className="font-mono text-xs">{log.node_id || '—'}</span>

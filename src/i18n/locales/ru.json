@@ -130,7 +130,11 @@
     "bulkExecuteMsg": "Выполнить команду на выбранных нодах",
     "bulkDelete": "Массовое удаление",
     "bulkDeleteMsg": "Удалить выбранные ноды? Это нельзя отменить.",
-    "allTags": "Все теги"
+    "allTags": "Все теги",
+    "selected": "Выбрано: {{count}}",
+    "clearSelection": "Сбросить",
+    "manageTags": "Управление тегами",
+    "cores": "ядер"
   },
   "commands": {
     "title": "Команды",
@@ -175,7 +179,11 @@
     "noPredefined": "Нет предопределённых команд",
     "noHistory": "История команд пока пуста",
     "output": "Вывод",
-    "node": "Нода"
+    "node": "Нода",
+    "overview": "Обзор",
+    "created": "Создана",
+    "updated": "Обновлена",
+    "notFound": "Команда не найдена"
   },
   "scripts": {
     "title": "Скрипты",
@@ -222,7 +230,13 @@
     "toastScheduleFailed": "Не удалось установить расписание",
     "reorder": "Переставить скрипты",
     "exitReorder": "Выйти из режима перестановки",
-    "details": "Подробнее"
+    "details": "Подробнее",
+    "overview": "Обзор",
+    "created": "Создан",
+    "notFound": "Скрипт не найден",
+    "noSteps": "Шагов нет",
+    "noSchedule": "Расписание не задано",
+    "timezone": "Часовой пояс"
   },
   "docker": {
     "title": "Docker",
