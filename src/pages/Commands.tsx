@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useForm, useFieldArray, useWatch, FormProvider, Controller, useFormContext, type Resolver } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -15,7 +16,6 @@ import { Skeleton } from '../components/ui/Skeleton'
 import { Pagination } from '../components/ui/Pagination'
 import { IconCommands, IconSearch } from '../components/ui/Icons'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
-import { NotesPanel } from '../components/ui/NotesPanel'
 import { useNodes } from '../hooks/useNodes'
 import {
   useCommands,
@@ -25,23 +25,22 @@ import {
   useUpdateCommand,
   useCloneCommand,
   useDeleteCommand,
-  useCommandStats,
 } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
-import type { Command, CommandCreate, CommandUpdate, CommandParameter } from '../api/types'
+import type { Command, CommandCreate, CommandUpdate } from '../api/types'
+import { ParameterEditor } from '../components/commands/CommandFormEditor'
+import { normalizeParameters, getDefaultParams } from '../components/commands/command-form-utils'
 import {
   commandCreateSchema,
   commandUpdateSchema,
   type CommandCreateFormValues,
   type CommandUpdateFormValues,
-  type CommandParameterFormValues,
 } from '../lib/validators/command-schema'
-
-type ParameterFormShape = { parameters?: CommandParameterFormValues[] }
 
 export function Commands() {
   const { t } = useTranslation()
   const { toast } = useToast()
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -70,8 +69,6 @@ export function Commands() {
   const [commandParams, setCommandParams] = useState<Record<string, unknown>>({})
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Command | null>(null)
-  const [statsTarget, setStatsTarget] = useState<Command | null>(null)
-  const [detailsTarget, setDetailsTarget] = useState<Command | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const createForm = useForm<CommandCreateFormValues>({
@@ -380,32 +377,30 @@ export function Commands() {
           ) : (
             <div className="divide-y divide-surface-200 dark:divide-surface-800">
               {commands.map((item) => (
-                <div key={item.id} className="px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors stagger-item">
+                <div
+                  key={item.id}
+                  onClick={() => navigate(`/commands/${item.id}`)}
+                  className="px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors stagger-item cursor-pointer"
+                >
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <code className="text-sm text-accent-600 dark:text-accent-400 font-mono">{item.name}</code>
-                      <span className="text-xs text-surface-500 dark:text-surface-500">{item.command}</span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <code className="text-sm text-accent-600 dark:text-accent-400 font-mono truncate">{item.name}</code>
+                      <span className="text-xs text-surface-500 dark:text-surface-500 truncate">{item.command}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       {item.tags.map((tag) => (
                         <Badge key={tag} variant="default">
                           {tag}
                         </Badge>
                       ))}
                       <FavoriteButton targetType="command" targetId={item.id} size="sm" />
-                      <Button variant="ghost" size="sm" onClick={() => setDetailsTarget(item)}>
-                        {t('common.view', 'View')}
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setStatsTarget(item)}>
-                        {t('commands.stats', 'Stats')}
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleClone(item)} disabled={cloneCommand.isPending}>
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleClone(item) }} disabled={cloneCommand.isPending}>
                         {t('commands.clone', 'Clone')}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item) }}>
                         {t('common.edit')}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: item.id, name: item.name })} className="text-red-500">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: item.id, name: item.name }) }} className="text-red-500">
                         {t('common.delete')}
                       </Button>
                     </div>
@@ -519,14 +514,6 @@ export function Commands() {
         </FormProvider>
       </Modal>
 
-      <Modal isOpen={!!detailsTarget} onClose={() => setDetailsTarget(null)} title={t('commands.commandDetails', 'Command Details')} size="lg">
-        {detailsTarget && <CommandDetailsContent command={detailsTarget} />}
-      </Modal>
-
-      <Modal isOpen={!!statsTarget} onClose={() => setStatsTarget(null)} title={t('commands.commandStats', 'Command Stats')}>
-        {statsTarget && <CommandStatsContent commandId={statsTarget.id} commandName={statsTarget.name} />}
-      </Modal>
-
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -538,316 +525,4 @@ export function Commands() {
       />
     </div>
   )
-}
-
-function ParameterEditor() {
-  const { t } = useTranslation()
-  const { control } = useFormContext<ParameterFormShape>()
-  const { fields, append, remove } = useFieldArray({ control, name: 'parameters' })
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('commands.parameters', 'Parameters')}</p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => append({ name: '', type: 'string', required: true, default: '', description: '' })}
-        >
-          {t('commands.addParameter', 'Add parameter')}
-        </Button>
-      </div>
-      {fields.length === 0 && <p className="text-xs text-surface-400">{t('commands.noParameters', 'No parameters')}</p>}
-      {fields.map((field, index) => (
-        <ParameterRow key={field.id} index={index} onRemove={() => remove(index)} />
-      ))}
-    </div>
-  )
-}
-
-function ParameterRow({ index, onRemove }: { index: number; onRemove: () => void }) {
-  const { t } = useTranslation()
-  const { control } = useFormContext<ParameterFormShape>()
-  const type = useWatch({ control, name: `parameters.${index}.type` })
-
-  return (
-    <div className="p-3 border border-surface-200 dark:border-surface-700 rounded-lg space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <Controller
-          name={`parameters.${index}.name`}
-          control={control}
-          render={({ field }) => <Input label={t('commands.paramName', 'Name')} placeholder="path" {...field} value={String(field.value ?? '')} />}
-        />
-        <Controller
-          name={`parameters.${index}.type`}
-          control={control}
-          render={({ field }) => (
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('commands.paramType', 'Type')}</label>
-              <select
-                {...field}
-                className="w-full px-4 py-2.5 bg-white border border-surface-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-              >
-                <option value="string">string</option>
-                <option value="integer">integer</option>
-                <option value="boolean">boolean</option>
-              </select>
-            </div>
-          )}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Controller
-          name={`parameters.${index}.default`}
-          control={control}
-          render={({ field }) => {
-            if (type === 'boolean') {
-              return (
-                <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400">
-                  <input
-                    type="checkbox"
-                    checked={!!field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
-                    className="rounded border-surface-300 dark:border-surface-600"
-                  />
-                  {t('commands.paramDefault', 'Default value')}
-                </label>
-              )
-            }
-            return (
-              <Input
-                label={t('commands.paramDefault', 'Default value')}
-                type={type === 'integer' ? 'number' : 'text'}
-                {...field}
-                value={field.value != null ? String(field.value) : ''}
-                onChange={(e) => field.onChange(e.target.value)}
-              />
-            )
-          }}
-        />
-        <Controller
-          name={`parameters.${index}.required`}
-          control={control}
-          render={({ field }) => (
-            <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400 self-end">
-              <input
-                type="checkbox"
-                checked={!!field.value}
-                onChange={(e) => field.onChange(e.target.checked)}
-                className="rounded border-surface-300 dark:border-surface-600"
-              />
-              {t('commands.paramRequired', 'Required')}
-            </label>
-          )}
-        />
-      </div>
-      <Controller
-        name={`parameters.${index}.description`}
-        control={control}
-        render={({ field }) => (
-          <Input label={t('commands.paramDescription', 'Description')} placeholder="Parameter description" {...field} value={String(field.value ?? '')} />
-        )}
-      />
-      <div className="flex justify-end">
-        <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
-          {t('common.remove', 'Remove')}
-        </Button>
-      </div>
-    </div>
-  )
-}
-
-function CommandDetailsContent({ command }: { command: Command }) {
-  const { t } = useTranslation()
-  const { data: stats, isLoading: statsLoading } = useCommandStats(command.id)
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-xs text-surface-500">{t('commands.name', 'Name')}</p>
-        <p className="text-sm font-medium text-surface-900 dark:text-white">{command.name}</p>
-      </div>
-      <div>
-        <p className="text-xs text-surface-500">{t('commands.command', 'Command')}</p>
-        <pre className="text-sm text-surface-700 bg-surface-50 rounded p-3 overflow-x-auto font-mono dark:text-surface-300 dark:bg-surface-800/50">
-          {command.command}
-        </pre>
-      </div>
-      {command.description && (
-        <div>
-          <p className="text-xs text-surface-500">{t('commands.descriptionField', 'Description')}</p>
-          <p className="text-sm text-surface-700 dark:text-surface-300">{command.description}</p>
-        </div>
-      )}
-      <div>
-        <p className="text-xs text-surface-500">{t('commands.tagsLabel', 'Tags')}</p>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {command.tags.length > 0 ? (
-            command.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)
-          ) : (
-            <span className="text-xs text-surface-400">{t('commands.noTags', 'No tags')}</span>
-          )}
-        </div>
-      </div>
-      <div>
-        <p className="text-xs text-surface-500">{t('commands.parameters', 'Parameters')}</p>
-        {command.parameters && command.parameters.length > 0 ? (
-          <ul className="space-y-1 mt-1">
-            {command.parameters.map((p) => (
-              <li key={p.name} className="text-sm text-surface-700 dark:text-surface-300">
-                <code className="font-mono">{p.name}</code>{' '}
-                <span className="text-xs text-surface-500">
-                  ({p.type}
-                  {p.required && ', required'})
-                </span>
-                {p.description && <span className="text-xs text-surface-400 ml-2">{p.description}</span>}
-                {p.default !== undefined && p.default !== null && (
-                  <span className="text-xs text-surface-400 ml-2">
-                    {t('commands.paramDefault', 'default')}: {String(p.default)}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <span className="text-xs text-surface-400">{t('commands.noParameters', 'No parameters')}</span>
-        )}
-      </div>
-      <div>
-        <p className="text-xs text-surface-500">{t('commands.statsSummary', 'Stats Summary')}</p>
-        {statsLoading ? (
-          <Spinner size="sm" />
-        ) : stats ? (
-          <div className="grid grid-cols-2 gap-3 mt-1">
-            <div className="text-center p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-              <p className="text-xl font-bold text-surface-900 dark:text-white">{stats.total}</p>
-              <p className="text-xs text-surface-500">{t('commands.totalExecutions', 'Total Executions')}</p>
-            </div>
-            <div className="text-center p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-              <p className="text-xl font-bold text-green-600">
-                {stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'}
-              </p>
-              <p className="text-xs text-surface-500">{t('commands.successRate', 'Success Rate')}</p>
-            </div>
-            <div className="text-center p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-              <p className="text-xl font-bold text-surface-900 dark:text-white">
-                {stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'}
-              </p>
-              <p className="text-xs text-surface-500">{t('commands.avgDuration', 'Avg Duration')}</p>
-            </div>
-            <div className="text-center p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-              <p className="text-xl font-bold text-red-500">{stats.failed}</p>
-              <p className="text-xs text-surface-500">{t('commands.failed', 'Failed')}</p>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-surface-500 text-center py-4">{t('commands.noStats', 'No stats available')}</p>
-        )}
-      </div>
-      {stats?.last_executed_at && (
-        <p className="text-xs text-surface-500">
-          {t('nodes.lastExecuted', 'Last executed')}: {new Date(stats.last_executed_at).toLocaleString()}
-        </p>
-      )}
-      <div className="border-t border-surface-200 dark:border-surface-800 pt-4">
-        <NotesPanel targetType="command" targetId={command.id} />
-      </div>
-    </div>
-  )
-}
-
-function CommandStatsContent({ commandId, commandName }: { commandId: string; commandName: string }) {
-  const { t } = useTranslation()
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const { data: stats, isLoading } = useCommandStats(commandId, {
-    date_from: dateFrom || undefined,
-    date_to: dateTo || undefined,
-  })
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-surface-500">{commandName}</p>
-      <div className="flex items-center gap-3">
-        <input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-        />
-        <span className="text-surface-400">—</span>
-        <input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-        />
-      </div>
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 shimmer rounded-lg" />
-          ))}
-        </div>
-      ) : stats ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-            <p className="text-2xl font-bold text-surface-900 dark:text-white">{stats.total}</p>
-            <p className="text-xs text-surface-500">{t('commands.totalExecutions', 'Total Executions')}</p>
-          </div>
-          <div className="text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-            <p className="text-2xl font-bold text-green-600">{stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'}</p>
-            <p className="text-xs text-surface-500">{t('commands.successRate', 'Success Rate')}</p>
-          </div>
-          <div className="text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-            <p className="text-2xl font-bold text-surface-900 dark:text-white">
-              {stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'}
-            </p>
-            <p className="text-xs text-surface-500">{t('commands.avgDuration', 'Avg Duration')}</p>
-          </div>
-          <div className="text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-            <p className="text-2xl font-bold text-red-500">{stats.failed}</p>
-            <p className="text-xs text-surface-500">{t('commands.failed', 'Failed')}</p>
-          </div>
-        </div>
-      ) : (
-        <p className="text-sm text-surface-500 text-center py-4">{t('commands.noStats', 'No stats available')}</p>
-      )}
-    </div>
-  )
-}
-
-function getDefaultParams(parameters: CommandParameter[] | null | undefined): Record<string, unknown> {
-  if (!parameters) return {}
-  return parameters.reduce((acc, param) => {
-    if (param.default !== undefined && param.default !== null) {
-      acc[param.name] = param.default
-    } else if (param.type === 'boolean') {
-      acc[param.name] = false
-    } else {
-      acc[param.name] = ''
-    }
-    return acc
-  }, {} as Record<string, unknown>)
-}
-
-function normalizeParameters(params?: CommandParameterFormValues[]): CommandParameter[] | undefined {
-  if (!params || params.length === 0) return undefined
-  return params.map((p) => ({
-    name: p.name,
-    type: p.type ?? 'string',
-    required: !!p.required,
-    description: p.description || null,
-    default: convertDefault(p.default, p.type ?? 'string'),
-  }))
-}
-
-function convertDefault(value: unknown, type: 'string' | 'integer' | 'boolean'): unknown {
-  if (value === '' || value === undefined || value === null) return undefined
-  if (type === 'integer') {
-    const num = Number(value)
-    return Number.isNaN(num) ? undefined : num
-  }
-  if (type === 'boolean') return !!value
-  return value
 }
