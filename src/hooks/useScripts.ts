@@ -6,10 +6,12 @@ import type {
   ScriptUpdate,
   ScriptExecuteRequest,
   ScriptExecutionResponse,
+  ExecutionStatsResponse,
+  ScheduledJob,
   PaginatedResponse,
 } from '../api/types'
 
-export function useScripts(params?: { page?: number; size?: number; tag?: string }) {
+export function useScripts(params?: { page?: number; size?: number; tag?: string; search?: string }) {
   return useQuery<PaginatedResponse<Script>>({
     queryKey: ['scripts', params],
     queryFn: () => scriptsApi.getAll(params),
@@ -129,5 +131,39 @@ export function useSetScriptSchedule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scripts'] })
     },
+  })
+}
+
+export function useRemoveScriptSchedule() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => scriptsApi.removeSchedule(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scripts'] })
+    },
+  })
+}
+
+export function useScriptTags() {
+  return useQuery<string[]>({
+    queryKey: ['scripts', 'tags'],
+    queryFn: () => scriptsApi.getTags(),
+  })
+}
+
+export function useScriptStats(id: string, params?: { date_from?: string; date_to?: string }) {
+  return useQuery<ExecutionStatsResponse>({
+    queryKey: ['scripts', id, 'stats', params],
+    queryFn: () => scriptsApi.getStats(id, params),
+    enabled: !!id,
+  })
+}
+
+export function useScriptSchedule(id: string) {
+  return useQuery<ScheduledJob | null>({
+    queryKey: ['scripts', id, 'schedule'],
+    queryFn: () => scriptsApi.getSchedule(id),
+    enabled: !!id,
   })
 }

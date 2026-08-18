@@ -77,6 +77,15 @@ export const commandHandlers = [
   http.get(`${API_URL}/api/v1/commands/:id/stats`, ({ params }) => {
     const cmd = mockCommands.find((c) => c.id === params.id)
     if (!cmd) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json({ total_executions: 15, successful: 13, failed: 2 })
+    return HttpResponse.json({
+      total: 15,
+      successful: 13,
+      failed: 2,
+      success_rate: 86.67,
+      avg_duration_ms: 1200,
+      min_duration_ms: 200,
+      max_duration_ms: 4500,
+      last_executed_at: '2026-01-15T10:00:00Z',
+    })
   }),
 ]

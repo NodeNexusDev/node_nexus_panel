@@ -8,7 +8,6 @@ import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
-import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconDocker } from '../components/ui/Icons'
 import {
@@ -18,6 +17,8 @@ import {
   useDockerVolumes,
   useDockerContainerLogs,
   useDockerContainerStats,
+  useDockerContainerInspect,
+  useDockerImageInspect,
   useStartContainer,
   useStopContainer,
   useRestartContainer,
@@ -53,6 +54,7 @@ function ContainerRow({
   onLogs,
   onStats,
   onExec,
+  onInspect,
   loading,
   selected,
   onSelect,
@@ -66,6 +68,7 @@ function ContainerRow({
   onLogs: () => void
   onStats: () => void
   onExec: () => void
+  onInspect: () => void
   loading: boolean
   selected: boolean
   onSelect: () => void
@@ -96,6 +99,7 @@ function ContainerRow({
           {isRunning && <Button variant="ghost" size="sm" onClick={onExec}>{t('nodes.execCommand')}</Button>}
           <Button variant="ghost" size="sm" onClick={onLogs}>{t('nodes.logs')}</Button>
           <Button variant="ghost" size="sm" onClick={onStats}>{t('nodes.stats')}</Button>
+          <Button variant="ghost" size="sm" onClick={onInspect}>{t('docker.inspect', 'Inspect')}</Button>
           <Button variant="ghost" size="sm" onClick={onDelete} disabled={loading} className="text-red-500 hover:text-red-600">{t('common.delete')}</Button>
         </div>
       </td>
@@ -106,7 +110,8 @@ function ContainerRow({
 function ContainersTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const { data: containers, isLoading } = useDockerContainers(nodeId)
+  const [showAll, setShowAll] = useState(false)
+  const { data: containers, isLoading } = useDockerContainers(nodeId, showAll)
   const startContainer = useStartContainer()
   const stopContainer = useStopContainer()
   const restartContainer = useRestartContainer()
@@ -120,6 +125,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
   const [logsTarget, setLogsTarget] = useState<DockerContainer | null>(null)
   const [statsTarget, setStatsTarget] = useState<DockerContainer | null>(null)
   const [execTarget, setExecTarget] = useState<DockerContainer | null>(null)
+  const [inspectTarget, setInspectTarget] = useState<DockerContainer | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createForm, setCreateForm] = useState({ name: '', image: '', ports: '', env: '', command: '' })
 
@@ -160,6 +166,12 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
           }} disabled={bulkStop.isPending}>{t('docker.stopAll')}</Button>
         </div>
       )}
+      <div className="flex items-center gap-3 mb-4 px-4">
+        <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-300">
+          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} className="rounded border-surface-300 dark:border-surface-600" />
+          {t('docker.showAll', 'Show all (including stopped)')}
+        </label>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full table-zebra">
           <thead className="table-sticky">
@@ -183,6 +195,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
                 onLogs={() => setLogsTarget(c)}
                 onStats={() => setStatsTarget(c)}
                 onExec={() => setExecTarget(c)}
+                onInspect={() => setInspectTarget(c)}
                 loading={loading} selected={selectedIds.has(c.ID)} onSelect={() => toggleOne(c.ID)}
               />
             ))}
@@ -206,7 +219,23 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
         {execTarget && <ExecContainerContent nodeId={nodeId} containerId={execTarget.ID} onClose={() => setExecTarget(null)} />}
       </Modal>
 
-      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={() => { if (deleteTarget) deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID }, { onSuccess: () => setDeleteTarget(null) }) }} title={t('docker.deleteContainer')} message={t('docker.deleteContainerMsg', { name: deleteTarget?.Names?.split('/').pop() })} confirmLabel={t('common.delete')} loading={deleteContainer.isPending} />
+      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`Inspect: ${inspectTarget?.Names?.split('/').pop() || ''}`} size="lg">
+        {inspectTarget && <ContainerInspectContent nodeId={nodeId} containerId={inspectTarget.ID} />}
+      </Modal>
+
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('docker.deleteContainer')}>
+        <div className="space-y-4">
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteContainerMsg', { name: deleteTarget?.Names?.split('/').pop() })}</p>
+          <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-300">
+            <input type="checkbox" id="forceDelete" className="rounded border-surface-300 dark:border-surface-600" />
+            {t('docker.forceDelete', 'Force delete')}
+          </label>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={() => { if (deleteTarget) { const force = (document.getElementById('forceDelete') as HTMLInputElement)?.checked; deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID, force: force || undefined }, { onSuccess: () => setDeleteTarget(null) }) } }} disabled={deleteContainer.isPending}>{deleteContainer.isPending ? t('common.loading') : t('common.delete')}</Button>
+          </div>
+        </div>
+      </Modal>
     </>
   )
 }
@@ -296,6 +325,39 @@ function ExecContainerContent({ nodeId, containerId, onClose }: { nodeId: string
   )
 }
 
+function ContainerInspectContent({ nodeId, containerId }: { nodeId: string; containerId: string }) {
+  const { t } = useTranslation()
+  const { data: inspect, isLoading } = useDockerContainerInspect(nodeId, containerId)
+  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (!inspect) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noData')}</p>
+  const rows: [string, string][] = [
+    [t('docker.id'), inspect.Id?.slice(0, 12) || '—'],
+    [t('docker.name'), inspect.Name?.split('/').pop() || '—'],
+    [t('docker.status'), inspect.State?.status || '—'],
+    [t('docker.running'), inspect.State?.running ? t('docker.yes') : t('docker.no')],
+    [t('docker.exitCode'), String(inspect.State?.exit_code ?? '—')],
+    [t('docker.command'), inspect.Config?.cmd?.join(' ') || '—'],
+    [t('docker.hostname'), inspect.Config?.hostname || '—'],
+    [t('docker.image'), inspect.Config?.image || '—'],
+  ]
+  return (
+    <div className="space-y-2 max-h-96 overflow-y-auto">
+      {rows.map(([key, value]) => (
+        <div key={key} className="flex justify-between py-2 border-b border-surface-200 dark:border-surface-800 last:border-0">
+          <span className="text-sm text-surface-600 dark:text-surface-400">{key}</span>
+          <span className="text-sm font-medium text-surface-900 dark:text-white font-mono text-right max-w-[60%] truncate">{value}</span>
+        </div>
+      ))}
+      {inspect.NetworkSettings && (
+        <div className="mt-2">
+          <p className="text-xs font-semibold text-surface-500 uppercase mb-1">{t('docker.networkSettings', 'Network Settings')}</p>
+          <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 bg-surface-50 dark:bg-surface-800/50 rounded p-3 overflow-x-auto">{JSON.stringify(inspect.NetworkSettings, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ImagesTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { data: images, isLoading } = useDockerImages(nodeId)
@@ -308,6 +370,7 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
   const [showBuildModal, setShowBuildModal] = useState(false)
   const [buildDockerfile, setBuildDockerfile] = useState('')
   const [buildTag, setBuildTag] = useState('')
+  const [inspectTarget, setInspectTarget] = useState<{ id: string; name: string } | null>(null)
 
   if (isLoading) return <TableSkeleton rows={5} cols={5} />
   if (!images?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noImages')} description={t('docker.noImagesDesc')} action={<Button onClick={() => setShowBuildModal(true)}>{t('docker.buildImage')}</Button>} />
@@ -335,6 +398,7 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{img.Size}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setInspectTarget({ id: img.ID, name: img.Repository || img.ID?.slice(0, 12) || '' })}>{t('docker.inspect', 'Inspect')}</Button>
                     <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: img.ID, tag: img.Tag })}>{t('docker.tag')}</Button>
                     <Button variant="ghost" size="sm" onClick={() => deleteImage.mutate({ nodeId, imageId: img.ID })} disabled={deleteImage.isPending} className="text-red-500">{t('common.delete')}</Button>
                   </div>
@@ -369,7 +433,43 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
           </div>
         </div>
       </Modal>
+
+      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`Inspect: ${inspectTarget?.name || ''}`} size="lg">
+        {inspectTarget && <ImageInspectContent nodeId={nodeId} imageId={inspectTarget.id} />}
+      </Modal>
     </>
+  )
+}
+
+function ImageInspectContent({ nodeId, imageId }: { nodeId: string; imageId: string }) {
+  const { t } = useTranslation()
+  const { data: inspect, isLoading } = useDockerImageInspect(nodeId, imageId)
+  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (!inspect) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noData')}</p>
+  const formatSize = (bytes?: number) => {
+    if (!bytes) return '—'
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+  }
+  const rows: [string, string][] = [
+    [t('docker.id'), inspect.id?.slice(0, 12) || '—'],
+    [t('docker.architecture', 'Architecture'), inspect.architecture || '—'],
+    [t('docker.os', 'OS'), inspect.os || '—'],
+    [t('docker.size'), formatSize(inspect.size)],
+    [t('docker.created'), inspect.created ? new Date(inspect.created).toLocaleString() : '—'],
+    [t('docker.tags', 'Tags'), inspect.repo_tags?.join(', ') || '—'],
+  ]
+  return (
+    <div className="space-y-2 max-h-96 overflow-y-auto">
+      {rows.map(([key, value]) => (
+        <div key={key} className="flex justify-between py-2 border-b border-surface-200 dark:border-surface-800 last:border-0">
+          <span className="text-sm text-surface-600 dark:text-surface-400">{key}</span>
+          <span className="text-sm font-medium text-surface-900 dark:text-white text-right max-w-[60%] truncate">{value}</span>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -481,7 +581,7 @@ export function Docker() {
         </nav>
       </div>
 
-      <Card>
+      <Card className="stagger-item">
         <CardContent className="p-0">
           {selectedNodeId && (
             <>

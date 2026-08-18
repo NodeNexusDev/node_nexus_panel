@@ -22,6 +22,6 @@ export function useClearAudit() {
 
 export function useExportAudit() {
   return useMutation({
-    mutationFn: () => auditApi.export(),
+    mutationFn: (params?: { from_date?: string; to_date?: string; action?: string; node_id?: string; fmt?: string }) => auditApi.export(params),
   })
 }

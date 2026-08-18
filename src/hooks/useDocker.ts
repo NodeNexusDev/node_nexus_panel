@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dockerApi } from '../api/docker'
 import type {
   DockerContainer,
+  DockerContainerInspect,
   DockerCreateContainerRequest,
   DockerContainerStats,
   DockerImage,
+  DockerImageInspectResponse,
   DockerImageBuildRequest,
   DockerImageTagRequest,
   DockerNetwork,
@@ -49,6 +51,22 @@ export function useDockerContainerLogs(nodeId: string, containerId: string, tail
     queryKey: ['docker', nodeId, 'containers', containerId, 'logs', tail],
     queryFn: () => dockerApi.getContainerLogs(nodeId, containerId, { tail }),
     enabled: !!nodeId && !!containerId,
+  })
+}
+
+export function useDockerContainerInspect(nodeId: string, containerId: string) {
+  return useQuery<DockerContainerInspect>({
+    queryKey: ['docker', nodeId, 'containers', containerId, 'inspect'],
+    queryFn: () => dockerApi.getContainer(nodeId, containerId),
+    enabled: !!nodeId && !!containerId,
+  })
+}
+
+export function useDockerImageInspect(nodeId: string, imageId: string) {
+  return useQuery<DockerImageInspectResponse>({
+    queryKey: ['docker', nodeId, 'images', imageId, 'inspect'],
+    queryFn: () => dockerApi.getImage(nodeId, imageId),
+    enabled: !!nodeId && !!imageId,
   })
 }
 
