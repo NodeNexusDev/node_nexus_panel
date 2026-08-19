@@ -29,10 +29,10 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
   }
 
   const max = Math.max(...data.map((d) => d.total), 1)
-  const barWidth = 100 / data.length
-  const padding = Math.max(barWidth * 0.15, 0.5)
+  const chartWidth = Math.max(data.length * 24, 100)
+  const barWidth = chartWidth / data.length
+  const padding = Math.max(barWidth * 0.25, 0.5)
   const chartHeight = height - 20
-  const chartWidth = 100
 
   const formatDate = (period: string) => {
     const d = new Date(period)
@@ -90,7 +90,7 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
                   height={failedH}
                   rx={w > 3 ? 1.5 : 0}
                   fill="url(#grad-failed)"
-                  className="opacity-80 hover:opacity-100 transition-opacity"
+                  className="transition-opacity"
                   style={{
                     animation: `chart-bar-in 0.4s ease-out ${i * 60}ms both`,
                     transformOrigin: `${x + w / 2}px ${chartHeight}px`,
@@ -104,7 +104,7 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
                 height={successH}
                 rx={w > 3 ? 1.5 : 0}
                 fill="url(#grad-success)"
-                className="opacity-80 hover:opacity-100 transition-opacity"
+                className="transition-opacity"
                 style={{
                   animation: `chart-bar-in 0.4s ease-out ${i * 60}ms both`,
                   transformOrigin: `${x + w / 2}px ${chartHeight}px`,

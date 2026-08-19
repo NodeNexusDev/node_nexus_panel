@@ -243,7 +243,7 @@ export function Dashboard() {
               {metricsLoading ? (
                 <MetricsChartSkeleton />
               ) : (
-                <MetricsChart data={metrics?.command_metrics || []} height={140} />
+                <MetricsChart data={metrics?.command_metrics || []} height={180} />
               )}
               <div className="mt-4 grid grid-cols-3 gap-4 text-center">
                 <div className="p-2 rounded-lg bg-surface-50 dark:bg-surface-800/50">
@@ -273,7 +273,7 @@ export function Dashboard() {
               {metricsLoading ? (
                 <MetricsChartSkeleton />
               ) : (
-                <MetricsChart data={metrics?.script_metrics || []} height={140} />
+                <MetricsChart data={metrics?.script_metrics || []} height={180} />
               )}
               <div className="mt-4 grid grid-cols-3 gap-4 text-center">
                 <div className="p-2 rounded-lg bg-surface-50 dark:bg-surface-800/50">
