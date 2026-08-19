@@ -20,12 +20,12 @@ type DatePreset = '7d' | '30d' | '90d' | 'all'
 
 function getDateRange(preset: DatePreset): { from: string; to: string } {
   const now = new Date()
-  const to = now.toISOString().slice(0, 10)
+  const to = now.toISOString()
   if (preset === 'all') return { from: '', to: '' }
   const days = preset === '7d' ? 7 : preset === '30d' ? 30 : 90
   const from = new Date(now)
   from.setDate(from.getDate() - days)
-  return { from: from.toISOString().slice(0, 10), to }
+  return { from: from.toISOString(), to }
 }
 
 function computeTrend(data: MetricsBucket[] | undefined): { value: number; direction: 'up' | 'down' | 'flat' } | undefined {
