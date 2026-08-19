@@ -26,7 +26,6 @@ export function Settings() {
 
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyScope, setNewKeyScope] = useState<'read-only' | 'read-write'>('read-write')
-  const [newKeyExpiresAt, setNewKeyExpiresAt] = useState('')
   const [showKeyModal, setShowKeyModal] = useState(false)
   const [createdKey, setCreatedKey] = useState<{ id: string; name: string; key: string; key_prefix: string; created_at: string } | null>(null)
   const [editKeyTarget, setEditKeyTarget] = useState<{ id: string; name: string; scope: string; is_active: boolean; expires_at: string | null } | null>(null)
@@ -40,8 +39,8 @@ export function Settings() {
   const apiKeys = apiKeysData?.items || []
 
   const handleCreateKey = () => {
-    createApiKey.mutate({ name: newKeyName, scope: newKeyScope, expires_at: newKeyExpiresAt || undefined }, {
-      onSuccess: (result) => { setCreatedKey(result); setShowKeyModal(false); setNewKeyName(''); setNewKeyScope('read-write'); setNewKeyExpiresAt('') },
+    createApiKey.mutate({ name: newKeyName, scope: newKeyScope }, {
+      onSuccess: (result) => { setCreatedKey(result); setShowKeyModal(false); setNewKeyName(''); setNewKeyScope('read-write') },
       onError: () => toast('error', t('settings.toastKeyCreateFailed')),
     })
   }
@@ -182,7 +181,6 @@ export function Settings() {
               <option value="read-write">{t('settings.readWrite')}</option>
             </select>
           </div>
-          <Input label={t('settings.expiresAt', 'Expires At (optional)')} type="datetime-local" value={newKeyExpiresAt} onChange={(e) => setNewKeyExpiresAt(e.target.value)} />
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowKeyModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreateKey} disabled={createApiKey.isPending || !newKeyName}>

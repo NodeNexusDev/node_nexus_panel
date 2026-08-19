@@ -218,7 +218,6 @@ export interface ApiKey {
 export interface ApiKeyCreate {
   name: string
   scope?: 'read-only' | 'read-write'
-  expires_at?: string
 }
 
 export interface ApiKeyUpdate {

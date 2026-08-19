@@ -390,53 +390,7 @@ body {
   background-color: var(--bg-secondary);
 }
 
-/* Tooltip */
-.tooltip-container {
-  position: relative;
-}
-
-.tooltip {
-  position: absolute;
-  z-index: 50;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  color: white;
-  background: var(--color-surface-900);
-  border-radius: 8px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: all 0.2s ease;
-}
-
-.tooltip-container:hover .tooltip {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.tooltip-top {
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  margin-bottom: 8px;
-}
-
-.tooltip-container:hover .tooltip-top {
-  transform: translateX(-50%) translateY(0);
-}
-
-.tooltip-bottom {
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-4px);
-  margin-top: 8px;
-}
-
-.tooltip-container:hover .tooltip-bottom {
-  transform: translateX(-50%) translateY(0);
-}
+/* Tooltip — positioned via Portal in Tooltip.tsx */
 
 /* Drag and drop */
 .draggable {

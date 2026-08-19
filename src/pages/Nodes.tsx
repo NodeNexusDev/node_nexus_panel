@@ -323,6 +323,7 @@ export function Nodes() {
 
   const handleEdit = () => {
     if (!editTarget) return
+    const toNull = (v: string) => v === '' ? null : v
     updateNode.mutate(
       {
         id: editTarget.id,
@@ -331,11 +332,11 @@ export function Nodes() {
           host: editNode.host,
           port: Number(editNode.port),
           connection_type: editNode.connection_type,
-          username: editNode.username || undefined,
-          password: editNode.password || undefined,
-          ssh_key: editNode.ssh_key || undefined,
-          passphrase: editNode.passphrase || undefined,
-          docker_host: editNode.docker_host || undefined,
+          username: toNull(editNode.username),
+          password: toNull(editNode.password),
+          ssh_key: toNull(editNode.ssh_key),
+          passphrase: toNull(editNode.passphrase),
+          docker_host: toNull(editNode.docker_host),
           tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
       },

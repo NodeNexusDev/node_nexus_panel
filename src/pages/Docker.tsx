@@ -23,7 +23,7 @@ export function Docker() {
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const { data: nodesData } = useNodes({ size: 100 })
-  const nodes = nodesData?.items || []
+  const nodes = (nodesData?.items || []).filter((n) => n.connection_type === 'docker')
   const [selectedNodeId, setSelectedNodeId] = useState(() => searchParams.get('node') ?? '')
 
   useEffect(() => {
