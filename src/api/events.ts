@@ -1,11 +1,16 @@
+import {
+  fetchEventSource,
+  type FetchEventSourceInit,
+} from '@microsoft/fetch-event-source'
 import { env } from '../lib/env'
 
 type SseEventHandler = (event: MessageEvent) => void
 
 const BASE_URL = env.VITE_API_URL || ''
+const API_KEY = env.VITE_API_KEY
 
 export class EventsClient {
-  private source: EventSource | null = null
+  private controller: AbortController | null = null
   private handlers = new Map<string, Set<SseEventHandler>>()
   private _isConnected = false
 
@@ -14,37 +19,55 @@ export class EventsClient {
   }
 
   connect() {
-    if (this.source) return
+    if (this.controller) return
 
-    this.source = new EventSource(`${BASE_URL}/api/v1/events/stream`)
+    this.controller = new AbortController()
 
-    this.source.onopen = () => {
-      this._isConnected = true
+    const headers: Record<string, string> = {}
+    if (API_KEY) {
+      headers['X-API-Key'] = API_KEY
     }
 
-    this.source.onmessage = (event) => {
-      this.emit('*', event)
-      try {
-        const data = JSON.parse(event.data)
-        if (data.type) {
-          this.emit(data.type, event)
+    fetchEventSource(`${BASE_URL}/api/v1/events/stream`, {
+      headers,
+      signal: this.controller.signal,
+      openWhenHidden: true,
+      onopen: async () => {
+        this._isConnected = true
+      },
+      onmessage: (event) => {
+        const msg = new MessageEvent(event.event, {
+          data: event.data,
+          lastEventId: event.id,
+        })
+        this.emit('*', msg)
+        try {
+          const data = JSON.parse(event.data)
+          if (data.type) {
+            this.emit(data.type, msg)
+          }
+        } catch {
+          // ignore parse errors
         }
-      } catch {
-        // ignore parse errors
-      }
-    }
-
-    this.source.onerror = () => {
-      this._isConnected = false
-      this.source?.close()
-      this.source = null
-      setTimeout(() => this.connect(), 3000)
-    }
+      },
+      onerror: () => {
+        this._isConnected = false
+        this.controller?.abort()
+        this.controller = null
+        setTimeout(() => this.connect(), 3000)
+        return undefined
+      },
+      onclose: () => {
+        this._isConnected = false
+        this.controller = null
+        setTimeout(() => this.connect(), 3000)
+      },
+    } satisfies FetchEventSourceInit)
   }
 
   disconnect() {
-    this.source?.close()
-    this.source = null
+    this.controller?.abort()
+    this.controller = null
     this._isConnected = false
   }
 
