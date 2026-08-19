@@ -2,7 +2,7 @@
 title: Design System
 status: stable
 translation_key: architecture.design_system
-source_revision: 2026-08-17
+source_revision: 2026-08-20
 ---
 
 # Design System
@@ -15,26 +15,51 @@ TailwindCSS 4 for utility-first styling. Configuration via `@theme` in `src/inde
 
 Reusable components in `src/components/ui/`:
 
-- **Button** — primary, secondary, danger, ghost, gradient variants
-- **Card** — glass, hover, gradient variants with CardHeader/CardContent
-- **Input / Select** — form controls with label and error state
-- **Table / ResponsiveTable** — typed tables with zebra-striping, sticky headers
-- **Modal** — backdrop-blur with spring animation
-- **ConfirmDialog** — wraps Modal for confirmations
-- **Badge** — status badges (success, warning, danger, info)
-- **Toast** — notification system with progress bar
-- **Skeleton** — shimmer loading (StatCardSkeleton, TableSkeleton, CardListSkeleton, FormSkeleton)
-- **Tooltip** — CSS hover tooltips (top/bottom)
-- **DragDropList** — generic drag-and-drop reorderable list
-- **MiniChart** — CSS-only bar chart for sparklines
-- **Timeline** — event timeline
-- **Typewriter** — animated text reveal
-- **EmptyState** — empty state placeholder
+### Layout & Navigation
+- **PageHeader** — page title with breadcrumbs and action buttons
+- **Tabs** — tab navigation with active state
 - **Pagination** — paginated navigation
-- **SearchInput** — debounced search
+- **Breadcrumb** — breadcrumb navigation
+
+### Data Display
+- **Badge** — status badges (success, warning, danger, info, default)
+- **TagBadge** — tag badge with remove button
+- **StatCard** — dashboard stat card with trend indicator
+- **KeyValueList** — key-value pair display
+- **ResponsiveTable** — typed tables with zebra-striping, sticky headers
+- **SortableHeader** — sortable column headers
+
+### Charts
+- **MetricsChart** — SVG bar/area chart with tooltips, legends, and date presets
+
+### Forms
+- **Input** — form input with label and error state
+- **DropdownMenu** — dropdown menu with items
+- **FilterBar** — filter controls bar
+- **SearchInput** — debounced search input
+- **NodeSelect** — node selector dropdown
+- **ModalFooter** — modal action buttons (cancel/confirm)
+
+### Feedback
+- **Toast** — notification system with progress bar
+- **ConfirmDialog** — wraps Modal for confirmations
+- **EmptyState** — empty state placeholder with icon
+- **ErrorState** — error state with retry
+- **ErrorPage** — full-page error display
+- **Skeleton** — shimmer loading (StatCardSkeleton, TableSkeleton, CardListSkeleton, FormSkeleton)
+- **Spinner** — inline loading indicator
+
+### Overlay
+- **Modal** — backdrop-blur with spring animation
+- **Tooltip** — CSS hover tooltips (top/bottom)
 - **CommandPalette** — Ctrl+K command palette
+
+### Utility
 - **ErrorBoundary** — React error boundary
-- **ErrorCard / ErrorPage / NetworkError** — error states
+- **FavoriteButton** — star toggle for favorites
+- **NotesPanel** — entity notes with markdown preview
+- **Typewriter** — animated text reveal
+- **Icons** — monochrome SVG icon system
 
 ## Theme
 

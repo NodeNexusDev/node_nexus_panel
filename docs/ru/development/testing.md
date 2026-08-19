@@ -2,7 +2,7 @@
 title: Тестирование
 status: stable
 translation_key: development.testing
-source_revision: 2026-08-16
+source_revision: 2026-08-20
 ---
 
 # Тестирование
@@ -75,16 +75,52 @@ describe('Button', () => {
 
 ## Мокирование API
 
-Обработчики MSW определены в `src/test/mocks/handlers.ts`.
+Обработчики MSW организованы по доменам в `src/mocks/handlers/`.
+
+### Структура
+
+```
+src/mocks/
+├── index.ts              # Настройка MSW browser/node
+├── browser.ts            # Browser worker
+├── node.ts               # Node сервер
+├── data/                 # Фикстуры мок-данных
+│   ├── nodes.ts
+│   ├── commands.ts
+│   ├── scripts.ts
+│   ├── dashboard.ts
+│   ├── docker.ts
+│   ├── audit.ts
+│   ├── api-keys.ts
+│   ├── favorites.ts
+│   └── notes.ts
+└── handlers/             # Обработчики запросов MSW
+    ├── index.ts          # Объединяет все обработчики
+    ├── nodes.ts
+    ├── commands.ts
+    ├── scripts.ts
+    ├── dashboard.ts
+    ├── docker.ts
+    ├── audit.ts
+    ├── api-keys.ts
+    ├── config.ts
+    ├── events.ts
+    ├── favorites.ts
+    ├── notes.ts
+    ├── search.ts
+    └── tags.ts
+```
 
 ### Добавление новых обработчиков
 
 ```typescript
+// src/mocks/handlers/nodes.ts
 import { http, HttpResponse } from 'msw'
+import { mockNodes } from '../data/nodes'
 
-export const handlers = [
-  http.get('http://localhost:8000/api/nodes', () => {
-    return HttpResponse.json({ data: [...], total: 1 })
+export const nodeHandlers = [
+  http.get(`${API_URL}/api/v1/nodes`, () => {
+    return HttpResponse.json({ data: mockNodes, total: mockNodes.length })
   }),
 ]
 ```
@@ -92,12 +128,12 @@ export const handlers = [
 ### Переопределение в отдельных тестах
 
 ```typescript
-import { server } from '../test/mocks/server'
+import { server } from '@/mocks/node'
 import { http, HttpResponse } from 'msw'
 
 it('handles error', async () => {
   server.use(
-    http.get('/api/nodes', () => {
+    http.get('/api/v1/nodes', () => {
       return new HttpResponse(null, { status: 500 })
     })
   )
@@ -109,8 +145,12 @@ it('handles error', async () => {
 
 ```
 src/test/
-├── setup.ts              # Глобальная настройка тестов
-└── mocks/
-    ├── handlers.ts       # Обработчики запросов MSW
-    └── server.ts         # Настройка сервера MSW
+└── setup.ts              # Глобальная настройка тестов
+
+src/mocks/
+├── index.ts              # Настройка MSW browser/node
+├── browser.ts            # Browser worker
+├── node.ts               # Node сервер
+├── data/                 # Фикстуры мок-данных
+└── handlers/             # Обработчики запросов MSW
 ```

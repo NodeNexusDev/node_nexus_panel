@@ -2,7 +2,7 @@
 title: Дизайн-система
 status: stable
 translation_key: architecture.design_system
-source_revision: 2026-08-17
+source_revision: 2026-08-20
 ---
 
 # Дизайн-система
@@ -15,26 +15,51 @@ TailwindCSS 4 для utility-first стилизации. Конфигураци�
 
 Переиспользуемые компоненты в `src/components/ui/`:
 
-- **Button** — варианты primary, secondary, danger, ghost, gradient
-- **Card** — glass, hover, gradient с CardHeader/CardContent
-- **Input / Select** — контролы формы с label и состоянием ошибки
-- **Table / ResponsiveTable** — типизированные таблицы с zebra-striping, sticky headers
-- **Modal** — backdrop-blur с spring-анимацией
-- **ConfirmDialog** — обёртка Modal для подтверждений
-- **Badge** — статусные бейджи (success, warning, danger, info)
-- **Toast** — система уведомлений с полоской прогресса
-- **Skeleton** — shimmer-загрузка (StatCardSkeleton, TableSkeleton, CardListSkeleton, FormSkeleton)
-- **Tooltip** — CSS-тултипы при наведении (top/bottom)
-- **DragDropList** — generic drag-and-drop reorderable list
-- **MiniChart** — CSS-only bar chart для спарклайнов
-- **Timeline** — таймлайн событий
-- **Typewriter** — анимированное появление текста
-- **EmptyState** — заглушка пустого состояния
+### Макет и навигация
+- **PageHeader** — заголовок страницы с хлебными крошками и кнопками действий
+- **Tabs** — навигация по вкладкам с активным состоянием
 - **Pagination** — навигация по страницам
-- **SearchInput** — debounce-поиск
+- **Breadcrumb** — навигация по хлебным крошкам
+
+### Отображение данных
+- **Badge** — статусные бейджи (success, warning, danger, info, default)
+- **TagBadge** — бейдж тега с кнопкой удаления
+- **StatCard** — карточка статистики дашборда с индикатором тренда
+- **KeyValueList** — отображение пар ключ-значение
+- **ResponsiveTable** — типизированные таблицы с zebra-striping, sticky headers
+- **SortableHeader** — сортируемые заголовки столбцов
+
+### Графики
+- **MetricsChart** — SVG-столбчатая/площадная диаграмма с тултипами, легендами и пресетами дат
+
+### Формы
+- **Input** — поле ввода с label и состоянием ошибки
+- **DropdownMenu** — выпадающее меню с элементами
+- **FilterBar** — панель фильтров
+- **SearchInput** — поле поиска с debounce
+- **NodeSelect** — выпадающий выбор ноды
+- **ModalFooter** — кнопки действий модального окна (отмена/подтверждение)
+
+### Обратная связь
+- **Toast** — система уведомлений с полоской прогресса
+- **ConfirmDialog** — обёртка Modal для подтверждений
+- **EmptyState** — заглушка пустого состояния с иконкой
+- **ErrorState** — состояние ошибки с повтором
+- **ErrorPage** — полноэкранное отображение ошибки
+- **Skeleton** — shimmer-загрузка (StatCardSkeleton, TableSkeleton, CardListSkeleton, FormSkeleton)
+- **Spinner** — индикатор загрузки inline
+
+### Оверлеи
+- **Modal** — backdrop-blur с spring-анимацией
+- **Tooltip** — CSS-тултипы при наведении (top/bottom)
 - **CommandPalette** — палитра команд (Ctrl+K)
+
+### Утилиты
 - **ErrorBoundary** — React error boundary
-- **ErrorCard / ErrorPage / NetworkError** — состояния ошибок
+- **FavoriteButton** — кнопка-звёздочка для избранного
+- **NotesPanel** — заметки сущности с предпросмотром markdown
+- **Typewriter** — анимированное появление текста
+- **Icons** — монохромная SVG-система иконок
 
 ## Тема
 

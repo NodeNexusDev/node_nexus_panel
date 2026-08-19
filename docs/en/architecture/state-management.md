@@ -2,7 +2,7 @@
 title: State Management
 status: stable
 translation_key: architecture.state_management
-source_revision: 2026-08-16
+source_revision: 2026-08-20
 ---
 
 # State Management
@@ -33,28 +33,24 @@ import { queryClient } from './lib/query-client'
 
 ### Custom Hooks
 
-| Hook | Purpose |
-|------|---------|
-| `useNodes` | Fetch node list with pagination |
-| `useNode` | Fetch single node by ID |
-| `useNodeStats` | Fetch dashboard statistics |
-| `useCreateNode` | Mutation to add a node |
-| `useDeleteNode` | Mutation to remove a node |
-| `useRestartNode` | Mutation to restart a node |
-| `useCommandHistory` | Fetch command history |
-| `useExecuteCommand` | Mutation to execute a command |
-| `useScripts` | Fetch script list |
-| `useCreateScript` | Mutation to create a script |
-| `useUpdateScript` | Mutation to update a script |
-| `useDeleteScript` | Mutation to delete a script |
-| `useRunScript` | Mutation to run a script |
-| `useLogin` | Mutation for login |
-| `useCurrentUser` | Fetch current user |
-| `useLogout` | Mutation for logout |
-| `useProfile` | Fetch user profile |
-| `useUpdateProfile` | Mutation to update profile |
-| `useApiKeys` | Fetch API keys |
-| `useNotificationSettings` | Fetch notification settings |
+| Hook File | Purpose |
+|-----------|---------|
+| `useNodes` | Node CRUD, bulk operations, tags, metrics, health checks |
+| `useCommands` | Command CRUD, execution, cloning, statistics |
+| `useScripts` | Script CRUD, execution, scheduling, statistics |
+| `useDashboard` | Dashboard statistics and activity |
+| `useSettings` | User profile, API keys, notifications |
+| `useDocker` | Docker containers, images, networks, volumes |
+| `useDockerContainerSse` | Real-time container status via SSE |
+| `useSse` | Generic SSE event stream hook |
+| `useAudit` | Audit log entries |
+| `useNotes` | Per-entity notes CRUD |
+| `useTags` | Tag management |
+| `useFavorites` | Favorites management |
+| `useSearch` | Global search |
+| `useSort` | Reusable sorting logic |
+| `useHotkey` | Keyboard shortcut handler |
+| `useDocumentTitle` | Dynamic page titles |
 
 ### Usage Pattern
 
@@ -106,16 +102,6 @@ const { theme, sidebarOpen, setTheme, toggleSidebar } = useUiStore()
 - Theme persistence (dark/light/system)
 - Sidebar state
 - Active modal tracking
-
-### Connection Store (`src/stores/connection-store.ts`)
-
-```typescript
-import { useConnectionStore } from './stores/connection-store'
-
-const { wsConnected, setWsConnected } = useConnectionStore()
-```
-
-- WebSocket connection status
 
 ## Patterns
 

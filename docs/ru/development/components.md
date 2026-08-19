@@ -2,7 +2,7 @@
 title: Компоненты
 status: stable
 translation_key: development.components
-source_revision: 2026-08-17
+source_revision: 2026-08-20
 ---
 
 # Компоненты
@@ -14,45 +14,69 @@ src/
 ├── components/
 │   ├── ui/              # Переиспользуемые UI-компоненты
 │   │   ├── Badge.tsx
-│   │   ├── Breadcrumb.tsx
 │   │   ├── Button.tsx
 │   │   ├── Card.tsx
 │   │   ├── CommandPalette.tsx
 │   │   ├── ConfirmDialog.tsx
-│   │   ├── DragDropList.tsx
+│   │   ├── DropdownMenu.tsx
 │   │   ├── EmptyState.tsx
 │   │   ├── ErrorBoundary.tsx
-│   │   ├── ErrorCard.tsx
 │   │   ├── ErrorPage.tsx
+│   │   ├── ErrorState.tsx
+│   │   ├── FavoriteButton.tsx
+│   │   ├── FilterBar.tsx
 │   │   ├── Icons.tsx
 │   │   ├── Input.tsx
-│   │   ├── MiniChart.tsx
+│   │   ├── KeyValueList.tsx
+│   │   ├── MetricsChart.tsx
 │   │   ├── Modal.tsx
-│   │   ├── NetworkError.tsx
+│   │   ├── ModalFooter.tsx
+│   │   ├── NodeSelect.tsx
+│   │   ├── NotesPanel.tsx
+│   │   ├── PageHeader.tsx
 │   │   ├── Pagination.tsx
 │   │   ├── ResponsiveTable.tsx
 │   │   ├── SearchInput.tsx
-│   │   ├── Select.tsx
 │   │   ├── Skeleton.tsx
+│   │   ├── SortableHeader.tsx
 │   │   ├── Spinner.tsx
-│   │   ├── Table.tsx
-│   │   ├── Timeline.tsx
+│   │   ├── StatCard.tsx
+│   │   ├── Tabs.tsx
+│   │   ├── TagBadge.tsx
 │   │   ├── Toast.tsx
-│   │   ├── Toggle.tsx
 │   │   ├── Tooltip.tsx
-│   │   └── Typewriter.tsx
-│   ├── guards/          # Guard-ы маршрутов
+│   │   ├── Typewriter.tsx
+│   │   ├── table-types.ts
+│   │   └── useToast.ts
+│   ├── commands/         # Компоненты команд
+│   ├── docker/           # Компоненты страницы Docker
+│   │   ├── ContainersTab.tsx
+│   │   ├── ContainerRow.tsx
+│   │   ├── ContainerDetailPanel.tsx
+│   │   ├── ContainerInspectContent.tsx
+│   │   ├── ExecContainerContent.tsx
+│   │   ├── CreateContainerForm.tsx
+│   │   ├── ImagesTab.tsx
+│   │   ├── NetworksTab.tsx
+│   │   └── VolumesTab.tsx
+│   ├── guards/           # Guard-ы маршрутов
 │   │   └── AuthGuard.tsx
-│   └── layout/          # Компоненты лейаута
-│       ├── ThemeToggle.tsx
-│       └── MobileMenu.tsx
-├── pages/               # Компоненты страниц
-├── hooks/               # Пользовательские React хуки
-├── api/                 # API-клиент
-├── stores/              # Zustand хранилища
-├── lib/                 # Утилиты и валидации
-├── styles/              # Конфигурация темы
-└── test/                # Настройка тестов и моки
+│   ├── layout/           # Компоненты лейаута
+│   │   ├── ThemeToggle.tsx
+│   │   └── MobileMenu.tsx
+│   ├── nodes/            # Компоненты нод
+│   │   └── ConnectionTypeSelect.tsx
+│   └── scripts/          # Компоненты скриптов
+├── pages/                # Компоненты страниц
+├── hooks/                # Пользовательские React хуки
+├── api/                  # API-клиент
+├── stores/               # Zustand хранилища
+├── lib/                  # Утилиты и валидации
+├── i18n/                 # Интернационализация
+├── layouts/              # Обёртки страниц
+├── mocks/                # Моки и обработчики MSW
+├── styles/               # Конфигурация темы
+└── test/                 # Настройка тестов и утилиты
 ```
 
 ## UI-компоненты
@@ -106,7 +130,7 @@ src/
 Система toast-уведомлений через context provider с полоской прогресса.
 
 ```tsx
-import { useToast } from './components/ui/Toast'
+import { useToast } from './components/ui/useToast'
 
 function MyComponent() {
   const { toast } = useToast()
@@ -122,20 +146,15 @@ function MyComponent() {
 <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
 ```
 
-### Select
+### DropdownMenu
 
-Выпадающий список с label и состоянием ошибки.
-
-```tsx
-<Select label="Нода" options={[{ value: '1', label: 'Сервер 01' }]} />
-```
-
-### Toggle
-
-Переключатель с label и описанием.
+Выпадающее меню с пунктами.
 
 ```tsx
-<Toggle checked={enabled} onChange={setEnabled} label="Функция" description="Переключить это" />
+<DropdownMenu trigger={<Button>Опции</Button>}>
+  <DropdownMenuItem onClick={handleEdit}>Редактировать</DropdownMenuItem>
+  <DropdownMenuItem onClick={handleDelete} variant="danger">Удалить</DropdownMenuItem>
+</DropdownMenu>
 ```
 
 ### Skeleton
@@ -190,25 +209,18 @@ CSS-тултип при наведении (top/bottom).
 </Tooltip>
 ```
 
-### DragDropList
+### MetricsChart
 
-Generic drag-and-drop reorderable list.
+SVG bar/area график с тултипами, легендами и пресетами дат.
 
 ```tsx
-<DragDropList
-  items={items}
-  onReorder={setItems}
-  keyExtractor={(item) => item.id}
-  renderItem={(item, index) => <div>{item.name}</div>}
+<MetricsChart
+  data={chartData}
+  title="Метрики команд"
+  type="bar"
+  datePreset="7d"
+  onDatePresetChange={setDatePreset}
 />
-```
-
-### MiniChart
-
-CSS-only bar chart для спарклайнов.
-
-```tsx
-<MiniChart data={[4, 6, 3, 8, 5, 7, 4]} color="bg-surface-400" className="h-8" />
 ```
 
 ### Typewriter
@@ -217,16 +229,6 @@ CSS-only bar chart для спарклайнов.
 
 ```tsx
 <Typewriter text="Hello World" speed={30} onComplete={() => console.log('done')} />
-```
-
-### Timeline
-
-Таймлайн событий.
-
-```tsx
-<Timeline items={[
-  { id: '1', title: 'Нода онлайн', description: 'Сервер 01 подключён', time: '2 мин назад' },
-]} />
 ```
 
 ### ConfirmDialog
@@ -255,12 +257,12 @@ React Error Boundary с fallback UI.
 </ErrorBoundary>
 ```
 
-### Table
+### ResponsiveTable
 
 Типизированная таблица с zebra-striping и sticky headers.
 
 ```tsx
-<Table
+<ResponsiveTable
   data={nodes}
   columns={[
     { key: 'name', header: 'Имя', render: (item) => item.name },
@@ -269,6 +271,71 @@ React Error Boundary с fallback UI.
   keyExtractor={(item) => item.id}
 />
 ```
+
+### TagBadge
+
+Тег-бейдж с опциональной кнопкой удаления.
+
+```tsx
+<TagBadge tag="production" onRemove={() => handleRemoveTag('production')} />
+```
+
+### FavoriteButton
+
+Кнопка-звёздочка для пометки элементов как избранных.
+
+```tsx
+<FavoriteButton entityId="node-1" entityType="node" isFavorite={true} onToggle={handleToggle} />
+```
+
+### NotesPanel
+
+Заметки сущности с markdown-превью и CRUD.
+
+```tsx
+<NotesPanel entityType="node" entityId="node-1" />
+```
+
+### NodeSelect
+
+Выпадающий список выбора ноды с поиском.
+
+```tsx
+<NodeSelect value={selectedNodeId} onChange={setSelectedNodeId} placeholder="Выберите ноду" />
+```
+
+### FilterBar
+
+Панель фильтров для страниц со списками.
+
+```tsx
+<FilterBar>
+  <SearchInput value={search} onChange={setSearch} />
+  <Select options={statusOptions} value={status} onChange={setStatus} />
+</FilterBar>
+```
+
+## Доменные компоненты
+
+### Docker (`src/components/docker/`)
+
+| Компонент | Описание |
+|-----------|----------|
+| `ContainersTab` | Список контейнеров с поиском, фильтрами и SSE-обновлениями |
+| `ContainerRow` | Строка контейнера с действиями |
+| `ContainerDetailPanel` | Раскрывающиеся детали контейнера (inspect, logs, exec) |
+| `ContainerInspectContent` | JSON-вывод inspect контейнера |
+| `ExecContainerContent` | Интерактивный терминал для exec в контейнер |
+| `CreateContainerForm` | Форма создания нового контейнера |
+| `ImagesTab` | Список образов с действиями pull/remove |
+| `NetworksTab` | Список сетей с действием remove |
+| `VolumesTab` | Список томов с действием remove |
+
+### Nodes (`src/components/nodes/`)
+
+| Компонент | Описание |
+|-----------|----------|
+| `ConnectionTypeSelect` | Селектор типа подключения SSH/Docker/Proxmox |
 
 ## Конвенции
 
