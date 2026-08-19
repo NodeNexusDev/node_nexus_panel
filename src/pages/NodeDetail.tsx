@@ -507,7 +507,7 @@ function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: strin
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => retry.mutate({ nodeId, executionId: item.id }, { onSuccess: () => toast('success', t('nodes.toastRetried')) })}
+                      onClick={() => retry.mutate({ nodeId, executionId: item.id }, { onSuccess: () => toast('success', t('nodes.toastRetried')), onError: () => toast('error', t('nodes.toastRetryFailed')) })}
                       disabled={retry.isPending}
                     >
                       {t('common.retry')}
@@ -554,7 +554,7 @@ function TagsTab({ nodeId }: { nodeId: string }) {
           {tags.map((tag) => (
             <Badge key={tag} variant="default" className="gap-1">
               {tag}
-              <button onClick={() => removeTag.mutate({ id: nodeId, tag }, { onSuccess: () => { toast('success', t('nodes.toastTagRemoved')); refetch() } })} className="ml-1 text-surface-400 hover:text-red-500">×</button>
+              <button onClick={() => removeTag.mutate({ id: nodeId, tag }, { onSuccess: () => { toast('success', t('nodes.toastTagRemoved')); refetch() }, onError: () => toast('error', t('nodes.toastTagRemoveFailed')) })} className="ml-1 text-surface-400 hover:text-red-500">×</button>
             </Badge>
           ))}
           {tags.length === 0 && <p className="text-sm text-surface-500">{t('nodes.noTags', 'No tags')}</p>}

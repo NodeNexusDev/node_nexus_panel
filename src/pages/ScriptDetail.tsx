@@ -318,8 +318,8 @@ function ExecutionsTab({ scriptId }: { scriptId: string }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  {exec.status === 'running' && <Button variant="ghost" size="sm" onClick={() => cancelExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastCancelled')) })}>{t('scripts.cancel')}</Button>}
-                  {exec.status === 'failed' && <Button variant="ghost" size="sm" onClick={() => retryExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastRetried')) })}>{t('common.retry')}</Button>}
+                  {exec.status === 'running' && <Button variant="ghost" size="sm" onClick={() => cancelExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastCancelled')), onError: () => toast('error', t('scripts.toastCancelFailed')) })}>{t('scripts.cancel')}</Button>}
+                  {exec.status === 'failed' && <Button variant="ghost" size="sm" onClick={() => retryExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastRetried')), onError: () => toast('error', t('scripts.toastRetryFailed')) })}>{t('common.retry')}</Button>}
                 </div>
               </div>
             ))}

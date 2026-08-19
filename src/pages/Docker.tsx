@@ -40,6 +40,7 @@ import {
   useBulkDockerStop,
 } from '../hooks/useDocker'
 import { useNodes } from '../hooks/useNodes'
+import { useToast } from '../components/ui/useToast'
 import type { DockerContainer, DockerPullResult, ContainerCreatedResponse } from '../api/types'
 
 type Tab = 'containers' | 'images' | 'networks' | 'volumes'
@@ -115,6 +116,7 @@ function ContainerRow({
 
 function ContainersTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const [showAll, setShowAll] = useState(false)
   const { data: containers, isLoading } = useDockerContainers(nodeId, showAll)
   const startContainer = useStartContainer()
@@ -161,6 +163,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
           const results = data.results.map((r) => `[${r.node_name}] ${r.status}: ${r.output || r.error}`).join('\n')
           setBulkExecResult(results || 'No output')
         },
+        onError: () => toast('error', t('docker.toastBulkExecFailed')),
       }
     )
   }
@@ -208,9 +211,9 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {containers.map((c) => (
               <ContainerRow key={c.ID} container={c} nodeId={nodeId}
-                onStart={() => startContainer.mutate({ nodeId, containerId: c.ID })}
-                onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID })}
-                onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID })}
+                onStart={() => startContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastStartFailed')) })}
+                onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastStopFailed')) })}
+                onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastRestartFailed')) })}
                 onDelete={() => setDeleteTarget(c)}
                 onLogs={() => setLogsTarget(c)}
                 onStats={() => setStatsTarget(c)}
@@ -252,7 +255,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
           </label>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
-            <Button variant="danger" onClick={() => { if (deleteTarget) { const force = (document.getElementById('forceDelete') as HTMLInputElement)?.checked; deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID, force: force || undefined }, { onSuccess: () => setDeleteTarget(null) }) } }} disabled={deleteContainer.isPending}>{deleteContainer.isPending ? t('common.loading') : t('common.delete')}</Button>
+            <Button variant="danger" onClick={() => { if (deleteTarget) { const force = (document.getElementById('forceDelete') as HTMLInputElement)?.checked; deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID, force: force || undefined }, { onSuccess: () => setDeleteTarget(null), onError: () => toast('error', t('docker.toastDeleteFailed')) }) } }} disabled={deleteContainer.isPending}>{deleteContainer.isPending ? t('common.loading') : t('common.delete')}</Button>
           </div>
         </div>
       </Modal>
@@ -276,6 +279,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
 
 function CreateContainerForm({ nodeId, onClose }: { nodeId: string; onClose: () => void }) {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const createContainer = useCreateContainer()
   const [result, setResult] = useState<ContainerCreatedResponse | null>(null)
   const {
@@ -358,6 +362,7 @@ function CreateContainerForm({ nodeId, onClose }: { nodeId: string; onClose: () 
           setResult(data)
           reset()
         },
+        onError: () => toast('error', t('docker.toastCreateFailed')),
       },
     )
   }
@@ -501,6 +506,7 @@ function ContainerInspectContent({ nodeId, containerId }: { nodeId: string; cont
 
 function ImagesTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { data: images, isLoading } = useDockerImages(nodeId)
   const deleteImage = useDeleteImage()
   const tagImage = useTagImage()
@@ -541,7 +547,7 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => setInspectTarget({ id: img.ID, name: img.Repository || img.ID?.slice(0, 12) || '' })}>{t('docker.inspect', 'Inspect')}</Button>
                     <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: img.ID, tag: img.Tag })}>{t('docker.tag')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteImage.mutate({ nodeId, imageId: img.ID })} disabled={deleteImage.isPending} className="text-red-500">{t('common.delete')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteImage.mutate({ nodeId, imageId: img.ID }, { onError: () => toast('error', t('docker.toastDeleteFailed')) })} disabled={deleteImage.isPending} className="text-red-500">{t('common.delete')}</Button>
                   </div>
                 </td>
               </tr>
@@ -556,7 +562,7 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
           <Input label={t('docker.tag')} placeholder="latest" value={tagName} onChange={(e) => setTagName(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setTagTarget(null)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (tagTarget && tagRepo && tagName) { tagImage.mutate({ nodeId, imageId: tagTarget.id, data: { repo: tagRepo, tag: tagName } }, { onSuccess: () => setTagTarget(null) }) } }} disabled={!tagRepo || !tagName || tagImage.isPending}>{tagImage.isPending ? t('common.loading') : t('docker.tag')}</Button>
+            <Button onClick={() => { if (tagTarget && tagRepo && tagName) { tagImage.mutate({ nodeId, imageId: tagTarget.id, data: { repo: tagRepo, tag: tagName } }, { onSuccess: () => setTagTarget(null), onError: () => toast('error', t('docker.toastTagFailed')) }) } }} disabled={!tagRepo || !tagName || tagImage.isPending}>{tagImage.isPending ? t('common.loading') : t('docker.tag')}</Button>
           </div>
         </div>
       </Modal>
@@ -570,7 +576,7 @@ function ImagesTab({ nodeId }: { nodeId: string }) {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowBuildModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { buildImage.mutate({ nodeId, data: { dockerfile: buildDockerfile, tag: buildTag } }, { onSuccess: () => setShowBuildModal(false) }) }} disabled={!buildTag || !buildDockerfile || buildImage.isPending}>{buildImage.isPending ? t('common.loading') : t('docker.buildImage')}</Button>
+            <Button onClick={() => { buildImage.mutate({ nodeId, data: { dockerfile: buildDockerfile, tag: buildTag } }, { onSuccess: () => setShowBuildModal(false), onError: () => toast('error', t('docker.toastBuildFailed')) }) }} disabled={!buildTag || !buildDockerfile || buildImage.isPending}>{buildImage.isPending ? t('common.loading') : t('docker.buildImage')}</Button>
           </div>
         </div>
       </Modal>
@@ -669,6 +675,7 @@ function VolumesTab({ nodeId }: { nodeId: string }) {
 
 export function Docker() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
@@ -697,6 +704,7 @@ export function Docker() {
           setPullImage('')
           setPullTimeout(300)
         },
+        onError: () => toast('error', t('docker.toastPullFailed')),
       },
     )
   }
