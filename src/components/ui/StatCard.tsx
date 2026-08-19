@@ -37,7 +37,7 @@ const trendIcons: Record<Trend['direction'], string> = {
 
 export function StatCard({ label, value, icon, sub, tone = 'default', trend, className = '' }: StatCardProps) {
   return (
-    <div className={`text-center p-4 bg-surface-50 dark:bg-surface-800 rounded-lg ${className}`}>
+    <div className={`text-center p-4 rounded-lg ${className}`}>
       <div className="flex items-center justify-center gap-1.5">
         {icon && <span className="text-surface-400 dark:text-surface-500">{icon}</span>}
         <p className={`text-2xl font-bold ${toneClasses[tone]}`}>{value}</p>
