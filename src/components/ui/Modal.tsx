@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 interface ModalProps {
   isOpen: boolean
@@ -17,19 +17,26 @@ const sizeClasses = {
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+  const initialFocusRef = useRef(false)
 
-  const handleBackdropClick = useCallback(() => {
-    onClose()
-  }, [onClose])
+  onCloseRef.current = onClose
+
+  useEffect(() => {
+    if (!isOpen) {
+      initialFocusRef.current = false
+      return
+    }
+
+    previousFocusRef.current = document.activeElement as HTMLElement
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
 
-    previousFocusRef.current = document.activeElement as HTMLElement
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
 
@@ -59,19 +66,21 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     document.addEventListener('keydown', handleKeyDown)
     document.body.style.overflow = 'hidden'
 
-    requestAnimationFrame(() => {
-      const focusable = contentRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-      focusable?.[0]?.focus()
-    })
-
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = ''
       previousFocusRef.current?.focus()
     }
-  }, [isOpen, onClose])
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || initialFocusRef.current) return
+    initialFocusRef.current = true
+    requestAnimationFrame(() => {
+      const closeBtn = contentRef.current?.querySelector<HTMLElement>('[aria-label="Close"]')
+      closeBtn?.focus()
+    })
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -85,7 +94,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
         data-modal-backdrop
-        onClick={handleBackdropClick}
+        onClick={() => onCloseRef.current()}
       />
       <div
         ref={contentRef}
@@ -96,7 +105,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200/50 dark:border-surface-800/50">
               <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{title}</h2>
               <button
-                onClick={onClose}
+                onClick={() => onCloseRef.current()}
                 aria-label="Close"
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
               >
