@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '../components/ui/Card'
-import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
@@ -14,7 +13,7 @@ import { TableSkeleton } from '../components/ui/Skeleton'
 import { Pagination } from '../components/ui/Pagination'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
-import { SortableHeader, type SortState } from '../components/ui/SortableHeader'
+import { SortableHeader } from '../components/ui/SortableHeader'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { IconCommands, IconZap } from '../components/ui/Icons'
@@ -28,6 +27,8 @@ import {
   useDeleteCommand,
 } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
+import { TagBadge } from '../components/ui/TagBadge'
+import { useSort } from '../hooks/useSort'
 import type { Command, CommandCreate, CommandUpdate } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 import { ParameterEditor } from '../components/commands/CommandFormEditor'
@@ -49,7 +50,7 @@ export function Commands() {
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [sort, setSort] = useState<SortState<SortKey> | null>(null)
+  const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
   const { data: commandsData, isLoading } = useCommands({
@@ -87,14 +88,6 @@ export function Commands() {
       })
     : commands
 
-  const toggleSort = (key: SortKey) => {
-    setSort((prev) => {
-      if (!prev || prev.key !== key) return { key, dir: 'asc' }
-      if (prev.dir === 'asc') return { key, dir: 'desc' }
-      return null
-    })
-  }
-
   const openCreate = () => {
     createForm.reset({ name: '', command: '', description: '', tags: [], parameters: [] })
     setShowCreateModal(true)
@@ -112,7 +105,7 @@ export function Commands() {
           name: p.name,
           type: p.type,
           required: p.required,
-          default: p.default ?? '',
+          default: typeof p.default === 'string' || typeof p.default === 'number' || typeof p.default === 'boolean' ? p.default : '',
           description: p.description ?? '',
         })) ?? [],
     })
@@ -194,9 +187,7 @@ export function Commands() {
       render: (cmd) => (
         <div className="flex flex-wrap gap-1">
           {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-            <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
-              <Badge variant="default">{tag}</Badge>
-            </button>
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -235,9 +226,7 @@ export function Commands() {
       </div>
       <div className="flex flex-wrap gap-1">
         {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-          <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
-            <Badge variant="default">{tag}</Badge>
-          </button>
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">

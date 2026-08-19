@@ -35,7 +35,12 @@ export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteBu
   }
 
   return (
-    <button onClick={toggle} className={`${buttonClasses} rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors`} title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}>
+    <button
+      onClick={toggle}
+      aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+      aria-pressed={isFavorited}
+      className={`${buttonClasses} rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors`}
+    >
       {isFavorited ? <IconStarFilled className={`${sizeClasses} text-yellow-500`} /> : <IconStar className={`${sizeClasses} text-surface-400`} />}
     </button>
   )

@@ -29,8 +29,8 @@ export function ThemeToggle() {
   return (
     <button
       onClick={cycleTheme}
+      aria-label={t('settings.themeTitle', { theme: themeLabels[theme] })}
       className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-colors cursor-pointer"
-      title={t('settings.themeTitle', { theme: themeLabels[theme] })}
     >
       {icons[theme]}
       <span className="hidden sm:inline">{themeLabels[theme]}</span>

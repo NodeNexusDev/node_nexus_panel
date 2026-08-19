@@ -19,7 +19,7 @@ test.describe('Theme', () => {
     await page.waitForFunction(() => document.documentElement.classList.contains('light'), null, { timeout: 10000 })
 
     const html = page.locator('html')
-    const themeToggle = page.locator('button[title*="Theme"]').first()
+    const themeToggle = page.locator('button[aria-label*="Theme"]').first()
     await expect(themeToggle).toBeVisible()
 
     // light → system
@@ -37,7 +37,7 @@ test.describe('Theme', () => {
     await page.goto('/')
     await page.waitForFunction(() => document.documentElement.classList.contains('light'), null, { timeout: 10000 })
 
-    const themeToggle = page.locator('button[title*="Theme"]').first()
+    const themeToggle = page.locator('button[aria-label*="Theme"]').first()
     await expect(themeToggle).toBeVisible()
 
     // light → system → dark

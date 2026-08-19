@@ -1,17 +1,6 @@
 import { render, type RenderOptions } from '@testing-library/react'
-import { QueryClient } from '@tanstack/react-query'
 import { TestProviders } from './TestProviders'
-
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-      },
-    },
-  })
-}
+import { createTestQueryClient } from './query-client'
 
 export function renderWithProviders(
   ui: React.ReactNode,

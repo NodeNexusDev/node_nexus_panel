@@ -1,11 +1,17 @@
 import type { ReactNode } from 'react'
 
+interface Trend {
+  value: number
+  direction: 'up' | 'down' | 'flat'
+}
+
 interface StatCardProps {
   label: string
   value: ReactNode
   icon?: ReactNode
   sub?: ReactNode
   tone?: 'default' | 'success' | 'danger' | 'warning' | 'info'
+  trend?: Trend
   className?: string
 }
 
@@ -17,14 +23,31 @@ const toneClasses: Record<NonNullable<StatCardProps['tone']>, string> = {
   info: 'text-blue-600 dark:text-blue-400',
 }
 
-export function StatCard({ label, value, icon, sub, tone = 'default', className = '' }: StatCardProps) {
+const trendColors: Record<Trend['direction'], string> = {
+  up: 'text-green-600 dark:text-green-400',
+  down: 'text-red-500 dark:text-red-400',
+  flat: 'text-surface-400 dark:text-surface-500',
+}
+
+const trendIcons: Record<Trend['direction'], string> = {
+  up: '\u2191',
+  down: '\u2193',
+  flat: '\u2014',
+}
+
+export function StatCard({ label, value, icon, sub, tone = 'default', trend, className = '' }: StatCardProps) {
   return (
-    <div className={`text-center p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg ${className}`}>
+    <div className={`text-center p-4 rounded-lg ${className}`}>
       <div className="flex items-center justify-center gap-1.5">
         {icon && <span className="text-surface-400 dark:text-surface-500">{icon}</span>}
         <p className={`text-2xl font-bold ${toneClasses[tone]}`}>{value}</p>
       </div>
       <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">{label}</p>
+      {trend && (
+        <p className={`text-xs font-medium mt-0.5 ${trendColors[trend.direction]}`}>
+          {trendIcons[trend.direction]} {trend.direction !== 'flat' ? `${Math.abs(trend.value)}%` : ''}
+        </p>
+      )}
       {sub && <p className="text-xs text-surface-400 dark:text-surface-500 mt-0.5">{sub}</p>}
     </div>
   )

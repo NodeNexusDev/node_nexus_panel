@@ -64,3 +64,22 @@ export function FormSkeleton({ fields = 3 }: { fields?: number }) {
     </div>
   )
 }
+
+export function MetricsChartSkeleton({ className = '' }: { className?: string }) {
+  return (
+    <div className={`space-y-3 ${className}`}>
+      <div className="flex items-end gap-1" style={{ height: 120 }}>
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div key={i} className="flex-1 flex flex-col gap-0.5">
+            <Skeleton variant="rectangular" className="w-full flex-1 rounded-t" />
+            <Skeleton variant="rectangular" className="w-full h-3 rounded-b" />
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center gap-4">
+        <Skeleton variant="text" className="w-16 h-3" />
+        <Skeleton variant="text" className="w-16 h-3" />
+      </div>
+    </div>
+  )
+}

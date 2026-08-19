@@ -14,7 +14,7 @@ import { Pagination } from '../components/ui/Pagination'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
-import { SortableHeader, type SortState } from '../components/ui/SortableHeader'
+import { SortableHeader } from '../components/ui/SortableHeader'
 import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
@@ -45,6 +45,8 @@ import {
   useValidateCredentials,
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
+import { useSort } from '../hooks/useSort'
+import { TagBadge } from '../components/ui/TagBadge'
 import { nodeStatusVariant } from '../lib/variants'
 import type { Node, NodeStatus } from '../api/types'
 import type { Column } from '../components/ui/table-types'
@@ -68,7 +70,7 @@ export function Nodes() {
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [tagFilter, setTagFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [sort, setSort] = useState<SortState<SortKey> | null>(null)
+  const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
   const { data, isLoading } = useNodes({
@@ -91,9 +93,9 @@ export function Nodes() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Node | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const defaultNode = { name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', docker_host: '', tags: '' }
+  const defaultNode = { name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' }
   const [newNode, setNewNode] = useState(defaultNode)
-  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', docker_host: '', tags: '' })
+  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' })
 
   const [execTarget, setExecTarget] = useState<Node | null>(null)
   const [scriptTarget, setScriptTarget] = useState<Node | null>(null)
@@ -121,14 +123,6 @@ export function Nodes() {
       })
     : nodes
 
-  const toggleSort = (key: SortKey) => {
-    setSort((prev) => {
-      if (!prev || prev.key !== key) return { key, dir: 'asc' }
-      if (prev.dir === 'asc') return { key, dir: 'desc' }
-      return null
-    })
-  }
-
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
   }
@@ -147,6 +141,7 @@ export function Nodes() {
       username: node.username || '',
       password: '',
       ssh_key: '',
+      passphrase: '',
       docker_host: node.docker_host || '',
       tags: node.tags.join(', '),
     })
@@ -156,7 +151,7 @@ export function Nodes() {
     setValidateTarget(node)
     setValidateResult(null)
     validateCreds.mutate(
-      { host: node.host, port: node.port, connection_type: node.connection_type, username: node.username || undefined },
+      { host: node.host, port: node.port, connection_type: node.connection_type, username: node.username || undefined, passphrase: undefined },
       { onSuccess: (r) => setValidateResult(r), onError: () => toast('error', t('nodes.toastValidateFailed')) },
     )
   }
@@ -239,9 +234,7 @@ export function Nodes() {
       render: (node) => (
         <div className="flex flex-wrap gap-1">
           {node.tags.length > 0 ? node.tags.map((tag) => (
-            <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
-              <Badge variant="default">{tag}</Badge>
-            </button>
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -291,9 +284,7 @@ export function Nodes() {
       </div>
       <div className="flex flex-wrap gap-1">
         {node.tags.length > 0 ? node.tags.map((tag) => (
-          <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
-            <Badge variant="default">{tag}</Badge>
-          </button>
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
@@ -319,6 +310,7 @@ export function Nodes() {
         username: newNode.username || undefined,
         password: newNode.password || undefined,
         ssh_key: newNode.ssh_key || undefined,
+        passphrase: newNode.passphrase || undefined,
         docker_host: newNode.docker_host || undefined,
         tags: newNode.tags ? newNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
       },
@@ -342,6 +334,7 @@ export function Nodes() {
           username: editNode.username || undefined,
           password: editNode.password || undefined,
           ssh_key: editNode.ssh_key || undefined,
+          passphrase: editNode.passphrase || undefined,
           docker_host: editNode.docker_host || undefined,
           tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
@@ -416,7 +409,7 @@ export function Nodes() {
               <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
                 bulkCheck.mutate(selectedIds, {
                   onSuccess: () => { toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
-                  onError: () => toast('error', t('nodes.toastBulkCheckDone')),
+                  onError: () => toast('error', t('nodes.toastBulkCheckFailed')),
                 })
               }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('nodes.bulkDelete', 'Bulk Delete')}</Button>
@@ -469,6 +462,7 @@ export function Nodes() {
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
             <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" value={newNode.ssh_key} onChange={(e) => setNewNode({ ...newNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
           </div>
+          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder="••••••" value={newNode.passphrase} onChange={(e) => setNewNode({ ...newNode, passphrase: e.target.value })} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={newNode.docker_host} onChange={(e) => setNewNode({ ...newNode, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={newNode.tags} onChange={(e) => setNewNode({ ...newNode, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
@@ -499,6 +493,7 @@ export function Nodes() {
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
             <textarea placeholder={t('common.leaveBlank')} value={editNode.ssh_key} onChange={(e) => setEditNode({ ...editNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
           </div>
+          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder={t('common.leaveBlank')} value={editNode.passphrase} onChange={(e) => setEditNode({ ...editNode, passphrase: e.target.value })} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={editNode.docker_host} onChange={(e) => setEditNode({ ...editNode, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={editNode.tags} onChange={(e) => setEditNode({ ...editNode, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
@@ -534,12 +529,12 @@ export function Nodes() {
           <Input label={t('nodes.command')} placeholder="uptime" value={bulkExecCmd} onChange={(e) => setBulkExecCmd(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => { setShowBulkExec(false); setBulkExecCmd('') }}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (bulkExecCmd) { bulkExecuteNodes.mutate({ command: bulkExecCmd, node_ids: selectedIds }, { onSuccess: () => { toast('success', t('nodes.toastBulkExecDone')); setShowBulkExec(false); setBulkExecCmd(''); setSelectedIds([]) } }) } }} disabled={!bulkExecCmd || bulkExecuteNodes.isPending}>{t('nodes.execCommand')}</Button>
+            <Button onClick={() => { if (bulkExecCmd) { bulkExecuteNodes.mutate({ command: bulkExecCmd, node_ids: selectedIds }, { onSuccess: () => { toast('success', t('nodes.toastBulkExecDone')); setShowBulkExec(false); setBulkExecCmd(''); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastExecFailed')) }) } }} disabled={!bulkExecCmd || bulkExecuteNodes.isPending}>{t('nodes.execCommand')}</Button>
           </div>
         </div>
       </Modal>
 
-      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: () => { toast('success', t('nodes.toastBulkDeleteDone')); setShowBulkDelete(false); setSelectedIds([]) } }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
+      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: () => { toast('success', t('nodes.toastBulkDeleteDone')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('nodes.deleteTitle')} message={t('nodes.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteNode.isPending} />
 
@@ -560,7 +555,7 @@ function BulkTagsModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds, onDo
         <Input label={t('nodes.tag')} placeholder="new-tag" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} />
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsAdd.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsAdded')); onDone() } }) } }} disabled={!bulkTag || !selectedIds.length || bulkTagsAdd.isPending}>{t('nodes.addTag')}</Button>
+          <Button onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsAdd.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsAdded')); onDone() }, onError: () => toast('error', t('nodes.toastBulkTagsFailed')) }) } }} disabled={!bulkTag || !selectedIds.length || bulkTagsAdd.isPending}>{t('nodes.addTag')}</Button>
         </div>
       </div>
     </Modal>
@@ -578,7 +573,7 @@ function BulkTagsRemoveModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds
         <div className="flex justify-end gap-3 pt-2">
           <Button
             variant="danger"
-            onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsRemove.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsRemoved', 'Tags removed')); onDone() } }) } }}
+            onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsRemove.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsRemoved', 'Tags removed')); onDone() }, onError: () => toast('error', t('nodes.toastBulkTagsRemoveFailed')) }) } }}
             disabled={!bulkTag || !selectedIds.length || bulkTagsRemove.isPending}
           >
             {t('nodes.removeTag', 'Remove Tag')}

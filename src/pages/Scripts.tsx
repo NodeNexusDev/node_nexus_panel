@@ -13,7 +13,7 @@ import { TableSkeleton } from '../components/ui/Skeleton'
 import { Pagination } from '../components/ui/Pagination'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
-import { SortableHeader, type SortState } from '../components/ui/SortableHeader'
+import { SortableHeader } from '../components/ui/SortableHeader'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { IconScripts } from '../components/ui/Icons'
@@ -32,6 +32,8 @@ import {
 } from '../hooks/useScripts'
 import { useNodes } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
+import { TagBadge } from '../components/ui/TagBadge'
+import { useSort } from '../hooks/useSort'
 import type { Script } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 
@@ -49,7 +51,7 @@ export function Scripts() {
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [sort, setSort] = useState<SortState<SortKey> | null>(null)
+  const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
   const { data, isLoading } = useScripts({ page, size: pageSize, search: search || undefined, tag: tagFilter || undefined })
@@ -88,14 +90,6 @@ export function Scripts() {
         return (typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv))) * dir
       })
     : scripts
-
-  const toggleSort = (key: SortKey) => {
-    setSort((prev) => {
-      if (!prev || prev.key !== key) return { key, dir: 'asc' }
-      if (prev.dir === 'asc') return { key, dir: 'desc' }
-      return null
-    })
-  }
 
   const handleDelete = () => {
     if (!deleteTarget) return
@@ -166,9 +160,7 @@ export function Scripts() {
       render: (script) => (
         <div className="flex flex-wrap gap-1">
           {script.tags.length > 0 ? script.tags.map((tag) => (
-            <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
-              <Badge variant="default">{tag}</Badge>
-            </button>
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -204,9 +196,7 @@ export function Scripts() {
       </div>
       <div className="flex flex-wrap gap-1">
         {script.tags.length > 0 ? script.tags.map((tag) => (
-          <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
-            <Badge variant="default">{tag}</Badge>
-          </button>
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">

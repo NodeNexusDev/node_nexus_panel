@@ -7,7 +7,7 @@ export const commandParameterSchema = z.object({
   description: z.string().max(500).nullable().optional(),
   type: z.enum(PARAMETER_TYPES).default('string'),
   required: z.boolean().default(true),
-  default: z.any().optional(),
+  default: z.string().or(z.number()).or(z.boolean()).or(z.null()).default(''),
 })
 
 export const commandCreateSchema = z.object({

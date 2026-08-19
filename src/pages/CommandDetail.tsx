@@ -64,7 +64,7 @@ export function CommandDetail() {
           name: p.name,
           type: p.type,
           required: p.required,
-          default: p.default ?? '',
+          default: typeof p.default === 'string' || typeof p.default === 'number' || typeof p.default === 'boolean' ? p.default : '',
           description: p.description ?? '',
         })) ?? [],
     })
