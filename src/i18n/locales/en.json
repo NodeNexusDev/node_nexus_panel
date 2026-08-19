@@ -372,7 +372,16 @@
     "toastTagFailed": "Failed to tag image",
     "toastBuildFailed": "Failed to build image",
     "toastPullFailed": "Failed to pull image",
-    "toastBulkExecFailed": "Bulk exec failed"
+    "toastBulkExecFailed": "Bulk exec failed",
+    "failedToLoadContainers": "Failed to load containers",
+    "failedToLoadImages": "Failed to load images",
+    "failedToLoadNetworks": "Failed to load networks",
+    "failedToLoadVolumes": "Failed to load volumes",
+    "searchContainers": "Search by name or image...",
+    "all": "All",
+    "running": "Running",
+    "stopped": "Stopped",
+    "noMatch": "No containers match the current filters"
   },
   "audit": {
     "title": "Audit",

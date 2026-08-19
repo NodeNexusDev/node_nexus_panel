@@ -19,7 +19,7 @@ export function useDockerContainers(nodeId: string, all?: boolean) {
     queryKey: ['docker', nodeId, 'containers', all],
     queryFn: () => dockerApi.getContainers(nodeId, { all }),
     enabled: !!nodeId,
-    refetchInterval: 15_000,
+    refetchInterval: 60_000,
   })
 }
 
@@ -28,7 +28,7 @@ export function useDockerImages(nodeId: string) {
     queryKey: ['docker', nodeId, 'images'],
     queryFn: () => dockerApi.getImages(nodeId),
     enabled: !!nodeId,
-    refetchInterval: 15_000,
+    refetchInterval: 60_000,
   })
 }
 
@@ -37,7 +37,7 @@ export function useDockerNetworks(nodeId: string) {
     queryKey: ['docker', nodeId, 'networks'],
     queryFn: () => dockerApi.getNetworks(nodeId),
     enabled: !!nodeId,
-    refetchInterval: 15_000,
+    refetchInterval: 60_000,
   })
 }
 
@@ -46,7 +46,7 @@ export function useDockerVolumes(nodeId: string) {
     queryKey: ['docker', nodeId, 'volumes'],
     queryFn: () => dockerApi.getVolumes(nodeId),
     enabled: !!nodeId,
-    refetchInterval: 15_000,
+    refetchInterval: 60_000,
   })
 }
 

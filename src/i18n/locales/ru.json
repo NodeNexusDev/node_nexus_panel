@@ -372,7 +372,16 @@
     "toastTagFailed": "Не удалось добавить тег к образу",
     "toastBuildFailed": "Не удалось собрать образ",
     "toastPullFailed": "Не удалось скачать образ",
-    "toastBulkExecFailed": "Массовое выполнение не удалось"
+    "toastBulkExecFailed": "Массовое выполнение не удалось",
+    "failedToLoadContainers": "Не удалось загрузить контейнеры",
+    "failedToLoadImages": "Не удалось загрузить образы",
+    "failedToLoadNetworks": "Не удалось загрузить сети",
+    "failedToLoadVolumes": "Не удалось загрузить тома",
+    "searchContainers": "Поиск по имени или образу...",
+    "all": "Все",
+    "running": "Работает",
+    "stopped": "Остановлен",
+    "noMatch": "Нет контейнеров, соответствующих текущим фильтрам"
   },
   "audit": {
     "title": "Аудит",
