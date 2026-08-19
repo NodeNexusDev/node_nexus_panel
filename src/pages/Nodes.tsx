@@ -14,7 +14,7 @@ import { Pagination } from '../components/ui/Pagination'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
-import { SortableHeader, type SortState } from '../components/ui/SortableHeader'
+import { SortableHeader } from '../components/ui/SortableHeader'
 import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
@@ -45,6 +45,8 @@ import {
   useValidateCredentials,
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
+import { useSort } from '../hooks/useSort'
+import { TagBadge } from '../components/ui/TagBadge'
 import { nodeStatusVariant } from '../lib/variants'
 import type { Node, NodeStatus } from '../api/types'
 import type { Column } from '../components/ui/table-types'
@@ -68,7 +70,7 @@ export function Nodes() {
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [tagFilter, setTagFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [sort, setSort] = useState<SortState<SortKey> | null>(null)
+  const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
   const { data, isLoading } = useNodes({
@@ -120,14 +122,6 @@ export function Nodes() {
         return av.localeCompare(bv) * dir
       })
     : nodes
-
-  const toggleSort = (key: SortKey) => {
-    setSort((prev) => {
-      if (!prev || prev.key !== key) return { key, dir: 'asc' }
-      if (prev.dir === 'asc') return { key, dir: 'desc' }
-      return null
-    })
-  }
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
@@ -239,9 +233,7 @@ export function Nodes() {
       render: (node) => (
         <div className="flex flex-wrap gap-1">
           {node.tags.length > 0 ? node.tags.map((tag) => (
-            <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
-              <Badge variant="default">{tag}</Badge>
-            </button>
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -291,9 +283,7 @@ export function Nodes() {
       </div>
       <div className="flex flex-wrap gap-1">
         {node.tags.length > 0 ? node.tags.map((tag) => (
-          <button key={tag} type="button" onClick={(e) => { e.stopPropagation(); setTagFilter(tag) }} title={t('common.filterByTag')} className="cursor-pointer transition-opacity hover:opacity-75">
-            <Badge variant="default">{tag}</Badge>
-          </button>
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
