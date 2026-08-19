@@ -82,6 +82,7 @@
     "connectionType": "Тип подключения",
     "port": "Порт",
     "username": "Имя пользователя",
+    "passphrase": "Фраза-пароль",
     "dockerHost": "Docker хост",
     "stats": "Статистика",
     "statusHistory": "История статусов",

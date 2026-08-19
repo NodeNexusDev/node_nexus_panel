@@ -82,6 +82,7 @@
     "connectionType": "Connection Type",
     "port": "Port",
     "username": "Username",
+    "passphrase": "Passphrase",
     "dockerHost": "Docker Host",
     "stats": "Stats",
     "statusHistory": "Status History",

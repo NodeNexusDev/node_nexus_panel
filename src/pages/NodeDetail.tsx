@@ -101,6 +101,7 @@ export function NodeDetail() {
       port: node?.port,
       connection_type: node?.connection_type,
       username: node?.username ?? null,
+      passphrase: null,
       docker_host: node?.docker_host ?? null,
       tags: node?.tags,
     },
@@ -115,6 +116,7 @@ export function NodeDetail() {
       username: node?.username ?? null,
       password: null,
       ssh_key: null,
+      passphrase: null,
       docker_host: node?.docker_host ?? null,
       tags: node?.tags,
     })
@@ -284,6 +286,7 @@ export function NodeDetail() {
             <textarea {...register('ssh_key')} placeholder={t('common.leaveBlank')} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
             {errors.ssh_key && <p className="text-xs text-red-500 mt-1">{errors.ssh_key.message}</p>}
           </div>
+          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder={t('common.leaveBlank')} {...register('passphrase')} error={errors.passphrase?.message} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...register('docker_host')} error={errors.docker_host?.message} />
           <Controller
             name="tags"
@@ -499,7 +502,7 @@ function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: strin
               <div key={item.id} className="flex items-center justify-between px-6 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-mono text-surface-900 dark:text-white truncate">{item.command_fingerprint}</p>
-                  <p className="text-xs text-surface-500">{item.node_id || '—'} · {new Date(item.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-surface-500">{new Date(item.created_at).toLocaleString()}</p>
                   <Badge variant={item.exit_code === 0 ? 'success' : 'danger'}>exit {item.exit_code}</Badge>
                 </div>
                 <div className="flex items-center gap-1 ml-2">

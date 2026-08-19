@@ -43,7 +43,7 @@ export const nodesApi = {
     api.delete<void>(`/nodes/${id}`),
 
   check: (id: string) =>
-    api.post<void>(`/nodes/${id}/check`),
+    api.post<Node>(`/nodes/${id}/check`),
 
   getMetrics: (id: string) =>
     api.get<NodeMetrics>(`/nodes/${id}/metrics`),
@@ -69,10 +69,10 @@ export const nodesApi = {
     api.delete<Node>(`/nodes/${id}/tags`, { body: { tag } }),
 
   bulkDelete: (nodeIds: string[]) =>
-    api.post<void>('/nodes/bulk/delete', { node_ids: nodeIds }),
+    api.post<BulkNodeOperationResult>('/nodes/bulk/delete', { node_ids: nodeIds }),
 
   bulkCheck: (nodeIds: string[]) =>
-    api.post<void>('/nodes/bulk/check', { node_ids: nodeIds }),
+    api.post<BulkNodeOperationResult>('/nodes/bulk/check', { node_ids: nodeIds }),
 
   bulkExecute: (data: { command: string; node_ids?: string[]; tags?: string[] }) =>
     api.post<BulkCommandResult>('/nodes/bulk/execute', data),

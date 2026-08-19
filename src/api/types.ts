@@ -30,6 +30,7 @@ export interface NodeCreate {
   username?: string | null
   password?: string | null
   ssh_key?: string | null
+  passphrase?: string | null
   docker_host?: string | null
   tags?: string[]
 }
@@ -43,6 +44,7 @@ export interface NodeUpdate {
   username?: string | null
   password?: string | null
   ssh_key?: string | null
+  passphrase?: string | null
   docker_host?: string | null
   tags?: string[]
 }
@@ -275,6 +277,7 @@ export interface NodeValidateRequest {
   username?: string | null
   password?: string | null
   ssh_key?: string | null
+  passphrase?: string | null
 }
 
 export interface NodeValidateResponse {
@@ -739,7 +742,6 @@ export interface ScriptExecutionBatchResult {
 
 export interface CommandHistoryResponse {
   id: string
-  node_id: string | null
   command_fingerprint: string
   exit_code: number
   stdout: string

@@ -93,9 +93,9 @@ export function Nodes() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Node | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const defaultNode = { name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', docker_host: '', tags: '' }
+  const defaultNode = { name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' }
   const [newNode, setNewNode] = useState(defaultNode)
-  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', docker_host: '', tags: '' })
+  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' })
 
   const [execTarget, setExecTarget] = useState<Node | null>(null)
   const [scriptTarget, setScriptTarget] = useState<Node | null>(null)
@@ -141,6 +141,7 @@ export function Nodes() {
       username: node.username || '',
       password: '',
       ssh_key: '',
+      passphrase: '',
       docker_host: node.docker_host || '',
       tags: node.tags.join(', '),
     })
@@ -150,7 +151,7 @@ export function Nodes() {
     setValidateTarget(node)
     setValidateResult(null)
     validateCreds.mutate(
-      { host: node.host, port: node.port, connection_type: node.connection_type, username: node.username || undefined },
+      { host: node.host, port: node.port, connection_type: node.connection_type, username: node.username || undefined, passphrase: undefined },
       { onSuccess: (r) => setValidateResult(r), onError: () => toast('error', t('nodes.toastValidateFailed')) },
     )
   }
@@ -309,6 +310,7 @@ export function Nodes() {
         username: newNode.username || undefined,
         password: newNode.password || undefined,
         ssh_key: newNode.ssh_key || undefined,
+        passphrase: newNode.passphrase || undefined,
         docker_host: newNode.docker_host || undefined,
         tags: newNode.tags ? newNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
       },
@@ -332,6 +334,7 @@ export function Nodes() {
           username: editNode.username || undefined,
           password: editNode.password || undefined,
           ssh_key: editNode.ssh_key || undefined,
+          passphrase: editNode.passphrase || undefined,
           docker_host: editNode.docker_host || undefined,
           tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
@@ -459,6 +462,7 @@ export function Nodes() {
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
             <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" value={newNode.ssh_key} onChange={(e) => setNewNode({ ...newNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
           </div>
+          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder="••••••" value={newNode.passphrase} onChange={(e) => setNewNode({ ...newNode, passphrase: e.target.value })} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={newNode.docker_host} onChange={(e) => setNewNode({ ...newNode, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={newNode.tags} onChange={(e) => setNewNode({ ...newNode, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
@@ -489,6 +493,7 @@ export function Nodes() {
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
             <textarea placeholder={t('common.leaveBlank')} value={editNode.ssh_key} onChange={(e) => setEditNode({ ...editNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
           </div>
+          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder={t('common.leaveBlank')} value={editNode.passphrase} onChange={(e) => setEditNode({ ...editNode, passphrase: e.target.value })} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={editNode.docker_host} onChange={(e) => setEditNode({ ...editNode, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={editNode.tags} onChange={(e) => setEditNode({ ...editNode, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
