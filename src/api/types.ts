@@ -325,7 +325,7 @@ export interface ScriptExecutionResponse {
   node_id: string | null
   params: Record<string, unknown> | null
   status: string
-  steps: Record<string, unknown>[] | null
+  steps: ScriptStepResult[] | null
   started_at: string
   finished_at: string | null
 }
@@ -610,7 +610,7 @@ export interface CommandExport {
   name: string
   command: string
   description?: string | null
-  parameters?: Record<string, unknown>[] | null
+  parameters?: CommandParameter[] | null
   tags?: string[]
 }
 

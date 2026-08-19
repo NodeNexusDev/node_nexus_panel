@@ -1,25 +1,16 @@
 import type { ReactNode } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../i18n'
 import { ToastProvider } from '../components/ui/Toast'
+import { createTestQueryClient } from './query-client'
+import type { QueryClient } from '@tanstack/react-query'
 
 interface TestProvidersProps {
   children: ReactNode
   initialEntries?: string[]
   queryClient?: QueryClient
-}
-
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-      },
-    },
-  })
 }
 
 export function TestProviders({ children, initialEntries = ['/'], queryClient }: TestProvidersProps) {

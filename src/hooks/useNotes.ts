@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { notesApi } from '../api/notes'
 import type { Note, NoteCreate, NoteUpdate } from '../api/types'
 
+const NOTES_KEY = 'notes' as const
+
 export function useNotes(targetType: string, targetId: string) {
   return useQuery<Note[]>({
-    queryKey: ['notes', targetType, targetId],
+    queryKey: [NOTES_KEY, targetType, targetId],
     queryFn: () => notesApi.get(targetType, targetId),
     enabled: !!targetType && !!targetId,
   })
@@ -24,7 +26,7 @@ export function useCreateNote() {
       data: NoteCreate
     }) => notesApi.create(targetType, targetId, data),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['notes', variables.targetType, variables.targetId] })
+      queryClient.invalidateQueries({ queryKey: [NOTES_KEY, variables.targetType, variables.targetId] })
     },
   })
 }
@@ -36,7 +38,7 @@ export function useUpdateNote() {
     mutationFn: ({ noteId, data }: { noteId: string; data: NoteUpdate }) =>
       notesApi.update(noteId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] })
+      queryClient.invalidateQueries({ queryKey: [NOTES_KEY] })
     },
   })
 }
@@ -47,7 +49,7 @@ export function useDeleteNote() {
   return useMutation({
     mutationFn: (noteId: string) => notesApi.remove(noteId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] })
+      queryClient.invalidateQueries({ queryKey: [NOTES_KEY] })
     },
   })
 }
