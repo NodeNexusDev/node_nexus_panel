@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
+import { Spinner } from '../ui/Spinner'
 import { useNodes } from '../../hooks/useNodes'
 import { useExecuteCommand } from '../../hooks/useCommands'
 import { useToast } from '../ui/useToast'
 import { getDefaultParams } from './command-form-utils'
 import { CommandParamInputs } from './CommandParamInputs'
-import type { Command } from '../../api/types'
+import { ExecutionResult } from './ExecutionResult'
+import type { Command, CommandResult } from '../../api/types'
 
 interface CommandExecuteModalProps {
   command: Command | null
@@ -23,11 +25,13 @@ export function CommandExecuteModal({ command, onClose }: CommandExecuteModalPro
 
   const [selectedNode, setSelectedNode] = useState('')
   const [commandParams, setCommandParams] = useState<Record<string, unknown>>({})
+  const [result, setResult] = useState<CommandResult | null>(null)
 
   useEffect(() => {
     if (command) {
       setCommandParams(getDefaultParams(command.parameters))
       setSelectedNode('')
+      setResult(null)
     }
   }, [command])
 
@@ -44,10 +48,10 @@ export function CommandExecuteModal({ command, onClose }: CommandExecuteModalPro
     executeCommand.mutate(
       { id: command.id, data: { node_id: selectedNode, params: Object.keys(params).length > 0 ? params : undefined } },
       {
-        onSuccess: () => {
+        onSuccess: (res) => {
           const target = nodes.find((n) => n.id === selectedNode)?.name ?? selectedNode
           toast('success', t('commands.toastExecuted', { target }))
-          onClose()
+          setResult(res)
         },
         onError: () => toast('error', t('commands.toastFailed')),
       },
@@ -59,28 +63,41 @@ export function CommandExecuteModal({ command, onClose }: CommandExecuteModalPro
       isOpen={!!command}
       onClose={onClose}
       title={command ? `${t('commands.execute')}: ${command.name}` : t('commands.execute')}
+      size="lg"
     >
-      <div className="space-y-4">
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('commands.selectNode')}</label>
-          <select value={selectedNode} onChange={(e) => setSelectedNode(e.target.value)} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-            <option value="">{t('commands.selectNode')}</option>
-            {nodes.map((node) => (<option key={node.id} value={node.id}>{node.name}</option>))}
-          </select>
-        </div>
-        {command && command.parameters && command.parameters.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-surface-600 dark:text-surface-400">{t('commands.parameters', 'Parameters')}</p>
-            <CommandParamInputs parameters={command.parameters} values={commandParams} onChange={(name, value) => setCommandParams((prev) => ({ ...prev, [name]: value }))} />
+      {result ? (
+        <div className="space-y-4">
+          <ExecutionResult stdout={result.stdout} stderr={result.stderr} exitCode={result.exit_code} />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={onClose}>{t('common.close')}</Button>
+            <Button onClick={() => setResult(null)}>{t('commands.executeAgain')}</Button>
           </div>
-        )}
-        <div className="flex justify-end gap-3 pt-2">
-          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleExecute} disabled={!selectedNode || executeCommand.isPending}>
-            {executeCommand.isPending ? t('common.loading') : t('commands.execute')}
-          </Button>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('commands.selectNode')}</label>
+            <select value={selectedNode} onChange={(e) => setSelectedNode(e.target.value)} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+              <option value="">{t('commands.selectNode')}</option>
+              {nodes.map((node) => (<option key={node.id} value={node.id}>{node.name}</option>))}
+            </select>
+          </div>
+          {command && command.parameters && command.parameters.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-surface-600 dark:text-surface-400">{t('commands.parameters', 'Parameters')}</p>
+              <CommandParamInputs parameters={command.parameters} values={commandParams} onChange={(name, value) => setCommandParams((prev) => ({ ...prev, [name]: value }))} />
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+            <Button onClick={handleExecute} disabled={!selectedNode || executeCommand.isPending}>
+              {executeCommand.isPending ? (
+                <span className="flex items-center gap-2"><Spinner size="sm" /> {t('common.loading')}</span>
+              ) : t('commands.execute')}
+            </Button>
+          </div>
+        </div>
+      )}
     </Modal>
   )
 }

@@ -204,7 +204,12 @@
     "paramType": "Type",
     "paramRequired": "Required",
     "paramDefault": "Default value",
-    "paramDescription": "Description"
+    "paramDescription": "Description",
+    "exitCode": "Exit code",
+    "noOutput": "No output",
+    "executeAgain": "Execute again",
+    "result": "Result",
+    "commandExecuted": "Command executed"
   },
   "scripts": {
     "title": "Scripts",
