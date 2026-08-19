@@ -204,7 +204,12 @@
     "paramType": "Тип",
     "paramRequired": "Обязательный",
     "paramDefault": "Значение по умолчанию",
-    "paramDescription": "Описание"
+    "paramDescription": "Описание",
+    "exitCode": "Код выхода",
+    "noOutput": "Нет вывода",
+    "executeAgain": "Выполнить снова",
+    "result": "Результат",
+    "commandExecuted": "Команда выполнена"
   },
   "scripts": {
     "title": "Скрипты",

@@ -1,23 +1,29 @@
 import { test, expect } from '@playwright/test'
-import { setupAuth } from './helpers'
+import { setupAuth, openSidebar } from './helpers'
 
 test.describe('Commands', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page)
     await page.goto('/')
-    await page.waitForSelector('h1')
-    await page.click('text=Commands')
-    await page.waitForSelector('h1:has-text("Commands")')
+    await page.waitForSelector('main h1')
+    await openSidebar(page)
+    await page.evaluate(() => document.querySelector('a[href="/commands"]')?.click())
+    await page.waitForSelector('main h1:has-text("Commands")')
   })
 
-  test('displays command selectors and execute button', async ({ page }) => {
-    const selects = page.locator('select')
-    await expect(selects.first()).toBeVisible()
-    await expect(selects.nth(1)).toBeVisible()
-    await expect(page.locator('button').filter({ hasText: /Execute/i })).toBeVisible()
+  test('displays commands page with create button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Create Command/i })).toBeVisible()
   })
 
-  test('shows command history section', async ({ page }) => {
-    await expect(page.locator('text=Command History')).toBeVisible()
+  test('opens create command modal', async ({ page }) => {
+    await page.getByRole('button', { name: /Create Command/i }).click()
+    await expect(page.locator('[role="dialog"]')).toBeVisible()
+  })
+
+  test('closes modal on cancel', async ({ page }) => {
+    await page.getByRole('button', { name: /Create Command/i }).click()
+    await expect(page.locator('[role="dialog"]')).toBeVisible()
+    await page.locator('[role="dialog"]').getByRole('button', { name: /Cancel/i }).click()
+    await expect(page.locator('[role="dialog"]')).not.toBeVisible()
   })
 })

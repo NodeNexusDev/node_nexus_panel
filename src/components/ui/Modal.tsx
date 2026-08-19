@@ -89,7 +89,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       />
       <div
         ref={contentRef}
-        className={`relative w-full ${sizeClasses[size]} spring`}
+        className={`relative w-full ${sizeClasses[size]} spring max-h-[calc(100vh-2rem)] overflow-y-auto`}
       >
         <div className="bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800 rounded-2xl shadow-2xl overflow-hidden">
           {title && (

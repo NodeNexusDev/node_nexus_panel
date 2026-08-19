@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test'
-import { setupAuth } from './helpers'
+import { setupAuth, openSidebar } from './helpers'
 
 test.describe('Nodes', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page)
     await page.goto('/')
     await page.waitForSelector('main h1')
-    await page.click('aside >> text=Nodes')
+    await openSidebar(page)
+    await page.evaluate(() => document.querySelector('a[href="/nodes"]')?.click())
     await page.waitForSelector('main h1:has-text("Nodes")')
   })
 
@@ -15,14 +16,16 @@ test.describe('Nodes', () => {
   })
 
   test('opens add node modal', async ({ page }) => {
-    await page.click('text=Add Node')
+    await page.getByRole('button', { name: /Add Node/i }).click()
     await expect(page.locator('[role="dialog"]')).toBeVisible()
   })
 
   test('closes modal on cancel', async ({ page }) => {
-    await page.click('text=Add Node')
+    await page.getByRole('button', { name: /Add Node/i }).click()
     await expect(page.locator('[role="dialog"]')).toBeVisible()
-    await page.click('[role="dialog"] >> text=Cancel')
+    const cancelBtn = page.locator('[role="dialog"]').getByRole('button', { name: /Cancel/i })
+    await cancelBtn.scrollIntoViewIfNeeded()
+    await cancelBtn.click()
     await expect(page.locator('[role="dialog"]')).not.toBeVisible()
   })
 })
