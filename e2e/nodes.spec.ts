@@ -23,7 +23,9 @@ test.describe('Nodes', () => {
   test('closes modal on cancel', async ({ page }) => {
     await page.getByRole('button', { name: /Add Node/i }).click()
     await expect(page.locator('[role="dialog"]')).toBeVisible()
-    await page.locator('[role="dialog"]').getByRole('button', { name: /Cancel/i }).click()
+    const cancelBtn = page.locator('[role="dialog"]').getByRole('button', { name: /Cancel/i })
+    await cancelBtn.scrollIntoViewIfNeeded()
+    await cancelBtn.click()
     await expect(page.locator('[role="dialog"]')).not.toBeVisible()
   })
 })
