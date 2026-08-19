@@ -53,7 +53,6 @@ function ContainerStatusBadge({ state }: { state: string }) {
 
 function ContainerRow({
   container,
-  nodeId: _nodeId,
   onStart,
   onStop,
   onRestart,
@@ -67,7 +66,6 @@ function ContainerRow({
   onSelect,
 }: {
   container: DockerContainer
-  nodeId: string
   onStart: () => void
   onStop: () => void
   onRestart: () => void
@@ -210,7 +208,7 @@ function ContainersTab({ nodeId }: { nodeId: string }) {
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {containers.map((c) => (
-              <ContainerRow key={c.ID} container={c} nodeId={nodeId}
+              <ContainerRow key={c.ID} container={c}
                 onStart={() => startContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastStartFailed')) })}
                 onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastStopFailed')) })}
                 onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastRestartFailed')) })}
