@@ -463,19 +463,16 @@ body {
   background: rgba(99, 102, 241, 0.1);
 }
 
-/* Mini chart */
-.mini-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 40px;
-}
-
-.mini-chart-bar {
-  flex: 1;
-  border-radius: 2px 2px 0 0;
-  transition: height 0.3s ease;
-  min-width: 4px;
+/* Chart bar animation */
+@keyframes chart-bar-in {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 
 /* Timeline */

@@ -8,26 +8,39 @@ export const dashboardHandlers = [
     return HttpResponse.json(mockDashboard)
   }),
 
-  http.get(`${API_URL}/api/v1/dashboard/metrics`, () => {
+  http.get(`${API_URL}/api/v1/dashboard/metrics`, ({ request }) => {
+    const url = new URL(request.url)
+    const groupBy = url.searchParams.get('group_by') || 'day'
+
+    const genDays = (count: number) => {
+      const now = new Date('2026-01-15')
+      return Array.from({ length: count }, (_, i) => {
+        const d = new Date(now)
+        d.setDate(d.getDate() - (count - 1 - i))
+        return d.toISOString().slice(0, 10)
+      })
+    }
+
+    const periods = groupBy === 'month'
+      ? ['2025-10', '2025-11', '2025-12', '2026-01']
+      : groupBy === 'week'
+        ? ['2025-12-22', '2025-12-29', '2026-01-05', '2026-01-12']
+        : genDays(14)
+
+    const cmdBase = [8, 12, 6, 15, 10, 18, 14, 9, 20, 11, 16, 13, 7, 17]
+    const scrBase = [2, 3, 1, 4, 2, 5, 3, 1, 4, 2, 3, 2, 1, 3]
+
     return HttpResponse.json({
-      command_metrics: [
-        { period: '2026-01-09', total: 12, successful: 10, failed: 2, avg_duration_ms: 1200 },
-        { period: '2026-01-10', total: 15, successful: 14, failed: 1, avg_duration_ms: 980 },
-        { period: '2026-01-11', total: 8, successful: 8, failed: 0, avg_duration_ms: 1100 },
-        { period: '2026-01-12', total: 20, successful: 18, failed: 2, avg_duration_ms: 1500 },
-        { period: '2026-01-13', total: 14, successful: 13, failed: 1, avg_duration_ms: 890 },
-        { period: '2026-01-14', total: 18, successful: 17, failed: 1, avg_duration_ms: 1050 },
-        { period: '2026-01-15', total: 10, successful: 10, failed: 0, avg_duration_ms: 950 },
-      ],
-      script_metrics: [
-        { period: '2026-01-09', total: 3, successful: 3, failed: 0, avg_duration_ms: 5000 },
-        { period: '2026-01-10', total: 2, successful: 2, failed: 0, avg_duration_ms: 4500 },
-        { period: '2026-01-11', total: 4, successful: 3, failed: 1, avg_duration_ms: 6000 },
-        { period: '2026-01-12', total: 1, successful: 1, failed: 0, avg_duration_ms: 3000 },
-        { period: '2026-01-13', total: 3, successful: 3, failed: 0, avg_duration_ms: 5200 },
-        { period: '2026-01-14', total: 2, successful: 2, failed: 0, avg_duration_ms: 4800 },
-        { period: '2026-01-15', total: 2, successful: 2, failed: 0, avg_duration_ms: 4200 },
-      ],
+      command_metrics: periods.map((period, i) => {
+        const total = cmdBase[i % cmdBase.length] + Math.floor(Math.random() * 4)
+        const successful = total - Math.floor(Math.random() * 2)
+        return { period, total, successful, failed: total - successful, avg_duration_ms: 800 + Math.floor(Math.random() * 700) }
+      }),
+      script_metrics: periods.map((period, i) => {
+        const total = scrBase[i % scrBase.length] + Math.floor(Math.random() * 2)
+        const successful = total - (Math.random() > 0.8 ? 1 : 0)
+        return { period, total, successful, failed: total - successful, avg_duration_ms: 3000 + Math.floor(Math.random() * 3000) }
+      }),
     })
   }),
 ]
