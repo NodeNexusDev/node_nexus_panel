@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 
 interface TooltipProps {
   children: ReactNode
@@ -7,10 +7,16 @@ interface TooltipProps {
 }
 
 export function Tooltip({ children, content, position = 'top' }: TooltipProps) {
+  const tooltipId = useId()
+
   return (
     <div className="tooltip-container inline-flex">
-      {children}
-      <div className={`tooltip ${position === 'top' ? 'tooltip-top' : 'tooltip-bottom'}`}>
+      <div aria-describedby={tooltipId}>{children}</div>
+      <div
+        id={tooltipId}
+        role="tooltip"
+        className={`tooltip ${position === 'top' ? 'tooltip-top' : 'tooltip-bottom'}`}
+      >
         {content}
       </div>
     </div>

@@ -12,6 +12,8 @@ const sizeClasses = {
 export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   return (
     <svg
+      role="status"
+      aria-label="Loading"
       className={`animate-spin text-current ${sizeClasses[size]} ${className}`}
       fill="none"
       viewBox="0 0 24 24"

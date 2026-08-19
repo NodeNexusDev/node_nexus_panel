@@ -142,7 +142,7 @@ export function MainLayout() {
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" />
             <div>
-              <h1 className="text-xl font-bold gradient-text">NodeNexus</h1>
+              <p className="text-xl font-bold gradient-text">NodeNexus</p>
               <p className="text-xs text-surface-500 dark:text-surface-500">Panel v{APP_VERSION}</p>
             </div>
           </div>
@@ -178,6 +178,7 @@ export function MainLayout() {
         <header className="h-[84px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
             className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -189,6 +190,7 @@ export function MainLayout() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
+              aria-label={i18n.language === 'en' ? 'Switch to Russian' : 'Switch to English'}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
             >
               <IconGlobe className="w-4 h-4" />

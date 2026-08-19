@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
 import { Spinner } from './Spinner'
@@ -22,6 +22,8 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
   const [editTarget, setEditTarget] = useState<Note | null>(null)
   const [editContent, setEditContent] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Note | null>(null)
+  const editDialogRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
   const handleCreate = () => {
     createNote.mutate(
@@ -44,6 +46,45 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
       onSuccess: () => setDeleteTarget(null),
     })
   }
+
+  const closeEditDialog = useCallback(() => {
+    setEditTarget(null)
+  }, [])
+
+  useEffect(() => {
+    if (!editTarget) return
+    previousFocusRef.current = document.activeElement as HTMLElement
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeEditDialog()
+        return
+      }
+      if (e.key === 'Tab' && editDialogRef.current) {
+        const focusable = editDialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus() }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus() }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    requestAnimationFrame(() => {
+      editDialogRef.current?.querySelector<HTMLElement>('textarea')?.focus()
+    })
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      previousFocusRef.current?.focus()
+    }
+  }, [editTarget, closeEditDialog])
 
   if (isLoading) return <Spinner size="sm" className="my-4" />
 
@@ -84,7 +125,13 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
       </div>
 
       {editTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div
+          ref={editDialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('notes.editTitle')}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        >
           <div className="bg-white dark:bg-surface-900 rounded-xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-lg font-semibold mb-4">{t('notes.editTitle')}</h3>
             <textarea
@@ -94,7 +141,7 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
               className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white resize-none"
             />
             <div className="flex justify-end gap-3 mt-4">
-              <Button variant="ghost" onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
+              <Button variant="ghost" onClick={closeEditDialog}>{t('common.cancel')}</Button>
               <Button onClick={handleSaveEdit} disabled={updateNote.isPending}>{t('common.save')}</Button>
             </div>
           </div>
