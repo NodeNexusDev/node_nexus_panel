@@ -16,14 +16,14 @@ export function ResponsiveTable<T>({
   columns,
   renderMobileItem,
   keyExtractor,
-  emptyMessage = 'No data',
+  emptyMessage,
   className = '',
   onRowClick,
 }: ResponsiveTableProps<T>) {
   if (data.length === 0) {
     return (
       <div className="py-12 text-center text-sm text-surface-500 dark:text-surface-400">
-        {emptyMessage}
+        {emptyMessage || 'No data'}
       </div>
     )
   }

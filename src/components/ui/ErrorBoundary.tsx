@@ -35,7 +35,7 @@ class ErrorBoundaryBase extends Component<Props, State> {
 
       return (
         <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-          <IconWarning className="w-10 h-10 text-surface-400 dark:text-surface-500 mb-4" />
+          <IconWarning className="w-10 h-10 text-surface-400 dark:text-surface-300 mb-4" />
           <h3 className="text-lg font-medium text-surface-900 dark:text-white">{t('errorBoundary.title')}</h3>
           <p className="text-sm text-surface-500 dark:text-surface-400 mt-1 max-w-sm">
             {this.state.error?.message || t('errorBoundary.fallback')}
