@@ -2,7 +2,7 @@
 title: Testing
 status: stable
 translation_key: development.testing
-source_revision: 2026-08-16
+source_revision: 2026-08-20
 ---
 
 # Testing
@@ -75,16 +75,52 @@ describe('Button', () => {
 
 ## Mocking API
 
-MSW handlers are defined in `src/test/mocks/handlers.ts`.
+MSW handlers are organized by domain in `src/mocks/handlers/`.
+
+### Structure
+
+```
+src/mocks/
+├── index.ts              # MSW browser/node setup
+├── browser.ts            # Browser worker
+├── node.ts               # Node server
+├── data/                 # Mock data fixtures
+│   ├── nodes.ts
+│   ├── commands.ts
+│   ├── scripts.ts
+│   ├── dashboard.ts
+│   ├── docker.ts
+│   ├── audit.ts
+│   ├── api-keys.ts
+│   ├── favorites.ts
+│   └── notes.ts
+└── handlers/             # MSW request handlers
+    ├── index.ts          # Combines all handlers
+    ├── nodes.ts
+    ├── commands.ts
+    ├── scripts.ts
+    ├── dashboard.ts
+    ├── docker.ts
+    ├── audit.ts
+    ├── api-keys.ts
+    ├── config.ts
+    ├── events.ts
+    ├── favorites.ts
+    ├── notes.ts
+    ├── search.ts
+    └── tags.ts
+```
 
 ### Adding New Handlers
 
 ```typescript
+// src/mocks/handlers/nodes.ts
 import { http, HttpResponse } from 'msw'
+import { mockNodes } from '../data/nodes'
 
-export const handlers = [
-  http.get('http://localhost:8000/api/nodes', () => {
-    return HttpResponse.json({ data: [...], total: 1 })
+export const nodeHandlers = [
+  http.get(`${API_URL}/api/v1/nodes`, () => {
+    return HttpResponse.json({ data: mockNodes, total: mockNodes.length })
   }),
 ]
 ```
@@ -92,12 +128,12 @@ export const handlers = [
 ### Per-Test Overrides
 
 ```typescript
-import { server } from '../test/mocks/server'
+import { server } from '@/mocks/node'
 import { http, HttpResponse } from 'msw'
 
 it('handles error', async () => {
   server.use(
-    http.get('/api/nodes', () => {
+    http.get('/api/v1/nodes', () => {
       return new HttpResponse(null, { status: 500 })
     })
   )
@@ -109,8 +145,12 @@ it('handles error', async () => {
 
 ```
 src/test/
-├── setup.ts              # Global test setup
-└── mocks/
-    ├── handlers.ts       # MSW request handlers
-    └── server.ts         # MSW server setup
+└── setup.ts              # Global test setup
+
+src/mocks/
+├── index.ts              # MSW browser/node setup
+├── browser.ts            # Browser worker
+├── node.ts               # Node server
+├── data/                 # Mock data fixtures
+└── handlers/             # MSW request handlers
 ```

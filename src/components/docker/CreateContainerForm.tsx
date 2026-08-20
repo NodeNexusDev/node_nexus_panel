@@ -14,29 +14,32 @@ interface CreateContainerFormProps {
   onClose: () => void
 }
 
-const parsePorts = (value: string): Record<string, string> | undefined => {
+const parsePorts = (value: string): { result: Record<string, string> | undefined; skipped: string[] } => {
   const entries = value.split(',').map((p) => p.trim()).filter(Boolean)
-  if (entries.length === 0) return undefined
+  if (entries.length === 0) return { result: undefined, skipped: [] }
   const result: Record<string, string> = {}
+  const skipped: string[] = []
   for (const entry of entries) {
     const [host, container] = entry.split(':').map((s) => s.trim())
     if (host && container) result[`${container}/tcp`] = `${host}/tcp`
+    else skipped.push(entry)
   }
-  return Object.keys(result).length > 0 ? result : undefined
+  return { result: Object.keys(result).length > 0 ? result : undefined, skipped }
 }
 
-const parseVolumes = (value: string): Record<string, { bind: string; mode?: 'rw' | 'ro' }> | undefined => {
+const parseVolumes = (value: string): { result: Record<string, { bind: string; mode?: 'rw' | 'ro' }> | undefined; skipped: string[] } => {
   const entries = value.split(',').map((p) => p.trim()).filter(Boolean)
-  if (entries.length === 0) return undefined
+  if (entries.length === 0) return { result: undefined, skipped: [] }
   const result: Record<string, { bind: string; mode?: 'rw' | 'ro' }> = {}
+  const skipped: string[] = []
   for (const entry of entries) {
     const parts = entry.split(':').map((s) => s.trim())
     const [host, container] = parts
-    if (!host || !container) continue
+    if (!host || !container) { skipped.push(entry); continue }
     const mode = parts[2] === 'ro' ? 'ro' as const : 'rw' as const
     result[container] = { bind: host, mode }
   }
-  return Object.keys(result).length > 0 ? result : undefined
+  return { result: Object.keys(result).length > 0 ? result : undefined, skipped }
 }
 
 const parseLabels = (value: string): Record<string, string> | undefined => {
@@ -78,6 +81,10 @@ export function CreateContainerForm({ nodeId, onClose }: CreateContainerFormProp
 
   const onSubmit = (values: ContainerCreateFormInput) => {
     setResult(null)
+    const ports = parsePorts(values.ports)
+    const volumes = parseVolumes(values.volumes)
+    if (ports.skipped.length > 0) toast('warning', `${t('docker.invalidPorts', 'Invalid port mappings skipped')}: ${ports.skipped.join(', ')}`)
+    if (volumes.skipped.length > 0) toast('warning', `${t('docker.invalidVolumes', 'Invalid volume mappings skipped')}: ${volumes.skipped.join(', ')}`)
     createContainer.mutate(
       {
         nodeId,
@@ -85,9 +92,9 @@ export function CreateContainerForm({ nodeId, onClose }: CreateContainerFormProp
           image: values.image,
           name: values.name.trim() || undefined,
           command: values.command.trim() || undefined,
-          ports: parsePorts(values.ports),
+          ports: ports.result,
           env: values.env ? values.env.split(',').map((e) => e.trim()).filter(Boolean) : undefined,
-          volumes: parseVolumes(values.volumes),
+          volumes: volumes.result,
           network: values.network.trim() || undefined,
           labels: parseLabels(values.labels),
           detach: true,

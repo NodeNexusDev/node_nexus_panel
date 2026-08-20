@@ -2,7 +2,7 @@
 title: Forms
 status: stable
 translation_key: guides.forms
-source_revision: 2026-08-16
+source_revision: 2026-08-20
 ---
 
 # Forms
@@ -15,15 +15,15 @@ source_revision: 2026-08-16
 
 ## Validation Schemas
 
-Located in `src/lib/validations/`:
+Located in `src/lib/validators/`:
 
-| File | Schema | Fields |
-|------|--------|--------|
-| `auth.ts` | `loginSchema` | email, password |
-| `node.ts` | `addNodeSchema` | name, ip, port |
-| `command.ts` | `commandSchema` | command, nodeId |
-| `script.ts` | `scriptSchema` | name, description, content, schedule |
-| `profile.ts` | `profileSchema`, `passwordSchema` | name, email, currentPassword, newPassword, confirmPassword |
+| File | Schemas | Fields |
+|------|---------|--------|
+| `node-schema.ts` | `nodeCreateSchema`, `nodeUpdateSchema`, `nodeValidateSchema` | name, host, port, connection_type, username, password, ssh_key, passphrase, docker_host, tags |
+| `command-schema.ts` | `commandCreateSchema`, `commandUpdateSchema`, `commandParameterSchema` | name, command, description, parameters, tags |
+| `script-schema.ts` | `scriptCreateSchema`, `scriptUpdateSchema`, `scriptStepSchema`, `scheduleSchema` | name, description, steps, tags, schedule |
+| `api-key-schema.ts` | `apiKeyCreateSchema` | name, expires_in |
+| `docker-schema.ts` | `containerCreateSchema`, `imagePullSchema`, `imageBuildSchema` | image, name, ports, env, volumes, command |
 
 ## Usage Pattern
 
@@ -32,62 +32,63 @@ Located in `src/lib/validations/`:
 ```typescript
 import { z } from 'zod'
 
-export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+export const nodeCreateSchema = z.object({
+  name: z.string().min(1).max(255),
+  host: z.string().min(1).max(255),
+  port: z.number().int().min(1).max(65535).default(22),
+  connection_type: z.enum(['ssh', 'docker', 'proxmox']),
+  username: z.string().min(1).max(255).nullable().optional(),
+  password: z.string().min(1).nullable().optional(),
+  ssh_key: z.string().min(1).nullable().optional(),
+  passphrase: z.string().min(1).nullable().optional(),
+  docker_host: z.string().min(1).max(255).nullable().optional(),
+  tags: z.array(z.string().min(1).max(100)).optional(),
 })
 
-export type LoginFormData = z.infer<typeof loginSchema>
+export type NodeCreateFormData = z.infer<typeof nodeCreateSchema>
 ```
 
-### 2. Create Form Hook
-
-```typescript
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { loginSchema, type LoginFormData } from '../lib/validations/auth'
-import { useLogin } from './useAuth'
-
-export function useLoginForm() {
-  const loginMutation = useLogin()
-
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
-  })
-
-  const onSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data)
-  }
-
-  return {
-    ...form,
-    onSubmit: form.handleSubmit(onSubmit),
-    isLoading: loginMutation.isPending,
-    error: loginMutation.error,
-  }
-}
-```
-
-### 3. Use in Component
+### 2. Use in Component
 
 ```tsx
-function Login() {
-  const { register, onSubmit, isLoading, error } = useLoginForm()
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { nodeCreateSchema, type NodeCreateFormData } from '@/lib/validators/node-schema'
+
+function AddNodeForm() {
+  const { register, handleSubmit, formState: { errors } } = useForm<NodeCreateFormData>({
+    resolver: zodResolver(nodeCreateSchema),
+    defaultValues: { port: 22, connection_type: 'ssh' },
+  })
+
+  const onSubmit = (data: NodeCreateFormData) => {
+    createNode.mutate(data)
+  }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit() }}>
-      {error && <div className="text-red-400">{error.message}</div>}
-      <Input label="Email" {...register('email')} />
-      <Input label="Password" type="password" {...register('password')} />
-      <Button type="submit" disabled={isLoading}>Sign In</Button>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <Input label="Name" {...register('name')} error={errors.name?.message} />
+      <Input label="Host" {...register('host')} error={errors.host?.message} />
+      <Input label="Port" type="number" {...register('port', { valueAsNumber: true })} error={errors.port?.message} />
+      <Input label="Passphrase" type="password" {...register('passphrase')} error={errors.passphrase?.message} />
+      <Button type="submit">Add Node</Button>
     </form>
   )
 }
 ```
 
-## Form Hooks
+### 3. Connection Type Select
 
-| Hook | Purpose |
-|------|---------|
-| `useLoginForm` | Login form with auth mutation |
+```tsx
+import { ConnectionTypeSelect } from '@/components/nodes/ConnectionTypeSelect'
+
+<ConnectionTypeSelect value={value} onChange={onChange} />
+```
+
+### 4. Node Select
+
+```tsx
+import { NodeSelect } from '@/components/ui/NodeSelect'
+
+<NodeSelect value={nodeId} onChange={setNodeId} placeholder="Select a node" />
+```

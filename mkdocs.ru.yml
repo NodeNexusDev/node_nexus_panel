@@ -31,6 +31,7 @@ nav:
       - Ноды: guides/nodes.md
       - Команды: guides/commands.md
       - Скрипты: guides/scripts.md
+      - Docker: guides/docker.md
       - Формы: guides/forms.md
       - Темизация: guides/theming.md
       - Настройки: guides/settings.md

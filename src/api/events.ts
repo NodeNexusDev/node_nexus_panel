@@ -13,6 +13,9 @@ export class EventsClient {
   private controller: AbortController | null = null
   private handlers = new Map<string, Set<SseEventHandler>>()
   private _isConnected = false
+  private _intentionalDisconnect = false
+  private _retryCount = 0
+  private static MAX_RETRY_DELAY = 30000
 
   get isConnected(): boolean {
     return this._isConnected
@@ -20,6 +23,7 @@ export class EventsClient {
 
   connect() {
     if (this.controller) return
+    this._intentionalDisconnect = false
 
     this.controller = new AbortController()
 
@@ -34,6 +38,7 @@ export class EventsClient {
       openWhenHidden: true,
       onopen: async () => {
         this._isConnected = true
+        this._retryCount = 0
       },
       onmessage: (event) => {
         const msg = new MessageEvent(event.event, {
@@ -54,18 +59,26 @@ export class EventsClient {
         this._isConnected = false
         this.controller?.abort()
         this.controller = null
-        setTimeout(() => this.connect(), 3000)
-        return undefined
+        if (!this._intentionalDisconnect) {
+          const delay = Math.min(3000 * 2 ** this._retryCount, EventsClient.MAX_RETRY_DELAY)
+          this._retryCount++
+          setTimeout(() => this.connect(), delay)
+        }
       },
       onclose: () => {
         this._isConnected = false
         this.controller = null
-        setTimeout(() => this.connect(), 3000)
+        if (!this._intentionalDisconnect) {
+          const delay = Math.min(3000 * 2 ** this._retryCount, EventsClient.MAX_RETRY_DELAY)
+          this._retryCount++
+          setTimeout(() => this.connect(), delay)
+        }
       },
     } satisfies FetchEventSourceInit)
   }
 
   disconnect() {
+    this._intentionalDisconnect = true
     this.controller?.abort()
     this.controller = null
     this._isConnected = false

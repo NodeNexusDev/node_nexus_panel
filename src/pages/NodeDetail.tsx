@@ -268,7 +268,7 @@ export function NodeDetail() {
             name="port"
             control={control}
             render={({ field }) => (
-              <Input label={t('nodes.port')} placeholder="22" type="number" value={String(field.value ?? 22)} onChange={(e) => field.onChange(Number(e.target.value))} error={errors.port?.message} />
+              <Input label={t('nodes.port')} placeholder="22" type="number" value={String(field.value ?? 22)} onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))} error={errors.port?.message} />
             )}
           />
           <div className="space-y-1">
@@ -402,6 +402,16 @@ function MetricsTab({ nodeId }: { nodeId: string }) {
             <KeyValueList
               rows={[
                 { label: t('nodes.uptimeSince', 'Uptime Since'), value: metrics.uptime_since ? new Date(metrics.uptime_since).toLocaleString() : '—' },
+              ]}
+            />
+          </div>
+          <div className="pt-1">
+            <h3 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('nodes.loadAverage', 'Load Average')}</h3>
+            <KeyValueList
+              rows={[
+                { label: t('nodes.load1m', '1 min'), value: metrics.load_average.one_min.toFixed(2) },
+                { label: t('nodes.load5m', '5 min'), value: metrics.load_average.five_min.toFixed(2) },
+                { label: t('nodes.load15m', '15 min'), value: metrics.load_average.fifteen_min.toFixed(2) },
               ]}
             />
           </div>

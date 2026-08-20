@@ -300,7 +300,7 @@ export function Scripts() {
           <p className="text-xs text-surface-500">{t('scripts.scheduleHint', 'Leave empty to remove schedule')}</p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setScheduleTarget(null)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSetSchedule}>{t('common.save')}</Button>
+            <Button onClick={handleSetSchedule} disabled={scheduleCron.trim() !== '' && scheduleNodeIds.length === 0}>{t('common.save')}</Button>
           </div>
         </div>
       </Modal>

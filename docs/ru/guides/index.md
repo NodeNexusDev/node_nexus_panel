@@ -2,7 +2,7 @@
 title: Гайды
 status: stable
 translation_key: guides
-source_revision: 2026-08-16
+source_revision: 2026-08-20
 ---
 
 # Гайды
@@ -13,6 +13,7 @@ source_revision: 2026-08-16
 - [Ноды](nodes.md) — Управление нодами
 - [Команды](commands.md) — Выполнение команд
 - [Скрипты](scripts.md) — Управление скриптами
+- [Docker](docker.md) — Управление Docker-контейнерами
 - [Настройки](settings.md) — Настройки панели
 - [WebSocket](websocket.md) — Обновления в реальном времени
 - [Решение проблем](troubleshooting.md) — Частые проблемы

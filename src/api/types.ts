@@ -36,17 +36,17 @@ export interface NodeCreate {
 }
 
 export interface NodeUpdate {
-  name?: string
-  host?: string
-  port?: number
-  connection_type?: ConnectionType
-  status?: NodeStatus
+  name?: string | null
+  host?: string | null
+  port?: number | null
+  connection_type?: ConnectionType | null
+  status?: NodeStatus | null
   username?: string | null
   password?: string | null
   ssh_key?: string | null
   passphrase?: string | null
   docker_host?: string | null
-  tags?: string[]
+  tags?: string[] | null
 }
 
 export interface CpuMetrics {
@@ -66,19 +66,26 @@ export interface DiskMetrics {
   percent: number
 }
 
+export interface LoadAverage {
+  one_min: number
+  five_min: number
+  fifteen_min: number
+}
+
 export interface NodeMetrics {
   cpu: CpuMetrics
   memory: MemoryMetrics
   disk: DiskMetrics
+  load_average: LoadAverage
   uptime_since: string
 }
 
 export interface CommandParameter {
   name: string
-  type: 'string' | 'integer' | 'boolean'
-  required: boolean
-  default: unknown
-  description: string | null
+  type?: 'string' | 'integer' | 'boolean'
+  required?: boolean
+  default?: unknown
+  description?: string | null
 }
 
 export interface Command {
@@ -94,18 +101,18 @@ export interface Command {
 
 export interface CommandCreate {
   name: string
-  description?: string
+  description?: string | null
   command: string
   parameters?: CommandParameter[]
   tags?: string[]
 }
 
 export interface CommandUpdate {
-  name?: string
-  description?: string
-  command?: string
-  parameters?: CommandParameter[]
-  tags?: string[]
+  name?: string | null
+  description?: string | null
+  command?: string | null
+  parameters?: CommandParameter[] | null
+  tags?: string[] | null
 }
 
 export interface CommandExecuteRequest {
@@ -140,21 +147,21 @@ export interface Script {
 
 export interface ScriptCreate {
   name: string
-  description?: string
+  description?: string | null
   steps: ScriptStep[]
   tags?: string[]
 }
 
 export interface ScriptUpdate {
-  name?: string
-  description?: string
-  steps?: ScriptStep[]
-  tags?: string[]
+  name?: string | null
+  description?: string | null
+  steps?: ScriptStep[] | null
+  tags?: string[] | null
 }
 
 export interface ScriptExecuteRequest {
-  node_ids?: string[]
-  node_tags?: string[]
+  node_ids?: string[] | null
+  node_tags?: string[] | null
   params?: Record<string, unknown>
 }
 
@@ -177,9 +184,9 @@ export interface EntityStats {
 export interface RecentActivity {
   id: string
   action: string
-  node_id: string | null
-  user: string | null
-  details: string | null
+  node_id?: string | null
+  user?: string | null
+  details?: string | null
   created_at: string
 }
 
@@ -196,7 +203,7 @@ export interface MetricsBucket {
   total: number
   successful: number
   failed: number
-  avg_duration_ms: number | null
+  avg_duration_ms?: number | null
 }
 
 export interface DashboardMetricsResponse {
@@ -218,7 +225,6 @@ export interface ApiKey {
 export interface ApiKeyCreate {
   name: string
   scope?: 'read-only' | 'read-write'
-  expires_at?: string
 }
 
 export interface ApiKeyUpdate {
@@ -249,16 +255,16 @@ export interface ExecutionStatsResponse {
   successful: number
   failed: number
   success_rate: number
-  avg_duration_ms: number | null
-  min_duration_ms: number | null
-  max_duration_ms: number | null
-  last_executed_at: string | null
+  avg_duration_ms?: number | null
+  min_duration_ms?: number | null
+  max_duration_ms?: number | null
+  last_executed_at?: string | null
 }
 
 export interface NodeStatusHistoryItem {
   id: string
-  node_id: string | null
-  old_status: string | null
+  node_id?: string | null
+  old_status?: string | null
   new_status: string
   source: string
   changed_at: string
@@ -287,7 +293,7 @@ export interface NodeValidateResponse {
 
 export interface BulkCommandHistoryItem {
   id: string
-  node_id: string | null
+  node_id?: string | null
   command_fingerprint: string
   exit_code: number
   stdout: string
@@ -295,7 +301,7 @@ export interface BulkCommandHistoryItem {
   stdout_bytes: number
   stderr_bytes: number
   truncated: boolean
-  batch_id: string | null
+  batch_id?: string | null
   started_at: string
   finished_at: string | null
   created_at: string
@@ -345,8 +351,8 @@ export interface DockerContainer {
   CreatedAt: string
   State: string
   Status: string
-  Ports: string | null
-  Networks: string | null
+  Ports?: string | null
+  Networks?: string | null
 }
 
 export interface DockerContainerInspect {
@@ -379,14 +385,14 @@ export interface ContainerVolumeMount {
 
 export interface DockerCreateContainerRequest {
   image: string
-  name?: string
-  command?: string
+  name?: string | null
+  command?: string | null
   detach?: boolean
   env?: string[]
   labels?: Record<string, string>
-  network?: string
+  network?: string | null
   ports?: Record<string, string>
-  restart_policy?: string
+  restart_policy?: string | null
   volumes?: Record<string, ContainerVolumeMount>
 }
 
@@ -491,10 +497,10 @@ export interface DockerVolume {
 
 export interface BulkDockerRequest {
   container_id: string
-  command?: string
+  command?: string | null
   node_ids?: string[]
   node_tags?: string[]
-  timeout?: number
+  timeout?: number | null
 }
 
 export interface BulkDockerResponse {
@@ -626,9 +632,9 @@ export interface ScriptExport {
 
 export interface ConfigImport {
   exported_at?: string
-  format_version?: string
-  version?: string
-  application_version?: string
+  format_version?: string | null
+  version?: string | null
+  application_version?: string | null
   nodes?: NodeExport[]
   commands?: CommandExport[]
   scripts?: ScriptExport[]
@@ -646,7 +652,7 @@ export interface ImportResult {
 
 export interface DryRunImportResult {
   dry_run?: boolean
-  would_create: DryRunWouldCreate
+  would_create?: DryRunWouldCreate
   duplicates?: string[]
   errors?: string[]
 }
@@ -689,12 +695,12 @@ export interface ScheduledJob {
   enabled: boolean
   misfire_grace_seconds: number
   operational_state: string
-  next_run_at: string | null
-  last_run_at: string | null
-  last_success_at: string | null
-  last_failure_at: string | null
-  last_error_type: string | null
-  node_ids: string[]
+  next_run_at?: string | null
+  last_run_at?: string | null
+  last_success_at?: string | null
+  last_failure_at?: string | null
+  last_error_type?: string | null
+  node_ids?: string[]
   params?: Record<string, unknown>
 }
 

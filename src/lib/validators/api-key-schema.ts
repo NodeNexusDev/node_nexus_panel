@@ -5,7 +5,6 @@ const API_KEY_SCOPES = ['read-only', 'read-write'] as const
 export const apiKeyCreateSchema = z.object({
   name: z.string().min(1).max(255),
   scope: z.enum(API_KEY_SCOPES).default('read-write'),
-  expires_at: z.string().datetime().optional(),
 })
 
 export const apiKeyUpdateSchema = z.object({

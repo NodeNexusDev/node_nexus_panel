@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from './Button'
 import { IconDots } from './Icons'
 
@@ -19,26 +20,58 @@ interface DropdownMenuProps {
 
 export function DropdownMenu({ items, align = 'right', ariaLabel = 'Actions' }: DropdownMenuProps) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number; flip: boolean }>({ top: 0, left: 0, flip: false })
+
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return
+    const rect = triggerRef.current.getBoundingClientRect()
+    const panelHeight = panelRef.current?.offsetHeight ?? 200
+    const gap = 4
+    const spaceBelow = window.innerHeight - rect.bottom
+    const flip = spaceBelow < panelHeight + gap
+
+    const top = flip
+      ? rect.top - panelHeight - gap
+      : rect.bottom + gap
+
+    const left = align === 'right'
+      ? rect.right - 192
+      : rect.left
+
+    setPos({ top, left, flip })
+  }, [align])
 
   useEffect(() => {
     if (!open) return
+    updatePosition()
+
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (
+        panelRef.current && !panelRef.current.contains(e.target as Node) &&
+        triggerRef.current && !triggerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false)
+      }
     }
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
+    const handleScroll = () => setOpen(false)
+
     document.addEventListener('mousedown', handleClickOutside)
     document.addEventListener('keydown', handleKey)
+    window.addEventListener('scroll', handleScroll, true)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleKey)
+      window.removeEventListener('scroll', handleScroll, true)
     }
-  }, [open])
+  }, [open, updatePosition])
 
   return (
-    <div ref={ref} className="relative inline-flex">
+    <div ref={triggerRef} className="relative inline-flex">
       <Button
         variant="ghost"
         size="sm"
@@ -50,10 +83,12 @@ export function DropdownMenu({ items, align = 'right', ariaLabel = 'Actions' }: 
       >
         <IconDots className="w-4 h-4" />
       </Button>
-      {open && (
+      {open && createPortal(
         <div
+          ref={panelRef}
           role="menu"
-          className={`absolute z-40 mt-1 w-48 rounded-xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 shadow-lg py-1 animate-fade-in ${align === 'right' ? 'right-0' : 'left-0'}`}
+          className="fixed z-[9999] w-48 rounded-xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 shadow-lg py-1 animate-fade-in"
+          style={{ top: pos.top, left: pos.left }}
         >
           {items.map((item) => (
             <div key={item.key}>
@@ -72,7 +107,8 @@ export function DropdownMenu({ items, align = 'right', ariaLabel = 'Actions' }: 
               </button>
             </div>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

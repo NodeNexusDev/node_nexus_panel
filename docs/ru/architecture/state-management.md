@@ -2,7 +2,7 @@
 title: Управление состоянием
 status: stable
 translation_key: architecture.state_management
-source_revision: 2026-08-16
+source_revision: 2026-08-20
 ---
 
 # Управление состоянием
@@ -33,28 +33,24 @@ import { queryClient } from './lib/query-client'
 
 ### Пользовательские хуки
 
-| Хук | Назначение |
-|-----|-----------|
-| `useNodes` | Получение списка нод с пагинацией |
-| `useNode` | Получение ноды по ID |
-| `useNodeStats` | Получение статистики дашборда |
-| `useCreateNode` | Мутация для добавления ноды |
-| `useDeleteNode` | Мутация для удаления ноды |
-| `useRestartNode` | Мутация для перезапуска ноды |
-| `useCommandHistory` | Получение истории команд |
-| `useExecuteCommand` | Мутация для выполнения команды |
-| `useScripts` | Получение списка скриптов |
-| `useCreateScript` | Мутация для создания скрипта |
-| `useUpdateScript` | Мутация для обновления скрипта |
-| `useDeleteScript` | Мутация для удаления скрипта |
-| `useRunScript` | Мутация для запуска скрипта |
-| `useLogin` | Мутация для входа |
-| `useCurrentUser` | Получение текущего пользователя |
-| `useLogout` | Мутация для выхода |
-| `useProfile` | Получение профиля |
-| `useUpdateProfile` | Мутация для обновления профиля |
-| `useApiKeys` | Получение API-ключей |
-| `useNotificationSettings` | Получение настроек уведомлений |
+| Файл хука | Назначение |
+|-----------|------------|
+| `useNodes` | CRUD нод, массовые операции, теги, метрики, проверки здоровья |
+| `useCommands` | CRUD команд, выполнение, клонирование, статистика |
+| `useScripts` | CRUD скриптов, выполнение, планирование, статистика |
+| `useDashboard` | Статистика дашборда и активность |
+| `useSettings` | Профиль пользователя, API-ключи, уведомления |
+| `useDocker` | Docker-контейнеры, образы, сети, тома |
+| `useDockerContainerSse` | Статус контейнеров в реальном времени через SSE |
+| `useSse` | Универсальный хук SSE-потока событий |
+| `useAudit` | Записи журнала аудита |
+| `useNotes` | CRUD-заметок по сущностям |
+| `useTags` | Управление тегами |
+| `useFavorites` | Управление избранным |
+| `useSearch` | Глобальный поиск |
+| `useSort` | Переиспользуемая логика сортировки |
+| `useHotkey` | Обработчик клавиатурных сокращений |
+| `useDocumentTitle` | Динамические заголовки страниц |
 
 ### Паттерн использования
 
@@ -106,16 +102,6 @@ const { theme, sidebarOpen, setTheme, toggleSidebar } = useUiStore()
 - Персистентность темы (dark/light/system)
 - Состояние sidebar
 - Отслеживание активной модалки
-
-### Connection Store (`src/stores/connection-store.ts`)
-
-```typescript
-import { useConnectionStore } from './stores/connection-store'
-
-const { wsConnected, setWsConnected } = useConnectionStore()
-```
-
-- Статус WebSocket подключения
 
 ## Паттерны
 

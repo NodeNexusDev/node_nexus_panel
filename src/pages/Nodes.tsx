@@ -301,11 +301,14 @@ export function Nodes() {
   )
 
   const handleAdd = () => {
+    if (!newNode.name.trim()) { toast('error', t('nodes.toastNameRequired', 'Name is required')); return }
+    const port = parseInt(String(newNode.port), 10)
+    if (isNaN(port) || port < 1 || port > 65535) { toast('error', t('nodes.toastInvalidPort', 'Invalid port number')); return }
     createNode.mutate(
       {
         name: newNode.name,
         host: newNode.host,
-        port: Number(newNode.port),
+        port,
         connection_type: newNode.connection_type,
         username: newNode.username || undefined,
         password: newNode.password || undefined,
@@ -323,19 +326,22 @@ export function Nodes() {
 
   const handleEdit = () => {
     if (!editTarget) return
+    if (!editNode.name.trim()) { toast('error', t('nodes.toastNameRequired', 'Name is required')); return }
+    const port = parseInt(String(editNode.port), 10)
+    if (isNaN(port) || port < 1 || port > 65535) { toast('error', t('nodes.toastInvalidPort', 'Invalid port number')); return }
+    const toNull = (v: string) => v === '' ? null : v
     updateNode.mutate(
       {
         id: editTarget.id,
         data: {
           name: editNode.name,
           host: editNode.host,
-          port: Number(editNode.port),
-          connection_type: editNode.connection_type,
-          username: editNode.username || undefined,
-          password: editNode.password || undefined,
-          ssh_key: editNode.ssh_key || undefined,
-          passphrase: editNode.passphrase || undefined,
-          docker_host: editNode.docker_host || undefined,
+          port,
+          username: toNull(editNode.username),
+          password: toNull(editNode.password),
+          ssh_key: toNull(editNode.ssh_key),
+          passphrase: toNull(editNode.passphrase),
+          docker_host: toNull(editNode.docker_host),
           tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
       },

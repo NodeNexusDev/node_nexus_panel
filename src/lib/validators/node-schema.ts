@@ -22,11 +22,11 @@ export const nodeUpdateSchema = z.object({
   port: z.number().int().min(1).max(65535).optional(),
   connection_type: z.enum(CONNECTION_TYPES).optional(),
   status: z.enum(NODE_STATUSES).optional(),
-  username: z.string().min(1).max(255).nullable().optional(),
-  password: z.string().min(1).nullable().optional(),
-  ssh_key: z.string().min(1).nullable().optional(),
-  passphrase: z.string().min(1).nullable().optional(),
-  docker_host: z.string().min(1).max(255).nullable().optional(),
+  username: z.string().max(255).transform(v => v === '' ? null : v).nullable().optional(),
+  password: z.string().transform(v => v === '' ? null : v).nullable().optional(),
+  ssh_key: z.string().transform(v => v === '' ? null : v).nullable().optional(),
+  passphrase: z.string().transform(v => v === '' ? null : v).nullable().optional(),
+  docker_host: z.string().max(255).transform(v => v === '' ? null : v).nullable().optional(),
   tags: z.array(z.string().min(1).max(100)).optional(),
 })
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { eventsClient } from '../api/events'
 
 export type SseEvent = {
@@ -30,10 +30,11 @@ export function useSse() {
     return () => {
       clearInterval(checkConnection)
       unsubscribe()
+      eventsClient.disconnect()
     }
   }, [])
 
-  const on = (eventType: string, handler: (event: SseEvent) => void) => {
+  const on = useCallback((eventType: string, handler: (event: SseEvent) => void) => {
     return eventsClient.on(eventType, (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data)
@@ -42,7 +43,7 @@ export function useSse() {
         // ignore parse errors
       }
     })
-  }
+  }, [])
 
   return { isConnected, lastEvent, on }
 }

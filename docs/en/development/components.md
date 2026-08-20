@@ -2,7 +2,7 @@
 title: Components
 status: stable
 translation_key: development.components
-source_revision: 2026-08-17
+source_revision: 2026-08-20
 ---
 
 # Components
@@ -12,47 +12,71 @@ source_revision: 2026-08-17
 ```
 src/
 ├── components/
-│   ├── ui/              # Reusable UI components
+│   ├── ui/              # Reusable UI primitives
 │   │   ├── Badge.tsx
-│   │   ├── Breadcrumb.tsx
 │   │   ├── Button.tsx
 │   │   ├── Card.tsx
 │   │   ├── CommandPalette.tsx
 │   │   ├── ConfirmDialog.tsx
-│   │   ├── DragDropList.tsx
+│   │   ├── DropdownMenu.tsx
 │   │   ├── EmptyState.tsx
 │   │   ├── ErrorBoundary.tsx
-│   │   ├── ErrorCard.tsx
 │   │   ├── ErrorPage.tsx
+│   │   ├── ErrorState.tsx
+│   │   ├── FavoriteButton.tsx
+│   │   ├── FilterBar.tsx
 │   │   ├── Icons.tsx
 │   │   ├── Input.tsx
-│   │   ├── MiniChart.tsx
+│   │   ├── KeyValueList.tsx
+│   │   ├── MetricsChart.tsx
 │   │   ├── Modal.tsx
-│   │   ├── NetworkError.tsx
+│   │   ├── ModalFooter.tsx
+│   │   ├── NodeSelect.tsx
+│   │   ├── NotesPanel.tsx
+│   │   ├── PageHeader.tsx
 │   │   ├── Pagination.tsx
 │   │   ├── ResponsiveTable.tsx
 │   │   ├── SearchInput.tsx
-│   │   ├── Select.tsx
 │   │   ├── Skeleton.tsx
+│   │   ├── SortableHeader.tsx
 │   │   ├── Spinner.tsx
-│   │   ├── Table.tsx
-│   │   ├── Timeline.tsx
+│   │   ├── StatCard.tsx
+│   │   ├── Tabs.tsx
+│   │   ├── TagBadge.tsx
 │   │   ├── Toast.tsx
-│   │   ├── Toggle.tsx
 │   │   ├── Tooltip.tsx
-│   │   └── Typewriter.tsx
-│   ├── guards/          # Route guards
+│   │   ├── Typewriter.tsx
+│   │   ├── table-types.ts
+│   │   └── useToast.ts
+│   ├── commands/         # Command-specific components
+│   ├── docker/           # Docker page components
+│   │   ├── ContainersTab.tsx
+│   │   ├── ContainerRow.tsx
+│   │   ├── ContainerDetailPanel.tsx
+│   │   ├── ContainerInspectContent.tsx
+│   │   ├── ExecContainerContent.tsx
+│   │   ├── CreateContainerForm.tsx
+│   │   ├── ImagesTab.tsx
+│   │   ├── NetworksTab.tsx
+│   │   └── VolumesTab.tsx
+│   ├── guards/           # Route guards
 │   │   └── AuthGuard.tsx
-│   └── layout/          # Layout components
-│       ├── ThemeToggle.tsx
-│       └── MobileMenu.tsx
-├── pages/               # Route-level components
-├── hooks/               # Custom React hooks
-├── api/                 # API client layer
-├── stores/              # Zustand stores
-├── lib/                 # Utilities and validations
-├── styles/              # Theme configuration
-└── test/                # Test setup and mocks
+│   ├── layout/           # Layout components
+│   │   ├── ThemeToggle.tsx
+│   │   └── MobileMenu.tsx
+│   ├── nodes/            # Node-specific components
+│   │   └── ConnectionTypeSelect.tsx
+│   └── scripts/          # Script-specific components
+├── pages/                # Route-level components
+├── hooks/                # Custom React hooks
+├── api/                  # API client layer
+├── stores/               # Zustand stores
+├── lib/                  # Utilities and validators
+├── i18n/                 # Internationalization
+├── layouts/              # Page layout wrappers
+├── mocks/                # MSW mock data and handlers
+├── styles/               # Theme configuration
+└── test/                 # Test setup and utilities
 ```
 
 ## UI Components
@@ -106,7 +130,7 @@ Dialog with overlay, backdrop-blur, spring animation, keyboard dismissal (Escape
 Toast notification system via context provider with progress bar.
 
 ```tsx
-import { useToast } from './components/ui/Toast'
+import { useToast } from './components/ui/useToast'
 
 function MyComponent() {
   const { toast } = useToast()
@@ -122,20 +146,15 @@ Form input with label and error state.
 <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
 ```
 
-### Select
+### DropdownMenu
 
-Dropdown select with label and error state.
-
-```tsx
-<Select label="Node" options={[{ value: '1', label: 'Server 01' }]} />
-```
-
-### Toggle
-
-Switch toggle with label and description.
+Dropdown menu with items.
 
 ```tsx
-<Toggle checked={enabled} onChange={setEnabled} label="Feature" description="Toggle this" />
+<DropdownMenu trigger={<Button>Options</Button>}>
+  <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>
+  <DropdownMenuItem onClick={handleDelete} variant="danger">Delete</DropdownMenuItem>
+</DropdownMenu>
 ```
 
 ### Skeleton
@@ -190,25 +209,18 @@ CSS hover tooltip (top/bottom).
 </Tooltip>
 ```
 
-### DragDropList
+### MetricsChart
 
-Generic drag-and-drop reorderable list.
+SVG bar/area chart with tooltips, legends, and date presets.
 
 ```tsx
-<DragDropList
-  items={items}
-  onReorder={setItems}
-  keyExtractor={(item) => item.id}
-  renderItem={(item, index) => <div>{item.name}</div>}
+<MetricsChart
+  data={chartData}
+  title="Command Metrics"
+  type="bar"
+  datePreset="7d"
+  onDatePresetChange={setDatePreset}
 />
-```
-
-### MiniChart
-
-CSS-only bar chart for sparklines.
-
-```tsx
-<MiniChart data={[4, 6, 3, 8, 5, 7, 4]} color="bg-surface-400" className="h-8" />
 ```
 
 ### Typewriter
@@ -217,16 +229,6 @@ Animated text reveal character by character.
 
 ```tsx
 <Typewriter text="Hello World" speed={30} onComplete={() => console.log('done')} />
-```
-
-### Timeline
-
-Event timeline.
-
-```tsx
-<Timeline items={[
-  { id: '1', title: 'Node online', description: 'Server 01 connected', time: '2 min ago' },
-]} />
 ```
 
 ### ConfirmDialog
@@ -255,12 +257,12 @@ React error boundary with fallback UI.
 </ErrorBoundary>
 ```
 
-### Table
+### ResponsiveTable
 
 Typed table with zebra-striping and sticky headers.
 
 ```tsx
-<Table
+<ResponsiveTable
   data={nodes}
   columns={[
     { key: 'name', header: 'Name', render: (item) => item.name },
@@ -269,6 +271,71 @@ Typed table with zebra-striping and sticky headers.
   keyExtractor={(item) => item.id}
 />
 ```
+
+### TagBadge
+
+Tag badge with optional remove button.
+
+```tsx
+<TagBadge tag="production" onRemove={() => handleRemoveTag('production')} />
+```
+
+### FavoriteButton
+
+Star toggle for marking items as favorites.
+
+```tsx
+<FavoriteButton entityId="node-1" entityType="node" isFavorite={true} onToggle={handleToggle} />
+```
+
+### NotesPanel
+
+Entity notes with markdown preview and CRUD.
+
+```tsx
+<NotesPanel entityType="node" entityId="node-1" />
+```
+
+### NodeSelect
+
+Node selector dropdown with search.
+
+```tsx
+<NodeSelect value={selectedNodeId} onChange={setSelectedNodeId} placeholder="Select a node" />
+```
+
+### FilterBar
+
+Filter controls bar for list pages.
+
+```tsx
+<FilterBar>
+  <SearchInput value={search} onChange={setSearch} />
+  <Select options={statusOptions} value={status} onChange={setStatus} />
+</FilterBar>
+```
+
+## Domain Components
+
+### Docker (`src/components/docker/`)
+
+| Component | Description |
+|-----------|-------------|
+| `ContainersTab` | Container list with search, filters, and SSE updates |
+| `ContainerRow` | Single container row with actions |
+| `ContainerDetailPanel` | Expandable container details (inspect, logs, exec) |
+| `ContainerInspectContent` | JSON view of container inspect output |
+| `ExecContainerContent` | Interactive terminal for container exec |
+| `CreateContainerForm` | Form for creating new containers |
+| `ImagesTab` | Image list with pull/remove actions |
+| `NetworksTab` | Network list with remove action |
+| `VolumesTab` | Volume list with remove action |
+
+### Nodes (`src/components/nodes/`)
+
+| Component | Description |
+|-----------|-------------|
+| `ConnectionTypeSelect` | SSH/Docker/Proxmox connection type selector |
 
 ## Conventions
 
