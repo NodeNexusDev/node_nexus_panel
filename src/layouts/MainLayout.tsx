@@ -87,6 +87,9 @@ export function MainLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-accent-600 focus:text-white focus:rounded-lg">
+        {t('common.skipToContent', 'Skip to content')}
+      </a>
       {/* Background layer — z-10 is below content but above body */}
       <div className="fixed inset-0 -z-10 bg-surface-50 dark:bg-surface-950">
         <div className="absolute inset-0 bg-gradient-to-br from-accent-500/5 via-transparent to-purple-500/5 dark:from-accent-500/10 dark:via-transparent dark:to-purple-500/10" />
@@ -176,15 +179,17 @@ export function MainLayout() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header with glassmorphism */}
         <header className="h-[84px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
-            className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          <Tooltip content={sidebarOpen ? t('common.closeMenu', 'Close menu') : t('common.openMenu', 'Open menu')}>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+              className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </Tooltip>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
             {/* Language toggle */}
@@ -221,32 +226,35 @@ export function MainLayout() {
             </div>
 
             {/* Command palette trigger */}
-            <button
-              onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <kbd className="hidden sm:inline-flex text-xs">Ctrl+K</kbd>
-            </button>
+            <Tooltip content={t('common.search', 'Search')}>
+              <button
+                onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <kbd className="hidden sm:inline-flex text-xs">Ctrl+K</kbd>
+              </button>
+            </Tooltip>
 
             {/* Divider */}
             <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
 
             {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
-              title={t('common.logout')}
-            >
-              <IconLogout className="w-4 h-4" />
-            </button>
+            <Tooltip content={t('common.logout')}>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
+              >
+                <IconLogout className="w-4 h-4" />
+              </button>
+            </Tooltip>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main id="main-content" className="flex-1 overflow-y-auto p-6">
           <div className="animate-fade-in">
             <Outlet />
           </div>

@@ -15,7 +15,9 @@
     "login": "Login",
     "password": "Password",
     "submit": "Sign In",
-    "error": "Invalid login or password"
+    "error": "Invalid login or password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "notFound": {
     "description": "The page you're looking for doesn't exist.",
@@ -101,6 +103,8 @@
     "toastDeleteFailed": "Failed to delete node",
     "toastValidating": "Validating credentials...",
     "toastValidateFailed": "Validation failed",
+    "validateSuccess": "Connection successful",
+    "validateFailed": "Connection failed",
     "toastNodeChecked": "Node checked",
     "toastCheckFailed": "Check failed",
     "toastExecFailed": "Exec failed",
@@ -491,7 +495,14 @@
     "copied": "Copied to clipboard",
     "filterByTag": "Filter by tag",
     "clear": "Clear",
-    "willBeCleared": "Will be cleared on save"
+    "willBeCleared": "Will be cleared on save",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "search": "Search",
+    "back": "Back",
+    "view": "View",
+    "skipToContent": "Skip to content",
+    "moreResults": "more results"
   },
   "notes": {
     "title": "Notes",
@@ -553,6 +564,8 @@
     "emptyDesc": "Mark resources as favorites to see them here",
     "open": "Open",
     "toastRemoved": "Removed from favorites",
-    "toastRemoveFailed": "Failed to remove favorite"
+    "toastRemoveFailed": "Failed to remove favorite",
+    "add": "Add to favorites",
+    "remove": "Remove from favorites"
   }
 }

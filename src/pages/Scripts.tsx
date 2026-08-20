@@ -8,6 +8,7 @@ import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { Pagination } from '../components/ui/Pagination'
@@ -309,13 +310,13 @@ export function Scripts() {
 
       <Modal isOpen={!!runTarget} onClose={() => { setRunTarget(null); setRunNodeId(''); setRunTags('') }} title={`${t('scripts.run')}: ${runTarget?.name || ''}`}>
         <div className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNode', 'Target Node (optional)')}</label>
-            <select value={runNodeId} onChange={(e) => setRunNodeId(e.target.value)} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="">{t('scripts.allNodes', 'All nodes')}</option>
-              {nodes.map((n) => (<option key={n.id} value={n.id}>{n.name}</option>))}
-            </select>
-          </div>
+          <Select
+            label={t('scripts.targetNode', 'Target Node (optional)')}
+            value={runNodeId}
+            onChange={setRunNodeId}
+            placeholder={t('scripts.allNodes', 'All nodes')}
+            options={nodes.map((n) => ({ value: n.id, label: n.name }))}
+          />
           <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => { setRunTarget(null); setRunNodeId(''); setRunTags('') }}>{t('common.cancel')}</Button>

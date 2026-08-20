@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react'
-import { ToastContext, type ToastType } from './useToast'
+import { ToastContext, type ToastType, type ToastAction } from './useToast'
 
 export type { ToastType, ToastContextValue } from './useToast'
 
@@ -8,6 +8,7 @@ interface Toast {
   type: ToastType
   message: string
   exiting: boolean
+  action?: ToastAction
 }
 
 const MAX_TOASTS = 5
@@ -38,10 +39,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     timersRef.current.set(id, timer)
   }, [])
 
-  const toast = useCallback((type: ToastType, message: string) => {
+  const toast = useCallback((type: ToastType, message: string, action?: ToastAction) => {
     const id = Math.random().toString(36).slice(2)
     setToasts((prev) => {
-      const next = [...prev, { id, type, message, exiting: false }]
+      const next = [...prev, { id, type, message, exiting: false, action }]
       return next.length > MAX_TOASTS ? next.slice(-MAX_TOASTS) : next
     })
     startTimer(id)
@@ -132,6 +133,14 @@ function ToastItem({ toast, onRemove, onPause, onResume }: { toast: Toast; onRem
     >
       <span className="text-current shrink-0">{typeIcons[toast.type]}</span>
       <span className="text-sm flex-1 font-medium">{toast.message}</span>
+      {toast.action && (
+        <button
+          onClick={() => { toast.action!.onClick(); onRemove() }}
+          className="text-sm font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity shrink-0 cursor-pointer"
+        >
+          {toast.action.label}
+        </button>
+      )}
       <button onClick={onRemove} aria-label="Close" className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

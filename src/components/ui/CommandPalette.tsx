@@ -163,23 +163,30 @@ export function CommandPalette() {
                   {searchLoading ? (
                     <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
                   ) : flatSearchResults.length > 0 ? (
-                    flatSearchResults.slice(0, 5).map((result) => (
-                      <button
-                        key={`${result.entity_type}-${result.id}`}
-                        onClick={() => {
-                          if (result.entity_type === 'node') select(`/nodes/${result.id}`)
-                          else if (result.entity_type === 'script') select(`/scripts/${result.id}`)
-                          else if (result.entity_type === 'command') select(`/commands/${result.id}`)
-                          else select('/')
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50"
-                      >
-                        <span className="text-surface-400 text-xs uppercase font-mono w-12">{result.entity_type}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{result.name || result.id}</p>
-                        </div>
-                      </button>
-                    ))
+                    <>
+                      {flatSearchResults.slice(0, 5).map((result) => (
+                        <button
+                          key={`${result.entity_type}-${result.id}`}
+                          onClick={() => {
+                            if (result.entity_type === 'node') select(`/nodes/${result.id}`)
+                            else if (result.entity_type === 'script') select(`/scripts/${result.id}`)
+                            else if (result.entity_type === 'command') select(`/commands/${result.id}`)
+                            else select('/')
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50"
+                        >
+                          <span className="text-surface-400 text-xs uppercase font-mono w-12">{result.entity_type}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{result.name || result.id}</p>
+                          </div>
+                        </button>
+                      ))}
+                      {flatSearchResults.length > 5 && (
+                        <p className="px-3 py-1.5 text-xs text-surface-400 text-center">
+                          +{flatSearchResults.length - 5} {t('commandPalette.moreResults', 'more results')}
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <p className="px-3 py-4 text-sm text-surface-500 text-center">{t('common.noResults')}</p>
                   )}

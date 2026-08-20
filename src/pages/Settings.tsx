@@ -5,16 +5,19 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Modal } from '../components/ui/Modal'
 import { FormSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/useToast'
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
 import { useApiKeys, useCreateApiKey, useUpdateApiKey, useDeleteApiKey, useConfigExport, useConfigImport } from '../hooks/useSettings'
 import type { DryRunImportResult } from '../api/types'
 
 export function Settings() {
   const { t } = useTranslation()
   const { toast } = useToast()
+  const { copy } = useCopyToClipboard({ onCopied: () => toast('success', t('settings.keyCopied', 'Key copied to clipboard')) })
   const fileRef = useRef<HTMLInputElement>(null)
 
   const { data: apiKeysData, isLoading: keysLoading } = useApiKeys()
@@ -174,13 +177,15 @@ export function Settings() {
       <Modal isOpen={showKeyModal} onClose={() => setShowKeyModal(false)} title={t('settings.createApiKey')} size="sm">
         <div className="space-y-4">
           <Input label={t('settings.keyName')} placeholder="my-api-key" value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} />
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('settings.scope')}</label>
-            <select value={newKeyScope} onChange={(e) => setNewKeyScope(e.target.value as 'read-only' | 'read-write')} className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="read-only">{t('settings.readOnly')}</option>
-              <option value="read-write">{t('settings.readWrite')}</option>
-            </select>
-          </div>
+          <Select
+            label={t('settings.scope')}
+            value={newKeyScope}
+            onChange={(val) => setNewKeyScope(val as 'read-only' | 'read-write')}
+            options={[
+              { value: 'read-only', label: t('settings.readOnly') },
+              { value: 'read-write', label: t('settings.readWrite') },
+            ]}
+          />
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowKeyModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreateKey} disabled={createApiKey.isPending || !newKeyName}>
@@ -196,7 +201,7 @@ export function Settings() {
             <p className="text-sm text-green-800 dark:text-green-300 mb-2">{t('settings.apiKeyWarning', 'Copy this key now. You won\'t be able to see it again.')}</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-sm font-mono bg-white dark:bg-surface-800 p-2 rounded border border-surface-200 dark:border-surface-700 break-all">{createdKey?.key}</code>
-              <Button variant="secondary" size="sm" onClick={() => { navigator.clipboard.writeText(createdKey?.key || ''); toast('success', t('settings.keyCopied', 'Key copied to clipboard')) }}>{t('common.copy', 'Copy')}</Button>
+              <Button variant="secondary" size="sm" onClick={() => copy(createdKey?.key || '')}>{t('common.copy', 'Copy')}</Button>
             </div>
           </div>
           <div className="flex justify-end">
@@ -208,13 +213,15 @@ export function Settings() {
       <Modal isOpen={!!editKeyTarget} onClose={() => setEditKeyTarget(null)} title={`${t('common.edit')} API Key: ${editKeyTarget?.name || ''}`} size="sm">
         <div className="space-y-4">
           <Input label={t('settings.name')} value={editKeyName} onChange={(e) => setEditKeyName(e.target.value)} />
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('settings.scope')}</label>
-            <select value={editKeyScope} onChange={(e) => setEditKeyScope(e.target.value as 'read-only' | 'read-write')} className="w-full px-3 py-2 border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="read-only">{t('settings.readOnly')}</option>
-              <option value="read-write">{t('settings.readWrite')}</option>
-            </select>
-          </div>
+          <Select
+            label={t('settings.scope')}
+            value={editKeyScope}
+            onChange={(val) => setEditKeyScope(val as 'read-only' | 'read-write')}
+            options={[
+              { value: 'read-only', label: t('settings.readOnly') },
+              { value: 'read-write', label: t('settings.readWrite') },
+            ]}
+          />
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={editKeyActive} onChange={(e) => setEditKeyActive(e.target.checked)} className="rounded border-surface-300 dark:border-surface-600" />
             <span className="text-sm text-surface-700 dark:text-surface-300">{t('settings.active')}</span>

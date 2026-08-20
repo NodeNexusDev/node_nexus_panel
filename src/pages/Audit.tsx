@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
+import { Select } from '../components/ui/Select'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -125,10 +126,16 @@ export function Audit() {
         description={t('audit.description')}
         actions={
           <>
-            <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')} className="px-3 py-1 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="json">JSON</option>
-              <option value="csv">CSV</option>
-            </select>
+            <div className="w-24">
+              <Select
+                value={exportFormat}
+                onChange={(val) => setExportFormat(val as 'json' | 'csv')}
+                options={[
+                  { value: 'json', label: 'JSON' },
+                  { value: 'csv', label: 'CSV' },
+                ]}
+              />
+            </div>
             <Button variant="ghost" onClick={handleExport} disabled={exportAudit.isPending}>
               {t('audit.export')}
             </Button>
@@ -152,14 +159,18 @@ export function Audit() {
       <Card className="stagger-item">
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <select value={nodeFilter} onChange={(e) => setNodeFilter(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="">{t('audit.allNodes', 'All nodes')}</option>
-              {nodes.map((n) => (<option key={n.id} value={n.id}>{n.name}</option>))}
-            </select>
-            <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="">{t('audit.allActions', 'All actions')}</option>
-              {COMMON_ACTIONS.map((action) => (<option key={action} value={action}>{action}</option>))}
-            </select>
+            <Select
+              value={nodeFilter}
+              onChange={setNodeFilter}
+              placeholder={t('audit.allNodes', 'All nodes')}
+              options={nodes.map((n) => ({ value: n.id, label: n.name }))}
+            />
+            <Select
+              value={actionFilter}
+              onChange={setActionFilter}
+              placeholder={t('audit.allActions', 'All actions')}
+              options={COMMON_ACTIONS.map((action) => ({ value: action, label: action }))}
+            />
             <input type="text" placeholder={t('audit.userPlaceholder', 'Filter by user')} value={userFilter} onChange={(e) => setUserFilter(e.target.value)} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500" />
             <div className="flex items-center gap-2">
               <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="flex-1 px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />

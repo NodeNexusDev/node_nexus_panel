@@ -87,7 +87,23 @@ export function useDeleteNode() {
 
   return useMutation({
     mutationFn: (id: string) => nodesApi.remove(id),
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['nodes'] })
+      const previous = queryClient.getQueriesData<PaginatedResponse<Node>>({ queryKey: ['nodes'] })
+      queryClient.setQueriesData<PaginatedResponse<Node>>({ queryKey: ['nodes'] }, (old) => {
+        if (!old) return old
+        return { ...old, items: old.items.filter((n) => n.id !== id) }
+      })
+      return { previous }
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
   })
@@ -98,8 +114,21 @@ export function useCheckNode() {
 
   return useMutation({
     mutationFn: (id: string) => nodesApi.check(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['nodes', id] })
+      const previous = queryClient.getQueryData<Node>(['nodes', id])
+      if (previous) {
+        queryClient.setQueryData<Node>(['nodes', id], { ...previous, status: 'active' })
+      }
+      return { previous }
+    },
+    onError: (_err, id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['nodes', id], context.previous)
+      }
+    },
+    onSettled: (_data, _err, id) => {
+      queryClient.invalidateQueries({ queryKey: ['nodes', id] })
     },
   })
 }
