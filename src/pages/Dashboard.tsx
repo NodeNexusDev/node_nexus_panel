@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { StatCard } from '../components/ui/StatCard'
+import { Select } from '../components/ui/Select'
 import { StatCardSkeleton, MetricsChartSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { MetricsChart } from '../components/ui/MetricsChart'
@@ -221,11 +222,17 @@ export function Dashboard() {
                   </button>
                 ))}
               </div>
-              <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as 'day' | 'week' | 'month')} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-                <option value="day">{t('dashboard.byDay')}</option>
-                <option value="week">{t('dashboard.byWeek')}</option>
-                <option value="month">{t('dashboard.byMonth')}</option>
-              </select>
+              <div className="w-32">
+                <Select
+                  value={groupBy}
+                  onChange={(val) => setGroupBy(val as 'day' | 'week' | 'month')}
+                  options={[
+                    { value: 'day', label: t('dashboard.byDay') },
+                    { value: 'week', label: t('dashboard.byWeek') },
+                    { value: 'month', label: t('dashboard.byMonth') },
+                  ]}
+                />
+              </div>
             </div>
           </div>
         </CardHeader>

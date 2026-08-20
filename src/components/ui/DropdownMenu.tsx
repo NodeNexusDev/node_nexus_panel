@@ -23,6 +23,15 @@ export function DropdownMenu({ items, align = 'right', ariaLabel = 'Actions' }: 
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number; flip: boolean }>({ top: 0, left: 0, flip: false })
+  const activeIndexRef = useRef(-1)
+
+  const focusItem = (index: number) => {
+    const menuItems = panelRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    if (!menuItems?.length) return
+    const idx = Math.max(0, Math.min(index, menuItems.length - 1))
+    activeIndexRef.current = idx
+    menuItems[idx].focus()
+  }
 
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return
@@ -44,8 +53,12 @@ export function DropdownMenu({ items, align = 'right', ariaLabel = 'Actions' }: 
   }, [align])
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      activeIndexRef.current = -1
+      return
+    }
     updatePosition()
+    focusItem(0)
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -56,7 +69,35 @@ export function DropdownMenu({ items, align = 'right', ariaLabel = 'Actions' }: 
       }
     }
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.querySelector('button')?.focus()
+        return
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        focusItem(activeIndexRef.current + 1)
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        focusItem(activeIndexRef.current - 1)
+      }
+      if (e.key === 'Home') {
+        e.preventDefault()
+        focusItem(0)
+      }
+      if (e.key === 'End') {
+        e.preventDefault()
+        const menuItems = panelRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+        focusItem((menuItems?.length ?? 1) - 1)
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        const focused = document.activeElement as HTMLElement
+        if (focused?.getAttribute('role') === 'menuitem') {
+          focused.click()
+        }
+      }
     }
     const handleScroll = () => setOpen(false)
 
@@ -95,6 +136,7 @@ export function DropdownMenu({ items, align = 'right', ariaLabel = 'Actions' }: 
               {item.separator && <div className="my-1 border-t border-surface-200 dark:border-surface-800" />}
               <button
                 role="menuitem"
+                tabIndex={-1}
                 onClick={(e) => { e.stopPropagation(); setOpen(false); item.onClick() }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors cursor-pointer ${
                   item.danger

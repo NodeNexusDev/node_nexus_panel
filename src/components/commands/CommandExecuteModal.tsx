@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
+import { Select } from '../ui/Select'
 import { Spinner } from '../ui/Spinner'
 import { useNodes } from '../../hooks/useNodes'
 import { useExecuteCommand } from '../../hooks/useCommands'
@@ -75,13 +76,13 @@ export function CommandExecuteModal({ command, onClose }: CommandExecuteModalPro
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('commands.selectNode')}</label>
-            <select value={selectedNode} onChange={(e) => setSelectedNode(e.target.value)} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="">{t('commands.selectNode')}</option>
-              {nodes.map((node) => (<option key={node.id} value={node.id}>{node.name}</option>))}
-            </select>
-          </div>
+          <Select
+            label={t('commands.selectNode')}
+            value={selectedNode}
+            onChange={setSelectedNode}
+            placeholder={t('commands.selectNode')}
+            options={nodes.map((node) => ({ value: node.id, label: node.name }))}
+          />
           {command && command.parameters && command.parameters.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-surface-600 dark:text-surface-400">{t('commands.parameters', 'Parameters')}</p>

@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Pagination } from '../components/ui/Pagination'
 import { Spinner } from '../components/ui/Spinner'
@@ -35,6 +36,7 @@ import {
   IconDocker,
 } from '../components/ui/Icons'
 import { useToast } from '../components/ui/useToast'
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
 import {
   useNode,
   useNodeStats,
@@ -58,6 +60,7 @@ export function NodeDetail() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { copy } = useCopyToClipboard({ onCopied: () => toast('success', t('nodes.addressCopied')) })
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   const TAB_KEYS: Tab[] = ['overview', 'metrics', 'stats', 'status-history', 'command-history', 'tags', 'notes']
@@ -179,7 +182,7 @@ export function NodeDetail() {
 
   const handleCopyAddress = () => {
     const address = `${node?.host ?? ''}:${node?.port ?? ''}`
-    navigator.clipboard?.writeText(address).then(() => toast('success', t('nodes.addressCopied')))
+    copy(address)
   }
 
   if (nodeLoading) return <NodeDetailSkeleton />
@@ -208,9 +211,11 @@ export function NodeDetail() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 animate-slide-up">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/nodes')} className="px-2">
-            <IconArrowLeft className="w-5 h-5" />
-          </Button>
+          <Tooltip content={t('common.back', 'Back')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/nodes')} className="px-2" aria-label={t('common.back', 'Back')}>
+              <IconArrowLeft className="w-5 h-5" />
+            </Button>
+          </Tooltip>
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
             node.status === 'active'
               ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400'
@@ -288,14 +293,22 @@ export function NodeDetail() {
               <Input label={t('nodes.port')} placeholder="22" type="number" value={String(field.value ?? 22)} onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))} error={errors.port?.message} />
             )}
           />
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.connectionType')}</label>
-            <select {...register('connection_type')} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="ssh">SSH</option>
-              <option value="docker">Docker</option>
-              <option value="proxmox">Proxmox</option>
-            </select>
-          </div>
+          <Controller
+            name="connection_type"
+            control={control}
+            render={({ field }) => (
+              <Select
+                label={t('nodes.connectionType')}
+                value={field.value ?? 'ssh'}
+                onChange={field.onChange}
+                options={[
+                  { value: 'ssh', label: 'SSH' },
+                  { value: 'docker', label: 'Docker' },
+                  { value: 'proxmox', label: 'Proxmox' },
+                ]}
+              />
+            )}
+          />
           <Input label={t('nodes.username', 'Username')} placeholder="root" {...register('username')} error={errors.username?.message} />
           <div className="space-y-1">
             <div className="flex items-center justify-between">
@@ -605,7 +618,7 @@ function TagsTab({ nodeId }: { nodeId: string }) {
           {tags.map((tag) => (
             <Badge key={tag} variant="default" className="gap-1">
               {tag}
-              <button onClick={() => removeTag.mutate({ id: nodeId, tag }, { onSuccess: () => { toast('success', t('nodes.toastTagRemoved')); refetch() }, onError: () => toast('error', t('nodes.toastTagRemoveFailed')) })} className="ml-1 text-surface-400 hover:text-red-500">×</button>
+              <button onClick={() => removeTag.mutate({ id: nodeId, tag }, { onSuccess: () => { toast('success', t('nodes.toastTagRemoved')); refetch() }, onError: () => toast('error', t('nodes.toastTagRemoveFailed')) })} aria-label={t('nodes.removeTag', 'Remove tag')} className="ml-1 text-surface-400 hover:text-red-500">×</button>
             </Badge>
           ))}
           {tags.length === 0 && <p className="text-sm text-surface-500">{t('nodes.noTags', 'No tags')}</p>}

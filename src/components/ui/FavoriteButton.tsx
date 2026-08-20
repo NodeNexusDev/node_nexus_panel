@@ -1,6 +1,8 @@
 import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { IconStar, IconStarFilled } from './Icons'
 import { Spinner } from './Spinner'
+import { Tooltip } from './Tooltip'
 import { useFavorites, useAddFavorite, useRemoveFavorite } from '../../hooks/useFavorites'
 import type { FavoriteCreate } from '../../api/types'
 
@@ -11,6 +13,7 @@ interface FavoriteButtonProps {
 }
 
 export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteButtonProps) {
+  const { t } = useTranslation()
   const { data: favoritesData } = useFavorites({ size: 100 })
   const addFavorite = useAddFavorite()
   const removeFavorite = useRemoveFavorite()
@@ -35,13 +38,15 @@ export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteBu
   }
 
   return (
-    <button
-      onClick={toggle}
-      aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-      aria-pressed={isFavorited}
-      className={`${buttonClasses} rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors`}
-    >
-      {isFavorited ? <IconStarFilled className={`${sizeClasses} text-yellow-500`} /> : <IconStar className={`${sizeClasses} text-surface-400`} />}
-    </button>
+    <Tooltip content={isFavorited ? t('favorites.remove', 'Remove from favorites') : t('favorites.add', 'Add to favorites')}>
+      <button
+        onClick={toggle}
+        aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+        aria-pressed={isFavorited}
+        className={`${buttonClasses} rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors`}
+      >
+        {isFavorited ? <IconStarFilled className={`${sizeClasses} text-yellow-500`} /> : <IconStar className={`${sizeClasses} text-surface-400`} />}
+      </button>
+    </Tooltip>
   )
 }

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
+import { Select } from '../components/ui/Select'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Pagination } from '../components/ui/Pagination'
@@ -71,12 +72,18 @@ export function Favorites() {
       <Card className="stagger-item">
         <CardContent>
           <div className="flex items-center gap-3">
-            <select value={targetType} onChange={(e) => { setTargetType(e.target.value); setPage(1) }} className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="">{t('favorites.allTypes', 'All types')}</option>
-              <option value="node">{t('favorites.node')}</option>
-              <option value="command">{t('favorites.command')}</option>
-              <option value="script">{t('favorites.script')}</option>
-            </select>
+            <div className="w-48">
+              <Select
+                value={targetType}
+                onChange={(val) => { setTargetType(val); setPage(1) }}
+                placeholder={t('favorites.allTypes', 'All types')}
+                options={[
+                  { value: 'node', label: t('favorites.node') },
+                  { value: 'command', label: t('favorites.command') },
+                  { value: 'script', label: t('favorites.script') },
+                ]}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '../components/ui/Input'
@@ -11,11 +11,15 @@ export function Login() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
+  const loginRef = useRef<HTMLInputElement>(null)
 
   const [panelLogin, setPanelLogin] = useState('')
   const [panelPassword, setPanelPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useState(() => { loginRef.current?.focus() })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,20 +66,31 @@ export function Login() {
 
             <div className="space-y-4">
               <Input
+                ref={loginRef}
                 label={t('login.login')}
                 placeholder="admin"
                 value={panelLogin}
                 onChange={(e) => { setPanelLogin(e.target.value); setError('') }}
                 disabled={submitting}
+                autoFocus
               />
-              <Input
-                label={t('login.password')}
-                type="password"
-                placeholder="••••••"
-                value={panelPassword}
-                onChange={(e) => { setPanelPassword(e.target.value); setError('') }}
-                disabled={submitting}
-              />
+              <div className="space-y-1">
+                <Input
+                  label={t('login.password')}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••"
+                  value={panelPassword}
+                  onChange={(e) => { setPanelPassword(e.target.value); setError('') }}
+                  disabled={submitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 transition-colors cursor-pointer"
+                >
+                  {showPassword ? t('login.hidePassword', 'Hide password') : t('login.showPassword', 'Show password')}
+                </button>
+              </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={submitting || !panelLogin || !panelPassword}>

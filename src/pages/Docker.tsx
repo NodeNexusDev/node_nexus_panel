@@ -5,6 +5,7 @@ import { Card, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { usePullImage } from '../hooks/useDocker'
@@ -69,11 +70,13 @@ export function Docker() {
       />
 
       <div className="flex items-center gap-4">
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('docker.selectNode')}</label>
-          <select value={selectedNodeId} onChange={(e) => setSelectedNodeId(e.target.value)} className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-            {dockerNodes.map((n) => (<option key={n.id} value={n.id}>{n.name}</option>))}
-          </select>
+        <div className="w-64">
+          <Select
+            label={t('docker.selectNode')}
+            value={selectedNodeId}
+            onChange={setSelectedNodeId}
+            options={dockerNodes.map((n) => ({ value: n.id, label: n.name }))}
+          />
         </div>
       </div>
 

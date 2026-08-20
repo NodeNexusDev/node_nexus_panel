@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tooltip } from '../components/ui/Tooltip'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
@@ -42,13 +45,14 @@ import {
   useBulkExecuteNodes,
   useBulkTagsAdd,
   useBulkTagsRemove,
-  useValidateCredentials,
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { useSort } from '../hooks/useSort'
 import { TagBadge } from '../components/ui/TagBadge'
 import { nodeStatusVariant } from '../lib/variants'
 import type { Node, NodeStatus } from '../api/types'
+import type { NodeCreateFormValues } from '../lib/validators/node-schema'
+import { nodeCreateSchema } from '../lib/validators/node-schema'
 import type { Column } from '../components/ui/table-types'
 
 type SortKey = 'name' | 'host' | 'status' | 'connection_type'
@@ -88,13 +92,27 @@ export function Nodes() {
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
   const bulkExecuteNodes = useBulkExecuteNodes()
-  const validateCreds = useValidateCredentials()
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Node | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const defaultNode = { name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' }
-  const [newNode, setNewNode] = useState(defaultNode)
+
+  const addForm = useForm<NodeCreateFormValues>({
+    resolver: zodResolver(nodeCreateSchema) as never,
+    defaultValues: {
+      name: '',
+      host: '',
+      port: 22,
+      connection_type: 'ssh',
+      username: null,
+      password: null,
+      ssh_key: null,
+      passphrase: null,
+      docker_host: null,
+      tags: undefined,
+    },
+  })
+
   const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' })
   const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
 
@@ -156,10 +174,17 @@ export function Nodes() {
   const handleValidate = (node: Node) => {
     setValidateTarget(node)
     setValidateResult(null)
-    validateCreds.mutate(
-      { host: node.host, port: node.port, connection_type: node.connection_type, username: node.username || undefined, passphrase: undefined },
-      { onSuccess: (r) => setValidateResult(r), onError: () => toast('error', t('nodes.toastValidateFailed')) },
-    )
+    checkNode.mutate(node.id, {
+      onSuccess: (checkedNode) => {
+        setValidateResult({
+          status: checkedNode.status,
+          message: checkedNode.status === 'active'
+            ? t('nodes.validateSuccess', 'Connection successful')
+            : t('nodes.validateFailed', 'Connection failed'),
+        })
+      },
+      onError: () => toast('error', t('nodes.toastValidateFailed')),
+    })
   }
 
   const nodeMenu = (node: Node): DropdownMenuItem[] => [
@@ -306,25 +331,29 @@ export function Nodes() {
     </div>
   )
 
-  const handleAdd = () => {
-    if (!newNode.name.trim()) { toast('error', t('nodes.toastNameRequired', 'Name is required')); return }
-    const port = parseInt(String(newNode.port), 10)
-    if (isNaN(port) || port < 1 || port > 65535) { toast('error', t('nodes.toastInvalidPort', 'Invalid port number')); return }
+  const handleAdd = (values: NodeCreateFormValues) => {
     createNode.mutate(
       {
-        name: newNode.name,
-        host: newNode.host,
-        port,
-        connection_type: newNode.connection_type,
-        username: newNode.username || undefined,
-        password: newNode.password || undefined,
-        ssh_key: newNode.ssh_key || undefined,
-        passphrase: newNode.passphrase || undefined,
-        docker_host: newNode.docker_host || undefined,
-        tags: newNode.tags ? newNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+        name: values.name,
+        host: values.host,
+        port: values.port,
+        connection_type: values.connection_type,
+        username: values.username ?? undefined,
+        password: values.password ?? undefined,
+        ssh_key: values.ssh_key ?? undefined,
+        passphrase: values.passphrase ?? undefined,
+        docker_host: values.docker_host ?? undefined,
+        tags: values.tags,
       },
       {
-        onSuccess: () => { toast('success', t('nodes.toastAdded', { name: newNode.name })); setShowAddModal(false); setNewNode(defaultNode) },
+        onSuccess: (createdNode) => {
+          toast('success', t('nodes.toastAdded', { name: values.name }), {
+            label: t('common.view', 'View'),
+            onClick: () => navigate(`/nodes/${createdNode.id}`),
+          })
+          setShowAddModal(false)
+          addForm.reset()
+        },
         onError: () => toast('error', t('nodes.toastAddFailed')),
       },
     )
@@ -397,17 +426,15 @@ export function Nodes() {
             </button>
           ))}
           {statusFilter.size > 0 && (
-            <button onClick={() => setStatusFilter(new Set())} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">×</button>
+            <button onClick={() => setStatusFilter(new Set())} aria-label={t('nodes.clearFilters', 'Clear filters')} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">×</button>
           )}
         </div>
-        <select
+        <Select
           value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
-          className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-        >
-          <option value="">{t('nodes.allTags', 'All tags')}</option>
-          {allTags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
-        </select>
+          onChange={setTagFilter}
+          placeholder={t('nodes.allTags', 'All tags')}
+          options={(allTags ?? []).map((tag) => ({ value: tag, label: tag }))}
+        />
       </FilterBar>
 
       <Card hover className="stagger-item">
@@ -456,34 +483,55 @@ export function Nodes() {
       </Card>
 
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={t('nodes.addNode')}>
-        <div className="space-y-4">
-          <Input label={t('nodes.node')} placeholder="prod-server-05" value={newNode.name} onChange={(e) => setNewNode({ ...newNode, name: e.target.value })} />
-          <Input label={t('nodes.host')} placeholder="192.168.1.105" value={newNode.host} onChange={(e) => setNewNode({ ...newNode, host: e.target.value })} />
-          <Input label={t('nodes.port')} placeholder="22" type="number" value={newNode.port} onChange={(e) => setNewNode({ ...newNode, port: e.target.value })} />
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.connectionType')}</label>
-            <select value={newNode.connection_type} onChange={(e) => setNewNode({ ...newNode, connection_type: e.target.value as 'ssh' | 'docker' | 'proxmox' })} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="ssh">SSH</option>
-              <option value="docker">Docker</option>
-              <option value="proxmox">Proxmox</option>
-            </select>
-          </div>
-          <Input label={t('nodes.username', 'Username')} placeholder="root" value={newNode.username} onChange={(e) => setNewNode({ ...newNode, username: e.target.value })} />
-          <Input label={t('nodes.password', 'Password')} type="password" placeholder="••••••" value={newNode.password} onChange={(e) => setNewNode({ ...newNode, password: e.target.value })} />
+        <form onSubmit={addForm.handleSubmit(handleAdd)} className="space-y-4">
+          <Input label={t('nodes.node')} placeholder="prod-server-05" {...addForm.register('name')} error={addForm.formState.errors.name?.message} />
+          <Input label={t('nodes.host')} placeholder="192.168.1.105" {...addForm.register('host')} error={addForm.formState.errors.host?.message} />
+          <Controller
+            name="port"
+            control={addForm.control}
+            render={({ field }) => (
+              <Input label={t('nodes.port')} placeholder="22" type="number" value={String(field.value ?? 22)} onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))} error={addForm.formState.errors.port?.message} />
+            )}
+          />
+          <Controller
+            name="connection_type"
+            control={addForm.control}
+            render={({ field }) => (
+              <Select
+                label={t('nodes.connectionType')}
+                value={field.value}
+                onChange={field.onChange}
+                options={[
+                  { value: 'ssh', label: 'SSH' },
+                  { value: 'docker', label: 'Docker' },
+                  { value: 'proxmox', label: 'Proxmox' },
+                ]}
+              />
+            )}
+          />
+          <Input label={t('nodes.username', 'Username')} placeholder="root" {...addForm.register('username')} error={addForm.formState.errors.username?.message} />
+          <Input label={t('nodes.password', 'Password')} type="password" placeholder="••••••" {...addForm.register('password')} error={addForm.formState.errors.password?.message} />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-            <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" value={newNode.ssh_key} onChange={(e) => setNewNode({ ...newNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
+            <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" {...addForm.register('ssh_key')} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
+            {addForm.formState.errors.ssh_key && <p className="text-xs text-red-500 mt-1">{addForm.formState.errors.ssh_key.message}</p>}
           </div>
-          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder="••••••" value={newNode.passphrase} onChange={(e) => setNewNode({ ...newNode, passphrase: e.target.value })} />
-          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={newNode.docker_host} onChange={(e) => setNewNode({ ...newNode, docker_host: e.target.value })} />
-          <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={newNode.tags} onChange={(e) => setNewNode({ ...newNode, tags: e.target.value })} />
+          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder="••••••" {...addForm.register('passphrase')} error={addForm.formState.errors.passphrase?.message} />
+          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...addForm.register('docker_host')} error={addForm.formState.errors.docker_host?.message} />
+          <Controller
+            name="tags"
+            control={addForm.control}
+            render={({ field }) => (
+              <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={(field.value ?? []).join(', ')} onChange={(e) => field.onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} error={addForm.formState.errors.tags?.message} />
+            )}
+          />
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowAddModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleAdd} disabled={createNode.isPending || !newNode.name || !newNode.host}>
+            <Button variant="ghost" type="button" onClick={() => setShowAddModal(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" disabled={createNode.isPending}>
               {createNode.isPending ? t('common.loading') : t('common.save')}
             </Button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title={t('nodes.editNode', 'Edit Node')}>
@@ -491,14 +539,16 @@ export function Nodes() {
           <Input label={t('nodes.node')} placeholder="prod-server-05" value={editNode.name} onChange={(e) => setEditNode({ ...editNode, name: e.target.value })} />
           <Input label={t('nodes.host')} placeholder="192.168.1.105" value={editNode.host} onChange={(e) => setEditNode({ ...editNode, host: e.target.value })} />
           <Input label={t('nodes.port')} placeholder="22" type="number" value={editNode.port} onChange={(e) => setEditNode({ ...editNode, port: e.target.value })} />
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.connectionType')}</label>
-            <select value={editNode.connection_type} onChange={(e) => setEditNode({ ...editNode, connection_type: e.target.value as 'ssh' | 'docker' | 'proxmox' })} className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-              <option value="ssh">SSH</option>
-              <option value="docker">Docker</option>
-              <option value="proxmox">Proxmox</option>
-            </select>
-          </div>
+          <Select
+            label={t('nodes.connectionType')}
+            value={editNode.connection_type}
+            onChange={(val) => setEditNode({ ...editNode, connection_type: val as 'ssh' | 'docker' | 'proxmox' })}
+            options={[
+              { value: 'ssh', label: 'SSH' },
+              { value: 'docker', label: 'Docker' },
+              { value: 'proxmox', label: 'Proxmox' },
+            ]}
+          />
           <Input label={t('nodes.username', 'Username')} placeholder="root" value={editNode.username} onChange={(e) => setEditNode({ ...editNode, username: e.target.value })} />
           <div className="space-y-1">
             <div className="flex items-center justify-between">
