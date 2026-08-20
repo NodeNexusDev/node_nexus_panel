@@ -5,6 +5,7 @@ import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { useToast } from '../ui/useToast'
 import type { ScriptStep } from '../../api/types'
+import { generateId } from '../../lib/uuid'
 
 type StepInput = { id: string; label: string; type: 'inline' | 'command'; command: string; command_id: string; params: Record<string, unknown>; on_failure: 'stop' | 'continue' }
 
@@ -40,7 +41,7 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
-  const [steps, setSteps] = useState<StepInput[]>([{ ...EMPTY_STEP, id: crypto.randomUUID() }])
+  const [steps, setSteps] = useState<StepInput[]>([{ ...EMPTY_STEP, id: generateId() }])
 
   const initialRef = useRef(initial)
   initialRef.current = initial
@@ -52,12 +53,12 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
       setName(init.name)
       setDescription(init.description)
       setTags(init.tags.join(', '))
-      setSteps(init.steps.map((s) => ({ id: crypto.randomUUID(), label: s.label, type: s.type, command: s.command || '', command_id: s.command_id || '', params: s.params || {}, on_failure: s.on_failure || 'stop' })))
+      setSteps(init.steps.map((s) => ({ id: generateId(), label: s.label, type: s.type, command: s.command || '', command_id: s.command_id || '', params: s.params || {}, on_failure: s.on_failure || 'stop' })))
     } else {
       setName('')
       setDescription('')
       setTags('')
-      setSteps([{ ...EMPTY_STEP, id: crypto.randomUUID() }])
+      setSteps([{ ...EMPTY_STEP, id: generateId() }])
     }
   }, [isOpen])
 
@@ -88,7 +89,7 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('scripts.steps')}</label>
-            <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { id: crypto.randomUUID(), label: `Step ${prev.length + 1}`, type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { id: generateId(), label: `Step ${prev.length + 1}`, type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
           </div>
           {steps.map((step, idx) => (
             <div key={step.id} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg space-y-2">
