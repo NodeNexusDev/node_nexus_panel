@@ -66,10 +66,17 @@ export interface DiskMetrics {
   percent: number
 }
 
+export interface LoadAverage {
+  one_min: number
+  five_min: number
+  fifteen_min: number
+}
+
 export interface NodeMetrics {
   cpu: CpuMetrics
   memory: MemoryMetrics
   disk: DiskMetrics
+  load_average: LoadAverage
   uptime_since: string
 }
 
@@ -296,7 +303,7 @@ export interface BulkCommandHistoryItem {
   truncated: boolean
   batch_id?: string | null
   started_at: string
-  finished_at?: string | null
+  finished_at: string | null
   created_at: string
 }
 
