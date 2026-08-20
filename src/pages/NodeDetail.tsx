@@ -405,6 +405,16 @@ function MetricsTab({ nodeId }: { nodeId: string }) {
               ]}
             />
           </div>
+          <div className="pt-1">
+            <h3 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('nodes.loadAverage', 'Load Average')}</h3>
+            <KeyValueList
+              rows={[
+                { label: t('nodes.load1m', '1 min'), value: metrics.load_average.one_min.toFixed(2) },
+                { label: t('nodes.load5m', '5 min'), value: metrics.load_average.five_min.toFixed(2) },
+                { label: t('nodes.load15m', '15 min'), value: metrics.load_average.fifteen_min.toFixed(2) },
+              ]}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
