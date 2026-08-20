@@ -96,6 +96,11 @@ export function Nodes() {
   const defaultNode = { name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' }
   const [newNode, setNewNode] = useState(defaultNode)
   const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' })
+  const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
+
+  const toggleClear = (field: string) => {
+    setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
+  }
 
   const [execTarget, setExecTarget] = useState<Node | null>(null)
   const [scriptTarget, setScriptTarget] = useState<Node | null>(null)
@@ -145,6 +150,7 @@ export function Nodes() {
       docker_host: node.docker_host || '',
       tags: node.tags.join(', '),
     })
+    setClearFields({})
   }
 
   const handleValidate = (node: Node) => {
@@ -338,9 +344,9 @@ export function Nodes() {
           host: editNode.host,
           port,
           username: toNull(editNode.username),
-          password: toNull(editNode.password),
-          ssh_key: toNull(editNode.ssh_key),
-          passphrase: toNull(editNode.passphrase),
+          password: editNode.password ? editNode.password : clearFields.password ? null : undefined,
+          ssh_key: editNode.ssh_key ? editNode.ssh_key : clearFields.ssh_key ? null : undefined,
+          passphrase: editNode.passphrase ? editNode.passphrase : clearFields.passphrase ? null : undefined,
           docker_host: toNull(editNode.docker_host),
           tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
@@ -494,12 +500,33 @@ export function Nodes() {
             </select>
           </div>
           <Input label={t('nodes.username', 'Username')} placeholder="root" value={editNode.username} onChange={(e) => setEditNode({ ...editNode, username: e.target.value })} />
-          <Input label={t('nodes.password', 'Password')} type="password" placeholder="Leave blank to keep unchanged" value={editNode.password} onChange={(e) => setEditNode({ ...editNode, password: e.target.value })} />
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-            <textarea placeholder={t('common.leaveBlank')} value={editNode.ssh_key} onChange={(e) => setEditNode({ ...editNode, ssh_key: e.target.value })} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.password', 'Password')}</label>
+              <Button variant="ghost" size="sm" onClick={() => toggleClear('password')} className="h-6 px-2 text-xs">
+                {clearFields.password ? t('common.cancel') : t('common.clear', 'Clear')}
+              </Button>
+            </div>
+            <Input type="password" placeholder={clearFields.password ? t('common.willBeCleared') : t('common.leaveBlank')} value={editNode.password} onChange={(e) => setEditNode({ ...editNode, password: e.target.value })} disabled={clearFields.password} />
           </div>
-          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder={t('common.leaveBlank')} value={editNode.passphrase} onChange={(e) => setEditNode({ ...editNode, passphrase: e.target.value })} />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
+              <Button variant="ghost" size="sm" onClick={() => toggleClear('ssh_key')} className="h-6 px-2 text-xs">
+                {clearFields.ssh_key ? t('common.cancel') : t('common.clear', 'Clear')}
+              </Button>
+            </div>
+            <textarea placeholder={clearFields.ssh_key ? t('common.willBeCleared') : t('common.leaveBlank')} value={editNode.ssh_key} onChange={(e) => setEditNode({ ...editNode, ssh_key: e.target.value })} disabled={clearFields.ssh_key} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.passphrase', 'Passphrase')}</label>
+              <Button variant="ghost" size="sm" onClick={() => toggleClear('passphrase')} className="h-6 px-2 text-xs">
+                {clearFields.passphrase ? t('common.cancel') : t('common.clear', 'Clear')}
+              </Button>
+            </div>
+            <Input type="password" placeholder={clearFields.passphrase ? t('common.willBeCleared') : t('common.leaveBlank')} value={editNode.passphrase} onChange={(e) => setEditNode({ ...editNode, passphrase: e.target.value })} disabled={clearFields.passphrase} />
+          </div>
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={editNode.docker_host} onChange={(e) => setEditNode({ ...editNode, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={editNode.tags} onChange={(e) => setEditNode({ ...editNode, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">

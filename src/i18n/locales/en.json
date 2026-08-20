@@ -489,7 +489,9 @@
     "remove": "Remove",
     "leaveBlank": "Leave blank to keep unchanged",
     "copied": "Copied to clipboard",
-    "filterByTag": "Filter by tag"
+    "filterByTag": "Filter by tag",
+    "clear": "Clear",
+    "willBeCleared": "Will be cleared on save"
   },
   "notes": {
     "title": "Notes",

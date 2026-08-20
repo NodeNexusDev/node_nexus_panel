@@ -69,6 +69,7 @@ export function NodeDetail() {
     setSearchParams(key === 'overview' ? {} : { tab: key })
   }
   const [showEditModal, setShowEditModal] = useState(false)
+  const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showCommandModal, setShowCommandModal] = useState(false)
   const [showScriptModal, setShowScriptModal] = useState(false)
@@ -107,6 +108,10 @@ export function NodeDetail() {
     },
   })
 
+  const toggleClear = (field: string) => {
+    setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
+  }
+
   const openEdit = () => {
     reset({
       name: node?.name,
@@ -114,21 +119,33 @@ export function NodeDetail() {
       port: node?.port,
       connection_type: node?.connection_type,
       username: node?.username ?? null,
-      password: null,
-      ssh_key: null,
-      passphrase: null,
       docker_host: node?.docker_host ?? null,
       tags: node?.tags,
     })
+    setClearFields({})
     setShowEditModal(true)
   }
 
   const onSubmitEdit = (values: NodeUpdateFormValues) => {
     if (!id) return
     const data: NodeUpdate = {
-      ...values,
+      name: values.name,
+      host: values.host,
+      port: values.port,
+      connection_type: values.connection_type,
+      username: values.username,
+      docker_host: values.docker_host,
       tags: values.tags,
     }
+    if (values.password) data.password = values.password
+    else if (clearFields.password) data.password = null
+
+    if (values.ssh_key) data.ssh_key = values.ssh_key
+    else if (clearFields.ssh_key) data.ssh_key = null
+
+    if (values.passphrase) data.passphrase = values.passphrase
+    else if (clearFields.passphrase) data.passphrase = null
+
     updateNode.mutate(
       { id, data },
       {
@@ -280,13 +297,34 @@ export function NodeDetail() {
             </select>
           </div>
           <Input label={t('nodes.username', 'Username')} placeholder="root" {...register('username')} error={errors.username?.message} />
-          <Input label={t('nodes.password', 'Password')} type="password" placeholder="Leave blank to keep unchanged" {...register('password')} error={errors.password?.message} />
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-            <textarea {...register('ssh_key')} placeholder={t('common.leaveBlank')} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.password', 'Password')}</label>
+              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('password')} className="h-6 px-2 text-xs">
+                {clearFields.password ? t('common.cancel') : t('common.clear', 'Clear')}
+              </Button>
+            </div>
+            <Input type="password" placeholder={clearFields.password ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.password} {...register('password')} error={errors.password?.message} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
+              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('ssh_key')} className="h-6 px-2 text-xs">
+                {clearFields.ssh_key ? t('common.cancel') : t('common.clear', 'Clear')}
+              </Button>
+            </div>
+            <textarea {...register('ssh_key')} placeholder={clearFields.ssh_key ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.ssh_key} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
             {errors.ssh_key && <p className="text-xs text-red-500 mt-1">{errors.ssh_key.message}</p>}
           </div>
-          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder={t('common.leaveBlank')} {...register('passphrase')} error={errors.passphrase?.message} />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.passphrase', 'Passphrase')}</label>
+              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('passphrase')} className="h-6 px-2 text-xs">
+                {clearFields.passphrase ? t('common.cancel') : t('common.clear', 'Clear')}
+              </Button>
+            </div>
+            <Input type="password" placeholder={clearFields.passphrase ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.passphrase} {...register('passphrase')} error={errors.passphrase?.message} />
+          </div>
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...register('docker_host')} error={errors.docker_host?.message} />
           <Controller
             name="tags"

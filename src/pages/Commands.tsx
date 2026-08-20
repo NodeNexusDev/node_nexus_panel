@@ -132,7 +132,7 @@ export function Commands() {
       command: values.command,
       description: values.description || undefined,
       parameters: normalizeParameters(values.parameters),
-      tags: values.tags,
+      tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
     }
     updateCommand.mutate(
       { id: editTarget.id, data },
