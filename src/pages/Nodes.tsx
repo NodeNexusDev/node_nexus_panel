@@ -301,11 +301,14 @@ export function Nodes() {
   )
 
   const handleAdd = () => {
+    if (!newNode.name.trim()) { toast('error', t('nodes.toastNameRequired', 'Name is required')); return }
+    const port = parseInt(String(newNode.port), 10)
+    if (isNaN(port) || port < 1 || port > 65535) { toast('error', t('nodes.toastInvalidPort', 'Invalid port number')); return }
     createNode.mutate(
       {
         name: newNode.name,
         host: newNode.host,
-        port: Number(newNode.port),
+        port,
         connection_type: newNode.connection_type,
         username: newNode.username || undefined,
         password: newNode.password || undefined,
@@ -323,6 +326,9 @@ export function Nodes() {
 
   const handleEdit = () => {
     if (!editTarget) return
+    if (!editNode.name.trim()) { toast('error', t('nodes.toastNameRequired', 'Name is required')); return }
+    const port = parseInt(String(editNode.port), 10)
+    if (isNaN(port) || port < 1 || port > 65535) { toast('error', t('nodes.toastInvalidPort', 'Invalid port number')); return }
     const toNull = (v: string) => v === '' ? null : v
     updateNode.mutate(
       {
@@ -330,8 +336,7 @@ export function Nodes() {
         data: {
           name: editNode.name,
           host: editNode.host,
-          port: Number(editNode.port),
-          connection_type: editNode.connection_type,
+          port,
           username: toNull(editNode.username),
           password: toNull(editNode.password),
           ssh_key: toNull(editNode.ssh_key),

@@ -87,7 +87,7 @@ function ParameterRow({ index, onRemove }: { index: number; onRemove: () => void
                 type={type === 'integer' ? 'number' : 'text'}
                 {...field}
                 value={field.value != null ? String(field.value) : ''}
-                onChange={(e) => field.onChange(e.target.value)}
+                onChange={(e) => field.onChange(type === 'integer' ? Number(e.target.value) : e.target.value)}
               />
             )
           }}

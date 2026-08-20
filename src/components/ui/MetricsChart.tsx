@@ -5,7 +5,7 @@ export interface MetricsBucket {
   total: number
   successful: number
   failed: number
-  avg_duration_ms: number | null
+  avg_duration_ms?: number | null
 }
 
 interface MetricsChartProps {

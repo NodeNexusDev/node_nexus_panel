@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui/Card'
@@ -23,14 +23,17 @@ export function Docker() {
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
   const { data: nodesData } = useNodes({ size: 100 })
-  const nodes = (nodesData?.items || []).filter((n) => n.connection_type === 'docker')
+  const dockerNodes = useMemo(
+    () => (nodesData?.items || []).filter((n) => n.connection_type === 'docker'),
+    [nodesData]
+  )
   const [selectedNodeId, setSelectedNodeId] = useState(() => searchParams.get('node') ?? '')
 
   useEffect(() => {
-    if (nodes.length > 0 && !nodes.some((n) => n.id === selectedNodeId)) {
-      setSelectedNodeId(nodes[0].id)
+    if (dockerNodes.length > 0 && !dockerNodes.some((n) => n.id === selectedNodeId)) {
+      setSelectedNodeId(dockerNodes[0].id)
     }
-  }, [nodes, selectedNodeId])
+  }, [dockerNodes, selectedNodeId])
   const [activeTab, setActiveTab] = useState<Tab>('containers')
   const [showPullModal, setShowPullModal] = useState(false)
   const [pullImage, setPullImage] = useState('')
@@ -69,7 +72,7 @@ export function Docker() {
         <div className="space-y-1">
           <label className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('docker.selectNode')}</label>
           <select value={selectedNodeId} onChange={(e) => setSelectedNodeId(e.target.value)} className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
-            {nodes.map((n) => (<option key={n.id} value={n.id}>{n.name}</option>))}
+            {dockerNodes.map((n) => (<option key={n.id} value={n.id}>{n.name}</option>))}
           </select>
         </div>
       </div>

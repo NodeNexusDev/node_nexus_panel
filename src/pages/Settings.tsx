@@ -229,7 +229,7 @@ export function Settings() {
 
       <Modal isOpen={!!importPreview} onClose={() => setImportPreview(null)} title={t('settings.importPreview', 'Import Preview')} size="md">
         <div className="space-y-4">
-          {importPreview?.result.would_create.nodes && importPreview.result.would_create.nodes.length > 0 && (
+          {importPreview?.result.would_create?.nodes && importPreview.result.would_create.nodes.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.nodesToCreate', 'Nodes to create')}: {importPreview.result.would_create.nodes.length}</h4>
               <div className="space-y-1">
@@ -239,7 +239,7 @@ export function Settings() {
               </div>
             </div>
           )}
-          {importPreview?.result.would_create.commands && importPreview.result.would_create.commands.length > 0 && (
+          {importPreview?.result.would_create?.commands && importPreview.result.would_create.commands.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.commandsToCreate', 'Commands to create')}: {importPreview.result.would_create.commands.length}</h4>
               <div className="space-y-1">
@@ -249,7 +249,7 @@ export function Settings() {
               </div>
             </div>
           )}
-          {importPreview?.result.would_create.scripts && importPreview.result.would_create.scripts.length > 0 && (
+          {importPreview?.result.would_create?.scripts && importPreview.result.would_create.scripts.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.scriptsToCreate', 'Scripts to create')}: {importPreview.result.would_create.scripts.length}</h4>
               <div className="space-y-1">

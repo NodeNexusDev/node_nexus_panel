@@ -268,7 +268,7 @@ export function NodeDetail() {
             name="port"
             control={control}
             render={({ field }) => (
-              <Input label={t('nodes.port')} placeholder="22" type="number" value={String(field.value ?? 22)} onChange={(e) => field.onChange(Number(e.target.value))} error={errors.port?.message} />
+              <Input label={t('nodes.port')} placeholder="22" type="number" value={String(field.value ?? 22)} onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))} error={errors.port?.message} />
             )}
           />
           <div className="space-y-1">

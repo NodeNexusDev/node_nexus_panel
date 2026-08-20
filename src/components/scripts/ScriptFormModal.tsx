@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
+import { useToast } from '../ui/useToast'
 import type { ScriptStep } from '../../api/types'
 
-type StepInput = { label: string; type: 'inline' | 'command'; command: string; command_id: string; params: Record<string, unknown>; on_failure: 'stop' | 'continue' }
+type StepInput = { id: string; label: string; type: 'inline' | 'command'; command: string; command_id: string; params: Record<string, unknown>; on_failure: 'stop' | 'continue' }
 
 export interface ScriptFormInitial {
   name: string
@@ -31,14 +32,15 @@ interface ScriptFormModalProps {
   onSubmit: (values: ScriptFormValues) => void
 }
 
-const EMPTY_STEP: StepInput = { label: 'Step 1', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }
+const EMPTY_STEP: StepInput = { id: '', label: 'Step 1', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }
 
 export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, onClose, onSubmit }: ScriptFormModalProps) {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
-  const [steps, setSteps] = useState<StepInput[]>([EMPTY_STEP])
+  const [steps, setSteps] = useState<StepInput[]>([{ ...EMPTY_STEP, id: crypto.randomUUID() }])
 
   const initialRef = useRef(initial)
   initialRef.current = initial
@@ -50,16 +52,18 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
       setName(init.name)
       setDescription(init.description)
       setTags(init.tags.join(', '))
-      setSteps(init.steps.map((s) => ({ label: s.label, type: s.type, command: s.command || '', command_id: s.command_id || '', params: s.params || {}, on_failure: s.on_failure || 'stop' })))
+      setSteps(init.steps.map((s) => ({ id: crypto.randomUUID(), label: s.label, type: s.type, command: s.command || '', command_id: s.command_id || '', params: s.params || {}, on_failure: s.on_failure || 'stop' })))
     } else {
       setName('')
       setDescription('')
       setTags('')
-      setSteps([EMPTY_STEP])
+      setSteps([{ ...EMPTY_STEP, id: crypto.randomUUID() }])
     }
   }, [isOpen])
 
   const handleSubmit = () => {
+    if (steps.some((s) => !s.label.trim())) { toast('error', t('scripts.toastStepLabelRequired', 'Step label is required')); return }
+    if (steps.some((s) => s.type === 'command' && !s.command_id.trim())) { toast('error', t('scripts.toastCommandIdRequired', 'Command ID is required for command steps')); return }
     onSubmit({
       name,
       description: description || undefined,
@@ -84,10 +88,10 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('scripts.steps')}</label>
-            <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { label: `Step ${prev.length + 1}`, type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { id: crypto.randomUUID(), label: `Step ${prev.length + 1}`, type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
           </div>
           {steps.map((step, idx) => (
-            <div key={idx} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg space-y-2">
+            <div key={step.id} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg space-y-2">
               <div className="flex items-center gap-2">
                 <Input label="" placeholder={t('scripts.stepLabel', 'Step label')} value={step.label} onChange={(e) => { const updated = [...steps]; updated[idx] = { ...updated[idx], label: e.target.value }; setSteps(updated) }} className="flex-1" />
                 <select value={step.type} onChange={(e) => { const updated = [...steps]; updated[idx] = { ...updated[idx], type: e.target.value as 'inline' | 'command' }; setSteps(updated) }} className="px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
