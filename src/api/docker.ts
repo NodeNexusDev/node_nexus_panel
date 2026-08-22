@@ -19,6 +19,12 @@ import type {
   DockerVolume,
   BulkDockerRequest,
   BulkDockerResponse,
+  BulkDockerImageBuildRequest,
+  BulkDockerImageBuildResponse,
+  BulkDockerImageRemoveRequest,
+  BulkDockerImageRemoveResponse,
+  BulkDockerPullRequest,
+  BulkDockerPullResponse,
 } from './types'
 
 function nodesBase(nodeId: string) {
@@ -104,4 +110,16 @@ export const dockerApi = {
 
   bulkStop: (data: BulkDockerRequest) =>
     api.post<BulkDockerResponse>('/docker/bulk/stop', data),
+
+  bulkRemove: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/remove', data),
+
+  bulkImageBuild: (data: BulkDockerImageBuildRequest) =>
+    api.post<BulkDockerImageBuildResponse>('/docker/bulk/images/build', data),
+
+  bulkImageRemove: (data: BulkDockerImageRemoveRequest) =>
+    api.post<BulkDockerImageRemoveResponse>('/docker/bulk/images/remove', data),
+
+  bulkPull: (data: BulkDockerPullRequest) =>
+    api.post<BulkDockerPullResponse>('/docker/bulk/pull', data),
 }

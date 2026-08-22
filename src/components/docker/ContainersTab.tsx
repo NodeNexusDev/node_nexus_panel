@@ -21,6 +21,7 @@ import {
   useBulkDockerRestart,
   useBulkDockerStart,
   useBulkDockerStop,
+  useBulkDockerRemove,
 } from '../../hooks/useDocker'
 import { useDockerContainerSse } from '../../hooks/useDockerContainerSse'
 import { ContainerRow } from './ContainerRow'
@@ -47,6 +48,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const bulkRestart = useBulkDockerRestart()
   const bulkStart = useBulkDockerStart()
   const bulkStop = useBulkDockerStop()
+  const bulkRemove = useBulkDockerRemove()
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'stopped'>('all')
@@ -132,6 +134,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           <Button variant="ghost" size="sm" onClick={() => bulkRestart.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkRestart.isPending}>{t('docker.restartAll')}</Button>
           <Button variant="ghost" size="sm" onClick={() => bulkStart.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkStart.isPending}>{t('docker.startAll')}</Button>
           <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkStop.isPending}>{t('docker.stopAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId && window.confirm(t('docker.confirmBulkRemove', 'Are you sure you want to remove the selected container?'))) { bulkRemove.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: () => { toast('success', t('docker.toastBulkRemoveDone', 'Container removed')); setSelectedIds(new Set()) }, onError: () => toast('error', t('docker.toastBulkRemoveFailed', 'Failed to remove container')) }) } }} disabled={bulkDisabled || bulkRemove.isPending} className="text-red-500">{bulkRemove.isPending ? t('common.loading') : t('docker.bulkRemove', 'Remove')}</Button>
           <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }} disabled={bulkDisabled}>{t('docker.bulkExec', 'Exec on selected')}</Button>
         </div>
       )}

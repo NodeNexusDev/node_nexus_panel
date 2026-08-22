@@ -45,6 +45,9 @@ import {
   useBulkExecuteNodes,
   useBulkTagsAdd,
   useBulkTagsRemove,
+  useBulkMetrics,
+  useBulkValidateCredentials,
+  useBulkUpdateNodes,
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { useSort } from '../hooks/useSort'
@@ -92,6 +95,9 @@ export function Nodes() {
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
   const bulkExecuteNodes = useBulkExecuteNodes()
+  const bulkMetrics = useBulkMetrics()
+  const bulkValidateCreds = useBulkValidateCredentials()
+  const bulkUpdateNodes = useBulkUpdateNodes()
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Node | null>(null)
@@ -133,6 +139,10 @@ export function Nodes() {
   const [showBulkTag, setShowBulkTag] = useState(false)
   const [showBulkTagRemove, setShowBulkTagRemove] = useState(false)
   const [bulkRemoveTag, setBulkRemoveTag] = useState('')
+  const [showBulkMetrics, setShowBulkMetrics] = useState(false)
+  const [bulkMetricsResult, setBulkMetricsResult] = useState<import('../api/types').BulkNodeMetricsResponse | null>(null)
+  const [showBulkUpdate, setShowBulkUpdate] = useState(false)
+  const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', username: '', docker_host: '', tags: '' })
 
   const nodes = data?.items || []
   const allSelected = nodes.length > 0 && nodes.every((n) => selectedIds.includes(n.id))
@@ -451,6 +461,24 @@ export function Nodes() {
                   onError: () => toast('error', t('nodes.toastBulkCheckFailed')),
                 })
               }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowBulkMetrics(true)
+                setBulkMetricsResult(null)
+                bulkMetrics.mutate(selectedIds, {
+                  onSuccess: (data) => setBulkMetricsResult(data),
+                  onError: () => toast('error', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics')),
+                })
+              }} disabled={bulkMetrics.isPending}>{bulkMetrics.isPending ? t('common.loading') : t('nodes.bulkMetrics', 'Bulk Metrics')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowBulkUpdate(true)
+                setBulkUpdateChanges({ name: '', host: '', port: '', username: '', docker_host: '', tags: '' })
+              }}>{t('nodes.bulkUpdate', 'Bulk Update')}</Button>
+              <Button variant="ghost" size="sm" disabled={bulkValidateCreds.isPending} onClick={() => {
+                bulkValidateCreds.mutate({ node_ids: selectedIds }, {
+                  onSuccess: (data) => { toast('success', t('nodes.toastBulkValidateDone', { succeeded: data.succeeded, failed: data.failed })); setSelectedIds([]) },
+                  onError: () => toast('error', t('nodes.toastBulkValidateFailed', 'Failed to validate credentials')),
+                })
+              }}>{bulkValidateCreds.isPending ? t('common.loading') : t('nodes.bulkValidate', 'Bulk Validate')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('nodes.bulkDelete', 'Bulk Delete')}</Button>
               <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('nodes.clearSelection', 'Clear')}</button>
             </div>
@@ -618,6 +646,69 @@ export function Nodes() {
       </Modal>
 
       <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: () => { toast('success', t('nodes.toastBulkDeleteDone')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
+
+      <Modal isOpen={showBulkMetrics} onClose={() => { setShowBulkMetrics(false); setBulkMetricsResult(null) }} title={t('nodes.bulkMetrics', 'Bulk Metrics')} size="lg">
+        <div className="space-y-4">
+          {bulkMetricsResult ? (
+            <div className="space-y-3">
+              <div className="flex gap-4 text-sm">
+                <span className="text-green-600 dark:text-green-400">{t('nodes.succeeded', 'Succeeded')}: {bulkMetricsResult.succeeded}</span>
+                <span className="text-red-600 dark:text-red-400">{t('nodes.failed', 'Failed')}: {bulkMetricsResult.failed}</span>
+              </div>
+              <div className="max-h-96 overflow-y-auto space-y-2">
+                {bulkMetricsResult.results.map((r) => (
+                  <div key={r.node_id} className={`p-3 rounded-lg ${r.status === 'ok' ? 'bg-green-50 dark:bg-green-500/10' : 'bg-red-50 dark:bg-red-500/10'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-surface-900 dark:text-white">{r.node_name}</span>
+                      <Badge variant={r.status === 'ok' ? 'success' : 'danger'}>{r.status}</Badge>
+                    </div>
+                    {r.metrics && (
+                      <div className="mt-2 text-xs text-surface-600 dark:text-surface-400 grid grid-cols-2 gap-1">
+                        <span>CPU: {r.metrics.cpu.usage_percent}%</span>
+                        <span>RAM: {r.metrics.memory.percent}%</span>
+                        <span>Disk: {r.metrics.disk.percent}%</span>
+                        <span>Uptime since: {r.metrics.uptime_since}</span>
+                      </div>
+                    )}
+                    {r.error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{r.error}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-surface-500"><span className="animate-spin w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full" /> {t('common.loading')}</div>
+          )}
+          <div className="flex justify-end"><Button variant="ghost" onClick={() => { setShowBulkMetrics(false); setBulkMetricsResult(null) }}>{t('common.close')}</Button></div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showBulkUpdate} onClose={() => setShowBulkUpdate(false)} title={t('nodes.bulkUpdate', 'Bulk Update')} size="lg">
+        <div className="space-y-4">
+          <p className="text-sm text-surface-500">{t('nodes.bulkUpdateMsg', { count: selectedIds.length })}</p>
+          <Input label={t('nodes.node')} placeholder="Leave empty to skip" value={bulkUpdateChanges.name} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, name: e.target.value })} />
+          <Input label={t('nodes.host')} placeholder="Leave empty to skip" value={bulkUpdateChanges.host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, host: e.target.value })} />
+          <Input label={t('nodes.port')} placeholder="Leave empty to skip" value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
+          <Input label={t('nodes.username', 'Username')} placeholder="Leave empty to skip" value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
+          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="Leave empty to skip" value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
+          <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="comma, separated" value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowBulkUpdate(false)}>{t('common.cancel')}</Button>
+            <Button onClick={() => {
+              const changes: import('../api/types').NodeUpdate = {}
+              if (bulkUpdateChanges.name) changes.name = bulkUpdateChanges.name
+              if (bulkUpdateChanges.host) changes.host = bulkUpdateChanges.host
+              if (bulkUpdateChanges.port) changes.port = parseInt(bulkUpdateChanges.port, 10)
+              if (bulkUpdateChanges.username) changes.username = bulkUpdateChanges.username
+              if (bulkUpdateChanges.docker_host) changes.docker_host = bulkUpdateChanges.docker_host
+              if (bulkUpdateChanges.tags) changes.tags = bulkUpdateChanges.tags.split(',').map((s) => s.trim()).filter(Boolean)
+              bulkUpdateNodes.mutate({ node_ids: selectedIds, changes }, {
+                onSuccess: (data) => { toast('success', t('nodes.toastBulkUpdateDone', { succeeded: data.succeeded, failed: data.failed })); setShowBulkUpdate(false); setSelectedIds([]) },
+                onError: () => toast('error', t('nodes.toastBulkUpdateFailed', 'Failed to update nodes')),
+              })
+            }} disabled={bulkUpdateNodes.isPending}>{bulkUpdateNodes.isPending ? t('common.loading') : t('common.save')}</Button>
+          </div>
+        </div>
+      </Modal>
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('nodes.deleteTitle')} message={t('nodes.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteNode.isPending} />
 

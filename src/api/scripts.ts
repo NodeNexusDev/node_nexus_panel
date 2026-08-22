@@ -10,6 +10,8 @@ import type {
   ScheduleRequest,
   ScheduleResponse,
   ExecutionStatsResponse,
+  BulkScriptCancelRequest,
+  BulkScriptRetryRequest,
   PaginatedResponse,
 } from './types'
 
@@ -85,4 +87,10 @@ export const scriptsApi = {
 
   retryExecution: (executionId: string) =>
     api.post<ScriptExecutionResponse>(`/scripts/executions/${executionId}/retry`),
+
+  bulkCancel: (data: BulkScriptCancelRequest) =>
+    api.post<Record<string, unknown>>('/scripts/bulk/cancel', data),
+
+  bulkRetry: (data: BulkScriptRetryRequest) =>
+    api.post<Record<string, unknown>>('/scripts/bulk/retry', data),
 }

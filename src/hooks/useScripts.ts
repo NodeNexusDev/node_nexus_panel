@@ -6,9 +6,9 @@ import type {
   ScriptUpdate,
   ScriptExecuteRequest,
   ScriptExecutionResponse,
-  ExecutionStatsResponse,
   ScheduledJob,
   PaginatedResponse,
+  ScheduleRequest,
 } from '../api/types'
 
 export function useScripts(params?: { page?: number; size?: number; tag?: string; search?: string }) {
@@ -126,7 +126,7 @@ export function useSetScriptSchedule() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { cron: string; node_ids: string[]; params?: Record<string, unknown>; timezone?: string; misfire_grace_seconds?: number } }) =>
+    mutationFn: ({ id, data }: { id: string; data: ScheduleRequest }) =>
       scriptsApi.setSchedule(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scripts'] })
@@ -152,18 +152,32 @@ export function useScriptTags() {
   })
 }
 
-export function useScriptStats(id: string, params?: { date_from?: string; date_to?: string }) {
-  return useQuery<ExecutionStatsResponse>({
-    queryKey: ['scripts', id, 'stats', params],
-    queryFn: () => scriptsApi.getStats(id, params),
-    enabled: !!id,
-  })
-}
-
 export function useScriptSchedule(id: string) {
   return useQuery<ScheduledJob | null>({
     queryKey: ['scripts', id, 'schedule'],
     queryFn: () => scriptsApi.getSchedule(id),
     enabled: !!id,
+  })
+}
+
+export function useBulkCancelScriptExecutions() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (executionIds: string[]) => scriptsApi.bulkCancel({ execution_ids: executionIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scripts'] })
+    },
+  })
+}
+
+export function useBulkRetryScriptExecutions() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (executionIds: string[]) => scriptsApi.bulkRetry({ execution_ids: executionIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scripts'] })
+    },
   })
 }

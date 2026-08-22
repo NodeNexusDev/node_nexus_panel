@@ -4,11 +4,9 @@ import type {
   Node,
   NodeCreate,
   NodeUpdate,
-  NodeValidateRequest,
   NodeMetrics,
   ExecutionStatsResponse,
   NodeStatusHistoryItem,
-  BulkCommandHistoryItem,
   CommandHistoryResponse,
   PaginatedResponse,
 } from '../api/types'
@@ -42,14 +40,6 @@ export function useNodeStatusHistory(id: string, params?: { page?: number; size?
     queryKey: ['nodes', id, 'status-history', params],
     queryFn: () => nodesApi.getStatusHistory(id, params),
     enabled: !!id,
-  })
-}
-
-export function useBulkHistory(batchId: string, params?: { page?: number; size?: number }) {
-  return useQuery<PaginatedResponse<BulkCommandHistoryItem>>({
-    queryKey: ['nodes', 'bulk-history', batchId, params],
-    queryFn: () => nodesApi.getBulkHistory(batchId, params),
-    enabled: !!batchId,
   })
 }
 
@@ -157,12 +147,6 @@ export function useRetryNodeCommand() {
   })
 }
 
-export function useValidateCredentials() {
-  return useMutation({
-    mutationFn: (data: NodeValidateRequest) => nodesApi.validateCredentials(data),
-  })
-}
-
 export function useBulkTagsAdd() {
   const queryClient = useQueryClient()
 
@@ -250,6 +234,39 @@ export function useBulkExecuteNodes() {
 
   return useMutation({
     mutationFn: (data: { command: string; node_ids?: string[]; tags?: string[] }) => nodesApi.bulkExecute(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkMetrics() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (nodeIds: string[]) => nodesApi.bulkMetrics(nodeIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkValidateCredentials() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { node_ids: string[]; tags?: string[] }) => nodesApi.bulkValidateCredentials(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkUpdateNodes() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { node_ids: string[]; changes: NodeUpdate }) => nodesApi.bulkUpdate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },

@@ -12,6 +12,10 @@ import type {
   DockerNetwork,
   DockerVolume,
   BulkDockerRequest,
+  BulkDockerImageBuildRequest,
+  BulkDockerImageRemoveRequest,
+  BulkDockerPullRequest,
+  DockerExecRequest,
 } from '../api/types'
 
 export function useDockerContainers(nodeId: string, all?: boolean) {
@@ -131,7 +135,7 @@ export function useExecContainer() {
     }: {
       nodeId: string
       containerId: string
-      data: { command: string; timeout?: number }
+      data: DockerExecRequest
     }) => dockerApi.execContainer(nodeId, containerId, data),
   })
 }
@@ -250,6 +254,58 @@ export function useBulkDockerStop() {
   return useMutation({
     mutationFn: (data: BulkDockerRequest) =>
       dockerApi.bulkStop(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerRemove() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerRequest) =>
+      dockerApi.bulkRemove(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerImageBuild() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerImageBuildRequest) =>
+      dockerApi.bulkImageBuild(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerImageRemove() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerImageRemoveRequest) =>
+      dockerApi.bulkImageRemove(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerPull() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerPullRequest) =>
+      dockerApi.bulkPull(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
       queryClient.invalidateQueries({ queryKey: ['nodes'] })

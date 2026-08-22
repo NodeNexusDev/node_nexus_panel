@@ -12,6 +12,11 @@ import type {
   BulkCommandHistoryItem,
   BulkNodeOperationResult,
   BulkCommandResult,
+  BulkNodeUpdateRequest,
+  BulkNodeUpdateResponse,
+  BulkNodeMetricsResponse,
+  BulkValidateCredentialsRequest,
+  BulkValidateCredentialsResponse,
   CommandHistoryResponse,
   PaginatedResponse,
 } from './types'
@@ -112,4 +117,13 @@ export const nodesApi = {
 
   bulkTagsRemove: (data: { node_ids: string[]; tags: string[] }) =>
     api.post<BulkNodeOperationResult>('/nodes/bulk/tags/remove', data),
+
+  bulkUpdate: (data: BulkNodeUpdateRequest) =>
+    api.put<BulkNodeUpdateResponse>('/nodes/bulk/update', data),
+
+  bulkMetrics: (nodeIds: string[]) =>
+    api.post<BulkNodeMetricsResponse>('/nodes/bulk/metrics', { node_ids: nodeIds }),
+
+  bulkValidateCredentials: (data: BulkValidateCredentialsRequest) =>
+    api.post<BulkValidateCredentialsResponse>('/nodes/bulk/validate-credentials', data),
 }
