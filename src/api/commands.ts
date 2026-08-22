@@ -5,6 +5,8 @@ import type {
   CommandUpdate,
   CommandExecuteRequest,
   CommandResult,
+  BulkCommandRequest,
+  BulkCommandResult,
   ExecutionStatsResponse,
   PaginatedResponse,
 } from './types'
@@ -50,4 +52,7 @@ export const commandsApi = {
 
   getTags: () =>
     api.get<string[]>('/commands/tags'),
+
+  bulkExecute: (commandId: string, data: BulkCommandRequest) =>
+    api.post<BulkCommandResult>(`/commands/${commandId}/bulk-execute`, data),
 }

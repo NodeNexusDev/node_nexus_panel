@@ -272,3 +272,27 @@ export function useBulkUpdateNodes() {
     },
   })
 }
+
+export function useBulkCancelCommands() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (executionIds: string[]) => nodesApi.bulkCancelCommands({ execution_ids: executionIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['commands'] })
+    },
+  })
+}
+
+export function useBulkRetryCommands() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (executionIds: string[]) => nodesApi.bulkRetryCommands({ execution_ids: executionIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+      queryClient.invalidateQueries({ queryKey: ['commands'] })
+    },
+  })
+}

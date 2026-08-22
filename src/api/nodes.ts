@@ -17,6 +17,10 @@ import type {
   BulkNodeMetricsResponse,
   BulkValidateCredentialsRequest,
   BulkValidateCredentialsResponse,
+  BulkCancelCommandRequest,
+  BulkCancelCommandResponse,
+  BulkRetryCommandRequest,
+  BulkRetryCommandResponse,
   CommandHistoryResponse,
   PaginatedResponse,
 } from './types'
@@ -126,4 +130,10 @@ export const nodesApi = {
 
   bulkValidateCredentials: (data: BulkValidateCredentialsRequest) =>
     api.post<BulkValidateCredentialsResponse>('/nodes/bulk/validate-credentials', data),
+
+  bulkCancelCommands: (data: BulkCancelCommandRequest) =>
+    api.post<BulkCancelCommandResponse>('/nodes/bulk/cancel', data),
+
+  bulkRetryCommands: (data: BulkRetryCommandRequest) =>
+    api.post<BulkRetryCommandResponse>('/nodes/bulk/retry', data),
 }

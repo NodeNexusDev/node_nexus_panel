@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { commandsApi } from '../api/commands'
-import type { Command, CommandCreate, CommandUpdate, CommandExecuteRequest, ExecutionStatsResponse, PaginatedResponse } from '../api/types'
+import type { Command, CommandCreate, CommandUpdate, CommandExecuteRequest, BulkCommandRequest, ExecutionStatsResponse, PaginatedResponse } from '../api/types'
 
 export function useCommands(params?: { page?: number; size?: number; tag?: string; search?: string }) {
   return useQuery<PaginatedResponse<Command>>({
@@ -84,6 +84,19 @@ export function useDeleteCommand() {
     mutationFn: (id: string) => commandsApi.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['commands'] })
+    },
+  })
+}
+
+export function useBulkExecuteCommand() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ commandId, data }: { commandId: string; data: BulkCommandRequest }) =>
+      commandsApi.bulkExecute(commandId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['commands'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
   })
 }

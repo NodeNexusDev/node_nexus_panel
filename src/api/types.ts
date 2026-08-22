@@ -691,6 +691,7 @@ export interface Favorite {
   id: string
   target_type: 'node' | 'command' | 'script'
   target_id: string
+  name: string | null
   note: string | null
   created_at: string
 }
@@ -698,6 +699,7 @@ export interface Favorite {
 export interface FavoriteCreate {
   target_type: 'node' | 'command' | 'script'
   target_id: string
+  name?: string | null
   note?: string | null
 }
 
@@ -892,6 +894,51 @@ export interface BulkScriptCancelRequest {
 
 export interface BulkScriptRetryRequest {
   execution_ids: string[]
+}
+
+// ── Commands: Bulk Execute ───────────────────────────────────
+
+export interface BulkCommandRequest {
+  command: string
+  node_ids?: string[] | null
+  tags?: string[] | null
+  params?: Record<string, unknown> | null
+}
+
+// ── Commands: Bulk Cancel/Retry ──────────────────────────────
+
+export interface BulkCancelCommandRequest {
+  execution_ids: string[]
+}
+
+export interface BulkCancelCommandResult {
+  execution_id: string
+  status: string
+  message?: string
+}
+
+export interface BulkCancelCommandResponse {
+  results: BulkCancelCommandResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+export interface BulkRetryCommandRequest {
+  execution_ids: string[]
+}
+
+export interface BulkRetryCommandResult {
+  execution_id: string
+  status: string
+  message?: string
+}
+
+export interface BulkRetryCommandResponse {
+  results: BulkRetryCommandResult[]
+  total: number
+  succeeded: number
+  failed: number
 }
 
 // ── Commands: History ───────────────────────────────────────────
