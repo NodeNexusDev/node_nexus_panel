@@ -17,6 +17,10 @@ import {
   useStopContainer,
   useRestartContainer,
   useDeleteContainer,
+  usePauseContainer,
+  useUnpauseContainer,
+  useRenameContainer,
+  usePruneContainers,
   useBulkDockerExec,
   useBulkDockerRestart,
   useBulkDockerStart,
@@ -31,6 +35,7 @@ import { ContainerLogsContent } from './ContainerLogsContent'
 import { ContainerStatsContent } from './ContainerStatsContent'
 import { ExecContainerContent } from './ExecContainerContent'
 import { ContainerInspectContent } from './ContainerInspectContent'
+import { TopContainerContent } from './TopContainerContent'
 import type { DockerContainer } from '../../api/types'
 
 type SortKey = 'name' | 'image' | 'status' | 'created'
@@ -44,6 +49,10 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const stopContainer = useStopContainer()
   const restartContainer = useRestartContainer()
   const deleteContainer = useDeleteContainer()
+  const pauseContainer = usePauseContainer()
+  const unpauseContainer = useUnpauseContainer()
+  const renameContainer = useRenameContainer()
+  const pruneContainers = usePruneContainers()
   const bulkExec = useBulkDockerExec()
   const bulkRestart = useBulkDockerRestart()
   const bulkStart = useBulkDockerStart()
@@ -65,6 +74,11 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const [bulkExecCommand, setBulkExecCommand] = useState('')
   const [bulkExecResult, setBulkExecResult] = useState<string>('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [renameTarget, setRenameTarget] = useState<DockerContainer | null>(null)
+  const [renameName, setRenameName] = useState('')
+  const [topTarget, setTopTarget] = useState<DockerContainer | null>(null)
+  const [showPruneConfirm, setShowPruneConfirm] = useState(false)
+  const [showBulkRemoveConfirm, setShowBulkRemoveConfirm] = useState(false)
   const filtered = useMemo(() => {
     if (!containers) return []
     const q = search.toLowerCase()
@@ -124,7 +138,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadContainers')} />
   if (!containers?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noContainers')} description={t('docker.noContainersDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createContainer')}</Button>} />
 
-  const loading = startContainer.isPending || stopContainer.isPending || restartContainer.isPending
+  const loading = startContainer.isPending || stopContainer.isPending || restartContainer.isPending || pauseContainer.isPending || unpauseContainer.isPending || renameContainer.isPending
 
   return (
     <>
@@ -134,8 +148,8 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           <Button variant="ghost" size="sm" onClick={() => bulkRestart.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkRestart.isPending}>{t('docker.restartAll')}</Button>
           <Button variant="ghost" size="sm" onClick={() => bulkStart.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkStart.isPending}>{t('docker.startAll')}</Button>
           <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkStop.isPending}>{t('docker.stopAll')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId && window.confirm(t('docker.confirmBulkRemove', 'Are you sure you want to remove the selected container?'))) { bulkRemove.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: () => { toast('success', t('docker.toastBulkRemoveDone', 'Container removed')); setSelectedIds(new Set()) }, onError: () => toast('error', t('docker.toastBulkRemoveFailed', 'Failed to remove container')) }) } }} disabled={bulkDisabled || bulkRemove.isPending} className="text-red-500">{bulkRemove.isPending ? t('common.loading') : t('docker.bulkRemove', 'Remove')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }} disabled={bulkDisabled}>{t('docker.bulkExec', 'Exec on selected')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) setShowBulkRemoveConfirm(true) }} disabled={bulkDisabled || bulkRemove.isPending} className="text-red-500">{bulkRemove.isPending ? t('common.loading') : t('docker.bulkRemove')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }} disabled={bulkDisabled}>{t('docker.bulkExec')}</Button>
         </div>
       )}
       {bulkDisabled && selectedIds.size > 0 && (
@@ -143,7 +157,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           {t('docker.bulkSingleContainer', 'Bulk operations apply to one container across multiple nodes. Select a single container to proceed.')}
         </p>
       )}
-      <div className="flex items-center gap-3 mb-4 px-4">
+      <div className="flex items-center gap-3 mb-4 px-4 flex-wrap">
         <SearchInput value={search} onChange={setSearch} placeholder={t('docker.searchContainers')} className="flex-1 max-w-sm" />
         <div className="flex items-center gap-1 bg-surface-100 dark:bg-surface-800 rounded-lg p-1">
           {(['all', 'running', 'stopped'] as const).map((key) => (
@@ -152,12 +166,13 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
             </button>
           ))}
         </div>
+        <Button variant="ghost" size="sm" onClick={() => setShowPruneConfirm(true)} disabled={pruneContainers.isPending}>{pruneContainers.isPending ? t('common.loading') : t('docker.pruneContainers')}</Button>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full table-zebra">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
-              <th className="px-6 py-3"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} className="rounded border-surface-300 dark:border-surface-600" /></th>
+              <th className="px-6 py-3"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="rounded border-surface-300 dark:border-surface-600" /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.name')} sortKey="name" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.image')} sortKey="image" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.status')} sortKey="status" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
@@ -170,10 +185,14 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
             {filtered.map((c) => (
               <Fragment key={c.ID}>
                 <ContainerRow container={c}
-                  onStart={() => startContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastStartFailed')) })}
-                  onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastStopFailed')) })}
-                  onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID }, { onError: () => toast('error', t('docker.toastRestartFailed')) })}
+                  onStart={() => startContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.start')), onError: () => toast('error', t('docker.toastStartFailed')) })}
+                  onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.stop')), onError: () => toast('error', t('docker.toastStopFailed')) })}
+                  onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.restart')), onError: () => toast('error', t('docker.toastRestartFailed')) })}
                   onDelete={() => setDeleteTarget(c)}
+                  onPause={() => pauseContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('docker.pause')), onError: () => toast('error', t('docker.toastPauseFailed')) })}
+                  onUnpause={() => unpauseContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('docker.unpause')), onError: () => toast('error', t('docker.toastUnpauseFailed')) })}
+                  onRename={() => { setRenameTarget(c); setRenameName(c.Names?.split('/').pop() || '') }}
+                  onTop={() => setTopTarget(c)}
                   loading={loading} selected={selectedIds.has(c.ID)} onSelect={() => toggleOne(c.ID)}
                   expanded={expandedId === c.ID} onToggleExpand={() => setExpandedId(expandedId === c.ID ? null : c.ID)}
                 />
@@ -238,6 +257,40 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           {bulkExecResult && (
             <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 bg-surface-50 dark:bg-surface-800/50 rounded p-4 max-h-64 overflow-y-auto whitespace-pre-wrap">{bulkExecResult}</pre>
           )}
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!renameTarget} onClose={() => setRenameTarget(null)} title={t('docker.renameContainer')}>
+        <div className="space-y-4">
+          <Input label={t('docker.newName')} placeholder="my-container" value={renameName} onChange={(e) => setRenameName(e.target.value)} />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setRenameTarget(null)}>{t('common.cancel')}</Button>
+            <Button onClick={() => { const trimmed = renameName.trim(); if (renameTarget && trimmed) { renameContainer.mutate({ nodeId, containerId: renameTarget.ID, data: { new_name: trimmed } }, { onSuccess: () => { toast('success', t('docker.renameContainer')); setRenameTarget(null); setRenameName('') }, onError: () => toast('error', t('docker.toastRenameFailed')) }) } }} disabled={!renameName.trim() || renameContainer.isPending}>{renameContainer.isPending ? t('common.loading') : t('docker.rename')}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!topTarget} onClose={() => setTopTarget(null)} title={`${t('docker.top')}: ${topTarget?.Names?.split('/').pop() || ''}`} size="lg">
+        {topTarget && <TopContainerContent nodeId={nodeId} containerId={topTarget.ID} />}
+      </Modal>
+
+      <Modal isOpen={showPruneConfirm} onClose={() => setShowPruneConfirm(false)} title={t('docker.pruneContainers')}>
+        <div className="space-y-4">
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.confirmPrune')}</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowPruneConfirm(false)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={() => { pruneContainers.mutate(nodeId, { onSuccess: () => { toast('success', t('docker.toastPruneDone')); setShowPruneConfirm(false) }, onError: () => toast('error', t('docker.toastPruneFailed')) }) }} disabled={pruneContainers.isPending}>{pruneContainers.isPending ? t('common.loading') : t('docker.pruneContainers')}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showBulkRemoveConfirm} onClose={() => setShowBulkRemoveConfirm(false)} title={t('docker.bulkRemove')}>
+        <div className="space-y-4">
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.confirmBulkRemove')}</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowBulkRemoveConfirm(false)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={() => { if (bulkContainerId) { bulkRemove.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: () => { toast('success', t('docker.toastBulkRemoveDone')); setSelectedIds(new Set()); setShowBulkRemoveConfirm(false) }, onError: () => toast('error', t('docker.toastBulkRemoveFailed')) }) } }} disabled={bulkRemove.isPending}>{bulkRemove.isPending ? t('common.loading') : t('common.delete')}</Button>
+          </div>
         </div>
       </Modal>
     </>

@@ -8,7 +8,7 @@ import { Input } from '../ui/Input'
 import { TableSkeleton } from '../ui/Skeleton'
 import { IconDocker } from '../ui/Icons'
 import { useToast } from '../ui/useToast'
-import { useDockerImages, useDeleteImage, useTagImage, useBuildImage, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
+import { useDockerImages, useDeleteImage, useTagImage, useBuildImage, usePruneImages, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
 import { ImageInspectContent } from './ImageInspectContent'
 
 export function ImagesTab({ nodeId }: { nodeId: string }) {
@@ -21,6 +21,7 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
   const bulkImageRemove = useBulkDockerImageRemove()
   const bulkImageBuild = useBulkDockerImageBuild()
   const bulkPull = useBulkDockerPull()
+  const pruneImages = usePruneImages()
   const [tagTarget, setTagTarget] = useState<{ id: string; tag: string } | null>(null)
   const [tagRepo, setTagRepo] = useState('')
   const [tagName, setTagName] = useState('')
@@ -33,6 +34,8 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
   const [showBulkBuild, setShowBulkBuild] = useState(false)
   const [showBulkPull, setShowBulkPull] = useState(false)
   const [bulkPullImage, setBulkPullImage] = useState('')
+  const [showPruneConfirm, setShowPruneConfirm] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const allSelected = images && images.length > 0 && images.every((img) => selectedIds.has(img.ID))
   const toggleAll = () => {
@@ -50,24 +53,25 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
   return (
     <>
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800 mb-4">
+        <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800 mb-4 flex-wrap">
           <span className="text-sm text-accent-700 dark:text-accent-300">{t('docker.selected', { count: selectedIds.size })}</span>
-          <Button variant="ghost" size="sm" onClick={() => setShowBulkRemove(true)} className="text-red-500">{t('docker.bulkRemoveImages', 'Remove')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowBulkRemove(true)} className="text-red-500">{t('docker.bulkRemoveImages')}</Button>
           <Button variant="ghost" size="sm" onClick={() => setShowBulkBuild(true)}>{t('docker.buildImage')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => setShowBulkPull(true)}>{t('docker.pullImage', 'Pull')}</Button>
-          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200">{t('docker.clearSelection', 'Clear')}</button>
+          <Button variant="ghost" size="sm" onClick={() => setShowBulkPull(true)}>{t('docker.pullImage')}</Button>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200">{t('docker.clearSelection')}</button>
         </div>
       )}
 
-      <div className="flex justify-end mb-4 px-4 gap-2">
-        <Button variant="ghost" onClick={() => setShowBulkPull(true)}>{t('docker.pullImage', 'Pull Image')}</Button>
+      <div className="flex justify-end mb-4 px-4 gap-2 flex-wrap">
+        <Button variant="ghost" onClick={() => setShowBulkPull(true)}>{t('docker.pullImage')}</Button>
+        <Button variant="ghost" onClick={() => setShowPruneConfirm(true)} disabled={pruneImages.isPending}>{pruneImages.isPending ? t('common.loading') : t('docker.pruneImages')}</Button>
         <Button onClick={() => setShowBuildModal(true)}>{t('docker.buildImage')}</Button>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full table-zebra">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
-              <th className="px-6 py-3"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} className="rounded border-surface-300 dark:border-surface-600" /></th>
+              <th className="px-6 py-3"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="rounded border-surface-300 dark:border-surface-600" /></th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.repository')}</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.tag')}</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.id')}</th>
@@ -78,16 +82,16 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {images.map((img) => (
               <tr key={img.ID} className="table-row-hover">
-                <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.has(img.ID)} onChange={() => toggleOne(img.ID)} onClick={(e) => e.stopPropagation()} className="rounded border-surface-300 dark:border-surface-600" /></td>
+                <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.has(img.ID)} onChange={() => toggleOne(img.ID)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', { name: img.Repository || img.ID?.slice(0, 12) || '' })} className="rounded border-surface-300 dark:border-surface-600" /></td>
                 <td className="px-6 py-4 text-sm font-mono text-surface-900 dark:text-white">{img.Repository}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{img.Tag}</td>
                 <td className="px-6 py-4 text-xs text-surface-500 font-mono">{img.ID?.slice(0, 12) || '—'}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{img.Size}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setInspectTarget({ id: img.ID, name: img.Repository || img.ID?.slice(0, 12) || '' })}>{t('docker.inspect', 'Inspect')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setInspectTarget({ id: img.ID, name: img.Repository || img.ID?.slice(0, 12) || '' })}>{t('docker.inspect')}</Button>
                     <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: img.ID, tag: img.Tag })}>{t('docker.tag')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteImage.mutate({ nodeId, imageId: img.ID }, { onError: () => toast('error', t('docker.toastDeleteFailed')) })} disabled={deleteImage.isPending} className="text-red-500">{t('common.delete')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: img.ID, name: img.Repository || img.ID?.slice(0, 12) || '' })} className="text-red-500">{t('common.delete')}</Button>
                   </div>
                 </td>
               </tr>
@@ -164,17 +168,37 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
         </div>
       </Modal>
 
-      <Modal isOpen={showBulkPull} onClose={() => { setShowBulkPull(false); setBulkPullImage('') }} title={t('docker.pullImage', 'Pull Image')}>
+      <Modal isOpen={showBulkPull} onClose={() => { setShowBulkPull(false); setBulkPullImage('') }} title={t('docker.pullImage')}>
         <div className="space-y-4">
-          <Input label={t('docker.image', 'Image')} placeholder="nginx:latest" value={bulkPullImage} onChange={(e) => setBulkPullImage(e.target.value)} />
+          <Input label={t('docker.image')} placeholder="nginx:latest" value={bulkPullImage} onChange={(e) => setBulkPullImage(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => { setShowBulkPull(false); setBulkPullImage('') }}>{t('common.cancel')}</Button>
             <Button onClick={() => {
               bulkPull.mutate({ image: bulkPullImage, node_ids: [nodeId] }, {
-                onSuccess: () => { toast('success', t('docker.toastPullDone', 'Pull started')); setShowBulkPull(false); setBulkPullImage('') },
-                onError: () => toast('error', t('docker.toastPullFailed', 'Failed to pull image')),
+                onSuccess: () => { toast('success', t('docker.toastPullDone')); setShowBulkPull(false); setBulkPullImage('') },
+                onError: () => toast('error', t('docker.toastPullFailed')),
               })
             }} disabled={!bulkPullImage || bulkPull.isPending}>{bulkPull.isPending ? t('common.loading') : t('docker.pullImage')}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('common.delete')}>
+        <div className="space-y-4">
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteImageMsg', { name: deleteTarget?.name })}</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={() => { if (deleteTarget) { deleteImage.mutate({ nodeId, imageId: deleteTarget.id }, { onSuccess: () => { toast('success', t('docker.toastBulkRemoveDone')); setDeleteTarget(null) }, onError: () => toast('error', t('docker.toastDeleteFailed')) }) } }} disabled={deleteImage.isPending}>{deleteImage.isPending ? t('common.loading') : t('common.delete')}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showPruneConfirm} onClose={() => setShowPruneConfirm(false)} title={t('docker.pruneImages')}>
+        <div className="space-y-4">
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.confirmPruneImages')}</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowPruneConfirm(false)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={() => { pruneImages.mutate(nodeId, { onSuccess: () => { toast('success', t('docker.toastPruneImagesDone')); setShowPruneConfirm(false) }, onError: () => toast('error', t('docker.toastPruneImagesFailed')) }) }} disabled={pruneImages.isPending}>{pruneImages.isPending ? t('common.loading') : t('docker.pruneImages')}</Button>
           </div>
         </div>
       </Modal>
