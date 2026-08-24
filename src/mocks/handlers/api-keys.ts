@@ -18,23 +18,29 @@ export const apiKeyHandlers = [
     const newKey = {
       id: String(mockApiKeys.length + 1),
       name: body.name,
-      key: `sk-${Math.random().toString(36).slice(2, 10)}`,
       key_prefix: 'sk-ne',
+      is_active: true,
+      scope: (body.scope || 'read-write') as 'read-only' | 'read-write',
       created_at: new Date().toISOString(),
+      last_used_at: null,
+      expires_at: null,
     }
+    mockApiKeys.push(newKey)
     return HttpResponse.json(newKey, { status: 201 })
   }),
 
   http.delete(`${API_URL}/api/v1/api-keys/:id`, ({ params }) => {
-    const key = mockApiKeys.find((k) => k.id === params.id)
-    if (!key) return new HttpResponse(null, { status: 404 })
+    const idx = mockApiKeys.findIndex((k) => k.id === params.id)
+    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    mockApiKeys.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.patch(`${API_URL}/api/v1/api-keys/:id`, async ({ params, request }) => {
-    const key = mockApiKeys.find((k) => k.id === params.id)
-    if (!key) return new HttpResponse(null, { status: 404 })
+    const idx = mockApiKeys.findIndex((k) => k.id === params.id)
+    if (idx === -1) return new HttpResponse(null, { status: 404 })
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json({ ...key, ...body })
+    Object.assign(mockApiKeys[idx], body)
+    return HttpResponse.json(mockApiKeys[idx])
   }),
 ]
