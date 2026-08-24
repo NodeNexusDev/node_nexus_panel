@@ -8,7 +8,6 @@ import { auditHandlers } from './audit'
 import { searchHandlers } from './search'
 import { favoritesHandlers } from './favorites'
 import { notesHandlers } from './notes'
-import { tagsHandlers } from './tags'
 import { configHandlers } from './config'
 import { eventsHandlers } from './events'
 
@@ -23,7 +22,6 @@ export const handlers = [
   ...searchHandlers,
   ...favoritesHandlers,
   ...notesHandlers,
-  ...tagsHandlers,
   ...configHandlers,
   ...eventsHandlers,
 ]
