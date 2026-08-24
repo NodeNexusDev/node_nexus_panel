@@ -175,7 +175,7 @@ export function Scripts() {
           <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); handleRun(script) }} disabled={runScript.isPending}>
             {runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}
           </Button>
-          <DropdownMenu items={scriptMenu(script)} ariaLabel={`${script.name} actions`} />
+          <DropdownMenu items={scriptMenu(script)} ariaLabel={t('common.actionsFor', { name: script.name })} />
         </div>
       ),
     },

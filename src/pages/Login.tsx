@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '../components/ui/Input'
@@ -19,7 +19,7 @@ export function Login() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  useState(() => { loginRef.current?.focus() })
+  useEffect(() => { loginRef.current?.focus() }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

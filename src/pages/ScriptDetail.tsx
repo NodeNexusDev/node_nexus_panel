@@ -130,7 +130,7 @@ export function ScriptDetail() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 animate-slide-up">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/scripts')} className="px-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/scripts')} className="px-2" aria-label={t('common.back')}>
             <IconArrowLeft className="w-5 h-5" />
           </Button>
           <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400 flex items-center justify-center">
@@ -342,8 +342,8 @@ function ExecutionsTab({ scriptId }: { scriptId: string }) {
               </div>
             )}
             <div className="flex items-center gap-3 px-6 py-2 border-b border-surface-200 dark:border-surface-800">
-              <input type="checkbox" checked={!!allSelected} onChange={toggleAll} className="rounded border-surface-300 dark:border-surface-600" />
-              <span className="text-xs text-surface-500">{t('scripts.selectAll', 'Select all')}</span>
+              <input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="rounded border-surface-300 dark:border-surface-600" />
+              <span className="text-xs text-surface-500">{t('scripts.selectAll')}</span>
             </div>
             {items.map((exec) => (
               <div key={exec.id}>
@@ -352,7 +352,7 @@ function ExecutionsTab({ scriptId }: { scriptId: string }) {
                   onClick={() => { if (exec.steps?.length) setExpandedExecId(expandedExecId === exec.id ? null : exec.id) }}
                 >
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} onClick={(e) => e.stopPropagation()} className="rounded border-surface-300 dark:border-surface-600" />
+                    <input type="checkbox" checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', 'Select execution {{id}}', { id: exec.id })} className="rounded border-surface-300 dark:border-surface-600" />
                     <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                     <div>
                       <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id || 'all'}</p>

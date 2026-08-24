@@ -26,8 +26,6 @@ const COMMON_ACTIONS = [
   'script.schedule',
   'api_key.create',
   'api_key.revoke',
-  'tag.rename',
-  'tag.delete',
   'config.export',
   'config.import',
   'favorite.add',

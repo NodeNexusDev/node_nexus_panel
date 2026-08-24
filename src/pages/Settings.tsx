@@ -210,7 +210,7 @@ export function Settings() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!editKeyTarget} onClose={() => setEditKeyTarget(null)} title={`${t('common.edit')} API Key: ${editKeyTarget?.name || ''}`} size="sm">
+      <Modal isOpen={!!editKeyTarget} onClose={() => setEditKeyTarget(null)} title={t('settings.editApiKey', { name: editKeyTarget?.name || '' })} size="sm">
         <div className="space-y-4">
           <Input label={t('settings.name')} value={editKeyName} onChange={(e) => setEditKeyName(e.target.value)} />
           <Select

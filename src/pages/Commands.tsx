@@ -207,7 +207,7 @@ export function Commands() {
             <IconZap className="w-4 h-4 mr-1" />
             {t('commands.execute')}
           </Button>
-          <DropdownMenu items={commandMenu(cmd)} ariaLabel={`${cmd.name} actions`} />
+          <DropdownMenu items={commandMenu(cmd)} ariaLabel={t('common.actionsFor', { name: cmd.name })} />
         </div>
       ),
     },

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
 
 interface PaginationProps {
@@ -29,6 +30,7 @@ function getPageNumbers(current: number, total: number): (number | '...')[] {
 }
 
 export function Pagination({ page, totalPages, onPageChange, className = '', showPerPage, perPage = 20, onPerPageChange }: PaginationProps) {
+  const { t } = useTranslation()
   const [jumpValue, setJumpValue] = useState('')
 
   if (totalPages <= 1) return null
@@ -48,7 +50,7 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
     <div className={`flex items-center justify-between gap-4 ${className}`}>
       {showPerPage && onPerPageChange && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-surface-500 dark:text-surface-400">Per page</span>
+          <span className="text-xs text-surface-500 dark:text-surface-400">{t('common.perPage')}</span>
           <select
             value={perPage}
             onChange={(e) => onPerPageChange(Number(e.target.value))}
@@ -67,7 +69,7 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
           size="sm"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          aria-label="Previous page"
+          aria-label={t('common.previousPage')}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -99,7 +101,7 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
           size="sm"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          aria-label="Next page"
+          aria-label={t('common.nextPage')}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -109,7 +111,7 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
 
       {totalPages > 5 && (
         <form onSubmit={handleJump} className="flex items-center gap-1">
-          <span className="text-xs text-surface-500 dark:text-surface-400">Go to</span>
+          <span className="text-xs text-surface-500 dark:text-surface-400">{t('common.goToPage')}</span>
           <input
             type="number"
             min={1}
@@ -120,7 +122,7 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
             className="w-12 px-2 py-1 text-xs text-center bg-white border border-surface-300 rounded dark:bg-surface-800 dark:border-surface-700 dark:text-white"
           />
           <Button type="submit" variant="ghost" size="sm" disabled={!jumpValue}>
-            Go
+            {t('common.go')}
           </Button>
         </form>
       )}

@@ -41,7 +41,7 @@ export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteBu
     <Tooltip content={isFavorited ? t('favorites.remove', 'Remove from favorites') : t('favorites.add', 'Add to favorites')}>
       <button
         onClick={toggle}
-        aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+        aria-label={isFavorited ? t('favorites.remove') : t('favorites.add')}
         aria-pressed={isFavorited}
         className={`${buttonClasses} rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors`}
       >

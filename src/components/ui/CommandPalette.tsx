@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useHotkey } from '../../hooks/useHotkey'
 import { useSearch } from '../../hooks/useSearch'
-import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings } from './Icons'
+import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings, IconStar } from './Icons'
 import { Spinner } from './Spinner'
 
 interface CommandItem {
@@ -31,6 +31,7 @@ export function CommandPalette() {
     { id: 'docker', label: t('nav.docker'), description: t('commandPalette.descDocker'), path: '/docker', icon: <IconDocker className="w-5 h-5" /> },
     { id: 'audit', label: t('nav.audit'), description: t('commandPalette.descAudit'), path: '/audit', icon: <IconAudit className="w-5 h-5" /> },
     { id: 'settings', label: t('nav.settings'), description: t('commandPalette.descSettings'), path: '/settings', icon: <IconSettings className="w-5 h-5" /> },
+    { id: 'favorites', label: t('nav.favorites'), description: t('commandPalette.descFavorites'), path: '/favorites', icon: <IconStar className="w-5 h-5" /> },
   ], [t])
 
   const filtered = useMemo(() => {
