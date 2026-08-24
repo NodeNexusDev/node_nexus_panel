@@ -33,7 +33,7 @@ export const scriptsApi = {
     api.post<Script>('/scripts/', data),
 
   update: (id: string, data: ScriptUpdate) =>
-    api.put<Script>(`/scripts/${id}`, data),
+    api.patch<Script>(`/scripts/${id}`, data),
 
   remove: (id: string) =>
     api.delete<void>(`/scripts/${id}`),

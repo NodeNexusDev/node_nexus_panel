@@ -9,6 +9,7 @@ import type {
   ScheduledJob,
   PaginatedResponse,
   ScheduleRequest,
+  ExecutionStatsResponse,
 } from '../api/types'
 
 export function useScripts(params?: { page?: number; size?: number; tag?: string; search?: string }) {
@@ -179,5 +180,13 @@ export function useBulkRetryScriptExecutions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scripts'] })
     },
+  })
+}
+
+export function useScriptStats(scriptId: string | null, params?: { date_from?: string; date_to?: string }) {
+  return useQuery<ExecutionStatsResponse>({
+    queryKey: ['scripts', scriptId, 'stats', params],
+    queryFn: () => scriptsApi.getStats(scriptId!, params),
+    enabled: !!scriptId,
   })
 }

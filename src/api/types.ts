@@ -974,3 +974,115 @@ export interface SseEvent {
   payload: unknown
   timestamp: string
 }
+
+// ── OpenAPI v0.17.1: New Types ──────────────────────────────────
+
+// Raw command execute
+export interface CommandExecuteRawRequest {
+  node_id: string
+  command: string
+  timeout?: number | null
+}
+
+// Container rename
+export interface ContainerRenameRequest {
+  new_name: string
+}
+
+// Network CRUD
+export interface NetworkCreateRequest {
+  name: string
+  driver?: string
+  gateway?: string | null
+  subnet?: string | null
+}
+
+export interface NetworkConnectRequest {
+  container_id: string
+  ip_address?: string | null
+}
+
+export interface NetworkDisconnectRequest {
+  container_id: string
+  force?: boolean
+}
+
+export interface NetworkInspectContainer {
+  name: string
+  ipv4_address?: string
+  ipv6_address?: string
+}
+
+export interface NetworkInspectResponse {
+  id: string
+  name: string
+  driver: string
+  scope: string
+  gateway?: string
+  subnet?: string
+  containers: NetworkInspectContainer[]
+}
+
+// Volume CRUD
+export interface VolumeCreateRequest {
+  name?: string | null
+  driver?: string
+}
+
+export interface VolumeInspectResponse {
+  name: string
+  driver: string
+  mountpoint: string
+  labels?: Record<string, string>
+}
+
+// Docker prune / top / system
+export interface DockerPruneResponse {
+  containers_deleted?: string[]
+  images_deleted?: string[]
+  space_reclaimed?: string
+}
+
+export interface DockerTopResult {
+  titles: string[]
+  processes: string[][]
+}
+
+export interface DockerSystemInfo {
+  server_version?: string
+  operating_system?: string
+  architecture?: string
+  cpus?: number
+  total_memory?: string
+  storage_driver?: string
+  containers_running?: number
+  containers_stopped?: number
+  images?: number
+}
+
+export interface DockerSystemDfItem {
+  type: string
+  total_count?: number
+  active_size?: string
+  reclaimable_size?: string
+  reclaimable_percent?: string
+}
+
+// Note / Favorite response
+export interface NoteResponse {
+  id: string
+  target_type: string
+  target_id: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
+export interface FavoriteResponse {
+  id: string
+  target_type: string
+  target_id: string
+  name: string | null
+  note: string | null
+  created_at: string
+}
