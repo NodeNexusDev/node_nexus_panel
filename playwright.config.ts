@@ -32,6 +32,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
+    timeout: 30_000,
     reuseExistingServer: !process.env.CI,
     env: {
       VITE_PANEL_LOGIN: process.env.VITE_PANEL_LOGIN || env.VITE_PANEL_LOGIN || 'admin',
