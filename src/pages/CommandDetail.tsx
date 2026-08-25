@@ -139,7 +139,7 @@ export function CommandDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <FavoriteButton targetType="command" targetId={command.id} size="sm" />
+          <FavoriteButton targetType="command" targetId={command.id} resourceName={command.name} size="sm" />
           <Button variant="secondary" size="sm" onClick={() => setShowExecModal(true)}>
             <IconCheckCircle className="w-4 h-4 mr-1" />
             {t('commands.execute')}

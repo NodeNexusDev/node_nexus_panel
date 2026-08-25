@@ -20,12 +20,12 @@ export const favoritesHandlers = [
   }),
 
   http.post(`${API}/api/v1/favorites`, async ({ request }) => {
-    const body = await request.json() as { target_type: 'node' | 'command' | 'script'; target_id: string }
+    const body = await request.json() as { target_type: 'node' | 'command' | 'script'; target_id: string; name?: string | null }
     const fav: Favorite = {
       id: String(mockFavorites.length + 1),
       target_type: body.target_type,
       target_id: body.target_id,
-      name: null,
+      name: body.name ?? null,
       note: null,
       created_at: new Date().toISOString(),
     }

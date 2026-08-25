@@ -202,7 +202,7 @@ export function Commands() {
       header: t('common.actions'),
       render: (cmd) => (
         <div className="flex items-center gap-1">
-          <FavoriteButton targetType="command" targetId={cmd.id} size="sm" />
+          <FavoriteButton targetType="command" targetId={cmd.id} resourceName={cmd.name} size="sm" />
           <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setExecuteTarget(cmd) }}>
             <IconZap className="w-4 h-4 mr-1" />
             {t('commands.execute')}
@@ -230,7 +230,7 @@ export function Commands() {
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
-        <FavoriteButton targetType="command" targetId={cmd.id} size="sm" />
+        <FavoriteButton targetType="command" targetId={cmd.id} resourceName={cmd.name} size="sm" />
         <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setExecuteTarget(cmd) }}>
           <IconZap className="w-4 h-4 mr-1" />
           {t('commands.execute')}

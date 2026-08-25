@@ -276,7 +276,7 @@ export function Nodes() {
       header: t('nodes.actions'),
       render: (node) => (
         <div className="flex items-center gap-1">
-          <FavoriteButton targetType="node" targetId={node.id} size="sm" />
+          <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
           <Tooltip content={t('nodes.checkNode')}>
             <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.checkNode')} onClick={(e) => { e.stopPropagation(); checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) }) }}>
               <IconCheckCircle className="w-4 h-4" />
@@ -320,7 +320,7 @@ export function Nodes() {
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
-        <FavoriteButton targetType="node" targetId={node.id} size="sm" />
+        <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
         <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
           <IconCommands className="w-4 h-4 mr-1" /> {t('nodes.execCommand')}
         </Button>

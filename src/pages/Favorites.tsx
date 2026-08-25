@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui/Card'
@@ -11,9 +11,6 @@ import { Pagination } from '../components/ui/Pagination'
 import { PageHeader } from '../components/ui/PageHeader'
 import { IconStar } from '../components/ui/Icons'
 import { useFavorites, useRemoveFavorite } from '../hooks/useFavorites'
-import { useNodes } from '../hooks/useNodes'
-import { useCommands } from '../hooks/useCommands'
-import { useScripts } from '../hooks/useScripts'
 import { useToast } from '../components/ui/useToast'
 import type { Favorite } from '../api/types'
 
@@ -34,18 +31,6 @@ export function Favorites() {
 
   const { data, isLoading } = useFavorites({ page, size: pageSize, target_type: targetType || undefined })
   const removeFavorite = useRemoveFavorite()
-
-  const { data: nodesData } = useNodes({ size: 200 })
-  const { data: commandsData } = useCommands({ size: 200 })
-  const { data: scriptsData } = useScripts({ size: 200 })
-
-  const resourceNames = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const n of nodesData?.items ?? []) map.set(`node:${n.id}`, n.name)
-    for (const c of commandsData?.items ?? []) map.set(`command:${c.id}`, c.name)
-    for (const s of scriptsData?.items ?? []) map.set(`script:${s.id}`, s.name)
-    return map
-  }, [nodesData, commandsData, scriptsData])
 
   const favorites = data?.items ?? []
 
@@ -101,7 +86,7 @@ export function Favorites() {
           ) : (
             <div className="divide-y divide-surface-200 dark:divide-surface-800">
               {favorites.map((fav) => {
-                const name = resourceNames.get(`${fav.target_type}:${fav.target_id}`) || fav.target_id
+                const name = fav.name || fav.target_id
                 return (
                   <div key={fav.id} className="flex items-center justify-between px-6 py-4">
                     <div className="flex items-center gap-3">
