@@ -6,7 +6,6 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -61,7 +60,7 @@ export function ScriptDetail() {
   const setSchedule = useSetScriptSchedule()
   const removeSchedule = useRemoveScriptSchedule()
 
-  const [runNodeId, setRunNodeId] = useState('')
+  const [runNodeIds, setRunNodeIds] = useState<string[]>([])
   const [runTags, setRunTags] = useState('')
   const [scheduleCron, setScheduleCron] = useState('')
   const [scheduleNodeIds, setScheduleNodeIds] = useState<string[]>([])
@@ -87,12 +86,12 @@ export function ScriptDetail() {
       {
         id: script.id,
         data: {
-          node_ids: runNodeId ? [runNodeId] : undefined,
+          node_ids: runNodeIds.length > 0 ? runNodeIds : undefined,
           node_tags: runTags ? runTags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
       },
       {
-        onSuccess: () => { toast('success', t('scripts.toastStarted', { name: script.name })); setShowRunModal(false); setRunNodeId(''); setRunTags('') },
+        onSuccess: () => { toast('success', t('scripts.toastStarted', { name: script.name })); setShowRunModal(false); setRunNodeIds([]); setRunTags('') },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),
       },
     )
@@ -172,13 +171,36 @@ export function ScriptDetail() {
 
       <Modal isOpen={showRunModal} onClose={() => setShowRunModal(false)} title={`${t('scripts.run')}: ${script.name}`}>
         <div className="space-y-4">
-          <Select
-            label={t('scripts.targetNode', 'Target Node (optional)')}
-            value={runNodeId}
-            onChange={setRunNodeId}
-            placeholder={t('scripts.allNodes', 'All nodes')}
-            options={nodes.map((n) => ({ value: n.id, label: n.name }))}
-          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNodes', 'Target Nodes')}</p>
+              <button
+                type="button"
+                onClick={() => setRunNodeIds(runNodeIds.length === nodes.length ? [] : nodes.map((n) => n.id))}
+                className="text-xs text-accent-600 dark:text-accent-400 hover:underline cursor-pointer"
+              >
+                {runNodeIds.length === nodes.length ? t('common.deselectAll', 'Deselect all') : t('common.selectAll', 'Select all')}
+              </button>
+            </div>
+            <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
+              {nodes.map((node) => (
+                <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={runNodeIds.includes(node.id)}
+                    onChange={() => {
+                      setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
+                    }}
+                    className="rounded border-surface-300 dark:border-surface-600"
+                  />
+                  <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
+                </label>
+              ))}
+            </div>
+            {runNodeIds.length > 0 && (
+              <p className="text-xs text-surface-500">{t('scripts.selectedNodes', { count: runNodeIds.length })}</p>
+            )}
+          </div>
           <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowRunModal(false)}>{t('common.cancel')}</Button>

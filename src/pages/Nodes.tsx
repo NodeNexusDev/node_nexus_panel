@@ -22,6 +22,7 @@ import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMe
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
+import { BulkCommandModal } from '../components/commands/BulkCommandModal'
 import {
   IconNodes,
   IconCommands,
@@ -41,7 +42,6 @@ import {
   useBulkCheck,
   useNodeTags,
   useBulkDeleteNodes,
-  useBulkExecuteNodes,
   useBulkMetrics,
   useBulkValidateCredentials,
   useBulkUpdateNodes,
@@ -91,7 +91,6 @@ export function Nodes() {
   const checkNode = useCheckNode()
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
-  const bulkExecuteNodes = useBulkExecuteNodes()
   const bulkMetrics = useBulkMetrics()
   const bulkValidateCreds = useBulkValidateCredentials()
   const bulkUpdateNodes = useBulkUpdateNodes()
@@ -129,7 +128,6 @@ export function Nodes() {
   const [validateResult, setValidateResult] = useState<{ status: string; message: string } | null>(null)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
-  const [bulkExecCmd, setBulkExecCmd] = useState('')
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBulkMetrics, setShowBulkMetrics] = useState(false)
@@ -621,16 +619,7 @@ export function Nodes() {
         </div>
       </Modal>
 
-      <Modal isOpen={showBulkExec} onClose={() => { setShowBulkExec(false); setBulkExecCmd('') }} title={t('nodes.bulkExec', 'Bulk Execute')}>
-        <div className="space-y-4">
-          <p className="text-sm text-surface-500">{t('nodes.bulkExecMsg', { count: selectedIds.length })}</p>
-          <Input label={t('nodes.command')} placeholder="uptime" value={bulkExecCmd} onChange={(e) => setBulkExecCmd(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => { setShowBulkExec(false); setBulkExecCmd('') }}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (bulkExecCmd) { bulkExecuteNodes.mutate({ command: bulkExecCmd, node_ids: selectedIds }, { onSuccess: () => { toast('success', t('nodes.toastBulkExecDone')); setShowBulkExec(false); setBulkExecCmd(''); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastExecFailed')) }) } }} disabled={!bulkExecCmd || bulkExecuteNodes.isPending}>{t('nodes.execCommand')}</Button>
-          </div>
-        </div>
-      </Modal>
+      <BulkCommandModal nodeIds={showBulkExec ? selectedIds : []} onClose={() => setShowBulkExec(false)} />
 
       <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: () => { toast('success', t('nodes.toastBulkDeleteDone')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
 
