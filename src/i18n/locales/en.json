@@ -236,6 +236,7 @@
   "scripts": {
     "title": "Scripts",
     "description": "Create and manage reusable scripts",
+    "descriptionLabel": "Description",
     "createScript": "Create Script",
     "schedule": "Schedule",
     "edit": "Edit",
@@ -292,6 +293,8 @@
     "selectedNodes": "{{count}} node(s) selected",
     "commandPlaceholder": "#!/bin/bash\necho \"Hello\"",
     "commandIdPlaceholder": "Command ID",
+    "selectCommand": "Select a command...",
+    "noCommands": "No commands available",
     "allNodes": "All nodes",
     "scheduleHistory": "Schedule History",
     "noScheduleHistory": "No schedule history",

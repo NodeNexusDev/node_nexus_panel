@@ -236,6 +236,7 @@
   "scripts": {
     "title": "Скрипты",
     "description": "Создание и управление повторяемыми скриптами",
+    "descriptionLabel": "Описание",
     "createScript": "Создать скрипт",
     "schedule": "Расписание",
     "edit": "Редактировать",
@@ -292,6 +293,8 @@
     "selectedNodes": "Выбрано нод: {{count}}",
     "commandPlaceholder": "#!/bin/bash\necho \"Hello\"",
     "commandIdPlaceholder": "ID команды",
+    "selectCommand": "Выберите команду...",
+    "noCommands": "Нет доступных команд",
     "allNodes": "Все ноды",
     "scheduleHistory": "История расписания",
     "noScheduleHistory": "Истории расписания нет",
