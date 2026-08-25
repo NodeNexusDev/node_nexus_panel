@@ -17,7 +17,6 @@ const ScriptDetail = lazy(() => import('./pages/ScriptDetail').then((m) => ({ de
 const Docker = lazy(() => import('./pages/Docker').then((m) => ({ default: m.Docker })))
 const Audit = lazy(() => import('./pages/Audit').then((m) => ({ default: m.Audit })))
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })))
-const Tags = lazy(() => import('./pages/Tags').then((m) => ({ default: m.Tags })))
 const Favorites = lazy(() => import('./pages/Favorites').then((m) => ({ default: m.Favorites })))
 
 function Loading() {
@@ -47,7 +46,6 @@ function App() {
                 <Route path="/docker" element={<Docker />} />
                 <Route path="/audit" element={<Audit />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/tags" element={<Tags />} />
                 <Route path="/favorites" element={<Favorites />} />
               </Route>
             </Route>

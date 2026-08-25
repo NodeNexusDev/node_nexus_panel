@@ -15,23 +15,27 @@ export const notesHandlers = [
     const body = await request.json() as { content: string }
     const note = {
       id: String(mockNotes.length + 1),
-      target_type: params.targetType,
-      target_id: params.targetId,
+      target_type: params.targetType as 'node' | 'command' | 'script',
+      target_id: params.targetId as string,
       content: body.content,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
+    mockNotes.push(note)
     return HttpResponse.json(note, { status: 201 })
   }),
 
   http.put(`${API}/api/v1/notes/:noteId`, async ({ params, request }) => {
-    const note = mockNotes.find((n) => n.id === params.noteId)
-    if (!note) return new HttpResponse(null, { status: 404 })
+    const idx = mockNotes.findIndex((n) => n.id === params.noteId)
+    if (idx === -1) return new HttpResponse(null, { status: 404 })
     const body = await request.json() as { content: string }
-    return HttpResponse.json({ ...note, ...body, updated_at: new Date().toISOString() })
+    Object.assign(mockNotes[idx], body, { updated_at: new Date().toISOString() })
+    return HttpResponse.json(mockNotes[idx])
   }),
 
-  http.delete(`${API}/api/v1/notes/:noteId`, () => {
+  http.delete(`${API}/api/v1/notes/:noteId`, ({ params }) => {
+    const idx = mockNotes.findIndex((n) => n.id === params.noteId)
+    if (idx !== -1) mockNotes.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 ]

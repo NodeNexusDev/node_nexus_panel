@@ -8,7 +8,6 @@ import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { Pagination } from '../components/ui/Pagination'
@@ -71,7 +70,7 @@ export function Scripts() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const [runTarget, setRunTarget] = useState<Script | null>(null)
-  const [runNodeId, setRunNodeId] = useState('')
+  const [runNodeIds, setRunNodeIds] = useState<string[]>([])
   const [runTags, setRunTags] = useState('')
   const [editScript, setEditScript] = useState<Script | null>(null)
   const [cloneTarget, setCloneTarget] = useState<{ id: string; name: string } | null>(null)
@@ -99,7 +98,7 @@ export function Scripts() {
 
   const handleRun = (script: Script) => {
     setRunTarget(script)
-    setRunNodeId('')
+    setRunNodeIds([])
     setRunTags('')
   }
 
@@ -175,7 +174,7 @@ export function Scripts() {
           <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); handleRun(script) }} disabled={runScript.isPending}>
             {runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}
           </Button>
-          <DropdownMenu items={scriptMenu(script)} ariaLabel={`${script.name} actions`} />
+          <DropdownMenu items={scriptMenu(script)} ariaLabel={t('common.actionsFor', { name: script.name })} />
         </div>
       ),
     },
@@ -308,24 +307,47 @@ export function Scripts() {
 
       <ConfirmDialog isOpen={!!cloneTarget} onClose={() => setCloneTarget(null)} onConfirm={handleClone} title={t('scripts.cloneTitle')} message={t('scripts.cloneMsg', { name: cloneTarget?.name })} confirmLabel={t('scripts.clone')} />
 
-      <Modal isOpen={!!runTarget} onClose={() => { setRunTarget(null); setRunNodeId(''); setRunTags('') }} title={`${t('scripts.run')}: ${runTarget?.name || ''}`}>
+      <Modal isOpen={!!runTarget} onClose={() => { setRunTarget(null); setRunNodeIds([]); setRunTags('') }} title={`${t('scripts.run')}: ${runTarget?.name || ''}`}>
         <div className="space-y-4">
-          <Select
-            label={t('scripts.targetNode', 'Target Node (optional)')}
-            value={runNodeId}
-            onChange={setRunNodeId}
-            placeholder={t('scripts.allNodes', 'All nodes')}
-            options={nodes.map((n) => ({ value: n.id, label: n.name }))}
-          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNodes', 'Target Nodes')}</p>
+              <button
+                type="button"
+                onClick={() => setRunNodeIds(runNodeIds.length === nodes.length ? [] : nodes.map((n) => n.id))}
+                className="text-xs text-accent-600 dark:text-accent-400 hover:underline cursor-pointer"
+              >
+                {runNodeIds.length === nodes.length ? t('common.deselectAll', 'Deselect all') : t('common.selectAll', 'Select all')}
+              </button>
+            </div>
+            <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
+              {nodes.map((node) => (
+                <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={runNodeIds.includes(node.id)}
+                    onChange={() => {
+                      setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
+                    }}
+                    className="rounded border-surface-300 dark:border-surface-600"
+                  />
+                  <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
+                </label>
+              ))}
+            </div>
+            {runNodeIds.length > 0 && (
+              <p className="text-xs text-surface-500">{t('scripts.selectedNodes', { count: runNodeIds.length })}</p>
+            )}
+          </div>
           <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => { setRunTarget(null); setRunNodeId(''); setRunTags('') }}>{t('common.cancel')}</Button>
+            <Button variant="ghost" onClick={() => { setRunTarget(null); setRunNodeIds([]); setRunTags('') }}>{t('common.cancel')}</Button>
             <Button onClick={() => {
               if (runTarget) {
                 const data: { node_ids?: string[]; node_tags?: string[] } = {}
-                if (runNodeId) data.node_ids = [runNodeId]
+                if (runNodeIds.length > 0) data.node_ids = runNodeIds
                 if (runTags) data.node_tags = runTags.split(',').map((s) => s.trim()).filter(Boolean)
-                runScript.mutate({ id: runTarget.id, data }, { onSuccess: () => { toast('success', t('scripts.toastStarted', { name: runTarget.name })); setRunTarget(null); setRunNodeId(''); setRunTags('') }, onError: () => toast('error', t('scripts.toastRunFailed', { name: runTarget.name })) })
+                runScript.mutate({ id: runTarget.id, data }, { onSuccess: () => { toast('success', t('scripts.toastStarted', { name: runTarget.name })); setRunTarget(null); setRunNodeIds([]); setRunTags('') }, onError: () => toast('error', t('scripts.toastRunFailed', { name: runTarget.name })) })
               }
             }} disabled={runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button>
           </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
@@ -47,14 +47,12 @@ import {
   useUpdateNode,
   useCheckNode,
   useDeleteNode,
-  useAddNodeTag,
-  useRemoveNodeTag,
 } from '../hooks/useNodes'
-import type { NodeUpdate } from '../api/types'
+import type { NodeUpdate, Node } from '../api/types'
 import { nodeUpdateSchema, type NodeUpdateFormValues } from '../lib/validators/node-schema'
 import { NodeDetailSkeleton } from './NodeDetailSkeleton'
 
-type Tab = 'overview' | 'metrics' | 'stats' | 'status-history' | 'command-history' | 'tags' | 'notes'
+type Tab = 'overview' | 'metrics' | 'stats' | 'status-history' | 'command-history' | 'notes'
 
 export function NodeDetail() {
   const { t } = useTranslation()
@@ -63,7 +61,7 @@ export function NodeDetail() {
   const { copy } = useCopyToClipboard({ onCopied: () => toast('success', t('nodes.addressCopied')) })
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
-  const TAB_KEYS: Tab[] = ['overview', 'metrics', 'stats', 'status-history', 'command-history', 'tags', 'notes']
+  const TAB_KEYS: Tab[] = ['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes']
   const tabFromUrl = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<Tab>(TAB_KEYS.includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview')
 
@@ -110,6 +108,19 @@ export function NodeDetail() {
       tags: node?.tags,
     },
   })
+
+  useEffect(() => {
+    if (!node) return
+    reset({
+      name: node.name,
+      host: node.host,
+      port: node.port,
+      connection_type: node.connection_type,
+      username: node.username ?? null,
+      docker_host: node.docker_host ?? null,
+      tags: node.tags,
+    })
+  }, [node, reset])
 
   const toggleClear = (field: string) => {
     setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
@@ -203,7 +214,6 @@ export function NodeDetail() {
     { key: 'stats', label: t('nodes.stats', 'Stats') },
     { key: 'status-history', label: t('nodes.statusHistory', 'Status History') },
     { key: 'command-history', label: t('nodes.cmdHistory', 'Command History') },
-    { key: 'tags', label: t('nodes.tags', 'Tags') },
     { key: 'notes', label: t('nodes.notes', 'Notes') },
   ]
 
@@ -279,7 +289,6 @@ export function NodeDetail() {
       {activeTab === 'command-history' && (
         <CommandHistoryTab nodeId={node.id} page={commandHistoryPage} size={pageSize} onPageChange={setCommandHistoryPage} />
       )}
-      {activeTab === 'tags' && <TagsTab nodeId={node.id} />}
       {activeTab === 'notes' && <NotesTab nodeId={node.id} />}
 
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title={t('nodes.editNode', 'Edit Node')} size="lg">
@@ -370,7 +379,7 @@ export function NodeDetail() {
   )
 }
 
-function OverviewTab({ node }: { node: import('../api/types').Node }) {
+function OverviewTab({ node }: { node: Node }) {
   const { t } = useTranslation()
   const connTypeBadge = <Badge variant="info">{node.connection_type}</Badge>
   const statusBadge = <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
@@ -587,46 +596,6 @@ function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: strin
             <Pagination page={page} totalPages={Math.ceil(data.total / size)} onPageChange={onPageChange} />
           </div>
         )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function TagsTab({ nodeId }: { nodeId: string }) {
-  const { t } = useTranslation()
-  const { toast } = useToast()
-  const { data: node, refetch } = useNode(nodeId)
-  const addTag = useAddNodeTag()
-  const removeTag = useRemoveNodeTag()
-  const [newTag, setNewTag] = useState('')
-  const tags = node?.tags ?? []
-
-  const handleAdd = () => {
-    const tag = newTag.trim()
-    if (!tag) return
-    addTag.mutate({ id: nodeId, tag }, {
-      onSuccess: () => { toast('success', t('nodes.toastTagAdded')); setNewTag(''); refetch() },
-      onError: () => toast('error', t('nodes.toastTagAddFailed')),
-    })
-  }
-
-  return (
-    <Card>
-      <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('nodes.tags')}</h2></CardHeader>
-      <CardContent>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="default" className="gap-1">
-              {tag}
-              <button onClick={() => removeTag.mutate({ id: nodeId, tag }, { onSuccess: () => { toast('success', t('nodes.toastTagRemoved')); refetch() }, onError: () => toast('error', t('nodes.toastTagRemoveFailed')) })} aria-label={t('nodes.removeTag', 'Remove tag')} className="ml-1 text-surface-400 hover:text-red-500">×</button>
-            </Badge>
-          ))}
-          {tags.length === 0 && <p className="text-sm text-surface-500">{t('nodes.noTags', 'No tags')}</p>}
-        </div>
-        <div className="flex gap-2">
-          <Input placeholder={t('nodes.newTag', 'New tag')} value={newTag} onChange={(e) => setNewTag(e.target.value)} />
-          <Button onClick={handleAdd} disabled={!newTag.trim() || addTag.isPending}>{t('nodes.addTag')}</Button>
-        </div>
       </CardContent>
     </Card>
   )

@@ -12,6 +12,20 @@ import type {
   DockerNetwork,
   DockerVolume,
   BulkDockerRequest,
+  BulkDockerImageBuildRequest,
+  BulkDockerImageRemoveRequest,
+  BulkDockerPullRequest,
+  DockerExecRequest,
+  ContainerRenameRequest,
+  NetworkCreateRequest,
+  NetworkInspectResponse,
+  NetworkConnectRequest,
+  NetworkDisconnectRequest,
+  VolumeCreateRequest,
+  VolumeInspectResponse,
+  DockerTopResult,
+  DockerSystemInfo,
+  DockerSystemDfItem,
 } from '../api/types'
 
 export function useDockerContainers(nodeId: string, all?: boolean) {
@@ -131,7 +145,7 @@ export function useExecContainer() {
     }: {
       nodeId: string
       containerId: string
-      data: { command: string; timeout?: number }
+      data: DockerExecRequest
     }) => dockerApi.execContainer(nodeId, containerId, data),
   })
 }
@@ -254,5 +268,277 @@ export function useBulkDockerStop() {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
+  })
+}
+
+export function useBulkDockerRemove() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerRequest) =>
+      dockerApi.bulkRemove(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerImageBuild() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerImageBuildRequest) =>
+      dockerApi.bulkImageBuild(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerImageRemove() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerImageRemoveRequest) =>
+      dockerApi.bulkImageRemove(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerPull() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerPullRequest) =>
+      dockerApi.bulkPull(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerInspect() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerRequest) =>
+      dockerApi.bulkInspect(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerLogs() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerRequest) =>
+      dockerApi.bulkLogs(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerStats() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerRequest) =>
+      dockerApi.bulkStats(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function usePauseContainer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, containerId }: { nodeId: string; containerId: string }) =>
+      dockerApi.pauseContainer(nodeId, containerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useUnpauseContainer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, containerId }: { nodeId: string; containerId: string }) =>
+      dockerApi.unpauseContainer(nodeId, containerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useRenameContainer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, containerId, data }: { nodeId: string; containerId: string; data: ContainerRenameRequest }) =>
+      dockerApi.renameContainer(nodeId, containerId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function usePruneContainers() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (nodeId: string) => dockerApi.pruneContainers(nodeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function usePruneImages() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (nodeId: string) => dockerApi.pruneImages(nodeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useCreateNetwork() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, data }: { nodeId: string; data: NetworkCreateRequest }) =>
+      dockerApi.createNetwork(nodeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useDeleteNetwork() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, networkId }: { nodeId: string; networkId: string }) =>
+      dockerApi.deleteNetwork(nodeId, networkId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useInspectNetwork(nodeId: string | null, networkId: string | null) {
+  return useQuery<NetworkInspectResponse>({
+    queryKey: ['docker', nodeId, 'networks', networkId, 'inspect'],
+    queryFn: () => dockerApi.inspectNetwork(nodeId!, networkId!),
+    enabled: !!nodeId && !!networkId,
+  })
+}
+
+export function useConnectNetwork() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, networkId, data }: { nodeId: string; networkId: string; data: NetworkConnectRequest }) =>
+      dockerApi.connectNetwork(nodeId, networkId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useDisconnectNetwork() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, networkId, data }: { nodeId: string; networkId: string; data: NetworkDisconnectRequest }) =>
+      dockerApi.disconnectNetwork(nodeId, networkId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useCreateVolume() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, data }: { nodeId: string; data: VolumeCreateRequest }) =>
+      dockerApi.createVolume(nodeId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useDeleteVolume() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ nodeId, volumeName }: { nodeId: string; volumeName: string }) =>
+      dockerApi.deleteVolume(nodeId, volumeName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useInspectVolume(nodeId: string | null, volumeName: string | null) {
+  return useQuery<VolumeInspectResponse>({
+    queryKey: ['docker', nodeId, 'volumes', volumeName, 'inspect'],
+    queryFn: () => dockerApi.inspectVolume(nodeId!, volumeName!),
+    enabled: !!nodeId && !!volumeName,
+  })
+}
+
+export function usePruneVolumes() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (nodeId: string) => dockerApi.pruneVolumes(nodeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+    },
+  })
+}
+
+export function useDockerSystemInfo(nodeId: string) {
+  return useQuery<DockerSystemInfo>({
+    queryKey: ['docker', nodeId, 'system', 'info'],
+    queryFn: () => dockerApi.getSystemInfo(nodeId),
+    enabled: !!nodeId,
+  })
+}
+
+export function useDockerSystemDf(nodeId: string) {
+  return useQuery<DockerSystemDfItem[]>({
+    queryKey: ['docker', nodeId, 'system', 'df'],
+    queryFn: () => dockerApi.getSystemDf(nodeId),
+    enabled: !!nodeId,
+  })
+}
+
+export function useDockerContainerTop(nodeId: string, containerId: string) {
+  return useQuery<DockerTopResult>({
+    queryKey: ['docker', nodeId, 'containers', containerId, 'top'],
+    queryFn: () => dockerApi.getContainerTop(nodeId, containerId),
+    enabled: !!nodeId && !!containerId,
   })
 }

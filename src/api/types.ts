@@ -310,6 +310,10 @@ export interface BulkCommandHistoryItem {
 export interface BulkNodeOperationResult {
   affected: number
   node_ids: string[]
+  errors?: string[] | null
+  failed?: number | null
+  succeeded?: number | null
+  total?: number | null
 }
 
 export interface BulkNodeResult {
@@ -323,6 +327,68 @@ export interface BulkNodeResult {
 export interface BulkCommandResult {
   command: string
   results: BulkNodeResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+// ── Bulk: Node Update ──────────────────────────────────────────
+
+export interface BulkNodeUpdateRequest {
+  node_ids: string[]
+  changes: NodeUpdate
+}
+
+export interface BulkNodeUpdateResult {
+  node_id: string
+  status: string
+  error?: string
+}
+
+export interface BulkNodeUpdateResponse {
+  results: BulkNodeUpdateResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+// ── Bulk: Node Metrics ─────────────────────────────────────────
+
+export interface BulkNodeMetricsRequest {
+  node_ids: string[]
+}
+
+export interface BulkNodeMetricsResult {
+  node_id: string
+  node_name: string
+  status: string
+  metrics?: NodeMetrics | null
+  error?: string
+}
+
+export interface BulkNodeMetricsResponse {
+  results: BulkNodeMetricsResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+// ── Bulk: Validate Credentials ─────────────────────────────────
+
+export interface BulkValidateCredentialsRequest {
+  node_ids: string[]
+  tags?: string[]
+}
+
+export interface BulkValidateCredentialsResult {
+  node_id: string
+  node_name: string
+  status: string
+  message?: string
+}
+
+export interface BulkValidateCredentialsResponse {
+  results: BulkValidateCredentialsResult[]
   total: number
   succeeded: number
   failed: number
@@ -426,6 +492,8 @@ export interface DockerContainerStats {
   PIDs?: string | null
 }
 
+
+
 // ── Docker: Image types ──────────────────────────────────────────
 
 export interface DockerImage {
@@ -519,6 +587,80 @@ export interface BulkDockerNodeResult {
   error?: string
 }
 
+// ── Docker: Bulk Image Build ──────────────────────────────────
+
+export interface BulkDockerImageBuildRequest {
+  dockerfile: string
+  tag: string
+  node_ids?: string[]
+  node_tags?: string[]
+  build_args?: Record<string, string>
+  no_cache?: boolean
+  timeout?: number | null
+}
+
+export interface BulkDockerImageBuildResult {
+  node_id: string
+  node_name: string
+  status: string
+  output?: string
+  error?: string
+}
+
+export interface BulkDockerImageBuildResponse {
+  results: BulkDockerImageBuildResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+// ── Docker: Bulk Image Remove ─────────────────────────────────
+
+export interface BulkDockerImageRemoveRequest {
+  image_id: string
+  node_ids?: string[]
+  node_tags?: string[]
+}
+
+export interface BulkDockerImageRemoveResult {
+  node_id: string
+  node_name: string
+  status: string
+  output?: string
+  error?: string
+}
+
+export interface BulkDockerImageRemoveResponse {
+  results: BulkDockerImageRemoveResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+// ── Docker: Bulk Pull ─────────────────────────────────────────
+
+export interface BulkDockerPullRequest {
+  image: string
+  node_ids?: string[]
+  node_tags?: string[]
+  timeout?: number | null
+}
+
+export interface BulkDockerPullResult {
+  node_id: string
+  node_name: string
+  status: string
+  output?: string
+  error?: string
+}
+
+export interface BulkDockerPullResponse {
+  results: BulkDockerPullResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
 // ── Docker: Logs (plain string from backend) ────────────────────
 
 // Logs endpoint returns plain text string
@@ -551,6 +693,7 @@ export interface Favorite {
   id: string
   target_type: 'node' | 'command' | 'script'
   target_id: string
+  name: string | null
   note: string | null
   created_at: string
 }
@@ -558,6 +701,7 @@ export interface Favorite {
 export interface FavoriteCreate {
   target_type: 'node' | 'command' | 'script'
   target_id: string
+  name?: string | null
   note?: string | null
 }
 
@@ -744,6 +888,61 @@ export interface ScriptExecutionBatchResult {
   results: ScriptNodeResult[]
 }
 
+// ── Scripts: Bulk Cancel/Retry ────────────────────────────────
+
+export interface BulkScriptCancelRequest {
+  execution_ids: string[]
+}
+
+export interface BulkScriptRetryRequest {
+  execution_ids: string[]
+}
+
+// ── Commands: Bulk Execute ───────────────────────────────────
+
+export interface BulkCommandRequest {
+  command: string
+  node_ids?: string[] | null
+  tags?: string[] | null
+  params?: Record<string, unknown> | null
+}
+
+// ── Commands: Bulk Cancel/Retry ──────────────────────────────
+
+export interface BulkCancelCommandRequest {
+  execution_ids: string[]
+}
+
+export interface BulkCancelCommandResult {
+  execution_id: string
+  status: string
+  message?: string
+}
+
+export interface BulkCancelCommandResponse {
+  results: BulkCancelCommandResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+export interface BulkRetryCommandRequest {
+  execution_ids: string[]
+}
+
+export interface BulkRetryCommandResult {
+  execution_id: string
+  status: string
+  message?: string
+}
+
+export interface BulkRetryCommandResponse {
+  results: BulkRetryCommandResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
 // ── Commands: History ───────────────────────────────────────────
 
 export interface CommandHistoryResponse {
@@ -776,4 +975,116 @@ export interface SseEvent {
   type: SseEventType
   payload: unknown
   timestamp: string
+}
+
+// ── OpenAPI v0.17.1: New Types ──────────────────────────────────
+
+// Raw command execute
+export interface CommandExecuteRawRequest {
+  node_id: string
+  command: string
+  timeout?: number | null
+}
+
+// Container rename
+export interface ContainerRenameRequest {
+  new_name: string
+}
+
+// Network CRUD
+export interface NetworkCreateRequest {
+  name: string
+  driver?: string
+  gateway?: string | null
+  subnet?: string | null
+}
+
+export interface NetworkConnectRequest {
+  container_id: string
+  ip_address?: string | null
+}
+
+export interface NetworkDisconnectRequest {
+  container_id: string
+  force?: boolean
+}
+
+export interface NetworkInspectContainer {
+  name: string
+  ipv4_address?: string
+  ipv6_address?: string
+}
+
+export interface NetworkInspectResponse {
+  id: string
+  name: string
+  driver: string
+  scope: string
+  gateway?: string
+  subnet?: string
+  containers: NetworkInspectContainer[]
+}
+
+// Volume CRUD
+export interface VolumeCreateRequest {
+  name?: string | null
+  driver?: string
+}
+
+export interface VolumeInspectResponse {
+  name: string
+  driver: string
+  mountpoint: string
+  labels?: Record<string, string>
+}
+
+// Docker prune / top / system
+export interface DockerPruneResponse {
+  containers_deleted?: string[]
+  images_deleted?: string[]
+  space_reclaimed?: string
+}
+
+export interface DockerTopResult {
+  titles: string[]
+  processes: string[][]
+}
+
+export interface DockerSystemInfo {
+  server_version?: string
+  operating_system?: string
+  architecture?: string
+  cpus?: number
+  total_memory?: string
+  storage_driver?: string
+  containers_running?: number
+  containers_stopped?: number
+  images?: number
+}
+
+export interface DockerSystemDfItem {
+  type: string
+  total_count?: number
+  active_size?: string
+  reclaimable_size?: string
+  reclaimable_percent?: string
+}
+
+// Note / Favorite response
+export interface NoteResponse {
+  id: string
+  target_type: string
+  target_id: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
+export interface FavoriteResponse {
+  id: string
+  target_type: string
+  target_id: string
+  name: string | null
+  note: string | null
+  created_at: string
 }

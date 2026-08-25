@@ -9,6 +9,10 @@ interface ContainerRowProps {
   onStop: () => void
   onRestart: () => void
   onDelete: () => void
+  onPause: () => void
+  onUnpause: () => void
+  onRename: () => void
+  onTop: () => void
   loading: boolean
   selected: boolean
   onSelect: () => void
@@ -22,6 +26,10 @@ export function ContainerRow({
   onStop,
   onRestart,
   onDelete,
+  onPause,
+  onUnpause,
+  onRename,
+  onTop,
   loading,
   selected,
   onSelect,
@@ -34,7 +42,7 @@ export function ContainerRow({
   return (
     <tr className={`table-row-hover cursor-pointer ${expanded ? 'bg-surface-50 dark:bg-surface-800/50' : ''}`} onClick={onToggleExpand}>
       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-        <input type="checkbox" checked={selected} onChange={onSelect} className="rounded border-surface-300 dark:border-surface-600" />
+        <input type="checkbox" checked={selected} onChange={onSelect} aria-label={t('common.selectItem', 'Select {{name}}', { name: containerName })} className="rounded border-surface-300 dark:border-surface-600" />
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
@@ -54,6 +62,10 @@ export function ContainerRow({
           {!isRunning && <Button variant="ghost" size="sm" onClick={onStart} disabled={loading}>{t('common.start')}</Button>}
           {isRunning && <Button variant="ghost" size="sm" onClick={onStop} disabled={loading}>{t('common.stop')}</Button>}
           <Button variant="ghost" size="sm" onClick={onRestart} disabled={loading}>{t('common.restart')}</Button>
+          {isRunning && container.State?.toLowerCase() !== 'paused' && <Button variant="ghost" size="sm" onClick={onPause} disabled={loading}>{t('docker.pause')}</Button>}
+          {container.State?.toLowerCase() === 'paused' && <Button variant="ghost" size="sm" onClick={onUnpause} disabled={loading}>{t('docker.unpause')}</Button>}
+          <Button variant="ghost" size="sm" onClick={onRename} disabled={loading}>{t('docker.rename')}</Button>
+          <Button variant="ghost" size="sm" onClick={onTop} disabled={loading || !isRunning}>{t('docker.top')}</Button>
           <Button variant="ghost" size="sm" onClick={onDelete} disabled={loading} className="text-red-500 hover:text-red-600">{t('common.delete')}</Button>
         </div>
       </td>

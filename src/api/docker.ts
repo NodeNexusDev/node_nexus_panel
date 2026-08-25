@@ -19,6 +19,23 @@ import type {
   DockerVolume,
   BulkDockerRequest,
   BulkDockerResponse,
+  BulkDockerImageBuildRequest,
+  BulkDockerImageBuildResponse,
+  BulkDockerImageRemoveRequest,
+  BulkDockerImageRemoveResponse,
+  BulkDockerPullRequest,
+  BulkDockerPullResponse,
+  ContainerRenameRequest,
+  NetworkCreateRequest,
+  NetworkInspectResponse,
+  NetworkConnectRequest,
+  NetworkDisconnectRequest,
+  VolumeCreateRequest,
+  VolumeInspectResponse,
+  DockerPruneResponse,
+  DockerTopResult,
+  DockerSystemInfo,
+  DockerSystemDfItem,
 } from './types'
 
 function nodesBase(nodeId: string) {
@@ -55,6 +72,21 @@ export const dockerApi = {
     return api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/restart${qs}`)
   },
 
+  pauseContainer: (nodeId: string, containerId: string) =>
+    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/pause`),
+
+  unpauseContainer: (nodeId: string, containerId: string) =>
+    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/unpause`),
+
+  renameContainer: (nodeId: string, containerId: string, data: ContainerRenameRequest) =>
+    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/rename`, data),
+
+  pruneContainers: (nodeId: string) =>
+    api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/containers/prune`),
+
+  getContainerTop: (nodeId: string, containerId: string) =>
+    api.get<DockerTopResult>(`${nodesBase(nodeId)}/containers/${containerId}/top`),
+
   execContainer: (nodeId: string, containerId: string, data: DockerExecRequest) =>
     api.post<DockerExecResult>(`${nodesBase(nodeId)}/containers/${containerId}/exec`, data),
 
@@ -87,11 +119,47 @@ export const dockerApi = {
   tagImage: (nodeId: string, imageId: string, data: DockerImageTagRequest) =>
     api.post<DockerImageTagResponse>(`${nodesBase(nodeId)}/images/${imageId}/tag`, data),
 
+  pruneImages: (nodeId: string) =>
+    api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/images/prune`),
+
   getNetworks: (nodeId: string) =>
     api.get<DockerNetwork[]>(`${nodesBase(nodeId)}/networks`),
 
+  createNetwork: (nodeId: string, data: NetworkCreateRequest) =>
+    api.post<DockerNetwork>(`${nodesBase(nodeId)}/networks`, data),
+
+  deleteNetwork: (nodeId: string, networkId: string) =>
+    api.delete<void>(`${nodesBase(nodeId)}/networks/${networkId}`),
+
+  inspectNetwork: (nodeId: string, networkId: string) =>
+    api.get<NetworkInspectResponse>(`${nodesBase(nodeId)}/networks/${networkId}`),
+
+  connectNetwork: (nodeId: string, networkId: string, data: NetworkConnectRequest) =>
+    api.post<void>(`${nodesBase(nodeId)}/networks/${networkId}/connect`, data),
+
+  disconnectNetwork: (nodeId: string, networkId: string, data: NetworkDisconnectRequest) =>
+    api.post<void>(`${nodesBase(nodeId)}/networks/${networkId}/disconnect`, data),
+
   getVolumes: (nodeId: string) =>
     api.get<DockerVolume[]>(`${nodesBase(nodeId)}/volumes`),
+
+  createVolume: (nodeId: string, data: VolumeCreateRequest) =>
+    api.post<DockerVolume>(`${nodesBase(nodeId)}/volumes`, data),
+
+  deleteVolume: (nodeId: string, volumeName: string) =>
+    api.delete<void>(`${nodesBase(nodeId)}/volumes/${volumeName}`),
+
+  inspectVolume: (nodeId: string, volumeName: string) =>
+    api.get<VolumeInspectResponse>(`${nodesBase(nodeId)}/volumes/${volumeName}`),
+
+  pruneVolumes: (nodeId: string) =>
+    api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/volumes/prune`),
+
+  getSystemInfo: (nodeId: string) =>
+    api.get<DockerSystemInfo>(`${nodesBase(nodeId)}/system/info`),
+
+  getSystemDf: (nodeId: string) =>
+    api.get<DockerSystemDfItem[]>(`${nodesBase(nodeId)}/system/df`),
 
   bulkExec: (data: BulkDockerRequest) =>
     api.post<BulkDockerResponse>('/docker/bulk/exec', data),
@@ -104,4 +172,25 @@ export const dockerApi = {
 
   bulkStop: (data: BulkDockerRequest) =>
     api.post<BulkDockerResponse>('/docker/bulk/stop', data),
+
+  bulkRemove: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/remove', data),
+
+  bulkImageBuild: (data: BulkDockerImageBuildRequest) =>
+    api.post<BulkDockerImageBuildResponse>('/docker/bulk/images/build', data),
+
+  bulkImageRemove: (data: BulkDockerImageRemoveRequest) =>
+    api.post<BulkDockerImageRemoveResponse>('/docker/bulk/images/remove', data),
+
+  bulkPull: (data: BulkDockerPullRequest) =>
+    api.post<BulkDockerPullResponse>('/docker/bulk/pull', data),
+
+  bulkInspect: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/inspect', data),
+
+  bulkLogs: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/logs', data),
+
+  bulkStats: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/stats', data),
 }

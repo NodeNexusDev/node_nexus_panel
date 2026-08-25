@@ -18,7 +18,7 @@ interface DropdownMenuProps {
   ariaLabel?: string
 }
 
-export function DropdownMenu({ items, align = 'right', ariaLabel = 'Actions' }: DropdownMenuProps) {
+export function DropdownMenu({ items, align = 'right', ariaLabel }: DropdownMenuProps) {
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)

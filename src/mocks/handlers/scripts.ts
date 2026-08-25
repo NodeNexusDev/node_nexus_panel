@@ -40,24 +40,27 @@ export const scriptHandlers = [
       id: String(mockScripts.length + 1),
       name: body.name as string,
       description: (body.description as string) || null,
-      steps: (body.steps as Record<string, unknown>[]) || [],
+      steps: (body.steps as Array<{ label: string; type: 'inline' | 'command'; command?: string; command_id?: string; params?: Record<string, unknown>; on_failure?: 'stop' | 'continue' }>) || [],
       tags: (body.tags as string[]) || [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
+    mockScripts.push(newScript)
     return HttpResponse.json(newScript, { status: 201 })
   }),
 
-  http.put(`${API_URL}/api/v1/scripts/:id`, async ({ params, request }) => {
-    const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+  http.patch(`${API_URL}/api/v1/scripts/:id`, async ({ params, request }) => {
+    const idx = mockScripts.findIndex((s) => s.id === params.id)
+    if (idx === -1) return new HttpResponse(null, { status: 404 })
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json({ ...script, ...body, updated_at: new Date().toISOString() })
+    Object.assign(mockScripts[idx], body, { updated_at: new Date().toISOString() })
+    return HttpResponse.json(mockScripts[idx])
   }),
 
   http.delete(`${API_URL}/api/v1/scripts/:id`, ({ params }) => {
-    const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    const idx = mockScripts.findIndex((s) => s.id === params.id)
+    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    mockScripts.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 
@@ -73,13 +76,15 @@ export const scriptHandlers = [
   http.post(`${API_URL}/api/v1/scripts/:id/clone`, ({ params }) => {
     const script = mockScripts.find((s) => s.id === params.id)
     if (!script) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json({
+    const cloned = {
       ...script,
       id: String(mockScripts.length + 1),
       name: `${script.name} (copy)`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    })
+    }
+    mockScripts.push(cloned)
+    return HttpResponse.json(cloned)
   }),
 
   http.get(`${API_URL}/api/v1/scripts/:id/stats`, ({ params }) => {
@@ -157,11 +162,49 @@ export const scriptHandlers = [
     return HttpResponse.json({ items: [], total: 0, page, size })
   }),
 
-  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/cancel`, () => {
-    return HttpResponse.json({ message: 'Execution cancelled' })
+  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/cancel`, ({ params }) => {
+    return HttpResponse.json({
+      id: params.executionId as string,
+      script_id: '1',
+      node_id: '1',
+      params: null,
+      status: 'cancelled',
+      steps: [],
+      started_at: new Date().toISOString(),
+      finished_at: new Date().toISOString(),
+    })
   }),
 
-  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/retry`, () => {
-    return HttpResponse.json({ message: 'Execution retried', execution_id: 'new-exec-123' })
+  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/retry`, ({ params }) => {
+    return HttpResponse.json({
+      id: params.executionId as string,
+      script_id: '1',
+      node_id: '1',
+      params: null,
+      status: 'pending',
+      steps: [],
+      started_at: new Date().toISOString(),
+      finished_at: null,
+    })
+  }),
+
+  http.post(`${API_URL}/api/v1/scripts/bulk/cancel`, async ({ request }) => {
+    const body = await request.json() as { execution_ids: string[] }
+    return HttpResponse.json({
+      results: body.execution_ids.map((id) => ({ execution_id: id, status: 'cancelled', message: 'Cancelled' })),
+      total: body.execution_ids.length,
+      succeeded: body.execution_ids.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API_URL}/api/v1/scripts/bulk/retry`, async ({ request }) => {
+    const body = await request.json() as { execution_ids: string[] }
+    return HttpResponse.json({
+      results: body.execution_ids.map((id) => ({ execution_id: id, status: 'pending', message: 'Retried' })),
+      total: body.execution_ids.length,
+      succeeded: body.execution_ids.length,
+      failed: 0,
+    })
   }),
 ]

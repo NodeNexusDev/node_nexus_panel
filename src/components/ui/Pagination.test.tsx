@@ -26,12 +26,12 @@ describe('Pagination', () => {
 
   it('disables previous button on first page', () => {
     render(<Pagination page={1} totalPages={3} onPageChange={vi.fn()} />)
-    expect(screen.getByLabelText('Previous page')).toBeDisabled()
+    expect(screen.getByLabelText('common.previousPage')).toBeDisabled()
   })
 
   it('disables next button on last page', () => {
     render(<Pagination page={3} totalPages={3} onPageChange={vi.fn()} />)
-    expect(screen.getByLabelText('Next page')).toBeDisabled()
+    expect(screen.getByLabelText('common.nextPage')).toBeDisabled()
   })
 
   it('highlights current page', () => {

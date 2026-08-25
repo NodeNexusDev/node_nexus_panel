@@ -6,7 +6,6 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -16,6 +15,7 @@ import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconScripts, IconArrowLeft, IconXCircle, IconZap } from '../components/ui/Icons'
+import { ExecutionResult } from '../components/commands/ExecutionResult'
 import { useToast } from '../components/ui/useToast'
 import { useNodes } from '../hooks/useNodes'
 import { ScriptFormModal, type ScriptFormValues } from '../components/scripts/ScriptFormModal'
@@ -32,6 +32,8 @@ import {
   useRemoveScriptSchedule,
   useCancelScriptExecution,
   useRetryScriptExecution,
+  useBulkCancelScriptExecutions,
+  useBulkRetryScriptExecutions,
 } from '../hooks/useScripts'
 import type { Script } from '../api/types'
 
@@ -58,7 +60,7 @@ export function ScriptDetail() {
   const setSchedule = useSetScriptSchedule()
   const removeSchedule = useRemoveScriptSchedule()
 
-  const [runNodeId, setRunNodeId] = useState('')
+  const [runNodeIds, setRunNodeIds] = useState<string[]>([])
   const [runTags, setRunTags] = useState('')
   const [scheduleCron, setScheduleCron] = useState('')
   const [scheduleNodeIds, setScheduleNodeIds] = useState<string[]>([])
@@ -84,12 +86,12 @@ export function ScriptDetail() {
       {
         id: script.id,
         data: {
-          node_ids: runNodeId ? [runNodeId] : undefined,
+          node_ids: runNodeIds.length > 0 ? runNodeIds : undefined,
           node_tags: runTags ? runTags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
       },
       {
-        onSuccess: () => { toast('success', t('scripts.toastStarted', { name: script.name })); setShowRunModal(false); setRunNodeId(''); setRunTags('') },
+        onSuccess: () => { toast('success', t('scripts.toastStarted', { name: script.name })); setShowRunModal(false); setRunNodeIds([]); setRunTags('') },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),
       },
     )
@@ -127,7 +129,7 @@ export function ScriptDetail() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 animate-slide-up">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/scripts')} className="px-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/scripts')} className="px-2" aria-label={t('common.back')}>
             <IconArrowLeft className="w-5 h-5" />
           </Button>
           <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400 flex items-center justify-center">
@@ -169,13 +171,36 @@ export function ScriptDetail() {
 
       <Modal isOpen={showRunModal} onClose={() => setShowRunModal(false)} title={`${t('scripts.run')}: ${script.name}`}>
         <div className="space-y-4">
-          <Select
-            label={t('scripts.targetNode', 'Target Node (optional)')}
-            value={runNodeId}
-            onChange={setRunNodeId}
-            placeholder={t('scripts.allNodes', 'All nodes')}
-            options={nodes.map((n) => ({ value: n.id, label: n.name }))}
-          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNodes', 'Target Nodes')}</p>
+              <button
+                type="button"
+                onClick={() => setRunNodeIds(runNodeIds.length === nodes.length ? [] : nodes.map((n) => n.id))}
+                className="text-xs text-accent-600 dark:text-accent-400 hover:underline cursor-pointer"
+              >
+                {runNodeIds.length === nodes.length ? t('common.deselectAll', 'Deselect all') : t('common.selectAll', 'Select all')}
+              </button>
+            </div>
+            <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
+              {nodes.map((node) => (
+                <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={runNodeIds.includes(node.id)}
+                    onChange={() => {
+                      setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
+                    }}
+                    className="rounded border-surface-300 dark:border-surface-600"
+                  />
+                  <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
+                </label>
+              ))}
+            </div>
+            {runNodeIds.length > 0 && (
+              <p className="text-xs text-surface-500">{t('scripts.selectedNodes', { count: runNodeIds.length })}</p>
+            )}
+          </div>
           <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowRunModal(false)}>{t('common.cancel')}</Button>
@@ -300,7 +325,24 @@ function ExecutionsTab({ scriptId }: { scriptId: string }) {
   const { data, isLoading } = useScriptExecutions(scriptId, { size: 20 })
   const cancelExec = useCancelScriptExecution()
   const retryExec = useRetryScriptExecution()
+  const bulkCancel = useBulkCancelScriptExecutions()
+  const bulkRetry = useBulkRetryScriptExecutions()
   const items = data?.items || []
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [expandedExecId, setExpandedExecId] = useState<string | null>(null)
+
+  const allSelected = items.length > 0 && items.every((exec) => selectedIds.has(exec.id))
+  const toggleAll = () => {
+    if (allSelected) setSelectedIds(new Set())
+    else setSelectedIds(new Set(items.map((exec) => exec.id)))
+  }
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
+  }
+
+  const runningIds = Array.from(selectedIds).filter((id) => items.find((e) => e.id === id)?.status === 'running')
+  const failedIds = Array.from(selectedIds).filter((id) => items.find((e) => e.id === id)?.status === 'failed')
+
   return (
     <Card>
       <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('scripts.executions')}</h2></CardHeader>
@@ -309,19 +351,61 @@ function ExecutionsTab({ scriptId }: { scriptId: string }) {
           <EmptyState title={t('scripts.emptyExecutions')} />
         ) : (
           <div className="divide-y divide-surface-200 dark:divide-surface-800">
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2 px-6 py-2 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
+                <span className="text-sm text-accent-700 dark:text-accent-300">{t('scripts.selected', { count: selectedIds.size })}</span>
+                {runningIds.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => bulkCancel.mutate(runningIds, { onSuccess: () => { toast('success', t('scripts.toastBulkCancelled', 'Executions cancelled')); setSelectedIds(new Set()) }, onError: () => toast('error', t('scripts.toastBulkCancelFailed', 'Failed to cancel executions')) })} disabled={bulkCancel.isPending}>{bulkCancel.isPending ? t('common.loading') : t('scripts.bulkCancel', 'Cancel Running')}</Button>
+                )}
+                {failedIds.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => bulkRetry.mutate(failedIds, { onSuccess: () => { toast('success', t('scripts.toastBulkRetried', 'Executions retried')); setSelectedIds(new Set()) }, onError: () => toast('error', t('scripts.toastBulkRetryFailed', 'Failed to retry executions')) })} disabled={bulkRetry.isPending}>{bulkRetry.isPending ? t('common.loading') : t('scripts.bulkRetry', 'Retry Failed')}</Button>
+                )}
+                <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200">{t('scripts.clearSelection', 'Clear')}</button>
+              </div>
+            )}
+            <div className="flex items-center gap-3 px-6 py-2 border-b border-surface-200 dark:border-surface-800">
+              <input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="rounded border-surface-300 dark:border-surface-600" />
+              <span className="text-xs text-surface-500">{t('scripts.selectAll')}</span>
+            </div>
             {items.map((exec) => (
-              <div key={exec.id} className="flex items-center justify-between px-6 py-3">
-                <div className="flex items-center gap-3">
-                  <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
-                  <div>
-                    <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id || 'all'}</p>
-                    <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
+              <div key={exec.id}>
+                <div
+                  className={`flex items-center justify-between px-6 py-3 transition-colors ${exec.steps?.length ? 'cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50' : ''} ${expandedExecId === exec.id ? 'bg-surface-50 dark:bg-surface-800/50' : ''}`}
+                  onClick={() => { if (exec.steps?.length) setExpandedExecId(expandedExecId === exec.id ? null : exec.id) }}
+                >
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', 'Select execution {{id}}', { id: exec.id })} className="rounded border-surface-300 dark:border-surface-600" />
+                    <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
+                    <div>
+                      <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id || 'all'}</p>
+                      <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    {exec.status === 'running' && <Button variant="ghost" size="sm" onClick={() => cancelExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastCancelled')), onError: () => toast('error', t('scripts.toastCancelFailed')) })}>{t('scripts.cancel')}</Button>}
+                    {exec.status === 'failed' && <Button variant="ghost" size="sm" onClick={() => retryExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastRetried')), onError: () => toast('error', t('scripts.toastRetryFailed')) })}>{t('common.retry')}</Button>}
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  {exec.status === 'running' && <Button variant="ghost" size="sm" onClick={() => cancelExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastCancelled')), onError: () => toast('error', t('scripts.toastCancelFailed')) })}>{t('scripts.cancel')}</Button>}
-                  {exec.status === 'failed' && <Button variant="ghost" size="sm" onClick={() => retryExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastRetried')), onError: () => toast('error', t('scripts.toastRetryFailed')) })}>{t('common.retry')}</Button>}
-                </div>
+                {expandedExecId === exec.id && exec.steps && (
+                  <div className="px-6 pb-4 space-y-4 border-t border-surface-200 dark:border-surface-800">
+                    {exec.steps.map((step, idx) => (
+                      <div key={idx} className="mt-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                            {t('scripts.step', 'Step')} {idx + 1}: {step.label}
+                          </span>
+                          <Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>
+                            exit {step.exit_code}
+                          </Badge>
+                          {step.truncated && (
+                            <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>
+                          )}
+                        </div>
+                        <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

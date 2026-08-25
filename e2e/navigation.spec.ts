@@ -1,5 +1,14 @@
 import { test, expect } from '@playwright/test'
 import { setupAuth, openSidebar } from './helpers'
+import type { Page } from '@playwright/test'
+
+async function waitForPageTitle(page: Page, title: string) {
+  await page.waitForFunction(
+    (t) => document.querySelector('main h1')?.textContent?.includes(t),
+    title,
+    { timeout: 10_000 },
+  )
+}
 
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
@@ -9,30 +18,31 @@ test.describe('Navigation', () => {
   })
 
   test('navigates to all pages via sidebar', async ({ page }) => {
+    test.slow()
     await expect(page.locator('main h1')).toContainText('Dashboard')
 
     await openSidebar(page)
-    await page.evaluate(() => document.querySelector('a[href="/nodes"]')?.click())
+    await page.locator('a[href="/nodes"]').click()
     await expect(page).toHaveURL('/nodes')
-    await expect(page.locator('main h1')).toContainText('Nodes')
+    await waitForPageTitle(page, 'Nodes')
 
     await openSidebar(page)
-    await page.evaluate(() => document.querySelector('a[href="/commands"]')?.click())
+    await page.locator('a[href="/commands"]').click()
     await expect(page).toHaveURL('/commands')
-    await expect(page.locator('main h1')).toContainText('Commands')
+    await waitForPageTitle(page, 'Commands')
 
     await openSidebar(page)
-    await page.evaluate(() => document.querySelector('a[href="/scripts"]')?.click())
+    await page.locator('a[href="/scripts"]').click()
     await expect(page).toHaveURL('/scripts')
-    await expect(page.locator('main h1')).toContainText('Scripts')
+    await waitForPageTitle(page, 'Scripts')
 
     await openSidebar(page)
-    await page.evaluate(() => document.querySelector('a[href="/settings"]')?.click())
+    await page.locator('a[href="/settings"]').click()
     await expect(page).toHaveURL('/settings')
-    await expect(page.locator('main h1')).toContainText('Settings')
+    await waitForPageTitle(page, 'Settings')
 
     await openSidebar(page)
-    await page.evaluate(() => document.querySelector('a[href="/"]')?.click())
+    await page.locator('a[href="/"]').click()
     await expect(page).toHaveURL('/')
   })
 

@@ -1,13 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { setupAuth, openSidebar } from './helpers'
+import { setupAuth } from './helpers'
 
 test.describe('Scripts', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page)
-    await page.goto('/')
-    await page.waitForSelector('main h1')
-    await openSidebar(page)
-    await page.evaluate(() => document.querySelector('a[href="/scripts"]')?.click())
+    await page.goto('/scripts')
     await page.waitForSelector('main h1:has-text("Scripts")')
   })
 

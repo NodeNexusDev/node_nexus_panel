@@ -12,7 +12,7 @@ import { useScript } from '../hooks/useScripts'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
 import { Tooltip } from '../components/ui/Tooltip'
-import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings, IconGlobe, IconLogout, IconTag, IconStar, IconRefresh } from '../components/ui/Icons'
+import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings, IconGlobe, IconLogout, IconStar, IconRefresh } from '../components/ui/Icons'
 import { queryClient } from '../lib/query-client'
 import { APP_VERSION } from '../lib/version'
 
@@ -22,7 +22,6 @@ const navItems = [
   { to: '/commands', key: 'nav.commands', Icon: IconCommands },
   { to: '/scripts', key: 'nav.scripts', Icon: IconScripts },
   { to: '/docker', key: 'nav.docker', Icon: IconDocker },
-  { to: '/tags', key: 'nav.tags', Icon: IconTag },
   { to: '/favorites', key: 'nav.favorites', Icon: IconStar },
   { to: '/audit', key: 'nav.audit', Icon: IconAudit },
   { to: '/settings', key: 'nav.settings', Icon: IconSettings },
@@ -53,7 +52,6 @@ export function MainLayout() {
     '/docker': 'docker.title',
     '/audit': 'audit.title',
     '/settings': 'settings.title',
-    '/tags': 'tags.title',
     '/favorites': 'favorites.title',
   }
 
@@ -182,7 +180,7 @@ export function MainLayout() {
           <Tooltip content={sidebarOpen ? t('common.closeMenu', 'Close menu') : t('common.openMenu', 'Open menu')}>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+              aria-label={sidebarOpen ? t('common.closeMenu') : t('common.openMenu')}
               className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -195,7 +193,7 @@ export function MainLayout() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
-              aria-label={i18n.language === 'en' ? 'Switch to Russian' : 'Switch to English'}
+              aria-label={t('common.switchLanguage')}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
             >
               <IconGlobe className="w-4 h-4" />
@@ -229,6 +227,7 @@ export function MainLayout() {
             <Tooltip content={t('common.search', 'Search')}>
               <button
                 onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+                aria-label={t('common.search')}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -245,6 +244,7 @@ export function MainLayout() {
             <Tooltip content={t('common.logout')}>
               <button
                 onClick={handleLogout}
+                aria-label={t('common.logout')}
                 className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
               >
                 <IconLogout className="w-4 h-4" />

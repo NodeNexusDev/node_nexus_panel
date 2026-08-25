@@ -55,26 +55,31 @@ export const nodeHandlers = [
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
+    mockNodes.push(newNode)
     return HttpResponse.json(newNode, { status: 201 })
   }),
 
-  http.put(`${API_URL}/api/v1/nodes/:id`, async ({ params, request }) => {
-    const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
+  http.patch(`${API_URL}/api/v1/nodes/:id`, async ({ params, request }) => {
+    const idx = mockNodes.findIndex((n) => n.id === params.id)
+    if (idx === -1) return new HttpResponse(null, { status: 404 })
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json({ ...node, ...body, updated_at: new Date().toISOString() })
+    Object.assign(mockNodes[idx], body, { updated_at: new Date().toISOString() })
+    return HttpResponse.json(mockNodes[idx])
   }),
 
   http.delete(`${API_URL}/api/v1/nodes/:id`, ({ params }) => {
-    const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
+    const idx = mockNodes.findIndex((n) => n.id === params.id)
+    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    mockNodes.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API_URL}/api/v1/nodes/:id/check`, ({ params }) => {
     const node = mockNodes.find((n) => n.id === params.id)
     if (!node) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json({ ...node, status: 'active', updated_at: new Date().toISOString() })
+    node.status = 'active'
+    node.updated_at = new Date().toISOString()
+    return HttpResponse.json(node)
   }),
 
   http.get(`${API_URL}/api/v1/nodes/:id/metrics`, ({ params }) => {
@@ -84,59 +89,30 @@ export const nodeHandlers = [
       cpu: { usage_percent: 45.2, cores: 4 },
       memory: { total_bytes: 8589934592, used_bytes: 5368709120, percent: 62.5 },
       disk: { total_bytes: 53687091200, used_bytes: 34896609280, percent: 65.0 },
+      load_average: { one_min: 1.23, five_min: 0.98, fifteen_min: 0.85 },
       uptime_since: '2026-01-10T08:00:00Z',
-    })
-  }),
-
-  http.get(`${API_URL}/api/v1/nodes/:id/commands/history`, ({ params }) => {
-    const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json({ items: [], total: 0, page: 1, size: 20 })
-  }),
-
-  http.post(`${API_URL}/api/v1/nodes/:id/execute`, async ({ params }) => {
-    const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json({
-      stdout: 'Command executed successfully',
-      stderr: '',
-      exit_code: 0,
     })
   }),
 
   http.post(`${API_URL}/api/v1/nodes/bulk/delete`, async ({ request }) => {
     const body = await request.json() as { node_ids: string[] }
+    for (const id of body.node_ids) {
+      const idx = mockNodes.findIndex((n) => n.id === id)
+      if (idx !== -1) mockNodes.splice(idx, 1)
+    }
     return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
   }),
 
   http.post(`${API_URL}/api/v1/nodes/bulk/check`, async ({ request }) => {
     const body = await request.json() as { node_ids: string[] }
+    for (const id of body.node_ids) {
+      const node = mockNodes.find((n) => n.id === id)
+      if (node) {
+        node.status = 'active'
+        node.updated_at = new Date().toISOString()
+      }
+    }
     return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
-  }),
-
-  http.post(`${API_URL}/api/v1/nodes/bulk/execute`, () => {
-    return HttpResponse.json({
-      command: 'echo test',
-      results: [],
-      total: 0,
-      succeeded: 0,
-      failed: 0,
-    })
-  }),
-
-  http.get(`${API_URL}/api/v1/nodes/:id/stats`, ({ params }) => {
-    const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
-    return HttpResponse.json({
-      total: 42,
-      successful: 38,
-      failed: 4,
-      success_rate: 90.48,
-      avg_duration_ms: 1250,
-      min_duration_ms: 200,
-      max_duration_ms: 5400,
-      last_executed_at: '2025-08-18T10:00:00Z',
-    })
   }),
 
   http.get(`${API_URL}/api/v1/nodes/:id/status-history`, ({ params, request }) => {
@@ -153,14 +129,6 @@ export const nodeHandlers = [
     return HttpResponse.json({ items: items.slice((page - 1) * size, page * size), total: items.length, page, size })
   }),
 
-  http.post(`${API_URL}/api/v1/nodes/:nodeId/commands/:executionId/retry`, () => {
-    return HttpResponse.json({
-      execution_id: 'retried-123',
-      status: 'pending',
-      message: 'Execution retried successfully',
-    })
-  }),
-
   http.post(`${API_URL}/api/v1/nodes/validate-credentials`, async ({ request }) => {
     const body = await request.json() as { host: string; connection_type: string }
     if (body.host === 'invalid-host') {
@@ -169,42 +137,55 @@ export const nodeHandlers = [
     return HttpResponse.json({ status: 'active', message: 'Credentials validated successfully' })
   }),
 
-  http.get(`${API_URL}/api/v1/nodes/bulk/history`, ({ request }) => {
-    const url = new URL(request.url)
-    const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
-    return HttpResponse.json({ items: [], total: 0, page, size })
-  }),
-
-  http.post(`${API_URL}/api/v1/nodes/bulk/tags/add`, async ({ request }) => {
-    const body = await request.json() as { node_ids: string[]; tags: string[] }
-    return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
-  }),
-
-  http.post(`${API_URL}/api/v1/nodes/bulk/tags/remove`, async ({ request }) => {
-    const body = await request.json() as { node_ids: string[]; tags: string[] }
-    return HttpResponse.json({ affected: body.node_ids.length, node_ids: body.node_ids })
-  }),
-
-  http.post(`${API_URL}/api/v1/nodes/:id/tags`, async ({ params, request }) => {
-    const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
-    const body = await request.json() as { tag: string }
-    if (!body.tag || body.tag.trim().length === 0) {
-      return new HttpResponse(null, { status: 422 })
+  http.patch(`${API_URL}/api/v1/nodes/bulk/update`, async ({ request }) => {
+    const body = await request.json() as { node_ids: string[]; changes: Record<string, unknown> }
+    for (const id of body.node_ids) {
+      const node = mockNodes.find((n) => n.id === id)
+      if (node) {
+        Object.assign(node, body.changes, { updated_at: new Date().toISOString() })
+      }
     }
-    node.tags = [...new Set([...node.tags, body.tag.trim()])]
-    return HttpResponse.json(node)
+    return HttpResponse.json({
+      results: body.node_ids.map((id) => ({ node_id: id, status: 'success' })),
+      total: body.node_ids.length,
+      succeeded: body.node_ids.length,
+      failed: 0,
+    })
   }),
 
-  http.delete(`${API_URL}/api/v1/nodes/:id/tags`, async ({ params, request }) => {
-    const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
-    const body = await request.json() as { tag: string }
-    if (!body.tag || body.tag.trim().length === 0) {
-      return new HttpResponse(null, { status: 422 })
-    }
-    node.tags = node.tags.filter((t) => t !== body.tag.trim())
-    return HttpResponse.json(node)
+  http.post(`${API_URL}/api/v1/nodes/bulk/metrics`, async ({ request }) => {
+    const body = await request.json() as { node_ids: string[] }
+    return HttpResponse.json({
+      results: body.node_ids.map((id) => ({
+        node_id: id,
+        node_name: `Node ${id}`,
+        status: 'success',
+        metrics: {
+          cpu: { usage_percent: 45.2, cores: 4 },
+          memory: { total_bytes: 8589934592, used_bytes: 5368709120, percent: 62.5 },
+          disk: { total_bytes: 53687091200, used_bytes: 34896609280, percent: 65.0 },
+          load_average: { one_min: 1.23, five_min: 0.98, fifteen_min: 0.85 },
+          uptime_since: '2026-01-10T08:00:00Z',
+        },
+      })),
+      total: body.node_ids.length,
+      succeeded: body.node_ids.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API_URL}/api/v1/nodes/bulk/validate-credentials`, async ({ request }) => {
+    const body = await request.json() as { node_ids: string[]; tags?: string[] }
+    return HttpResponse.json({
+      results: body.node_ids.map((id) => ({
+        node_id: id,
+        node_name: `Node ${id}`,
+        status: 'active',
+        message: 'Credentials validated successfully',
+      })),
+      total: body.node_ids.length,
+      succeeded: body.node_ids.length,
+      failed: 0,
+    })
   }),
 ]

@@ -22,6 +22,7 @@ import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMe
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
+import { BulkCommandModal } from '../components/commands/BulkCommandModal'
 import {
   IconNodes,
   IconCommands,
@@ -31,7 +32,6 @@ import {
   IconChart,
   IconClock,
   IconActivity,
-  IconTag,
 } from '../components/ui/Icons'
 import {
   useNodes,
@@ -42,15 +42,15 @@ import {
   useBulkCheck,
   useNodeTags,
   useBulkDeleteNodes,
-  useBulkExecuteNodes,
-  useBulkTagsAdd,
-  useBulkTagsRemove,
+  useBulkMetrics,
+  useBulkValidateCredentials,
+  useBulkUpdateNodes,
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { useSort } from '../hooks/useSort'
 import { TagBadge } from '../components/ui/TagBadge'
 import { nodeStatusVariant } from '../lib/variants'
-import type { Node, NodeStatus } from '../api/types'
+import type { Node, NodeStatus, BulkNodeMetricsResponse, NodeUpdate } from '../api/types'
 import type { NodeCreateFormValues } from '../lib/validators/node-schema'
 import { nodeCreateSchema } from '../lib/validators/node-schema'
 import type { Column } from '../components/ui/table-types'
@@ -91,7 +91,9 @@ export function Nodes() {
   const checkNode = useCheckNode()
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
-  const bulkExecuteNodes = useBulkExecuteNodes()
+  const bulkMetrics = useBulkMetrics()
+  const bulkValidateCreds = useBulkValidateCredentials()
+  const bulkUpdateNodes = useBulkUpdateNodes()
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Node | null>(null)
@@ -126,13 +128,12 @@ export function Nodes() {
   const [validateResult, setValidateResult] = useState<{ status: string; message: string } | null>(null)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
-  const [bulkExecCmd, setBulkExecCmd] = useState('')
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [bulkTag, setBulkTag] = useState('')
-  const [showBulkTag, setShowBulkTag] = useState(false)
-  const [showBulkTagRemove, setShowBulkTagRemove] = useState(false)
-  const [bulkRemoveTag, setBulkRemoveTag] = useState('')
+  const [showBulkMetrics, setShowBulkMetrics] = useState(false)
+  const [bulkMetricsResult, setBulkMetricsResult] = useState<BulkNodeMetricsResponse | null>(null)
+  const [showBulkUpdate, setShowBulkUpdate] = useState(false)
+  const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', username: '', docker_host: '', tags: '' })
 
   const nodes = data?.items || []
   const allSelected = nodes.length > 0 && nodes.every((n) => selectedIds.includes(n.id))
@@ -195,7 +196,6 @@ export function Nodes() {
     { key: 'stats', label: t('nodes.stats', 'Stats'), icon: <IconChart className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=stats`) },
     { key: 'status-history', label: t('nodes.statusHistory', 'Status History'), icon: <IconClock className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=status-history`) },
     { key: 'command-history', label: t('nodes.cmdHistory', 'Command History'), icon: <IconCommands className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=command-history`) },
-    { key: 'tags', label: t('nodes.manageTags', 'Manage Tags'), icon: <IconTag className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=tags`) },
     { key: 'sep-2', label: '', onClick: () => {}, separator: true },
     { key: 'delete', label: t('common.delete'), icon: <IconXCircle className="w-4 h-4" />, danger: true, onClick: () => setDeleteTarget({ id: node.id, name: node.name }) },
   ]
@@ -208,7 +208,7 @@ export function Nodes() {
           type="checkbox"
           checked={allSelected}
           onChange={toggleAll}
-          aria-label="Select all"
+          aria-label={t('common.selectAll')}
           className="w-4 h-4 rounded border-surface-300 dark:border-surface-600"
         />
       ),
@@ -219,6 +219,7 @@ export function Nodes() {
           checked={selectedIds.includes(node.id)}
           onChange={() => toggleSelect(node.id)}
           onClick={(e) => e.stopPropagation()}
+          aria-label={t('common.selectItem', 'Select {{name}}', { name: node.name })}
           className="w-4 h-4 rounded border-surface-300 dark:border-surface-600"
         />
       ),
@@ -277,21 +278,21 @@ export function Nodes() {
         <div className="flex items-center gap-1">
           <FavoriteButton targetType="node" targetId={node.id} size="sm" />
           <Tooltip content={t('nodes.checkNode')}>
-            <Button variant="ghost" size="sm" className="px-2" onClick={(e) => { e.stopPropagation(); checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) }) }}>
+            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.checkNode')} onClick={(e) => { e.stopPropagation(); checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) }) }}>
               <IconCheckCircle className="w-4 h-4" />
             </Button>
           </Tooltip>
           <Tooltip content={t('nodes.execCommand')}>
-            <Button variant="ghost" size="sm" className="px-2" onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
+            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.execCommand')} onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
               <IconCommands className="w-4 h-4" />
             </Button>
           </Tooltip>
           <Tooltip content={t('nodes.runScript')}>
-            <Button variant="ghost" size="sm" className="px-2" onClick={(e) => { e.stopPropagation(); setScriptTarget(node) }}>
+            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.runScript')} onClick={(e) => { e.stopPropagation(); setScriptTarget(node) }}>
               <IconScripts className="w-4 h-4" />
             </Button>
           </Tooltip>
-          <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
+          <DropdownMenu items={nodeMenu(node)} ariaLabel={t('common.actionsFor', { name: node.name })} />
         </div>
       ),
     },
@@ -442,8 +443,6 @@ export function Nodes() {
           {selectedIds.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
               <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('nodes.selected', { count: selectedIds.length })}</span>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulkTag(true)}>{t('nodes.bulkTags')}</Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulkTagRemove(true)}>{t('nodes.bulkRemoveTags', 'Bulk Remove Tag')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkExec(true)}>{t('nodes.bulkExec', 'Bulk Exec')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
                 bulkCheck.mutate(selectedIds, {
@@ -451,6 +450,24 @@ export function Nodes() {
                   onError: () => toast('error', t('nodes.toastBulkCheckFailed')),
                 })
               }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowBulkMetrics(true)
+                setBulkMetricsResult(null)
+                bulkMetrics.mutate(selectedIds, {
+                  onSuccess: (data) => setBulkMetricsResult(data),
+                  onError: () => toast('error', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics')),
+                })
+              }} disabled={bulkMetrics.isPending}>{bulkMetrics.isPending ? t('common.loading') : t('nodes.bulkMetrics', 'Bulk Metrics')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowBulkUpdate(true)
+                setBulkUpdateChanges({ name: '', host: '', port: '', username: '', docker_host: '', tags: '' })
+              }}>{t('nodes.bulkUpdate', 'Bulk Update')}</Button>
+              <Button variant="ghost" size="sm" disabled={bulkValidateCreds.isPending} onClick={() => {
+                bulkValidateCreds.mutate({ node_ids: selectedIds }, {
+                  onSuccess: (data) => { toast('success', t('nodes.toastBulkValidateDone', { succeeded: data.succeeded, failed: data.failed })); setSelectedIds([]) },
+                  onError: () => toast('error', t('nodes.toastBulkValidateFailed', 'Failed to validate credentials')),
+                })
+              }}>{bulkValidateCreds.isPending ? t('common.loading') : t('nodes.bulkValidate', 'Bulk Validate')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('nodes.bulkDelete', 'Bulk Delete')}</Button>
               <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('nodes.clearSelection', 'Clear')}</button>
             </div>
@@ -602,22 +619,72 @@ export function Nodes() {
         </div>
       </Modal>
 
-      <BulkTagsModal isOpen={showBulkTag} onClose={() => { setShowBulkTag(false); setBulkTag('') }} bulkTag={bulkTag} setBulkTag={setBulkTag} selectedIds={selectedIds} onDone={() => { setShowBulkTag(false); setBulkTag(''); setSelectedIds([]) }} />
+      <BulkCommandModal nodeIds={showBulkExec ? selectedIds : []} onClose={() => setShowBulkExec(false)} />
 
-      <BulkTagsRemoveModal isOpen={showBulkTagRemove} onClose={() => { setShowBulkTagRemove(false); setBulkRemoveTag('') }} bulkTag={bulkRemoveTag} setBulkTag={setBulkRemoveTag} selectedIds={selectedIds} onDone={() => { setShowBulkTagRemove(false); setBulkRemoveTag(''); setSelectedIds([]) }} />
+      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: () => { toast('success', t('nodes.toastBulkDeleteDone')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
 
-      <Modal isOpen={showBulkExec} onClose={() => { setShowBulkExec(false); setBulkExecCmd('') }} title={t('nodes.bulkExec', 'Bulk Execute')}>
+      <Modal isOpen={showBulkMetrics} onClose={() => { setShowBulkMetrics(false); setBulkMetricsResult(null) }} title={t('nodes.bulkMetrics', 'Bulk Metrics')} size="lg">
         <div className="space-y-4">
-          <p className="text-sm text-surface-500">{t('nodes.bulkExecMsg', { count: selectedIds.length })}</p>
-          <Input label={t('nodes.command')} placeholder="uptime" value={bulkExecCmd} onChange={(e) => setBulkExecCmd(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => { setShowBulkExec(false); setBulkExecCmd('') }}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (bulkExecCmd) { bulkExecuteNodes.mutate({ command: bulkExecCmd, node_ids: selectedIds }, { onSuccess: () => { toast('success', t('nodes.toastBulkExecDone')); setShowBulkExec(false); setBulkExecCmd(''); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastExecFailed')) }) } }} disabled={!bulkExecCmd || bulkExecuteNodes.isPending}>{t('nodes.execCommand')}</Button>
-          </div>
+          {bulkMetricsResult ? (
+            <div className="space-y-3">
+              <div className="flex gap-4 text-sm">
+                <span className="text-green-600 dark:text-green-400">{t('nodes.succeeded', 'Succeeded')}: {bulkMetricsResult.succeeded}</span>
+                <span className="text-red-600 dark:text-red-400">{t('nodes.failed', 'Failed')}: {bulkMetricsResult.failed}</span>
+              </div>
+              <div className="max-h-96 overflow-y-auto space-y-2">
+                {bulkMetricsResult.results.map((r) => (
+                  <div key={r.node_id} className={`p-3 rounded-lg ${r.status === 'ok' ? 'bg-green-50 dark:bg-green-500/10' : 'bg-red-50 dark:bg-red-500/10'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-surface-900 dark:text-white">{r.node_name}</span>
+                      <Badge variant={r.status === 'ok' ? 'success' : 'danger'}>{r.status}</Badge>
+                    </div>
+                    {r.metrics && (
+                      <div className="mt-2 text-xs text-surface-600 dark:text-surface-400 grid grid-cols-2 gap-1">
+                        <span>CPU: {r.metrics.cpu.usage_percent}%</span>
+                        <span>RAM: {r.metrics.memory.percent}%</span>
+                        <span>Disk: {r.metrics.disk.percent}%</span>
+                        <span>Uptime since: {r.metrics.uptime_since}</span>
+                      </div>
+                    )}
+                    {r.error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{r.error}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-surface-500"><span className="animate-spin w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full" /> {t('common.loading')}</div>
+          )}
+          <div className="flex justify-end"><Button variant="ghost" onClick={() => { setShowBulkMetrics(false); setBulkMetricsResult(null) }}>{t('common.close')}</Button></div>
         </div>
       </Modal>
 
-      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: () => { toast('success', t('nodes.toastBulkDeleteDone')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
+      <Modal isOpen={showBulkUpdate} onClose={() => setShowBulkUpdate(false)} title={t('nodes.bulkUpdate', 'Bulk Update')} size="lg">
+        <div className="space-y-4">
+          <p className="text-sm text-surface-500">{t('nodes.bulkUpdateMsg', { count: selectedIds.length })}</p>
+          <Input label={t('nodes.node')} placeholder="Leave empty to skip" value={bulkUpdateChanges.name} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, name: e.target.value })} />
+          <Input label={t('nodes.host')} placeholder="Leave empty to skip" value={bulkUpdateChanges.host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, host: e.target.value })} />
+          <Input label={t('nodes.port')} placeholder="Leave empty to skip" value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
+          <Input label={t('nodes.username', 'Username')} placeholder="Leave empty to skip" value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
+          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="Leave empty to skip" value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
+          <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="comma, separated" value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowBulkUpdate(false)}>{t('common.cancel')}</Button>
+            <Button onClick={() => {
+              const changes: NodeUpdate = {}
+              if (bulkUpdateChanges.name) changes.name = bulkUpdateChanges.name
+              if (bulkUpdateChanges.host) changes.host = bulkUpdateChanges.host
+              if (bulkUpdateChanges.port) changes.port = parseInt(bulkUpdateChanges.port, 10)
+              if (bulkUpdateChanges.username) changes.username = bulkUpdateChanges.username
+              if (bulkUpdateChanges.docker_host) changes.docker_host = bulkUpdateChanges.docker_host
+              if (bulkUpdateChanges.tags) changes.tags = bulkUpdateChanges.tags.split(',').map((s) => s.trim()).filter(Boolean)
+              bulkUpdateNodes.mutate({ node_ids: selectedIds, changes }, {
+                onSuccess: (data) => { toast('success', t('nodes.toastBulkUpdateDone', { succeeded: data.succeeded, failed: data.failed })); setShowBulkUpdate(false); setSelectedIds([]) },
+                onError: () => toast('error', t('nodes.toastBulkUpdateFailed', 'Failed to update nodes')),
+              })
+            }} disabled={bulkUpdateNodes.isPending}>{bulkUpdateNodes.isPending ? t('common.loading') : t('common.save')}</Button>
+          </div>
+        </div>
+      </Modal>
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('nodes.deleteTitle')} message={t('nodes.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteNode.isPending} />
 
@@ -625,44 +692,5 @@ export function Nodes() {
 
       <NodeScriptModal node={scriptTarget} onClose={() => setScriptTarget(null)} />
     </div>
-  )
-}
-
-function BulkTagsModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds, onDone }: { isOpen: boolean; onClose: () => void; bulkTag: string; setBulkTag: (v: string) => void; selectedIds: string[]; onDone: () => void }) {
-  const { t } = useTranslation()
-  const { toast } = useToast()
-  const bulkTagsAdd = useBulkTagsAdd()
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('nodes.bulkTags')}>
-      <div className="space-y-4">
-        <Input label={t('nodes.tag')} placeholder="new-tag" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} />
-        <div className="flex justify-end gap-3 pt-2">
-          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsAdd.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsAdded')); onDone() }, onError: () => toast('error', t('nodes.toastBulkTagsFailed')) }) } }} disabled={!bulkTag || !selectedIds.length || bulkTagsAdd.isPending}>{t('nodes.addTag')}</Button>
-        </div>
-      </div>
-    </Modal>
-  )
-}
-
-function BulkTagsRemoveModal({ isOpen, onClose, bulkTag, setBulkTag, selectedIds, onDone }: { isOpen: boolean; onClose: () => void; bulkTag: string; setBulkTag: (v: string) => void; selectedIds: string[]; onDone: () => void }) {
-  const { t } = useTranslation()
-  const { toast } = useToast()
-  const bulkTagsRemove = useBulkTagsRemove()
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('nodes.bulkRemoveTags', 'Bulk Remove Tag')}>
-      <div className="space-y-4">
-        <Input label={t('nodes.tag')} placeholder="tag-to-remove" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)} />
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            variant="danger"
-            onClick={() => { if (bulkTag && selectedIds.length) { bulkTagsRemove.mutate({ node_ids: selectedIds, tags: [bulkTag] }, { onSuccess: () => { toast('success', t('nodes.toastTagsRemoved', 'Tags removed')); onDone() }, onError: () => toast('error', t('nodes.toastBulkTagsRemoveFailed')) }) } }}
-            disabled={!bulkTag || !selectedIds.length || bulkTagsRemove.isPending}
-          >
-            {t('nodes.removeTag', 'Remove Tag')}
-          </Button>
-        </div>
-      </div>
-    </Modal>
   )
 }
