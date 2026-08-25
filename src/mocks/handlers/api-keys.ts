@@ -18,14 +18,20 @@ export const apiKeyHandlers = [
     const newKey = {
       id: String(mockApiKeys.length + 1),
       name: body.name,
+      key: 'sk-ne-' + Math.random().toString(36).slice(2),
       key_prefix: 'sk-ne',
+      created_at: new Date().toISOString(),
+    }
+    mockApiKeys.push({
+      id: newKey.id,
+      name: newKey.name,
+      key_prefix: newKey.key_prefix,
       is_active: true,
       scope: (body.scope || 'read-write') as 'read-only' | 'read-write',
-      created_at: new Date().toISOString(),
+      created_at: newKey.created_at,
       last_used_at: null,
       expires_at: null,
-    }
-    mockApiKeys.push(newKey)
+    })
     return HttpResponse.json(newKey, { status: 201 })
   }),
 

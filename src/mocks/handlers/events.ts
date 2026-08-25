@@ -8,6 +8,9 @@ function encodeSse(event: string, data: unknown) {
 
 export const eventsHandlers = [
   http.get(`${API_URL}/api/v1/events/stream`, () => {
+    let heartbeatInterval: ReturnType<typeof setInterval> | null = null
+    let realEventInterval: ReturnType<typeof setInterval> | null = null
+
     const stream = new ReadableStream({
       start(controller) {
         const sendEvent = (type: string, payload: unknown) => {
@@ -19,14 +22,12 @@ export const eventsHandlers = [
           controller.enqueue(new TextEncoder().encode(encodeSse(type, event)))
         }
 
-        // Send initial heartbeat to establish connection
         sendEvent('heartbeat', { message: 'connected' })
 
-        const _interval = setInterval(() => {
+        heartbeatInterval = setInterval(() => {
           sendEvent('heartbeat', { message: 'keep-alive' })
         }, 15000)
 
-        // Occasionally emit real event types so dashboard refetch logic is exercised
         const realEvents = [
           'node:status',
           'node:metrics',
@@ -36,16 +37,14 @@ export const eventsHandlers = [
           'docker:container:stopped',
           'system:alert',
         ]
-        const _realEventInterval = setInterval(() => {
+        realEventInterval = setInterval(() => {
           const type = realEvents[Math.floor(Math.random() * realEvents.length)]
           sendEvent(type, {})
         }, 30000)
-
-        // Keep references alive until the stream is closed
-        void _interval
-        void _realEventInterval
-
-
+      },
+      cancel() {
+        if (heartbeatInterval) clearInterval(heartbeatInterval)
+        if (realEventInterval) clearInterval(realEventInterval)
       },
     })
 

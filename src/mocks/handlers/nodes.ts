@@ -89,6 +89,7 @@ export const nodeHandlers = [
       cpu: { usage_percent: 45.2, cores: 4 },
       memory: { total_bytes: 8589934592, used_bytes: 5368709120, percent: 62.5 },
       disk: { total_bytes: 53687091200, used_bytes: 34896609280, percent: 65.0 },
+      load_average: { one_min: 1.23, five_min: 0.98, fifteen_min: 0.85 },
       uptime_since: '2026-01-10T08:00:00Z',
     })
   }),
@@ -163,6 +164,7 @@ export const nodeHandlers = [
           cpu: { usage_percent: 45.2, cores: 4 },
           memory: { total_bytes: 8589934592, used_bytes: 5368709120, percent: 62.5 },
           disk: { total_bytes: 53687091200, used_bytes: 34896609280, percent: 65.0 },
+          load_average: { one_min: 1.23, five_min: 0.98, fifteen_min: 0.85 },
           uptime_since: '2026-01-10T08:00:00Z',
         },
       })),

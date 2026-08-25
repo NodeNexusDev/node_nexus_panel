@@ -162,11 +162,49 @@ export const scriptHandlers = [
     return HttpResponse.json({ items: [], total: 0, page, size })
   }),
 
-  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/cancel`, () => {
-    return HttpResponse.json({ message: 'Execution cancelled' })
+  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/cancel`, ({ params }) => {
+    return HttpResponse.json({
+      id: params.executionId as string,
+      script_id: '1',
+      node_id: '1',
+      params: null,
+      status: 'cancelled',
+      steps: [],
+      started_at: new Date().toISOString(),
+      finished_at: new Date().toISOString(),
+    })
   }),
 
-  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/retry`, () => {
-    return HttpResponse.json({ message: 'Execution retried', execution_id: 'new-exec-123' })
+  http.post(`${API_URL}/api/v1/scripts/executions/:executionId/retry`, ({ params }) => {
+    return HttpResponse.json({
+      id: params.executionId as string,
+      script_id: '1',
+      node_id: '1',
+      params: null,
+      status: 'pending',
+      steps: [],
+      started_at: new Date().toISOString(),
+      finished_at: null,
+    })
+  }),
+
+  http.post(`${API_URL}/api/v1/scripts/bulk/cancel`, async ({ request }) => {
+    const body = await request.json() as { execution_ids: string[] }
+    return HttpResponse.json({
+      results: body.execution_ids.map((id) => ({ execution_id: id, status: 'cancelled', message: 'Cancelled' })),
+      total: body.execution_ids.length,
+      succeeded: body.execution_ids.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API_URL}/api/v1/scripts/bulk/retry`, async ({ request }) => {
+    const body = await request.json() as { execution_ids: string[] }
+    return HttpResponse.json({
+      results: body.execution_ids.map((id) => ({ execution_id: id, status: 'pending', message: 'Retried' })),
+      total: body.execution_ids.length,
+      succeeded: body.execution_ids.length,
+      failed: 0,
+    })
   }),
 ]

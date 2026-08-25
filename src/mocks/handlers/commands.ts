@@ -28,6 +28,33 @@ export const commandHandlers = [
     return HttpResponse.json(tags)
   }),
 
+  http.get(`${API_URL}/api/v1/commands/history`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') || '1')
+    const size = Number(url.searchParams.get('size') || '20')
+    return HttpResponse.json({ items: [], total: 0, page, size })
+  }),
+
+  http.get(`${API_URL}/api/v1/commands/stats`, () => {
+    return HttpResponse.json({
+      total: 42,
+      successful: 38,
+      failed: 4,
+      success_rate: 90.48,
+      avg_duration_ms: 1250,
+      min_duration_ms: 200,
+      max_duration_ms: 5400,
+      last_executed_at: '2025-08-18T10:00:00Z',
+    })
+  }),
+
+  http.get(`${API_URL}/api/v1/commands/bulk/history`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') || '1')
+    const size = Number(url.searchParams.get('size') || '20')
+    return HttpResponse.json({ items: [], total: 0, page, size })
+  }),
+
   http.get(`${API_URL}/api/v1/commands/:id`, ({ params }) => {
     const cmd = mockCommands.find((c) => c.id === params.id)
     if (!cmd) return new HttpResponse(null, { status: 404 })
@@ -113,39 +140,12 @@ export const commandHandlers = [
     })
   }),
 
-  http.get(`${API_URL}/api/v1/commands/history`, ({ request }) => {
-    const url = new URL(request.url)
-    const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
-    return HttpResponse.json({ items: [], total: 0, page, size })
-  }),
-
-  http.get(`${API_URL}/api/v1/commands/stats`, ({ request: _request }) => {
-    return HttpResponse.json({
-      total: 42,
-      successful: 38,
-      failed: 4,
-      success_rate: 90.48,
-      avg_duration_ms: 1250,
-      min_duration_ms: 200,
-      max_duration_ms: 5400,
-      last_executed_at: '2025-08-18T10:00:00Z',
-    })
-  }),
-
   http.post(`${API_URL}/api/v1/commands/executions/:executionId/retry`, () => {
     return HttpResponse.json({
       execution_id: 'retried-123',
       status: 'pending',
       message: 'Execution retried successfully',
     })
-  }),
-
-  http.get(`${API_URL}/api/v1/commands/bulk/history`, ({ request }) => {
-    const url = new URL(request.url)
-    const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
-    return HttpResponse.json({ items: [], total: 0, page, size })
   }),
 
   http.post(`${API_URL}/api/v1/commands/bulk/execute`, async ({ request }) => {
@@ -155,6 +155,24 @@ export const commandHandlers = [
       results: [],
       total: 0,
       succeeded: 0,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API_URL}/api/v1/commands/:id/bulk-execute`, async ({ request }) => {
+    const body = await request.json() as { command: string; node_ids?: string[]; tags?: string[] }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      command: body.command,
+      results: nodeIds.map((nid) => ({
+        node_id: nid,
+        node_name: `node-${nid}`,
+        stdout: `Command executed on node-${nid}`,
+        stderr: '',
+        exit_code: 0,
+      })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
       failed: 0,
     })
   }),

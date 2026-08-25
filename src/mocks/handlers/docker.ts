@@ -275,4 +275,124 @@ export const dockerHandlers = [
       failed: 0,
     })
   }),
+
+  http.post(`${API}/api/v1/docker/bulk/remove`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[] }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'remove',
+      results: nodeIds.map((nid) => ({ node_id: nid, node_name: `node-${nid}`, status: 'success', output: '', error: '' })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API}/api/v1/docker/bulk/inspect`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[] }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'inspect',
+      results: nodeIds.map((nid) => ({
+        node_id: nid,
+        node_name: `node-${nid}`,
+        status: 'success',
+        output: JSON.stringify({ Id: `container-${nid}`, Name: '/mock-container', State: { status: 'running', running: true, exit_code: 0 }, Config: { image: 'nginx:latest' } }),
+        error: '',
+      })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API}/api/v1/docker/bulk/logs`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[] }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'logs',
+      results: nodeIds.map((nid) => ({
+        node_id: nid,
+        node_name: `node-${nid}`,
+        status: 'success',
+        output: '2025-08-18 nginx started\n2025-08-18 listening on port 80\n',
+        error: '',
+      })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API}/api/v1/docker/bulk/stats`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[] }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'stats',
+      results: nodeIds.map((nid) => ({
+        node_id: nid,
+        node_name: `node-${nid}`,
+        status: 'success',
+        output: JSON.stringify({ Container: 'c1', Name: 'nginx', CPUPerc: '2.50%', MemUsage: '128MiB / 1GiB', MemPerc: '12.50%', NetIO: '1MB / 512KB', BlockIO: '10MB / 0B', MemLimit: '1GiB', PIDs: '5' }),
+        error: '',
+      })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API}/api/v1/docker/bulk/images/build`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[]; tag?: string }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'build',
+      results: nodeIds.map((nid) => ({
+        node_id: nid,
+        node_name: `node-${nid}`,
+        status: 'success',
+        output: `Building image ${body.tag || 'custom:latest'}...\nDone`,
+        error: '',
+      })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API}/api/v1/docker/bulk/images/remove`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[]; image_id?: string }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'remove',
+      results: nodeIds.map((nid) => ({
+        node_id: nid,
+        node_name: `node-${nid}`,
+        status: 'success',
+        output: '',
+        error: '',
+      })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
+  }),
+
+  http.post(`${API}/api/v1/docker/bulk/pull`, async ({ request }) => {
+    const body = await request.json() as { node_ids?: string[]; node_tags?: string[]; image?: string }
+    const nodeIds = body.node_ids || ['1', '2']
+    return HttpResponse.json({
+      action: 'pull',
+      results: nodeIds.map((nid) => ({
+        node_id: nid,
+        node_name: `node-${nid}`,
+        status: 'success',
+        output: `Pulling ${body.image || 'nginx:latest'}...\nDone`,
+        error: '',
+      })),
+      total: nodeIds.length,
+      succeeded: nodeIds.length,
+      failed: 0,
+    })
+  }),
 ]
