@@ -1088,3 +1088,8 @@ export interface FavoriteResponse {
   note: string | null
   created_at: string
 }
+
+export interface HealthResponse {
+  status: string
+  version: string
+}
