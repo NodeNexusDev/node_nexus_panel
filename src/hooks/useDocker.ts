@@ -323,6 +323,45 @@ export function useBulkDockerPull() {
   })
 }
 
+export function useBulkDockerInspect() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerRequest) =>
+      dockerApi.bulkInspect(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerLogs() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerRequest) =>
+      dockerApi.bulkLogs(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+export function useBulkDockerStats() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: BulkDockerRequest) =>
+      dockerApi.bulkStats(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker'] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
 export function usePauseContainer() {
   const queryClient = useQueryClient()
 

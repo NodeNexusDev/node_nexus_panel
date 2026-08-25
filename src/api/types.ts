@@ -492,6 +492,8 @@ export interface DockerContainerStats {
   PIDs?: string | null
 }
 
+
+
 // ── Docker: Image types ──────────────────────────────────────────
 
 export interface DockerImage {

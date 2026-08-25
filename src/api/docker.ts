@@ -184,4 +184,13 @@ export const dockerApi = {
 
   bulkPull: (data: BulkDockerPullRequest) =>
     api.post<BulkDockerPullResponse>('/docker/bulk/pull', data),
+
+  bulkInspect: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/inspect', data),
+
+  bulkLogs: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/logs', data),
+
+  bulkStats: (data: BulkDockerRequest) =>
+    api.post<BulkDockerResponse>('/docker/bulk/stats', data),
 }
