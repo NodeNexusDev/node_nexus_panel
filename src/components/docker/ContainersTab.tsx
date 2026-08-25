@@ -26,6 +26,9 @@ import {
   useBulkDockerStart,
   useBulkDockerStop,
   useBulkDockerRemove,
+  useBulkDockerInspect,
+  useBulkDockerLogs,
+  useBulkDockerStats,
 } from '../../hooks/useDocker'
 import { useDockerContainerSse } from '../../hooks/useDockerContainerSse'
 import { ContainerRow } from './ContainerRow'
@@ -36,7 +39,8 @@ import { ContainerStatsContent } from './ContainerStatsContent'
 import { ExecContainerContent } from './ExecContainerContent'
 import { ContainerInspectContent } from './ContainerInspectContent'
 import { TopContainerContent } from './TopContainerContent'
-import type { DockerContainer } from '../../api/types'
+import { BulkResultContent } from './BulkResultContent'
+import type { DockerContainer, BulkDockerResponse } from '../../api/types'
 
 type SortKey = 'name' | 'image' | 'status' | 'created'
 
@@ -58,6 +62,9 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const bulkStart = useBulkDockerStart()
   const bulkStop = useBulkDockerStop()
   const bulkRemove = useBulkDockerRemove()
+  const bulkInspect = useBulkDockerInspect()
+  const bulkLogs = useBulkDockerLogs()
+  const bulkStats = useBulkDockerStats()
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'stopped'>('all')
@@ -73,6 +80,12 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const [showBulkExecModal, setShowBulkExecModal] = useState(false)
   const [bulkExecCommand, setBulkExecCommand] = useState('')
   const [bulkExecResult, setBulkExecResult] = useState<string>('')
+  const [showBulkInspectModal, setShowBulkInspectModal] = useState(false)
+  const [bulkInspectResult, setBulkInspectResult] = useState<BulkDockerResponse | null>(null)
+  const [showBulkLogsModal, setShowBulkLogsModal] = useState(false)
+  const [bulkLogsResult, setBulkLogsResult] = useState<BulkDockerResponse | null>(null)
+  const [showBulkStatsModal, setShowBulkStatsModal] = useState(false)
+  const [bulkStatsResult, setBulkStatsResult] = useState<BulkDockerResponse | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [renameTarget, setRenameTarget] = useState<DockerContainer | null>(null)
   const [renameName, setRenameName] = useState('')
@@ -150,6 +163,9 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkStop.isPending}>{t('docker.stopAll')}</Button>
           <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) setShowBulkRemoveConfirm(true) }} disabled={bulkDisabled || bulkRemove.isPending} className="text-red-500">{bulkRemove.isPending ? t('common.loading') : t('docker.bulkRemove')}</Button>
           <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }} disabled={bulkDisabled}>{t('docker.bulkExec')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkInspectModal(true); setBulkInspectResult(null); bulkInspect.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkInspectResult(data), onError: () => toast('error', t('docker.toastBulkInspectFailed')) }) } }} disabled={bulkDisabled || bulkInspect.isPending}>{t('docker.bulkInspect')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkLogsModal(true); setBulkLogsResult(null); bulkLogs.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkLogsResult(data), onError: () => toast('error', t('docker.toastBulkLogsFailed')) }) } }} disabled={bulkDisabled || bulkLogs.isPending}>{t('docker.bulkLogs')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkStatsModal(true); setBulkStatsResult(null); bulkStats.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkStatsResult(data), onError: () => toast('error', t('docker.toastBulkStatsFailed')) }) } }} disabled={bulkDisabled || bulkStats.isPending}>{t('docker.bulkStats')}</Button>
         </div>
       )}
       {bulkDisabled && selectedIds.size > 0 && (
@@ -258,6 +274,18 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
             <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 bg-surface-50 dark:bg-surface-800/50 rounded p-4 max-h-64 overflow-y-auto whitespace-pre-wrap">{bulkExecResult}</pre>
           )}
         </div>
+      </Modal>
+
+      <Modal isOpen={showBulkInspectModal} onClose={() => setShowBulkInspectModal(false)} title={t('docker.bulkInspect', 'Bulk Inspect')} size="lg">
+        <BulkResultContent result={bulkInspectResult} isLoading={bulkInspect.isPending} />
+      </Modal>
+
+      <Modal isOpen={showBulkLogsModal} onClose={() => setShowBulkLogsModal(false)} title={t('docker.bulkLogs', 'Bulk Logs')} size="lg">
+        <BulkResultContent result={bulkLogsResult} isLoading={bulkLogs.isPending} />
+      </Modal>
+
+      <Modal isOpen={showBulkStatsModal} onClose={() => setShowBulkStatsModal(false)} title={t('docker.bulkStats', 'Bulk Stats')} size="lg">
+        <BulkResultContent result={bulkStatsResult} isLoading={bulkStats.isPending} />
       </Modal>
 
       <Modal isOpen={!!renameTarget} onClose={() => setRenameTarget(null)} title={t('docker.renameContainer')}>
