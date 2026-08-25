@@ -141,7 +141,7 @@ export function ScriptDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <FavoriteButton targetType="script" targetId={script.id} size="sm" />
+          <FavoriteButton targetType="script" targetId={script.id} resourceName={script.name} size="sm" />
           <Button variant="secondary" size="sm" onClick={() => setShowRunModal(true)}>
             <IconZap className="w-4 h-4 mr-1" />
             {t('scripts.run')}

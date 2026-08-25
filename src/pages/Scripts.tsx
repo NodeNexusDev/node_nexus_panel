@@ -170,7 +170,7 @@ export function Scripts() {
       header: t('common.actions'),
       render: (script) => (
         <div className="flex items-center gap-1">
-          <FavoriteButton targetType="script" targetId={script.id} size="sm" />
+          <FavoriteButton targetType="script" targetId={script.id} resourceName={script.name} size="sm" />
           <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); handleRun(script) }} disabled={runScript.isPending}>
             {runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}
           </Button>
@@ -200,7 +200,7 @@ export function Scripts() {
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
-        <FavoriteButton targetType="script" targetId={script.id} size="sm" />
+        <FavoriteButton targetType="script" targetId={script.id} resourceName={script.name} size="sm" />
         <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); handleRun(script) }} disabled={runScript.isPending}>
           {runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}
         </Button>

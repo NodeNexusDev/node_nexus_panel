@@ -9,10 +9,11 @@ import type { FavoriteCreate } from '../../api/types'
 interface FavoriteButtonProps {
   targetType: FavoriteCreate['target_type']
   targetId: string
+  resourceName?: string
   size?: 'sm' | 'md'
 }
 
-export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteButtonProps) {
+export function FavoriteButton({ targetType, targetId, resourceName, size = 'md' }: FavoriteButtonProps) {
   const { t } = useTranslation()
   const { data: favoritesData } = useFavorites({ size: 100 })
   const addFavorite = useAddFavorite()
@@ -29,9 +30,9 @@ export function FavoriteButton({ targetType, targetId, size = 'md' }: FavoriteBu
     if (isFavorited) {
       removeFavorite.mutate({ targetType, targetId })
     } else {
-      addFavorite.mutate({ target_type: targetType, target_id: targetId })
+      addFavorite.mutate({ target_type: targetType, target_id: targetId, name: resourceName })
     }
-  }, [isFavorited, targetType, targetId, addFavorite, removeFavorite])
+  }, [isFavorited, targetType, targetId, resourceName, addFavorite, removeFavorite])
 
   if (addFavorite.isPending || removeFavorite.isPending) {
     return <Spinner size="sm" />

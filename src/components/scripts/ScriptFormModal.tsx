@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
+import { Spinner } from '../ui/Spinner'
 import { useToast } from '../ui/useToast'
+import { useCommands } from '../../hooks/useCommands'
 import type { ScriptStep } from '../../api/types'
 import { generateId } from '../../lib/uuid'
 
@@ -38,6 +40,8 @@ const EMPTY_STEP: StepInput = { id: '', label: 'Step 1', type: 'inline', command
 export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, onClose, onSubmit }: ScriptFormModalProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
+  const { data: commandsData, isLoading: commandsLoading } = useCommands({ size: 100 })
+  const commands = commandsData?.items || []
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
@@ -84,7 +88,7 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="lg">
       <div className="space-y-4">
         <Input label={t('common.name')} placeholder="backup-db.sh" value={name} onChange={(e) => setName(e.target.value)} />
-        <Input label={t('scripts.description')} placeholder="Backup PostgreSQL database" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Input label={t('scripts.descriptionLabel', 'Description')} placeholder="Backup PostgreSQL database" value={description} onChange={(e) => setDescription(e.target.value)} />
         <Input label={t('scripts.tagsLabel')} placeholder="backup, database" value={tags} onChange={(e) => setTags(e.target.value)} />
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -108,7 +112,22 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
               {step.type === 'inline' ? (
                 <textarea placeholder={t('scripts.commandPlaceholder', '#!/bin/bash\necho "Hello"')} value={step.command} onChange={(e) => { const updated = [...steps]; updated[idx] = { ...updated[idx], command: e.target.value }; setSteps(updated) }} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={3} />
               ) : (
-                <Input label="" placeholder={t('scripts.commandIdPlaceholder', 'Command ID')} value={step.command_id} onChange={(e) => { const updated = [...steps]; updated[idx] = { ...updated[idx], command_id: e.target.value }; setSteps(updated) }} />
+                commandsLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-surface-500 py-2"><Spinner size="sm" /> {t('common.loading')}</div>
+                ) : commands.length === 0 ? (
+                  <p className="text-sm text-surface-500 py-2">{t('scripts.noCommands', 'No commands available')}</p>
+                ) : (
+                  <select
+                    value={step.command_id}
+                    onChange={(e) => { const updated = [...steps]; updated[idx] = { ...updated[idx], command_id: e.target.value }; setSteps(updated) }}
+                    className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
+                  >
+                    <option value="">{t('scripts.selectCommand', 'Select a command...')}</option>
+                    {commands.map((cmd) => (
+                      <option key={cmd.id} value={cmd.id}>{cmd.name} — {cmd.command}</option>
+                    ))}
+                  </select>
+                )
               )}
             </div>
           ))}

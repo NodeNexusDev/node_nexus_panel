@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/auth-store'
 import { useUiStore } from '../stores/ui-store'
 import { useSse } from '../hooks/useSse'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useHealth } from '../hooks/useHealth'
 import { useNode } from '../hooks/useNodes'
 import { useCommand } from '../hooks/useCommands'
 import { useScript } from '../hooks/useScripts'
@@ -35,6 +36,7 @@ export function MainLayout() {
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
   const wsConnected = useSse().isConnected
   const isFetching = useIsFetching() > 0
+  const { data: health } = useHealth()
 
   const location = useLocation()
   const nodeId = location.pathname.match(/^\/nodes\/([^/]+)$/)?.[1]
@@ -144,7 +146,9 @@ export function MainLayout() {
             <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" />
             <div>
               <p className="text-xl font-bold gradient-text">NodeNexus</p>
-              <p className="text-xs text-surface-500 dark:text-surface-500">Panel v{APP_VERSION}</p>
+              <p className="text-xs text-surface-500 dark:text-surface-500">
+                Panel v{APP_VERSION}{health?.version && <span className="ml-1">API v{health.version}</span>}
+              </p>
             </div>
           </div>
         </div>

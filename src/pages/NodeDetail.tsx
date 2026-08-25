@@ -239,7 +239,7 @@ export function NodeDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <FavoriteButton targetType="node" targetId={node.id} size="sm" />
+          <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
           <Tooltip content={t('nodes.copyAddress')}>
             <Button variant="ghost" size="sm" className="px-2" onClick={handleCopyAddress} aria-label={t('nodes.copyAddress')}>
               <IconCopy className="w-4 h-4" />
