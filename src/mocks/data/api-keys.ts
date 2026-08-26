@@ -1,6 +1,6 @@
-import type { ApiKey } from '../../api/types'
+import type { APIKeyResponse } from '../../api/types'
 
-export const mockApiKeys: ApiKey[] = [
+export const mockApiKeys: APIKeyResponse[] = [
   {
     id: '1',
     name: 'Production Key',

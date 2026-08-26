@@ -1,9 +1,9 @@
-import type { GlobalSearchResponse, SearchResultItem, Favorite } from '../../api/types'
+import type { GlobalSearchResponse, SearchResultItem, FavoriteResponse } from '../../api/types'
 import { mockNodes } from './nodes'
 import { mockCommands } from './commands'
 import { mockScripts } from './scripts'
 
-export const mockFavorites: Favorite[] = [
+export const mockFavorites: FavoriteResponse[] = [
   { id: '1', target_type: 'node', target_id: '1', name: 'prod-server-01', note: 'Production server', created_at: '2025-08-18T10:00:00Z' },
   { id: '2', target_type: 'command', target_id: '1', name: 'Check Disk Space', note: null, created_at: '2025-08-17T09:00:00Z' },
 ]

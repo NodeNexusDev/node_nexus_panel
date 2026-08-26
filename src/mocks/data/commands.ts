@@ -1,6 +1,6 @@
-import type { Command } from '../../api/types'
+import type { CommandResponse } from '../../api/types'
 
-export const mockCommands: Command[] = [
+export const mockCommands: CommandResponse[] = [
   {
     id: '1',
     name: 'Check Disk Space',

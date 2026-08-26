@@ -1,6 +1,6 @@
-import type { AuditLog } from '../../api/types'
+import type { AuditLogResponse } from '../../api/types'
 
-export const mockAuditLogs: AuditLog[] = [
+export const mockAuditLogs: AuditLogResponse[] = [
   { id: '1', action: 'node.create', node_id: 'n1', user: 'admin', details: 'Created node "prod-server-01"', created_at: '2025-08-18T10:30:00Z' },
   { id: '2', action: 'command.execute', node_id: 'n1', user: 'admin', details: 'Executed "Check disk space" on node prod-server-01', created_at: '2025-08-18T10:25:00Z' },
   { id: '3', action: 'node.update', node_id: 'n2', user: 'admin', details: 'Updated tags for node staging-02', created_at: '2025-08-18T09:15:00Z' },
