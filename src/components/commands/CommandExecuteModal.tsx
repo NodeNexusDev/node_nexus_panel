@@ -9,10 +9,10 @@ import { useToast } from '../ui/useToast'
 import { getDefaultParams } from './command-form-utils'
 import { CommandParamInputs } from './CommandParamInputs'
 import { ExecutionResult } from './ExecutionResult'
-import type { Command, CommandResult, BulkCommandResult, BulkNodeResult } from '../../api/types'
+import type { CommandResponse, CommandResult, BulkCommandResult, BulkNodeResult } from '../../api/types'
 
 interface CommandExecuteModalProps {
-  command: Command | null
+  command: CommandResponse | null
   onClose: () => void
 }
 
