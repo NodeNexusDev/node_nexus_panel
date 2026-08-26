@@ -7,7 +7,6 @@ import { env } from '../lib/env'
 type SseEventHandler = (event: MessageEvent) => void
 
 const BASE_URL = env.VITE_API_URL || ''
-const API_KEY = env.VITE_API_KEY
 
 export class EventsClient {
   private controller: AbortController | null = null
@@ -28,9 +27,6 @@ export class EventsClient {
     this.controller = new AbortController()
 
     const headers: Record<string, string> = {}
-    if (API_KEY) {
-      headers['X-API-Key'] = API_KEY
-    }
 
     fetchEventSource(`${BASE_URL}/api/v1/events/stream`, {
       headers,

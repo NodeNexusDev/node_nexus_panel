@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-envsubst '${VITE_API_URL} ${VITE_API_KEY} ${VITE_PANEL_LOGIN} ${VITE_PANEL_PASSWORD}' \
+envsubst '${VITE_API_URL} ${VITE_PANEL_LOGIN} ${VITE_PANEL_PASSWORD}' \
   < /usr/share/nginx/html/index.html \
   > /usr/share/nginx/html/index.html.tmp
 

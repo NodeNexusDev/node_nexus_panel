@@ -2,7 +2,6 @@ import type { ApiError } from './types'
 import { env } from '../lib/env'
 
 const API_URL = env.VITE_API_URL
-const API_KEY = env.VITE_API_KEY
 
 class ApiClient {
   private baseUrl: string
@@ -28,10 +27,6 @@ class ApiClient {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
-    }
-
-    if (API_KEY) {
-      headers['X-API-Key'] = API_KEY
     }
 
     if (this.accessToken) {
