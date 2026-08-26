@@ -33,7 +33,7 @@ describe('auth-store', () => {
   })
 
   it('login sets user and isAuthenticated', async () => {
-    await useAuthStore.getState().login('admin@nodenexus.dev', 'password')
+    await useAuthStore.getState().login('admin', 'password')
     const state = useAuthStore.getState()
     expect(state.isAuthenticated).toBe(true)
     expect(state.user).toBeDefined()
@@ -42,7 +42,7 @@ describe('auth-store', () => {
   })
 
   it('logout clears state', async () => {
-    await useAuthStore.getState().login('admin@nodenexus.dev', 'password')
+    await useAuthStore.getState().login('admin', 'password')
     expect(useAuthStore.getState().isAuthenticated).toBe(true)
 
     await useAuthStore.getState().logout()

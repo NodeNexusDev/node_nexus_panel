@@ -1,5 +1,8 @@
 import { http, HttpResponse } from 'msw'
 
+const VALID_EMAIL = import.meta.env.VITE_PANEL_LOGIN || 'admin'
+const VALID_PASSWORD = import.meta.env.VITE_PANEL_PASSWORD || 'password'
+
 const mockUser = {
   id: '00000000-0000-0000-0000-000000000001',
   email: 'admin@nodenexus.dev',
@@ -14,7 +17,14 @@ const mockToken = {
 }
 
 export const authHandlers = [
-  http.post('*/auth/login', async () => {
+  http.post('*/auth/login', async ({ request }) => {
+    const body = (await request.json()) as { email?: string; password?: string }
+    if (body.email !== VALID_EMAIL || body.password !== VALID_PASSWORD) {
+      return HttpResponse.json(
+        { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' },
+        { status: 401 },
+      )
+    }
     return HttpResponse.json(mockToken, {
       headers: { 'Set-Cookie': 'refresh_token=mock-refresh-token; Path=/auth; HttpOnly; SameSite=Strict' },
     })

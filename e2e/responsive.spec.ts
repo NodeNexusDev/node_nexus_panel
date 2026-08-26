@@ -36,7 +36,6 @@ test.describe('Responsive', () => {
   test('content adapts to mobile', async ({ page }) => {
     await setupAuth(page)
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto('/')
     await page.waitForSelector('main h1')
 
     await expect(page.locator('main')).toBeVisible()

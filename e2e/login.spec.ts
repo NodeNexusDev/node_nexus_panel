@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test'
-import { loadEnv } from 'vite'
 
-const env = loadEnv('development', process.cwd(), '')
-const PANEL_LOGIN = process.env.VITE_PANEL_LOGIN || env.VITE_PANEL_LOGIN || 'admin'
-const PANEL_PASSWORD = process.env.VITE_PANEL_PASSWORD || env.VITE_PANEL_PASSWORD || 'password'
+const PANEL_LOGIN = process.env.VITE_PANEL_LOGIN || 'admin'
+const PANEL_PASSWORD = process.env.VITE_PANEL_PASSWORD || 'password'
 
 test.describe('Login', () => {
   test('shows login form', async ({ page }) => {

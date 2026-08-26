@@ -11,9 +11,11 @@ interface AuthState {
   refreshUser: () => Promise<void>
 }
 
+const hasAuthSession = () => sessionStorage.getItem('authenticated') === 'true'
+
 export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
-  isAuthenticated: false,
+  isAuthenticated: hasAuthSession(),
 
   login: async (email: string, password: string) => {
     const tokenResponse = await authApi.login({ email, password })

@@ -3,8 +3,7 @@ import { setupAuth } from './helpers'
 
 test.describe('Nodes', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page)
-    await page.goto('/nodes')
+    await setupAuth(page, '/nodes')
     await page.waitForSelector('main h1:has-text("Nodes")')
   })
 
