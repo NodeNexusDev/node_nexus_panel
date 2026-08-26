@@ -1073,15 +1073,25 @@ export interface DockerSystemDfItem {
 export interface DockerNetworkCreateResponse {
   id: string
   name: string
-  driver?: string
 }
 
 // ── Docker: Volume creation response ──────────────────────────────
 
 export interface DockerVolumeCreateResponse {
   name: string
-  driver?: string
-  mountpoint?: string
+}
+
+// ── Docker: Action response (pause, unpause, connect, disconnect) ─
+
+export interface DockerActionResponse {
+  status: string
+}
+
+// ── Docker: Container rename response ─────────────────────────────
+
+export interface DockerContainerRenameResponse {
+  new_name: string
+  status: string
 }
 
 // ── Docker: Volume prune response ─────────────────────────────────

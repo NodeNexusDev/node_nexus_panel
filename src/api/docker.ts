@@ -39,6 +39,8 @@ import type {
   DockerTopResult,
   DockerSystemInfo,
   DockerSystemDfItem,
+  DockerActionResponse,
+  DockerContainerRenameResponse,
 } from './types'
 
 function nodesBase(nodeId: string) {
@@ -76,13 +78,13 @@ export const dockerApi = {
   },
 
   pauseContainer: (nodeId: string, containerId: string) =>
-    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/pause`),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/pause`),
 
   unpauseContainer: (nodeId: string, containerId: string) =>
-    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/unpause`),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/unpause`),
 
   renameContainer: (nodeId: string, containerId: string, data: ContainerRenameRequest) =>
-    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/rename`, data),
+    api.post<DockerContainerRenameResponse>(`${nodesBase(nodeId)}/containers/${containerId}/rename`, data),
 
   pruneContainers: (nodeId: string) =>
     api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/containers/prune`),
@@ -138,10 +140,10 @@ export const dockerApi = {
     api.get<NetworkInspectResponse>(`${nodesBase(nodeId)}/networks/${networkId}`),
 
   connectNetwork: (nodeId: string, networkId: string, data: NetworkConnectRequest) =>
-    api.post<void>(`${nodesBase(nodeId)}/networks/${networkId}/connect`, data),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/networks/${networkId}/connect`, data),
 
   disconnectNetwork: (nodeId: string, networkId: string, data: NetworkDisconnectRequest) =>
-    api.post<void>(`${nodesBase(nodeId)}/networks/${networkId}/disconnect`, data),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/networks/${networkId}/disconnect`, data),
 
   getVolumes: (nodeId: string) =>
     api.get<DockerVolume[]>(`${nodesBase(nodeId)}/volumes`),
