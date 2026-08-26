@@ -3,6 +3,7 @@ import {
   type FetchEventSourceInit,
 } from '@microsoft/fetch-event-source'
 import { env } from '../lib/env'
+import { api } from './client'
 
 type SseEventHandler = (event: MessageEvent) => void
 
@@ -27,6 +28,10 @@ export class EventsClient {
     this.controller = new AbortController()
 
     const headers: Record<string, string> = {}
+    const token = api.getToken()
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
 
     fetchEventSource(`${BASE_URL}/api/v1/events/stream`, {
       headers,
