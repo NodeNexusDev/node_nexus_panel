@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { commandsApi } from '../api/commands'
 import type {
-  Command,
+  CommandResponse,
   CommandCreate,
   CommandUpdate,
   CommandExecuteRequest,
@@ -13,14 +13,14 @@ import type {
 } from '../api/types'
 
 export function useCommands(params?: { page?: number; size?: number; tag?: string; search?: string }) {
-  return useQuery<PaginatedResponse<Command>>({
+  return useQuery<PaginatedResponse<CommandResponse>>({
     queryKey: ['commands', params],
     queryFn: () => commandsApi.getAll(params),
   })
 }
 
 export function useCommand(id: string) {
-  return useQuery<Command>({
+  return useQuery<CommandResponse>({
     queryKey: ['commands', id],
     queryFn: () => commandsApi.getById(id),
     enabled: !!id,

@@ -3,8 +3,8 @@ import { dockerApi } from '../api/docker'
 import type {
   DockerContainer,
   DockerContainerInspect,
-  DockerCreateContainerRequest,
-  DockerContainerStats,
+  ContainerCreateRequest,
+  DockerContainerStatsResponse,
   DockerImage,
   DockerImageInspectResponse,
   DockerImageBuildRequest,
@@ -178,7 +178,7 @@ export function useCreateContainer() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ nodeId, data }: { nodeId: string; data: DockerCreateContainerRequest }) =>
+    mutationFn: ({ nodeId, data }: { nodeId: string; data: ContainerCreateRequest }) =>
       dockerApi.createContainer(nodeId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })
@@ -187,7 +187,7 @@ export function useCreateContainer() {
 }
 
 export function useDockerContainerStats(nodeId: string, containerId: string) {
-  return useQuery<DockerContainerStats>({
+  return useQuery<DockerContainerStatsResponse>({
     queryKey: ['docker', nodeId, 'containers', containerId, 'stats'],
     queryFn: () => dockerApi.getContainerStats(nodeId, containerId),
     enabled: !!nodeId && !!containerId,

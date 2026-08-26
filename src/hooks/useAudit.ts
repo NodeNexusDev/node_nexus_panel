@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { auditApi } from '../api/audit'
-import type { AuditLog, PaginatedResponse } from '../api/types'
+import type { AuditLogResponse, PaginatedResponse } from '../api/types'
 
 export function useAuditLogs(params?: { page?: number; size?: number; node_id?: string; action?: string; user?: string; date_from?: string; date_to?: string }) {
-  return useQuery<PaginatedResponse<AuditLog>>({
+  return useQuery<PaginatedResponse<AuditLogResponse>>({
     queryKey: ['audit', params],
     queryFn: () => auditApi.getAll(params),
   })
