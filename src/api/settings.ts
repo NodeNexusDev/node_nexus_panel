@@ -1,5 +1,11 @@
 import { api } from './client'
-import type { ApiKey, ApiKeyCreate, ApiKeyUpdate, ApiKeyCreated, ApiKeyList } from './types'
+import type {
+  APIKeyResponse,
+  ApiKeyCreate,
+  ApiKeyUpdate,
+  ApiKeyCreated,
+  APIKeyListResponse,
+} from './types'
 
 export const apiKeysApi = {
   getAll: (params?: { page?: number; size?: number }) => {
@@ -7,7 +13,7 @@ export const apiKeysApi = {
     if (params?.page) query.set('page', String(params.page))
     if (params?.size) query.set('size', String(params.size))
     const qs = query.toString()
-    return api.get<ApiKeyList>(`/api-keys/${qs ? `?${qs}` : ''}`)
+    return api.get<APIKeyListResponse>(`/api-keys/${qs ? `?${qs}` : ''}`)
   },
 
   create: (data: ApiKeyCreate) =>
@@ -17,5 +23,5 @@ export const apiKeysApi = {
     api.delete<void>(`/api-keys/${id}`),
 
   update: (id: string, data: ApiKeyUpdate) =>
-    api.patch<ApiKey>(`/api-keys/${id}`, data),
+    api.patch<APIKeyResponse>(`/api-keys/${id}`, data),
 }

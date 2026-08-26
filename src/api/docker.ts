@@ -2,11 +2,11 @@ import { api } from './client'
 import type {
   DockerContainer,
   DockerContainerInspect,
-  DockerCreateContainerRequest,
+  ContainerCreateRequest,
   ContainerCreatedResponse,
   DockerExecRequest,
   DockerExecResult,
-  DockerContainerStats,
+  DockerContainerStatsResponse,
   DockerImage,
   DockerImagePullRequest,
   DockerPullResult,
@@ -48,7 +48,7 @@ export const dockerApi = {
     return api.get<DockerContainer[]>(`${nodesBase(nodeId)}/containers${qs}`)
   },
 
-  createContainer: (nodeId: string, data: DockerCreateContainerRequest) =>
+  createContainer: (nodeId: string, data: ContainerCreateRequest) =>
     api.post<ContainerCreatedResponse>(`${nodesBase(nodeId)}/containers`, data),
 
   getContainer: (nodeId: string, containerId: string) =>
@@ -99,7 +99,7 @@ export const dockerApi = {
   },
 
   getContainerStats: (nodeId: string, containerId: string) =>
-    api.get<DockerContainerStats>(`${nodesBase(nodeId)}/containers/${containerId}/stats`),
+    api.get<DockerContainerStatsResponse>(`${nodesBase(nodeId)}/containers/${containerId}/stats`),
 
   getImages: (nodeId: string) =>
     api.get<DockerImage[]>(`${nodesBase(nodeId)}/images`),

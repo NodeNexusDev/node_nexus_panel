@@ -88,7 +88,7 @@ export interface CommandParameter {
   description?: string | null
 }
 
-export interface Command {
+export interface CommandResponse {
   id: string
   name: string
   description: string | null
@@ -135,7 +135,7 @@ export interface ScriptStep {
   on_failure?: 'stop' | 'continue'
 }
 
-export interface Script {
+export interface ScriptResponse {
   id: string
   name: string
   description: string | null
@@ -171,7 +171,7 @@ export interface NodeStats {
   unreachable: number
 }
 
-export interface DockerStats {
+export interface DashboardDockerStats {
   total: number
   running: number
   stopped: number
@@ -192,7 +192,7 @@ export interface RecentActivity {
 
 export interface DashboardResponse {
   nodes: NodeStats
-  docker: DockerStats
+  docker: DashboardDockerStats
   scripts: EntityStats
   commands: EntityStats
   recent_activity: RecentActivity[]
@@ -211,7 +211,7 @@ export interface DashboardMetricsResponse {
   script_metrics: MetricsBucket[]
 }
 
-export interface ApiKey {
+export interface APIKeyResponse {
   id: string
   name: string
   key_prefix: string
@@ -341,7 +341,7 @@ export interface BulkNodeUpdateRequest {
 
 export interface BulkNodeUpdateResult {
   node_id: string
-  status: string
+  status: 'success' | 'error'
   error?: string
 }
 
@@ -449,7 +449,7 @@ export interface ContainerVolumeMount {
   mode?: 'rw' | 'ro'
 }
 
-export interface DockerCreateContainerRequest {
+export interface ContainerCreateRequest {
   image: string
   name?: string | null
   command?: string | null
@@ -480,7 +480,7 @@ export interface DockerExecResult {
   exit_code: number
 }
 
-export interface DockerContainerStats {
+export interface DockerContainerStatsResponse {
   Container: string
   Name: string
   CPUPerc: string
@@ -566,7 +566,7 @@ export interface DockerVolume {
 export interface BulkDockerRequest {
   container_id: string
   command?: string | null
-  node_ids?: string[]
+  node_ids: string[]
   node_tags?: string[]
   timeout?: number | null
 }
@@ -667,7 +667,7 @@ export interface BulkDockerPullResponse {
 
 // ── Phase 3: Audit + Search + Favorites ─────────────────────────
 
-export interface AuditLog {
+export interface AuditLogResponse {
   id: string
   action: string
   node_id: string | null
@@ -689,7 +689,7 @@ export interface GlobalSearchResponse {
   tags: string[]
 }
 
-export interface Favorite {
+export interface FavoriteResponse {
   id: string
   target_type: 'node' | 'command' | 'script'
   target_id: string
@@ -707,7 +707,7 @@ export interface FavoriteCreate {
 
 // ── Phase 4: Notes + Tags + Config ─────────────────────────────
 
-export interface Note {
+export interface NoteResponse {
   id: string
   target_type: 'node' | 'command' | 'script'
   target_id: string
@@ -733,8 +733,8 @@ export interface Tag {
 
 // ── Settings: API Keys ──────────────────────────────────────────
 
-export interface ApiKeyList {
-  items: ApiKey[]
+export interface APIKeyListResponse {
+  items: APIKeyResponse[]
   total: number
 }
 
@@ -812,6 +812,7 @@ export interface DryRunNodePreview {
   host: string
   port: number
   connection_type: string
+  docker_host?: string | null
   tags?: string[]
   username?: string | null
 }
@@ -867,7 +868,7 @@ export interface ScriptNodeResult {
   execution_id: string
   node_id: string
   node_name: string
-  status: string
+  status: 'success' | 'error'
   steps: ScriptStepResult[]
 }
 
@@ -890,11 +891,11 @@ export interface ScriptExecutionBatchResult {
 
 // ── Scripts: Bulk Cancel/Retry ────────────────────────────────
 
-export interface BulkScriptCancelRequest {
+export interface ScriptBulkCancelRequest {
   execution_ids: string[]
 }
 
-export interface BulkScriptRetryRequest {
+export interface ScriptBulkRetryRequest {
   execution_ids: string[]
 }
 
@@ -915,7 +916,7 @@ export interface BulkCancelCommandRequest {
 
 export interface BulkCancelCommandResult {
   execution_id: string
-  status: string
+  status: 'cancelled' | 'error'
   message?: string
 }
 
@@ -932,7 +933,7 @@ export interface BulkRetryCommandRequest {
 
 export interface BulkRetryCommandResult {
   execution_id: string
-  status: string
+  status: 'retry_scheduled' | 'error'
   message?: string
 }
 
@@ -977,7 +978,7 @@ export interface SseEvent {
   timestamp: string
 }
 
-// ── OpenAPI v0.17.1: New Types ──────────────────────────────────
+// ── OpenAPI v1.1.0: Types ───────────────────────────────────────
 
 // Raw command execute
 export interface CommandExecuteRawRequest {
@@ -1070,26 +1071,74 @@ export interface DockerSystemDfItem {
   reclaimable_percent?: string
 }
 
-// Note / Favorite response
-export interface NoteResponse {
-  id: string
-  target_type: string
-  target_id: string
-  content: string
-  created_at: string
-  updated_at: string
-}
-
-export interface FavoriteResponse {
-  id: string
-  target_type: string
-  target_id: string
-  name: string | null
-  note: string | null
-  created_at: string
-}
-
 export interface HealthResponse {
   status: string
   version: string
+}
+
+// ── Auth (JWT) ─────────────────────────────────────────────────
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface TokenResponse {
+  access_token: string
+  token_type: string
+}
+
+export interface UserCreate {
+  email: string
+  password: string
+  is_superuser?: boolean
+}
+
+export interface UserResponse {
+  id: string
+  email: string
+  is_active: boolean
+  is_superuser: boolean
+  created_at: string
+}
+
+export interface UserListResponse {
+  items: UserResponse[]
+  total: number
+}
+
+// ── Script cancel/retry responses ─────────────────────────────
+
+export interface ScriptCancelResponse {
+  execution_id: string
+  status: string
+  message: string
+}
+
+export interface ScriptRetryResponse {
+  execution_id: string
+  status: string
+  message: string
+}
+
+export interface ScriptBulkResult {
+  execution_id: string
+  status: string
+  message: string
+}
+
+export interface ScriptBulkOperationResponse {
+  results: ScriptBulkResult[]
+  total: number
+  succeeded: number
+  failed: number
+}
+
+// ── Node status history (paginated) ───────────────────────────
+
+export interface NodeStatusHistoryResponse {
+  items: NodeStatusHistoryItem[]
+  total: number
+  page: number
+  size: number
 }

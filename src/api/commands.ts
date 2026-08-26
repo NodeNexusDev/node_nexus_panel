@@ -1,6 +1,6 @@
 import { api } from './client'
 import type {
-  Command,
+  CommandResponse,
   CommandCreate,
   CommandUpdate,
   CommandExecuteRequest,
@@ -26,17 +26,17 @@ export const commandsApi = {
     if (params?.tag) query.set('tag', params.tag)
     if (params?.search) query.set('search', params.search)
     const qs = query.toString()
-    return api.get<PaginatedResponse<Command>>(`/commands/${qs ? `?${qs}` : ''}`)
+    return api.get<PaginatedResponse<CommandResponse>>(`/commands/${qs ? `?${qs}` : ''}`)
   },
 
   getById: (id: string) =>
-    api.get<Command>(`/commands/${id}`),
+    api.get<CommandResponse>(`/commands/${id}`),
 
   create: (data: CommandCreate) =>
-    api.post<Command>('/commands/', data),
+    api.post<CommandResponse>('/commands/', data),
 
   update: (id: string, data: CommandUpdate) =>
-    api.patch<Command>(`/commands/${id}`, data),
+    api.patch<CommandResponse>(`/commands/${id}`, data),
 
   remove: (id: string) =>
     api.delete<void>(`/commands/${id}`),
@@ -46,7 +46,7 @@ export const commandsApi = {
 
   clone: (id: string, newName?: string) => {
     const qs = newName ? `?new_name=${encodeURIComponent(newName)}` : ''
-    return api.post<Command>(`/commands/${id}/clone${qs}`)
+    return api.post<CommandResponse>(`/commands/${id}/clone${qs}`)
   },
 
   getStats: (id: string, params?: { date_from?: string; date_to?: string }) => {

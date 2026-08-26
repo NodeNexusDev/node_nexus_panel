@@ -1,17 +1,20 @@
 import { api } from './client'
 import type {
-  Script,
+  ScriptResponse,
   ScriptCreate,
   ScriptUpdate,
   ScriptExecuteRequest,
   ScriptExecutionResponse,
   ScriptExecutionBatchResult,
+  ScriptCancelResponse,
+  ScriptRetryResponse,
+  ScriptBulkCancelRequest,
+  ScriptBulkRetryRequest,
+  ScriptBulkOperationResponse,
   ScheduledJob,
   ScheduleRequest,
   ScheduleResponse,
   ExecutionStatsResponse,
-  BulkScriptCancelRequest,
-  BulkScriptRetryRequest,
   PaginatedResponse,
 } from './types'
 
@@ -23,17 +26,17 @@ export const scriptsApi = {
     if (params?.tag) query.set('tag', params.tag)
     if (params?.search) query.set('search', params.search)
     const qs = query.toString()
-    return api.get<PaginatedResponse<Script>>(`/scripts/${qs ? `?${qs}` : ''}`)
+    return api.get<PaginatedResponse<ScriptResponse>>(`/scripts/${qs ? `?${qs}` : ''}`)
   },
 
   getById: (id: string) =>
-    api.get<Script>(`/scripts/${id}`),
+    api.get<ScriptResponse>(`/scripts/${id}`),
 
   create: (data: ScriptCreate) =>
-    api.post<Script>('/scripts/', data),
+    api.post<ScriptResponse>('/scripts/', data),
 
   update: (id: string, data: ScriptUpdate) =>
-    api.patch<Script>(`/scripts/${id}`, data),
+    api.patch<ScriptResponse>(`/scripts/${id}`, data),
 
   remove: (id: string) =>
     api.delete<void>(`/scripts/${id}`),
@@ -43,7 +46,7 @@ export const scriptsApi = {
 
   clone: (id: string, newName?: string) => {
     const qs = newName ? `?new_name=${encodeURIComponent(newName)}` : ''
-    return api.post<Script>(`/scripts/${id}/clone${qs}`)
+    return api.post<ScriptResponse>(`/scripts/${id}/clone${qs}`)
   },
 
   getStats: (id: string, params?: { date_from?: string; date_to?: string }) => {
@@ -83,14 +86,14 @@ export const scriptsApi = {
   },
 
   cancelExecution: (executionId: string) =>
-    api.post<ScriptExecutionResponse>(`/scripts/executions/${executionId}/cancel`),
+    api.post<ScriptCancelResponse>(`/scripts/executions/${executionId}/cancel`),
 
   retryExecution: (executionId: string) =>
-    api.post<ScriptExecutionResponse>(`/scripts/executions/${executionId}/retry`),
+    api.post<ScriptRetryResponse>(`/scripts/executions/${executionId}/retry`),
 
-  bulkCancel: (data: BulkScriptCancelRequest) =>
-    api.post<Record<string, unknown>>('/scripts/bulk/cancel', data),
+  bulkCancel: (data: ScriptBulkCancelRequest) =>
+    api.post<ScriptBulkOperationResponse>('/scripts/bulk/cancel', data),
 
-  bulkRetry: (data: BulkScriptRetryRequest) =>
-    api.post<Record<string, unknown>>('/scripts/bulk/retry', data),
+  bulkRetry: (data: ScriptBulkRetryRequest) =>
+    api.post<ScriptBulkOperationResponse>('/scripts/bulk/retry', data),
 }
