@@ -29,7 +29,7 @@ import { ParameterEditor } from '../components/commands/CommandFormEditor'
 import { CommandExecuteModal } from '../components/commands/CommandExecuteModal'
 import { normalizeParameters } from '../components/commands/command-form-utils'
 import { commandUpdateSchema, type CommandUpdateFormValues } from '../lib/validators/command-schema'
-import type { Command, CommandUpdate } from '../api/types'
+import type { CommandResponse, CommandUpdate } from '../api/types'
 
 type Tab = 'overview' | 'parameters' | 'stats' | 'notes'
 
@@ -210,7 +210,7 @@ export function CommandDetail() {
   )
 }
 
-function OverviewTab({ command }: { command: Command }) {
+function OverviewTab({ command }: { command: CommandResponse }) {
   const { t } = useTranslation()
   return (
     <Card>
@@ -243,7 +243,7 @@ function OverviewTab({ command }: { command: Command }) {
   )
 }
 
-function ParametersTab({ command }: { command: Command }) {
+function ParametersTab({ command }: { command: CommandResponse }) {
   const { t } = useTranslation()
   const parameters = command.parameters || []
   return (

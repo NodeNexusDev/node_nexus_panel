@@ -35,7 +35,7 @@ import {
   useBulkCancelScriptExecutions,
   useBulkRetryScriptExecutions,
 } from '../hooks/useScripts'
-import type { Script } from '../api/types'
+import type { ScriptResponse } from '../api/types'
 
 type Tab = 'overview' | 'steps' | 'executions' | 'schedule' | 'notes'
 
@@ -262,7 +262,7 @@ export function ScriptDetail() {
   )
 }
 
-function OverviewTab({ script }: { script: Script }) {
+function OverviewTab({ script }: { script: ScriptResponse }) {
   const { t } = useTranslation()
   return (
     <Card>
@@ -286,7 +286,7 @@ function OverviewTab({ script }: { script: Script }) {
   )
 }
 
-function StepsTab({ script }: { script: Script }) {
+function StepsTab({ script }: { script: ScriptResponse }) {
   const { t } = useTranslation()
   return (
     <Card>

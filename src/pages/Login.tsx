@@ -5,7 +5,6 @@ import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
 import { useAuthStore } from '../stores/auth-store'
-import { env } from '../lib/env'
 
 export function Login() {
   const { t } = useTranslation()
@@ -13,31 +12,26 @@ export function Login() {
   const login = useAuthStore((s) => s.login)
   const loginRef = useRef<HTMLInputElement>(null)
 
-  const [panelLogin, setPanelLogin] = useState('')
-  const [panelPassword, setPanelPassword] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => { loginRef.current?.focus() }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setSubmitting(true)
 
-    setTimeout(() => {
-      const envLogin = env.VITE_PANEL_LOGIN
-      const envPassword = env.VITE_PANEL_PASSWORD
-
-      if (panelLogin === envLogin && panelPassword === envPassword) {
-        login()
-        navigate('/')
-      } else {
-        setError(t('login.error'))
-        setSubmitting(false)
-      }
-    }, 400)
+    try {
+      await login(email, password)
+      navigate('/')
+    } catch {
+      setError(t('login.error'))
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -69,8 +63,8 @@ export function Login() {
                 ref={loginRef}
                 label={t('login.login')}
                 placeholder="admin"
-                value={panelLogin}
-                onChange={(e) => { setPanelLogin(e.target.value); setError('') }}
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError('') }}
                 disabled={submitting}
                 autoFocus
               />
@@ -79,8 +73,8 @@ export function Login() {
                   label={t('login.password')}
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••"
-                  value={panelPassword}
-                  onChange={(e) => { setPanelPassword(e.target.value); setError('') }}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError('') }}
                   disabled={submitting}
                 />
                 <button
@@ -93,7 +87,7 @@ export function Login() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={submitting || !panelLogin || !panelPassword}>
+            <Button type="submit" className="w-full" disabled={submitting || !email || !password}>
               {submitting ? <Spinner size="sm" /> : t('login.submit')}
             </Button>
           </form>
