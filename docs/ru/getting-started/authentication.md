@@ -7,23 +7,28 @@ source_revision: 2026-08-17
 
 # Авторизация
 
-NodeNexus Panel использует авторизацию через переменные окружения. Учётные данные настраиваются через env-переменные.
+NodeNexus Panel использует JWT-авторизацию через Backend API.
 
 ## Вход
 
-1. Введите учётные данные на странице входа
-2. Панель сверяет их с `VITE_PANEL_LOGIN` и `VITE_PANEL_PASSWORD`
-3. При успешном входе состояние сохраняется в `sessionStorage`
+1. Введите email и пароль на странице входа
+2. Панель отправляет запрос `POST /auth/login` на Backend API
+3. При успешном входе JWT access token сохраняется в памяти, refresh token — в HttpOnly cookie
+4. Состояние авторизации дублируется в `sessionStorage`
 
-## Переменные окружения
+## Выход
 
-| Переменная | Описание | По умолчанию |
-|------------|----------|--------------|
-| `VITE_PANEL_LOGIN` | Логин для входа в панель | `admin` |
-| `VITE_PANEL_PASSWORD` | Пароль для входа в панель | `password` |
+- `POST /auth/logout` — инвалидирует refresh token на сервере
+- access token удаляется из памяти
+- `sessionStorage` очищается
 
-Подробности в [Переменные окружения](../operations/environment.md).
+## Токены
+
+| Тип | Хранение | Срок жизни |
+|-----|----------|------------|
+| Access token | Память (JS) | Короткий |
+| Refresh token | HttpOnly cookie | Длинный |
 
 ## API ключи
 
-Для программного доступа к backend API настройте `VITE_API_KEY` — он будет передаваться в заголовке `X-API-Key`.
+Для программного доступа к Backend API настройте API ключи через панель (Settings → API Keys). API ключи передаются в заголовке `X-API-Key`.

@@ -22,9 +22,6 @@ docker pull ghcr.io/nodenexusdev/node_nexus_panel:latest
 docker run -d \
   -p 8080:8080 \
   -e VITE_API_URL=https://api.example.com \
-  -e VITE_WS_URL=wss://api.example.com \
-  -e VITE_PANEL_LOGIN=admin \
-  -e VITE_PANEL_PASSWORD=secret \
   ghcr.io/nodenexusdev/node_nexus_panel:latest
 ```
 
@@ -38,9 +35,6 @@ services:
       - "8080:8080"
     environment:
       - VITE_API_URL=https://api.example.com
-      - VITE_WS_URL=wss://api.example.com
-      - VITE_PANEL_LOGIN=admin
-      - VITE_PANEL_PASSWORD=secret
     restart: unless-stopped
 ```
 
