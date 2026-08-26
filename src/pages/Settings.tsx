@@ -12,6 +12,7 @@ import { FormSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/useToast'
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
 import { useApiKeys, useCreateApiKey, useUpdateApiKey, useDeleteApiKey, useConfigExport, useConfigImport } from '../hooks/useSettings'
+import { useUsers, useCreateUser, useDeleteUser } from '../hooks/useUsers'
 import type { DryRunImportResult } from '../api/types'
 
 export function Settings() {
@@ -38,6 +39,15 @@ export function Settings() {
   const [editKeyExpiresAt, setEditKeyExpiresAt] = useState('')
   const [deleteKeyTarget, setDeleteKeyTarget] = useState<{ id: string; name: string } | null>(null)
   const [importPreview, setImportPreview] = useState<{ data: Record<string, unknown>; result: DryRunImportResult } | null>(null)
+
+  const { data: usersData, isLoading: usersLoading } = useUsers()
+  const createUser = useCreateUser()
+  const deleteUser = useDeleteUser()
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false)
+  const [newUserEmail, setNewUserEmail] = useState('')
+  const [newUserPassword, setNewUserPassword] = useState('')
+  const [newUserSuperuser, setNewUserSuperuser] = useState(false)
+  const [deleteUserTarget, setDeleteUserTarget] = useState<{ id: string; email: string } | null>(null)
 
   const apiKeys = apiKeysData?.items || []
 
@@ -119,6 +129,21 @@ export function Settings() {
     })
   }
 
+  const handleCreateUser = () => {
+    createUser.mutate({ email: newUserEmail, password: newUserPassword, is_superuser: newUserSuperuser }, {
+      onSuccess: () => { toast('success', t('settings.toastUserCreated')); setShowCreateUserModal(false); setNewUserEmail(''); setNewUserPassword(''); setNewUserSuperuser(false) },
+      onError: () => toast('error', t('settings.toastUserCreateFailed')),
+    })
+  }
+
+  const handleDeleteUser = () => {
+    if (!deleteUserTarget) return
+    deleteUser.mutate(deleteUserTarget.id, {
+      onSuccess: () => { toast('success', t('settings.toastUserDeleted')); setDeleteUserTarget(null) },
+      onError: () => toast('error', t('settings.toastUserDeleteFailed')),
+    })
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
@@ -171,6 +196,36 @@ export function Settings() {
             <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
           </div>
           {configImport.isPending && <p className="text-sm text-surface-500 mt-2">{t('settings.importing')}</p>}
+        </CardContent>
+      </Card>
+
+      <Card hover className="stagger-item" style={{ animationDelay: '300ms' }}>
+        <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('settings.users', 'Users')}</h2></CardHeader>
+        <CardContent>
+          {usersLoading ? <FormSkeleton fields={2} /> : (
+            <div className="space-y-4">
+              {(!usersData?.items || usersData.items.length === 0) ? (
+                <p className="text-sm text-surface-500 dark:text-surface-500">{t('settings.noUsers', 'No users')}</p>
+              ) : usersData.items.map((user) => (
+                <div key={user.id} className="p-3 bg-surface-50 rounded-lg dark:bg-surface-800/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-surface-900 dark:text-white">{user.email}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {user.is_superuser && <Badge variant="warning">{t('settings.superuser', 'Superuser')}</Badge>}
+                        {!user.is_active && <Badge variant="info">{t('settings.inactive')}</Badge>}
+                      </div>
+                      <p className="text-xs text-surface-500 dark:text-surface-500 mt-1">
+                        {t('settings.created')} {new Date(user.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteUserTarget({ id: user.id, email: user.email })}>{t('common.delete')}</Button>
+                  </div>
+                </div>
+              ))}
+              <Button variant="secondary" onClick={() => setShowCreateUserModal(true)}>{t('settings.createUser', 'Create User')}</Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -294,6 +349,25 @@ export function Settings() {
       </Modal>
 
       <ConfirmDialog isOpen={!!deleteKeyTarget} onClose={() => setDeleteKeyTarget(null)} onConfirm={handleDeleteKey} title={t('settings.deleteTitle')} message={t('settings.deleteMsg', { name: deleteKeyTarget?.name })} confirmLabel={t('common.delete')} loading={deleteApiKey.isPending} />
+
+      <Modal isOpen={showCreateUserModal} onClose={() => setShowCreateUserModal(false)} title={t('settings.createUser', 'Create User')} size="sm">
+        <div className="space-y-4">
+          <Input label={t('settings.userEmail', 'Email')} placeholder="user@example.com" type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
+          <Input label={t('settings.userPassword', 'Password')} type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} />
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={newUserSuperuser} onChange={(e) => setNewUserSuperuser(e.target.checked)} className="rounded border-surface-300 dark:border-surface-600" />
+            <span className="text-sm text-surface-700 dark:text-surface-300">{t('settings.superuser', 'Superuser')}</span>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setShowCreateUserModal(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleCreateUser} disabled={createUser.isPending || !newUserEmail || !newUserPassword}>
+              {createUser.isPending ? t('common.loading') : t('common.create')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog isOpen={!!deleteUserTarget} onClose={() => setDeleteUserTarget(null)} onConfirm={handleDeleteUser} title={t('settings.deleteUserTitle', 'Delete User')} message={t('settings.deleteUserMsg', { email: deleteUserTarget?.email })} confirmLabel={t('common.delete')} loading={deleteUser.isPending} />
     </div>
   )
 }

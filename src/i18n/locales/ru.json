@@ -309,7 +309,13 @@
     "step": "Шаг {{number}}",
     "truncated": "Обрезано",
     "toastStepLabelRequired": "Название шага обязательно",
-    "toastCommandIdRequired": "Команда обязательна"
+    "toastCommandIdRequired": "Команда обязательна",
+    "stats": "Статистика",
+    "totalExecutions": "Всего запусков",
+    "successRate": "Процент успеха",
+    "avgDuration": "Среднее время",
+    "failed": "Ошибки",
+    "noStats": "Статистика отсутствует"
   },
   "docker": {
     "title": "Docker",
@@ -560,7 +566,19 @@
     "duplicates": "Дубликаты",
     "errors": "Ошибки",
     "confirmImport": "Подтвердить импорт",
-    "keyCopied": "Ключ скопирован в буфер обмена"
+    "keyCopied": "Ключ скопирован в буфер обмена",
+    "users": "Пользователи",
+    "noUsers": "Нет пользователей",
+    "createUser": "Создать пользователя",
+    "userEmail": "Email",
+    "userPassword": "Пароль",
+    "superuser": "Суперпользователь",
+    "toastUserCreated": "Пользователь создан",
+    "toastUserCreateFailed": "Не удалось создать пользователя",
+    "toastUserDeleted": "Пользователь удалён",
+    "toastUserDeleteFailed": "Не удалось удалить пользователя",
+    "deleteUserTitle": "Удалить пользователя",
+    "deleteUserMsg": "Вы уверены, что хотите удалить пользователя {{email}}?"
   },
   "common": {
     "connected": "Подключено",
