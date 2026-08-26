@@ -38,7 +38,7 @@ class ApiClient {
       headers,
     })
 
-    if (response.status === 401 && this.accessToken) {
+    if (response.status === 401) {
       const newToken = await this.tryRefresh()
       if (newToken) {
         headers['Authorization'] = `Bearer ${newToken}`
