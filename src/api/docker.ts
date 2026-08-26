@@ -16,7 +16,10 @@ import type {
   DockerImageTagResponse,
   DockerImageInspectResponse,
   DockerNetwork,
+  DockerNetworkCreateResponse,
   DockerVolume,
+  DockerVolumeCreateResponse,
+  DockerVolumePruneResponse,
   BulkDockerRequest,
   BulkDockerResponse,
   BulkDockerImageBuildRequest,
@@ -126,7 +129,7 @@ export const dockerApi = {
     api.get<DockerNetwork[]>(`${nodesBase(nodeId)}/networks`),
 
   createNetwork: (nodeId: string, data: NetworkCreateRequest) =>
-    api.post<DockerNetwork>(`${nodesBase(nodeId)}/networks`, data),
+    api.post<DockerNetworkCreateResponse>(`${nodesBase(nodeId)}/networks`, data),
 
   deleteNetwork: (nodeId: string, networkId: string) =>
     api.delete<void>(`${nodesBase(nodeId)}/networks/${networkId}`),
@@ -144,7 +147,7 @@ export const dockerApi = {
     api.get<DockerVolume[]>(`${nodesBase(nodeId)}/volumes`),
 
   createVolume: (nodeId: string, data: VolumeCreateRequest) =>
-    api.post<DockerVolume>(`${nodesBase(nodeId)}/volumes`, data),
+    api.post<DockerVolumeCreateResponse>(`${nodesBase(nodeId)}/volumes`, data),
 
   deleteVolume: (nodeId: string, volumeName: string) =>
     api.delete<void>(`${nodesBase(nodeId)}/volumes/${volumeName}`),
@@ -153,13 +156,16 @@ export const dockerApi = {
     api.get<VolumeInspectResponse>(`${nodesBase(nodeId)}/volumes/${volumeName}`),
 
   pruneVolumes: (nodeId: string) =>
-    api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/volumes/prune`),
+    api.post<DockerVolumePruneResponse>(`${nodesBase(nodeId)}/volumes/prune`),
 
   getSystemInfo: (nodeId: string) =>
     api.get<DockerSystemInfo>(`${nodesBase(nodeId)}/system/info`),
 
   getSystemDf: (nodeId: string) =>
     api.get<DockerSystemDfItem[]>(`${nodesBase(nodeId)}/system/df`),
+
+  pruneNetworks: (nodeId: string) =>
+    api.post<void>(`${nodesBase(nodeId)}/networks/prune`),
 
   bulkExec: (data: BulkDockerRequest) =>
     api.post<BulkDockerResponse>('/docker/bulk/exec', data),

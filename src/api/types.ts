@@ -726,16 +726,13 @@ export interface NoteUpdate {
   content: string
 }
 
-export interface Tag {
-  name: string
-  count: number
-}
-
 // ── Settings: API Keys ──────────────────────────────────────────
 
 export interface APIKeyListResponse {
   items: APIKeyResponse[]
   total: number
+  page: number
+  size: number
 }
 
 // ── Config: Export/Import ───────────────────────────────────────
@@ -1069,6 +1066,40 @@ export interface DockerSystemDfItem {
   active_size?: string
   reclaimable_size?: string
   reclaimable_percent?: string
+}
+
+// ── Docker: Network creation response ─────────────────────────────
+
+export interface DockerNetworkCreateResponse {
+  id: string
+  name: string
+  driver?: string
+}
+
+// ── Docker: Volume creation response ──────────────────────────────
+
+export interface DockerVolumeCreateResponse {
+  name: string
+  driver?: string
+  mountpoint?: string
+}
+
+// ── Docker: Volume prune response ─────────────────────────────────
+
+export interface DockerVolumePruneResponse {
+  output: string
+}
+
+// ── Bulk: Node Check Request ──────────────────────────────────────
+
+export interface BulkNodeCheckRequest {
+  node_ids: string[]
+}
+
+// ── Bulk: Node Delete Request ─────────────────────────────────────
+
+export interface BulkNodeDeleteRequest {
+  node_ids: string[]
 }
 
 export interface HealthResponse {
