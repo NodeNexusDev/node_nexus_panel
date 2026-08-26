@@ -27,7 +27,7 @@ describe('useNotes', () => {
 describe('useCreateNote', () => {
   it('creates a note', async () => {
     const { result } = renderHook(() => useCreateNote(), { wrapper: createWrapper() })
-    result.current.mutate({ targetType: 'node', targetId: '1', data: { content: 'test note' } })
+    result.current.mutate({ targetType: 'node', targetId: '1', data: { target_type: 'node', target_id: '1', content: 'test note' } })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toBeDefined()
   })
