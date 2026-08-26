@@ -1,6 +1,6 @@
-import type { Script } from '../../api/types'
+import type { ScriptResponse } from '../../api/types'
 
-export const mockScripts: Script[] = [
+export const mockScripts: ScriptResponse[] = [
   {
     id: '1',
     name: 'backup-db.sh',

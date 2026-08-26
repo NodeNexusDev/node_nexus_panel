@@ -309,7 +309,13 @@
     "step": "Step {{number}}",
     "truncated": "Truncated",
     "toastStepLabelRequired": "Step label is required",
-    "toastCommandIdRequired": "Command is required"
+    "toastCommandIdRequired": "Command is required",
+    "stats": "Stats",
+    "totalExecutions": "Total Executions",
+    "successRate": "Success Rate",
+    "avgDuration": "Avg Duration",
+    "failed": "Failed",
+    "noStats": "No stats available"
   },
   "docker": {
     "title": "Docker",
@@ -449,6 +455,10 @@
     "toastPruneImagesFailed": "Failed to prune images",
     "toastPruneVolumesDone": "Volumes pruned",
     "toastPruneVolumesFailed": "Failed to prune volumes",
+    "pruneNetworks": "Prune Networks",
+    "confirmPruneNetworks": "Are you sure you want to prune unused networks?",
+    "toastPruneNetworksDone": "Networks pruned",
+    "toastPruneNetworksFailed": "Failed to prune networks",
     "toastCreateNetworkFailed": "Failed to create network",
     "toastCreateVolumeFailed": "Failed to create volume",
     "toastDeleteNetworkFailed": "Failed to delete network",
@@ -556,7 +566,19 @@
     "duplicates": "Duplicates",
     "errors": "Errors",
     "confirmImport": "Confirm Import",
-    "keyCopied": "Key copied to clipboard"
+    "keyCopied": "Key copied to clipboard",
+    "users": "Users",
+    "noUsers": "No users",
+    "createUser": "Create User",
+    "userEmail": "Email",
+    "userPassword": "Password",
+    "superuser": "Superuser",
+    "toastUserCreated": "User created",
+    "toastUserCreateFailed": "Failed to create user",
+    "toastUserDeleted": "User deleted",
+    "toastUserDeleteFailed": "Failed to delete user",
+    "deleteUserTitle": "Delete User",
+    "deleteUserMsg": "Are you sure you want to delete user {{email}}?"
   },
   "common": {
     "connected": "Connected",

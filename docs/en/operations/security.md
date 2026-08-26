@@ -21,7 +21,7 @@ Authentication state is stored in `sessionStorage`, which is cleared when the br
 
 ## Environment Variables
 
-Login credentials (`VITE_PANEL_LOGIN`, `VITE_PANEL_PASSWORD`) are injected at runtime in Docker, not baked into the JS bundle. See [Environment Variables](./environment.md).
+Environment variables are injected at runtime in Docker, not baked into the JS bundle. See [Environment Variables](./environment.md).
 
 ## CSP
 

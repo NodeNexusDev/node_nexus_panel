@@ -3,11 +3,11 @@ import {
   type FetchEventSourceInit,
 } from '@microsoft/fetch-event-source'
 import { env } from '../lib/env'
+import { api } from './client'
 
 type SseEventHandler = (event: MessageEvent) => void
 
 const BASE_URL = env.VITE_API_URL || ''
-const API_KEY = env.VITE_API_KEY
 
 export class EventsClient {
   private controller: AbortController | null = null
@@ -28,8 +28,9 @@ export class EventsClient {
     this.controller = new AbortController()
 
     const headers: Record<string, string> = {}
-    if (API_KEY) {
-      headers['X-API-Key'] = API_KEY
+    const token = api.getToken()
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
     }
 
     fetchEventSource(`${BASE_URL}/api/v1/events/stream`, {

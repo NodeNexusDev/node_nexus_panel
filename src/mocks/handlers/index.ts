@@ -11,8 +11,11 @@ import { notesHandlers } from './notes'
 import { configHandlers } from './config'
 import { eventsHandlers } from './events'
 import { healthHandlers } from './health'
+import { authHandlers } from './auth'
+import { userHandlers } from './users'
 
 export const handlers = [
+  ...authHandlers,
   ...nodeHandlers,
   ...commandHandlers,
   ...scriptHandlers,
@@ -26,4 +29,5 @@ export const handlers = [
   ...configHandlers,
   ...eventsHandlers,
   ...healthHandlers,
+  ...userHandlers,
 ]

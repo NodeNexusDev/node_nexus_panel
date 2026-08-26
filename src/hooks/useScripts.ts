@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { scriptsApi } from '../api/scripts'
 import type {
-  Script,
+  ScriptResponse,
   ScriptCreate,
   ScriptUpdate,
   ScriptExecuteRequest,
@@ -13,14 +13,14 @@ import type {
 } from '../api/types'
 
 export function useScripts(params?: { page?: number; size?: number; tag?: string; search?: string }) {
-  return useQuery<PaginatedResponse<Script>>({
+  return useQuery<PaginatedResponse<ScriptResponse>>({
     queryKey: ['scripts', params],
     queryFn: () => scriptsApi.getAll(params),
   })
 }
 
 export function useScript(id: string) {
-  return useQuery<Script>({
+  return useQuery<ScriptResponse>({
     queryKey: ['scripts', id],
     queryFn: () => scriptsApi.getById(id),
     enabled: !!id,

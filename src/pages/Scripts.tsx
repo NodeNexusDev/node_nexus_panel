@@ -34,12 +34,12 @@ import { useNodes } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { TagBadge } from '../components/ui/TagBadge'
 import { useSort } from '../hooks/useSort'
-import type { Script } from '../api/types'
+import type { ScriptResponse } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 
 type SortKey = 'name' | 'steps' | 'updated_at'
 
-function scriptSortValue(script: Script, key: SortKey): string | number {
+function scriptSortValue(script: ScriptResponse, key: SortKey): string | number {
   if (key === 'steps') return script.steps.length
   return script[key] ?? ''
 }
@@ -69,10 +69,10 @@ export function Scripts() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
-  const [runTarget, setRunTarget] = useState<Script | null>(null)
+  const [runTarget, setRunTarget] = useState<ScriptResponse | null>(null)
   const [runNodeIds, setRunNodeIds] = useState<string[]>([])
   const [runTags, setRunTags] = useState('')
-  const [editScript, setEditScript] = useState<Script | null>(null)
+  const [editScript, setEditScript] = useState<ScriptResponse | null>(null)
   const [cloneTarget, setCloneTarget] = useState<{ id: string; name: string } | null>(null)
   const [scheduleTarget, setScheduleTarget] = useState<{ id: string; name: string } | null>(null)
   const [scheduleCron, setScheduleCron] = useState('')
@@ -96,7 +96,7 @@ export function Scripts() {
     deleteScript.mutate(deleteTarget.id, { onSuccess: () => { toast('success', t('scripts.toastDeleted', { name: deleteTarget.name })); setDeleteTarget(null) }, onError: () => toast('error', t('scripts.toastDeleteFailed')) })
   }
 
-  const handleRun = (script: Script) => {
+  const handleRun = (script: ScriptResponse) => {
     setRunTarget(script)
     setRunNodeIds([])
     setRunTags('')
@@ -125,7 +125,7 @@ export function Scripts() {
     }
   }
 
-  const scriptMenu = (script: Script): DropdownMenuItem[] => [
+  const scriptMenu = (script: ScriptResponse): DropdownMenuItem[] => [
     { key: 'edit', label: t('common.edit'), onClick: () => setEditScript(script) },
     { key: 'clone', label: t('scripts.clone'), onClick: () => setCloneTarget({ id: script.id, name: script.name }) },
     { key: 'schedule', label: t('scripts.schedule'), onClick: () => { setScheduleTarget({ id: script.id, name: script.name }); setScheduleCron(''); setScheduleNodeIds([]); setScheduleTimezone('UTC'); setScheduleMisfireGrace(60) } },
@@ -133,7 +133,7 @@ export function Scripts() {
     { key: 'delete', label: t('common.delete'), danger: true, onClick: () => setDeleteTarget({ id: script.id, name: script.name }) },
   ]
 
-  const columns: Column<Script>[] = [
+  const columns: Column<ScriptResponse>[] = [
     {
       key: 'name',
       header: <SortableHeader label={t('common.name')} sortKey="name" sort={sort} onSort={toggleSort} />,
@@ -180,7 +180,7 @@ export function Scripts() {
     },
   ]
 
-  const renderMobileScript = (script: Script) => (
+  const renderMobileScript = (script: ScriptResponse) => (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">

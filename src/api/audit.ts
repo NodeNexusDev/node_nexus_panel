@@ -1,5 +1,8 @@
 import { api } from './client'
-import type { AuditLog, PaginatedResponse } from './types'
+import type {
+  AuditLogResponse,
+  PaginatedResponse,
+} from './types'
 
 export const auditApi = {
   getAll: (params?: { page?: number; size?: number; node_id?: string; action?: string; user?: string; date_from?: string; date_to?: string }) => {
@@ -12,7 +15,7 @@ export const auditApi = {
     if (params?.date_from) query.set('date_from', params.date_from)
     if (params?.date_to) query.set('date_to', params.date_to)
     const qs = query.toString()
-    return api.get<PaginatedResponse<AuditLog>>(`/audit/${qs ? `?${qs}` : ''}`)
+    return api.get<PaginatedResponse<AuditLogResponse>>(`/audit/${qs ? `?${qs}` : ''}`)
   },
 
   clear: () =>

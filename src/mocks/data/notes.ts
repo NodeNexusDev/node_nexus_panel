@@ -1,6 +1,6 @@
-import type { Note } from '../../api/types'
+import type { NoteResponse } from '../../api/types'
 
-export const mockNotes: Note[] = [
+export const mockNotes: NoteResponse[] = [
   {
     id: '1',
     target_type: 'node',

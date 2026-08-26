@@ -7,7 +7,7 @@ import { Spinner } from '../ui/Spinner'
 import { IconScripts } from '../ui/Icons'
 import { useScripts, useRunScript } from '../../hooks/useScripts'
 import { useToast } from '../ui/useToast'
-import type { Node, Script } from '../../api/types'
+import type { Node, ScriptResponse } from '../../api/types'
 
 interface NodeScriptModalProps {
   node: Node | null
@@ -22,7 +22,7 @@ export function NodeScriptModal({ node, onClose }: NodeScriptModalProps) {
   const runScript = useRunScript()
 
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<Script | null>(null)
+  const [selected, setSelected] = useState<ScriptResponse | null>(null)
 
   useEffect(() => {
     if (node) {

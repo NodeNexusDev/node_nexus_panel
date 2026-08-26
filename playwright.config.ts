@@ -1,7 +1,4 @@
 import { defineConfig, devices } from '@playwright/test'
-import { loadEnv } from 'vite'
-
-const env = loadEnv('development', process.cwd(), '')
 
 export default defineConfig({
   testDir: './e2e',
@@ -35,8 +32,6 @@ export default defineConfig({
     timeout: 30_000,
     reuseExistingServer: !process.env.CI,
     env: {
-      VITE_PANEL_LOGIN: process.env.VITE_PANEL_LOGIN || env.VITE_PANEL_LOGIN || 'admin',
-      VITE_PANEL_PASSWORD: process.env.VITE_PANEL_PASSWORD || env.VITE_PANEL_PASSWORD || 'password',
       VITE_ENABLE_MOCKS: 'true',
     },
   },

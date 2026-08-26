@@ -12,7 +12,7 @@ import { useToast } from '../ui/useToast'
 import { getDefaultParams } from './command-form-utils'
 import { CommandParamInputs } from './CommandParamInputs'
 import { ExecutionResult } from './ExecutionResult'
-import type { Command, BulkNodeResult } from '../../api/types'
+import type { CommandResponse, BulkNodeResult } from '../../api/types'
 
 type Tab = 'command' | 'custom'
 
@@ -31,7 +31,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
 
   const [tab, setTab] = useState<Tab>('command')
   const [search, setSearch] = useState('')
-  const [selectedCommand, setSelectedCommand] = useState<Command | null>(null)
+  const [selectedCommand, setSelectedCommand] = useState<CommandResponse | null>(null)
   const [params, setParams] = useState<Record<string, unknown>>({})
   const [customCommand, setCustomCommand] = useState('')
 
@@ -50,7 +50,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
 
   const filtered = commands.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
 
-  const selectCommand = (cmd: Command) => {
+  const selectCommand = (cmd: CommandResponse) => {
     setSelectedCommand(cmd)
     setParams(getDefaultParams(cmd.parameters))
     setBulkResult(null)

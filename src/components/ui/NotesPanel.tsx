@@ -4,7 +4,7 @@ import { Button } from './Button'
 import { Spinner } from './Spinner'
 import { ConfirmDialog } from './ConfirmDialog'
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '../../hooks/useNotes'
-import type { Note } from '../../api/types'
+import type { NoteResponse } from '../../api/types'
 
 interface NotesPanelProps {
   targetType: 'node' | 'command' | 'script'
@@ -19,9 +19,9 @@ export function NotesPanel({ targetType, targetId }: NotesPanelProps) {
   const deleteNote = useDeleteNote()
 
   const [newContent, setNewContent] = useState('')
-  const [editTarget, setEditTarget] = useState<Note | null>(null)
+  const [editTarget, setEditTarget] = useState<NoteResponse | null>(null)
   const [editContent, setEditContent] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState<Note | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<NoteResponse | null>(null)
   const editDialogRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
 

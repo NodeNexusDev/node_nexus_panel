@@ -13,6 +13,7 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
+import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconScripts, IconArrowLeft, IconXCircle, IconZap } from '../components/ui/Icons'
 import { ExecutionResult } from '../components/commands/ExecutionResult'
@@ -21,6 +22,7 @@ import { useNodes } from '../hooks/useNodes'
 import { ScriptFormModal, type ScriptFormValues } from '../components/scripts/ScriptFormModal'
 import {
   useScript,
+  useScriptStats,
   useScriptSchedule,
   useScriptScheduleHistory,
   useScriptExecutions,
@@ -35,9 +37,9 @@ import {
   useBulkCancelScriptExecutions,
   useBulkRetryScriptExecutions,
 } from '../hooks/useScripts'
-import type { Script } from '../api/types'
+import type { ScriptResponse } from '../api/types'
 
-type Tab = 'overview' | 'steps' | 'executions' | 'schedule' | 'notes'
+type Tab = 'overview' | 'steps' | 'executions' | 'schedule' | 'stats' | 'notes'
 
 export function ScriptDetail() {
   const { t } = useTranslation()
@@ -77,6 +79,7 @@ export function ScriptDetail() {
     { key: 'steps', label: t('scripts.steps') },
     { key: 'executions', label: t('scripts.executions') },
     { key: 'schedule', label: t('scripts.schedule') },
+    { key: 'stats', label: t('scripts.stats', 'Stats') },
     { key: 'notes', label: t('notes.title') },
   ]
 
@@ -167,6 +170,7 @@ export function ScriptDetail() {
       {activeTab === 'steps' && <StepsTab script={script} />}
       {activeTab === 'executions' && <ExecutionsTab scriptId={script.id} />}
       {activeTab === 'schedule' && <ScheduleTab scriptId={script.id} />}
+      {activeTab === 'stats' && <StatsTab scriptId={script.id} />}
       {activeTab === 'notes' && <NotesTab scriptId={script.id} />}
 
       <Modal isOpen={showRunModal} onClose={() => setShowRunModal(false)} title={`${t('scripts.run')}: ${script.name}`}>
@@ -262,7 +266,7 @@ export function ScriptDetail() {
   )
 }
 
-function OverviewTab({ script }: { script: Script }) {
+function OverviewTab({ script }: { script: ScriptResponse }) {
   const { t } = useTranslation()
   return (
     <Card>
@@ -286,7 +290,7 @@ function OverviewTab({ script }: { script: Script }) {
   )
 }
 
-function StepsTab({ script }: { script: Script }) {
+function StepsTab({ script }: { script: ScriptResponse }) {
   const { t } = useTranslation()
   return (
     <Card>
@@ -409,6 +413,43 @@ function ExecutionsTab({ scriptId }: { scriptId: string }) {
               </div>
             ))}
           </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function StatsTab({ scriptId }: { scriptId: string }) {
+  const { t } = useTranslation()
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const { data: stats, isLoading, error, refetch } = useScriptStats(scriptId, { date_from: dateFrom || undefined, date_to: dateTo || undefined })
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('scripts.stats', 'Stats')}</h2>
+          <div className="flex items-center gap-2">
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-1.5 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            <span className="text-surface-400">—</span>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-1.5 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <Spinner size="lg" className="mx-auto my-8" />
+        ) : error ? (
+          <ErrorState error={error} onRetry={refetch} />
+        ) : stats ? (
+          <StatsGrid>
+            <StatCard label={t('scripts.totalExecutions', 'Total Executions')} value={stats.total} />
+            <StatCard label={t('scripts.successRate', 'Success Rate')} value={stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'} tone="success" />
+            <StatCard label={t('scripts.avgDuration', 'Avg Duration')} value={stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'} />
+            <StatCard label={t('scripts.failed', 'Failed')} value={stats.failed} tone="danger" />
+          </StatsGrid>
+        ) : (
+          <EmptyState title={t('scripts.noStats', 'No stats available')} />
         )}
       </CardContent>
     </Card>

@@ -14,10 +14,6 @@ source_revision: 2026-08-17
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
 | `VITE_API_URL` | URL Backend API | `http://localhost:8000` |
-| `VITE_WS_URL` | URL WebSocket | `ws://localhost:8000` |
-| `VITE_API_KEY` | API ключ для заголовка X-API-Key | *(пусто)* |
-| `VITE_PANEL_LOGIN` | Логин для входа в панель | `admin` |
-| `VITE_PANEL_PASSWORD` | Пароль для входа в панель | `password` |
 
 ## Как это работает
 
@@ -35,9 +31,6 @@ services:
     image: ghcr.io/nodenexusdev/node_nexus_panel:latest
     environment:
       - VITE_API_URL=https://api.example.com
-      - VITE_WS_URL=wss://api.example.com
-      - VITE_PANEL_LOGIN=myuser
-      - VITE_PANEL_PASSWORD=mypassword
 ```
 
 ## Локальная разработка
@@ -46,7 +39,4 @@ services:
 
 ```bash
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
-VITE_PANEL_LOGIN=admin
-VITE_PANEL_PASSWORD=password
 ```

@@ -29,7 +29,7 @@ import {
 import { useToast } from '../components/ui/useToast'
 import { TagBadge } from '../components/ui/TagBadge'
 import { useSort } from '../hooks/useSort'
-import type { Command, CommandCreate, CommandUpdate } from '../api/types'
+import type { CommandResponse, CommandCreate, CommandUpdate } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 import { ParameterEditor } from '../components/commands/CommandFormEditor'
 import { CommandExecuteModal } from '../components/commands/CommandExecuteModal'
@@ -66,9 +66,9 @@ export function Commands() {
   const deleteCommand = useDeleteCommand()
 
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editTarget, setEditTarget] = useState<Command | null>(null)
+  const [editTarget, setEditTarget] = useState<CommandResponse | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const [executeTarget, setExecuteTarget] = useState<Command | null>(null)
+  const [executeTarget, setExecuteTarget] = useState<CommandResponse | null>(null)
 
   const createForm = useForm<CommandCreateFormValues>({
     resolver: zodResolver(commandCreateSchema) as Resolver<CommandCreateFormValues>,
@@ -93,7 +93,7 @@ export function Commands() {
     setShowCreateModal(true)
   }
 
-  const openEdit = (cmd: Command) => {
+  const openEdit = (cmd: CommandResponse) => {
     setEditTarget(cmd)
     editForm.reset({
       name: cmd.name,
@@ -143,7 +143,7 @@ export function Commands() {
     )
   }
 
-  const handleClone = (cmd: Command) => {
+  const handleClone = (cmd: CommandResponse) => {
     cloneCommand.mutate(
       { id: cmd.id, newName: `${cmd.name} (copy)` },
       { onSuccess: () => toast('success', t('commands.toastCloned')), onError: () => toast('error', t('commands.toastCloneFailed')) },
@@ -158,14 +158,14 @@ export function Commands() {
     })
   }
 
-  const commandMenu = (cmd: Command): DropdownMenuItem[] => [
+  const commandMenu = (cmd: CommandResponse): DropdownMenuItem[] => [
     { key: 'edit', label: t('common.edit'), onClick: () => openEdit(cmd) },
     { key: 'clone', label: t('commands.clone'), onClick: () => handleClone(cmd) },
     { key: 'sep', label: '', onClick: () => {}, separator: true },
     { key: 'delete', label: t('common.delete'), danger: true, onClick: () => setDeleteTarget({ id: cmd.id, name: cmd.name }) },
   ]
 
-  const columns: Column<Command>[] = [
+  const columns: Column<CommandResponse>[] = [
     {
       key: 'name',
       header: <SortableHeader label={t('common.name')} sortKey="name" sort={sort} onSort={toggleSort} />,
@@ -213,7 +213,7 @@ export function Commands() {
     },
   ]
 
-  const renderMobileCommand = (cmd: Command) => (
+  const renderMobileCommand = (cmd: CommandResponse) => (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-accent-500/10 text-accent-600 dark:bg-accent-500/20 dark:text-accent-400 flex items-center justify-center shrink-0">

@@ -13,7 +13,7 @@ import { useToast } from '../ui/useToast'
 import { getDefaultParams } from '../commands/command-form-utils'
 import { CommandParamInputs } from '../commands/CommandParamInputs'
 import { ExecutionResult } from '../commands/ExecutionResult'
-import type { Command, CommandResult, Node } from '../../api/types'
+import type { CommandResponse, CommandResult, Node } from '../../api/types'
 
 type Tab = 'command' | 'custom'
 
@@ -37,7 +37,7 @@ export function NodeCommandModal({ node, onClose }: NodeCommandModalProps) {
 
   const [tab, setTab] = useState<Tab>('command')
   const [search, setSearch] = useState('')
-  const [selectedCommand, setSelectedCommand] = useState<Command | null>(null)
+  const [selectedCommand, setSelectedCommand] = useState<CommandResponse | null>(null)
   const [params, setParams] = useState<Record<string, unknown>>({})
   const [customCommand, setCustomCommand] = useState('')
   const [customTimeout, setCustomTimeout] = useState('')
@@ -60,7 +60,7 @@ export function NodeCommandModal({ node, onClose }: NodeCommandModalProps) {
 
   const filtered = commands.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
 
-  const selectCommand = (cmd: Command) => {
+  const selectCommand = (cmd: CommandResponse) => {
     setSelectedCommand(cmd)
     setParams(getDefaultParams(cmd.parameters))
     setCommandResult(null)

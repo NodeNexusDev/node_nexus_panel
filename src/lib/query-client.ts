@@ -19,6 +19,9 @@ export const queryClient = new QueryClient({
         if (error instanceof ApiRequestError && error.status === 404) {
           return false
         }
+        if (error instanceof ApiRequestError && error.status === 401) {
+          return false
+        }
         return failureCount < 3
       },
       refetchOnWindowFocus: true,

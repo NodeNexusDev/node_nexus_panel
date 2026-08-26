@@ -2,11 +2,11 @@ import { api } from './client'
 import type {
   DockerContainer,
   DockerContainerInspect,
-  DockerCreateContainerRequest,
+  ContainerCreateRequest,
   ContainerCreatedResponse,
   DockerExecRequest,
   DockerExecResult,
-  DockerContainerStats,
+  DockerContainerStatsResponse,
   DockerImage,
   DockerImagePullRequest,
   DockerPullResult,
@@ -16,7 +16,10 @@ import type {
   DockerImageTagResponse,
   DockerImageInspectResponse,
   DockerNetwork,
+  DockerNetworkCreateResponse,
   DockerVolume,
+  DockerVolumeCreateResponse,
+  DockerVolumePruneResponse,
   BulkDockerRequest,
   BulkDockerResponse,
   BulkDockerImageBuildRequest,
@@ -36,6 +39,8 @@ import type {
   DockerTopResult,
   DockerSystemInfo,
   DockerSystemDfItem,
+  DockerActionResponse,
+  DockerContainerRenameResponse,
 } from './types'
 
 function nodesBase(nodeId: string) {
@@ -48,7 +53,7 @@ export const dockerApi = {
     return api.get<DockerContainer[]>(`${nodesBase(nodeId)}/containers${qs}`)
   },
 
-  createContainer: (nodeId: string, data: DockerCreateContainerRequest) =>
+  createContainer: (nodeId: string, data: ContainerCreateRequest) =>
     api.post<ContainerCreatedResponse>(`${nodesBase(nodeId)}/containers`, data),
 
   getContainer: (nodeId: string, containerId: string) =>
@@ -73,13 +78,13 @@ export const dockerApi = {
   },
 
   pauseContainer: (nodeId: string, containerId: string) =>
-    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/pause`),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/pause`),
 
   unpauseContainer: (nodeId: string, containerId: string) =>
-    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/unpause`),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/unpause`),
 
   renameContainer: (nodeId: string, containerId: string, data: ContainerRenameRequest) =>
-    api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/rename`, data),
+    api.post<DockerContainerRenameResponse>(`${nodesBase(nodeId)}/containers/${containerId}/rename`, data),
 
   pruneContainers: (nodeId: string) =>
     api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/containers/prune`),
@@ -99,7 +104,7 @@ export const dockerApi = {
   },
 
   getContainerStats: (nodeId: string, containerId: string) =>
-    api.get<DockerContainerStats>(`${nodesBase(nodeId)}/containers/${containerId}/stats`),
+    api.get<DockerContainerStatsResponse>(`${nodesBase(nodeId)}/containers/${containerId}/stats`),
 
   getImages: (nodeId: string) =>
     api.get<DockerImage[]>(`${nodesBase(nodeId)}/images`),
@@ -126,7 +131,7 @@ export const dockerApi = {
     api.get<DockerNetwork[]>(`${nodesBase(nodeId)}/networks`),
 
   createNetwork: (nodeId: string, data: NetworkCreateRequest) =>
-    api.post<DockerNetwork>(`${nodesBase(nodeId)}/networks`, data),
+    api.post<DockerNetworkCreateResponse>(`${nodesBase(nodeId)}/networks`, data),
 
   deleteNetwork: (nodeId: string, networkId: string) =>
     api.delete<void>(`${nodesBase(nodeId)}/networks/${networkId}`),
@@ -135,16 +140,16 @@ export const dockerApi = {
     api.get<NetworkInspectResponse>(`${nodesBase(nodeId)}/networks/${networkId}`),
 
   connectNetwork: (nodeId: string, networkId: string, data: NetworkConnectRequest) =>
-    api.post<void>(`${nodesBase(nodeId)}/networks/${networkId}/connect`, data),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/networks/${networkId}/connect`, data),
 
   disconnectNetwork: (nodeId: string, networkId: string, data: NetworkDisconnectRequest) =>
-    api.post<void>(`${nodesBase(nodeId)}/networks/${networkId}/disconnect`, data),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/networks/${networkId}/disconnect`, data),
 
   getVolumes: (nodeId: string) =>
     api.get<DockerVolume[]>(`${nodesBase(nodeId)}/volumes`),
 
   createVolume: (nodeId: string, data: VolumeCreateRequest) =>
-    api.post<DockerVolume>(`${nodesBase(nodeId)}/volumes`, data),
+    api.post<DockerVolumeCreateResponse>(`${nodesBase(nodeId)}/volumes`, data),
 
   deleteVolume: (nodeId: string, volumeName: string) =>
     api.delete<void>(`${nodesBase(nodeId)}/volumes/${volumeName}`),
@@ -153,13 +158,16 @@ export const dockerApi = {
     api.get<VolumeInspectResponse>(`${nodesBase(nodeId)}/volumes/${volumeName}`),
 
   pruneVolumes: (nodeId: string) =>
-    api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/volumes/prune`),
+    api.post<DockerVolumePruneResponse>(`${nodesBase(nodeId)}/volumes/prune`),
 
   getSystemInfo: (nodeId: string) =>
     api.get<DockerSystemInfo>(`${nodesBase(nodeId)}/system/info`),
 
   getSystemDf: (nodeId: string) =>
     api.get<DockerSystemDfItem[]>(`${nodesBase(nodeId)}/system/df`),
+
+  pruneNetworks: (nodeId: string) =>
+    api.post<void>(`${nodesBase(nodeId)}/networks/prune`),
 
   bulkExec: (data: BulkDockerRequest) =>
     api.post<BulkDockerResponse>('/docker/bulk/exec', data),

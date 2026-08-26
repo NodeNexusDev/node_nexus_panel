@@ -183,18 +183,6 @@ export function useBulkDeleteNodes() {
   })
 }
 
-export function useBulkExecuteNodes() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (data: { command: string; node_ids?: string[]; tags?: string[] }) => commandsApi.bulkExecuteGlobal(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-      queryClient.invalidateQueries({ queryKey: ['commands'] })
-    },
-  })
-}
-
 export function useBulkMetrics() {
   const queryClient = useQueryClient()
 
@@ -224,30 +212,6 @@ export function useBulkUpdateNodes() {
     mutationFn: (data: { node_ids: string[]; changes: NodeUpdate }) => nodesApi.bulkUpdate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkCancelCommands() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (executionIds: string[]) => commandsApi.bulkCancel({ execution_ids: executionIds }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-      queryClient.invalidateQueries({ queryKey: ['commands'] })
-    },
-  })
-}
-
-export function useBulkRetryCommands() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (executionIds: string[]) => commandsApi.bulkRetry({ execution_ids: executionIds }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-      queryClient.invalidateQueries({ queryKey: ['commands'] })
     },
   })
 }

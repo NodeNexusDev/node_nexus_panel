@@ -13,7 +13,6 @@ async function waitForPageTitle(page: Page, title: string) {
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page)
-    await page.goto('/')
     await page.waitForSelector('main h1')
   })
 

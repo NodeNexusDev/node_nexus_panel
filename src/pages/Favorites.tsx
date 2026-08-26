@@ -12,7 +12,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { IconStar } from '../components/ui/Icons'
 import { useFavorites, useRemoveFavorite } from '../hooks/useFavorites'
 import { useToast } from '../components/ui/useToast'
-import type { Favorite } from '../api/types'
+import type { FavoriteResponse } from '../api/types'
 
 function targetTypeVariant(targetType: string): 'info' | 'warning' | 'success' | 'default' {
   if (targetType === 'node') return 'info'
@@ -34,13 +34,13 @@ export function Favorites() {
 
   const favorites = data?.items ?? []
 
-  const handleNavigate = (fav: Favorite) => {
+  const handleNavigate = (fav: FavoriteResponse) => {
     if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`)
     else if (fav.target_type === 'command') navigate(`/commands/${fav.target_id}`)
     else navigate(`/scripts/${fav.target_id}`)
   }
 
-  const handleRemove = (fav: Favorite) => {
+  const handleRemove = (fav: FavoriteResponse) => {
     removeFavorite.mutate(
       { targetType: fav.target_type, targetId: fav.target_id },
       {

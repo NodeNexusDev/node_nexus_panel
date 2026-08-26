@@ -1,26 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { commandsApi } from '../api/commands'
 import type {
-  Command,
+  CommandResponse,
   CommandCreate,
   CommandUpdate,
   CommandExecuteRequest,
   BulkCommandRequest,
   ExecutionStatsResponse,
   PaginatedResponse,
-  CommandHistoryResponse,
-  BulkCommandHistoryItem,
 } from '../api/types'
 
 export function useCommands(params?: { page?: number; size?: number; tag?: string; search?: string }) {
-  return useQuery<PaginatedResponse<Command>>({
+  return useQuery<PaginatedResponse<CommandResponse>>({
     queryKey: ['commands', params],
     queryFn: () => commandsApi.getAll(params),
   })
 }
 
 export function useCommand(id: string) {
-  return useQuery<Command>({
+  return useQuery<CommandResponse>({
     queryKey: ['commands', id],
     queryFn: () => commandsApi.getById(id),
     enabled: !!id,
@@ -117,50 +115,8 @@ export function useExecuteRawCommand() {
   })
 }
 
-export function useCommandHistory(nodeId: string | null, params?: { page?: number; size?: number }) {
-  return useQuery<PaginatedResponse<CommandHistoryResponse>>({
-    queryKey: ['command-history', nodeId, params],
-    queryFn: () => commandsApi.getHistory({ node_id: nodeId!, ...params }),
-    enabled: !!nodeId,
-  })
-}
-
-export function useCommandStatsByNode(nodeId: string | null, params?: { date_from?: string; date_to?: string }) {
-  return useQuery<ExecutionStatsResponse>({
-    queryKey: ['command-stats', nodeId, params],
-    queryFn: () => commandsApi.getStatsByNode({ node_id: nodeId!, ...params }),
-    enabled: !!nodeId,
-  })
-}
-
-export function useRetryCommandExecution() {
-  return useMutation({
-    mutationFn: (executionId: string) => commandsApi.retryExecution(executionId),
-  })
-}
-
-export function useBulkCommandHistory(batchId: string | null, params?: { page?: number; size?: number }) {
-  return useQuery<PaginatedResponse<BulkCommandHistoryItem>>({
-    queryKey: ['bulk-command-history', batchId, params],
-    queryFn: () => commandsApi.getBulkHistory(batchId!, params),
-    enabled: !!batchId,
-  })
-}
-
 export function useBulkExecuteRawCommand() {
   return useMutation({
     mutationFn: commandsApi.bulkExecuteGlobal,
-  })
-}
-
-export function useBulkCancelCommandsGlobal() {
-  return useMutation({
-    mutationFn: commandsApi.bulkCancel,
-  })
-}
-
-export function useBulkRetryCommandsGlobal() {
-  return useMutation({
-    mutationFn: commandsApi.bulkRetry,
   })
 }

@@ -1,16 +1,10 @@
 interface Env {
   VITE_API_URL: string
-  VITE_API_KEY: string
-  VITE_PANEL_LOGIN: string
-  VITE_PANEL_PASSWORD: string
   VITE_ENABLE_MOCKS: string
 }
 
 const defaults: Env = {
   VITE_API_URL: '',
-  VITE_API_KEY: '',
-  VITE_PANEL_LOGIN: 'admin',
-  VITE_PANEL_PASSWORD: 'password',
   VITE_ENABLE_MOCKS: 'false',
 }
 

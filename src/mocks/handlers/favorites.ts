@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { mockFavorites } from '../data/favorites'
-import type { Favorite } from '../../api/types'
+import type { FavoriteResponse } from '../../api/types'
 
 const API = '*'
 
@@ -21,7 +21,7 @@ export const favoritesHandlers = [
 
   http.post(`${API}/api/v1/favorites`, async ({ request }) => {
     const body = await request.json() as { target_type: 'node' | 'command' | 'script'; target_id: string; name?: string | null }
-    const fav: Favorite = {
+    const fav: FavoriteResponse = {
       id: String(mockFavorites.length + 1),
       target_type: body.target_type,
       target_id: body.target_id,
