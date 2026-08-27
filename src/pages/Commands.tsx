@@ -28,6 +28,7 @@ import {
 } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
 import { TagBadge } from '../components/ui/TagBadge'
+import { TagFilter } from '../components/ui/TagFilter'
 import { useSort } from '../hooks/useSort'
 import type { CommandResponse, CommandCreate, CommandUpdate } from '../api/types'
 import type { Column } from '../components/ui/table-types'
@@ -48,7 +49,7 @@ export function Commands() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
-  const [tagFilter, setTagFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
@@ -57,7 +58,7 @@ export function Commands() {
     page,
     size: pageSize,
     search: search || undefined,
-    tag: tagFilter || undefined,
+    tags: tagFilter.length > 0 ? tagFilter.join(',') : undefined,
   })
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()
@@ -187,7 +188,7 @@ export function Commands() {
       render: (cmd) => (
         <div className="flex flex-wrap gap-1">
           {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -226,7 +227,7 @@ export function Commands() {
       </div>
       <div className="flex flex-wrap gap-1">
         {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
@@ -249,14 +250,11 @@ export function Commands() {
       />
 
       <FilterBar search={search} onSearch={setSearch} searchPlaceholder={t('commands.searchPlaceholder', 'Search commands...')}>
-        <select
-          value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
-          className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-        >
-          <option value="">{t('commands.allTags', 'All tags')}</option>
-          {tags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
-        </select>
+        <TagFilter
+          available={tags ?? []}
+          selected={tagFilter}
+          onChange={setTagFilter}
+        />
       </FilterBar>
 
       <Card hover className="stagger-item">

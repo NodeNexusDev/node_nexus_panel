@@ -35,6 +35,7 @@ import {
 import { useNodes } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { TagBadge } from '../components/ui/TagBadge'
+import { TagFilter } from '../components/ui/TagFilter'
 import { useSort } from '../hooks/useSort'
 import type { ScriptResponse, ScriptExecutionBatchResult } from '../api/types'
 import type { Column } from '../components/ui/table-types'
@@ -51,12 +52,12 @@ export function Scripts() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
-  const [tagFilter, setTagFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
-  const { data, isLoading } = useScripts({ page, size: pageSize, search: search || undefined, tag: tagFilter || undefined })
+  const { data, isLoading } = useScripts({ page, size: pageSize, search: search || undefined, tags: tagFilter.length > 0 ? tagFilter.join(',') : undefined })
   const { data: tags } = useScriptTags()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
@@ -166,7 +167,7 @@ export function Scripts() {
       render: (script) => (
         <div className="flex flex-wrap gap-1">
           {script.tags.length > 0 ? script.tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -202,7 +203,7 @@ export function Scripts() {
       </div>
       <div className="flex flex-wrap gap-1">
         {script.tags.length > 0 ? script.tags.map((tag) => (
-          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
@@ -224,14 +225,11 @@ export function Scripts() {
       />
 
       <FilterBar search={search} onSearch={setSearch} searchPlaceholder={t('scripts.searchPlaceholder', 'Search scripts...')}>
-        <select
-          value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
-          className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-        >
-          <option value="">{t('scripts.allTags', 'All tags')}</option>
-          {tags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
-        </select>
+        <TagFilter
+          available={tags ?? []}
+          selected={tagFilter}
+          onChange={setTagFilter}
+        />
       </FilterBar>
 
       <Card hover className="stagger-item">

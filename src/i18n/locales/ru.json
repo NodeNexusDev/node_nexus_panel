@@ -632,7 +632,9 @@
     "clearSearch": "Очистить поиск",
     "parameterDescription": "Описание параметра",
     "leaveEmptyToSkip": "Оставьте пустым для пропуска",
-    "avgDuration": "Ср. время"
+    "avgDuration": "Ср. время",
+    "tagsFilter": "Теги",
+    "clearAll": "Очистить все"
   },
   "notes": {
     "title": "Заметки",

@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { TagFilter } from '../components/ui/TagFilter'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tooltip } from '../components/ui/Tooltip'
@@ -72,7 +73,7 @@ export function Nodes() {
   const { toast } = useToast()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
-  const [tagFilter, setTagFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
@@ -82,7 +83,7 @@ export function Nodes() {
     size: pageSize,
     search: search || undefined,
     status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined,
-    tags: tagFilter || undefined,
+    tags: tagFilter.length > 0 ? tagFilter.join(',') : undefined,
   }, { refetchInterval: 30_000 })
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
@@ -266,7 +267,7 @@ export function Nodes() {
       render: (node) => (
         <div className="flex flex-wrap gap-1">
           {node.tags.length > 0 ? node.tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -316,7 +317,7 @@ export function Nodes() {
       </div>
       <div className="flex flex-wrap gap-1">
         {node.tags.length > 0 ? node.tags.map((tag) => (
-          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-1">
@@ -430,11 +431,10 @@ export function Nodes() {
             <button onClick={() => setStatusFilter(new Set())} aria-label={t('nodes.clearFilters', 'Clear filters')} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">×</button>
           )}
         </div>
-        <Select
-          value={tagFilter}
+        <TagFilter
+          available={allTags ?? []}
+          selected={tagFilter}
           onChange={setTagFilter}
-          placeholder={t('nodes.allTags', 'All tags')}
-          options={(allTags ?? []).map((tag) => ({ value: tag, label: tag }))}
         />
       </FilterBar>
 

@@ -12,7 +12,7 @@ import type {
   ExecutionStatsResponse,
 } from '../api/types'
 
-export function useScripts(params?: { page?: number; size?: number; tag?: string; search?: string }) {
+export function useScripts(params?: { page?: number; size?: number; tags?: string; search?: string }) {
   return useQuery<PaginatedResponse<ScriptResponse>>({
     queryKey: ['scripts', params],
     queryFn: () => scriptsApi.getAll(params),

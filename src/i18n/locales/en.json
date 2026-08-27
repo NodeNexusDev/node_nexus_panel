@@ -630,7 +630,9 @@
     "clearSearch": "Clear search",
     "parameterDescription": "Parameter description",
     "leaveEmptyToSkip": "Leave empty to skip",
-    "avgDuration": "Avg duration"
+    "avgDuration": "Avg duration",
+    "tagsFilter": "Tags",
+    "clearAll": "Clear all"
   },
   "notes": {
     "title": "Notes",

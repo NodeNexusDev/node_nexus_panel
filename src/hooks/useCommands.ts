@@ -10,7 +10,7 @@ import type {
   PaginatedResponse,
 } from '../api/types'
 
-export function useCommands(params?: { page?: number; size?: number; tag?: string; search?: string }) {
+export function useCommands(params?: { page?: number; size?: number; tags?: string; search?: string }) {
   return useQuery<PaginatedResponse<CommandResponse>>({
     queryKey: ['commands', params],
     queryFn: () => commandsApi.getAll(params),
