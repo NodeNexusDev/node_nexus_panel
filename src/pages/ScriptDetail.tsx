@@ -188,7 +188,7 @@ export function ScriptDetail() {
                 <div key={idx} className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
-                      {t('scripts.step', 'Step')} {idx + 1}: {step.label}
+                      {t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}
                     </span>
                     <Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>
                       exit {step.exit_code}
@@ -448,7 +448,7 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
                       <div key={idx} className="mt-3 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
-                            {t('scripts.step', 'Step')} {idx + 1}: {step.label}
+                            {t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}
                           </span>
                           <Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>
                             exit {step.exit_code}
