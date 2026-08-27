@@ -5,6 +5,17 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { AuthGuard } from './components/guards/AuthGuard'
 import { MainLayout } from './layouts/MainLayout'
 import { eventsClient } from './api/events'
+import { DashboardSkeleton } from './pages/DashboardSkeleton'
+import { NodesSkeleton } from './pages/NodesSkeleton'
+import { NodeDetailSkeleton } from './pages/NodeDetailSkeleton'
+import { CommandsSkeleton } from './pages/CommandsSkeleton'
+import { CommandDetailSkeleton } from './pages/CommandDetailSkeleton'
+import { ScriptsSkeleton } from './pages/ScriptsSkeleton'
+import { ScriptDetailSkeleton } from './pages/ScriptDetailSkeleton'
+import { DockerSkeleton } from './pages/DockerSkeleton'
+import { AuditSkeleton } from './pages/AuditSkeleton'
+import { SettingsSkeleton } from './pages/SettingsSkeleton'
+import { FavoritesSkeleton } from './pages/FavoritesSkeleton'
 
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })))
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })))
@@ -31,32 +42,31 @@ function Loading() {
 function App() {
   useEffect(() => {
     eventsClient.connect()
+    return () => eventsClient.disconnect()
   }, [])
 
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <Suspense fallback={<Loading />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<AuthGuard />}>
-              <Route element={<MainLayout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/nodes" element={<Nodes />} />
-                <Route path="/nodes/:id" element={<NodeDetail />} />
-                <Route path="/commands" element={<Commands />} />
-                <Route path="/commands/:id" element={<CommandDetail />} />
-                <Route path="/scripts" element={<Scripts />} />
-                <Route path="/scripts/:id" element={<ScriptDetail />} />
-                <Route path="/docker" element={<Docker />} />
-                <Route path="/audit" element={<Audit />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/favorites" element={<Favorites />} />
-              </Route>
+        <Routes>
+          <Route path="/login" element={<Suspense fallback={<Loading />}><Login /></Suspense>} />
+          <Route element={<AuthGuard />}>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Suspense fallback={<DashboardSkeleton />}><Dashboard /></Suspense>} />
+              <Route path="/nodes" element={<Suspense fallback={<NodesSkeleton />}><Nodes /></Suspense>} />
+              <Route path="/nodes/:id" element={<Suspense fallback={<NodeDetailSkeleton />}><NodeDetail /></Suspense>} />
+              <Route path="/commands" element={<Suspense fallback={<CommandsSkeleton />}><Commands /></Suspense>} />
+              <Route path="/commands/:id" element={<Suspense fallback={<CommandDetailSkeleton />}><CommandDetail /></Suspense>} />
+              <Route path="/scripts" element={<Suspense fallback={<ScriptsSkeleton />}><Scripts /></Suspense>} />
+              <Route path="/scripts/:id" element={<Suspense fallback={<ScriptDetailSkeleton />}><ScriptDetail /></Suspense>} />
+              <Route path="/docker" element={<Suspense fallback={<DockerSkeleton />}><Docker /></Suspense>} />
+              <Route path="/audit" element={<Suspense fallback={<AuditSkeleton />}><Audit /></Suspense>} />
+              <Route path="/settings" element={<Suspense fallback={<SettingsSkeleton />}><Settings /></Suspense>} />
+              <Route path="/favorites" element={<Suspense fallback={<FavoritesSkeleton />}><Favorites /></Suspense>} />
             </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+          </Route>
+          <Route path="*" element={<Suspense fallback={<Loading />}><NotFound /></Suspense>} />
+        </Routes>
       </BrowserRouter>
     </ErrorBoundary>
   )

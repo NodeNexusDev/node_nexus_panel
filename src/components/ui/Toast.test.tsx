@@ -79,7 +79,7 @@ describe('Toast', () => {
       screen.getByText('Success').click()
     })
     act(() => {
-      screen.getByLabelText('Close').click()
+      screen.getByLabelText(/close/i).click()
     })
     act(() => {
       vi.advanceTimersByTime(300)

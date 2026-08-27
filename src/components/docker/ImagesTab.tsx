@@ -9,6 +9,7 @@ import { TableSkeleton } from '../ui/Skeleton'
 import { IconDocker } from '../ui/Icons'
 import { useToast } from '../ui/useToast'
 import { useDockerImages, useDeleteImage, useTagImage, useBuildImage, usePruneImages, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
+import { Checkbox } from '../ui/Checkbox'
 import { ImageInspectContent } from './ImageInspectContent'
 
 export function ImagesTab({ nodeId }: { nodeId: string }) {
@@ -71,7 +72,7 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
         <table className="w-full table-zebra">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
-              <th className="px-6 py-3"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="rounded border-surface-300 dark:border-surface-600" /></th>
+              <th className="px-6 py-3"><div className="flex items-center"><Checkbox checked={!!allSelected} onChange={toggleAll} ariaLabel={t('common.selectAll')} /></div></th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.repository')}</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.tag')}</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.id')}</th>
@@ -82,7 +83,7 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {images.map((img) => (
               <tr key={img.ID} className="table-row-hover">
-                <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.has(img.ID)} onChange={() => toggleOne(img.ID)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', { name: img.Repository || img.ID?.slice(0, 12) || '' })} className="rounded border-surface-300 dark:border-surface-600" /></td>
+                <td className="px-6 py-4"><div className="flex items-center"><Checkbox checked={selectedIds.has(img.ID)} onChange={() => toggleOne(img.ID)} ariaLabel={t('common.selectItem', { name: img.Repository || img.ID?.slice(0, 12) || '' })} /></div></td>
                 <td className="px-6 py-4 text-sm font-mono text-surface-900 dark:text-white">{img.Repository}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{img.Tag}</td>
                 <td className="px-6 py-4 text-xs text-surface-500 font-mono">{img.ID?.slice(0, 12) || '—'}</td>

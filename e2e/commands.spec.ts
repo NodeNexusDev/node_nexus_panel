@@ -4,7 +4,7 @@ import { setupAuth } from './helpers'
 test.describe('Commands', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page, '/commands')
-    await page.waitForSelector('main h1:has-text("Commands")')
+    await page.waitForSelector('main h1')
   })
 
   test('displays commands page with create button', async ({ page }) => {

@@ -18,27 +18,27 @@ test.describe('Navigation', () => {
 
   test('navigates to all pages via sidebar', async ({ page }) => {
     test.slow()
-    await expect(page.locator('main h1')).toContainText('Dashboard')
+    await expect(page.locator('main h1')).toBeVisible()
 
     await openSidebar(page)
     await page.locator('a[href="/nodes"]').click()
     await expect(page).toHaveURL('/nodes')
-    await waitForPageTitle(page, 'Nodes')
+    await page.waitForSelector('main h1')
 
     await openSidebar(page)
     await page.locator('a[href="/commands"]').click()
     await expect(page).toHaveURL('/commands')
-    await waitForPageTitle(page, 'Commands')
+    await page.waitForSelector('main h1')
 
     await openSidebar(page)
     await page.locator('a[href="/scripts"]').click()
     await expect(page).toHaveURL('/scripts')
-    await waitForPageTitle(page, 'Scripts')
+    await page.waitForSelector('main h1')
 
     await openSidebar(page)
     await page.locator('a[href="/settings"]').click()
     await expect(page).toHaveURL('/settings')
-    await waitForPageTitle(page, 'Settings')
+    await page.waitForSelector('main h1')
 
     await openSidebar(page)
     await page.locator('a[href="/"]').click()

@@ -12,11 +12,13 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
+import { Checkbox } from '../components/ui/Checkbox'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
-import { TableSkeleton } from '../components/ui/Skeleton'
+import { Skeleton, StatCardSkeleton, TableSkeleton } from '../components/ui/Skeleton'
 import { IconScripts, IconArrowLeft, IconXCircle, IconZap } from '../components/ui/Icons'
 import { ExecutionResult } from '../components/commands/ExecutionResult'
+import { ScriptBulkNodeResultItem } from '../components/scripts/ScriptBulkNodeResultItem'
 import { useToast } from '../components/ui/useToast'
 import { useNodes } from '../hooks/useNodes'
 import { useCommands } from '../hooks/useCommands'
@@ -38,7 +40,7 @@ import {
   useBulkCancelScriptExecutions,
   useBulkRetryScriptExecutions,
 } from '../hooks/useScripts'
-import type { ScriptResponse } from '../api/types'
+import type { ScriptResponse, ScriptExecutionBatchResult } from '../api/types'
 
 type Tab = 'overview' | 'steps' | 'executions' | 'schedule' | 'stats' | 'notes'
 
@@ -67,12 +69,22 @@ export function ScriptDetail() {
 
   const [runNodeIds, setRunNodeIds] = useState<string[]>([])
   const [runTags, setRunTags] = useState('')
+  const [runResult, setRunResult] = useState<ScriptExecutionBatchResult | null>(null)
   const [scheduleCron, setScheduleCron] = useState('')
   const [scheduleNodeIds, setScheduleNodeIds] = useState<string[]>([])
   const [scheduleTimezone, setScheduleTimezone] = useState('UTC')
   const [scheduleMisfireGrace, setScheduleMisfireGrace] = useState(60)
+  const [confirmRemoveSchedule, setConfirmRemoveSchedule] = useState(false)
 
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-16" />
+  if (isLoading) {
+    return (
+      <div className="space-y-6" aria-busy="true" aria-live="polite">
+        <Skeleton variant="text" className="w-64 h-8" />
+        <Skeleton variant="rectangular" className="w-full h-32" />
+        <Skeleton variant="rectangular" className="w-full h-48" />
+      </div>
+    )
+  }
   if (error || !script) {
     return <ErrorState title={t('scripts.notFound', 'Script not found')} error={error} onRetry={refetch} />
   }
@@ -97,25 +109,26 @@ export function ScriptDetail() {
         },
       },
       {
-        onSuccess: () => { toast('success', t('scripts.toastStarted', { name: script.name })); setShowRunModal(false); setRunNodeIds([]); setRunTags('') },
+        onSuccess: (response) => { toast('success', t('scripts.toastStarted', { name: script.name })); setRunResult(response) },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),
       },
     )
   }
 
   const handleSchedule = () => {
+    if (!script || !scheduleCron.trim()) return
+    setSchedule.mutate({ id: script.id, data: { cron: scheduleCron, node_ids: scheduleNodeIds, timezone: scheduleTimezone, misfire_grace_seconds: scheduleMisfireGrace } }, {
+      onSuccess: () => { toast('success', t('scripts.toastScheduleSet')); setShowScheduleModal(false) },
+      onError: () => toast('error', t('scripts.toastScheduleFailed')),
+    })
+  }
+
+  const handleRemoveSchedule = () => {
     if (!script) return
-    if (!scheduleCron.trim()) {
-      removeSchedule.mutate(script.id, {
-        onSuccess: () => { toast('success', t('scripts.toastScheduleRemoved')); setShowScheduleModal(false) },
-        onError: () => toast('error', t('scripts.toastScheduleFailed')),
-      })
-    } else {
-      setSchedule.mutate({ id: script.id, data: { cron: scheduleCron, node_ids: scheduleNodeIds, timezone: scheduleTimezone, misfire_grace_seconds: scheduleMisfireGrace } }, {
-        onSuccess: () => { toast('success', t('scripts.toastScheduleSet')); setShowScheduleModal(false) },
-        onError: () => toast('error', t('scripts.toastScheduleFailed')),
-      })
-    }
+    removeSchedule.mutate(script.id, {
+      onSuccess: () => { toast('success', t('scripts.toastScheduleRemoved')); setShowScheduleModal(false); setConfirmRemoveSchedule(false) },
+      onError: () => toast('error', t('scripts.toastScheduleFailed')),
+    })
   }
 
   const handleClone = () => {
@@ -176,44 +189,81 @@ export function ScriptDetail() {
       {activeTab === 'stats' && <StatsTab scriptId={script.id} />}
       {activeTab === 'notes' && <NotesTab scriptId={script.id} />}
 
-      <Modal isOpen={showRunModal} onClose={() => setShowRunModal(false)} title={`${t('scripts.run')}: ${script.name}`}>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNodes', 'Target Nodes')}</p>
-              <button
-                type="button"
-                onClick={() => setRunNodeIds(runNodeIds.length === nodes.length ? [] : nodes.map((n) => n.id))}
-                className="text-xs text-accent-600 dark:text-accent-400 hover:underline cursor-pointer"
-              >
-                {runNodeIds.length === nodes.length ? t('common.deselectAll', 'Deselect all') : t('common.selectAll', 'Select all')}
-              </button>
-            </div>
-            <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
-              {nodes.map((node) => (
-                <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={runNodeIds.includes(node.id)}
-                    onChange={() => {
-                      setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
-                    }}
-                    className="rounded border-surface-300 dark:border-surface-600"
-                  />
-                  <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
-                </label>
-              ))}
-            </div>
-            {runNodeIds.length > 0 && (
-              <p className="text-xs text-surface-500">{t('scripts.selectedNodes', { count: runNodeIds.length })}</p>
+      <Modal isOpen={showRunModal} onClose={() => { setShowRunModal(false); setRunResult(null) }} title={`${t('scripts.run')}: ${script.name}`}>
+        {runResult ? (
+          <div className="space-y-4">
+            {runResult.results.length === 1 ? (
+              runResult.results[0].steps.map((step, idx) => (
+                <div key={idx} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                      {t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}
+                    </span>
+                    <Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>
+                      exit {step.exit_code}
+                    </Badge>
+                    {step.truncated && (
+                      <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>
+                    )}
+                  </div>
+                  <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} />
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="flex gap-4 text-sm">
+                  <span className="text-green-600 dark:text-green-400">{t('scripts.succeeded', 'Succeeded')}: {runResult.results.filter((r) => r.status === 'success').length}</span>
+                  <span className="text-red-600 dark:text-red-400">{t('scripts.failed', 'Failed')}: {runResult.results.filter((r) => r.status === 'error').length}</span>
+                </div>
+                <div className="max-h-96 overflow-y-auto space-y-3">
+                  {runResult.results.map((r) => (
+                    <ScriptBulkNodeResultItem key={r.node_id} result={r} />
+                  ))}
+                </div>
+              </>
             )}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="ghost" onClick={() => { setShowRunModal(false); setRunResult(null) }}>{t('common.close')}</Button>
+              <Button onClick={() => setRunResult(null)}>{t('scripts.runAgain', 'Run Again')}</Button>
+            </div>
           </div>
-          <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowRunModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleRun} disabled={runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNodes', 'Target Nodes')}</p>
+                <button
+                  type="button"
+                  onClick={() => setRunNodeIds(runNodeIds.length === nodes.length ? [] : nodes.map((n) => n.id))}
+                  className="text-xs text-accent-600 dark:text-accent-400 hover:underline cursor-pointer"
+                >
+                  {runNodeIds.length === nodes.length ? t('common.deselectAll', 'Deselect all') : t('common.selectAll', 'Select all')}
+                </button>
+              </div>
+              <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
+                {nodes.map((node) => (
+                  <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
+                    <Checkbox
+                      checked={runNodeIds.includes(node.id)}
+                      onChange={() => {
+                        setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
+                      }}
+                    />
+                    <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
+                  </label>
+                ))}
+              </div>
+              {runNodeIds.length > 0 && (
+                <p className="text-xs text-surface-500">{t('scripts.selectedNodes', { count: runNodeIds.length })}</p>
+              )}
+            </div>
+            <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="ghost" onClick={() => { setShowRunModal(false); setRunResult(null) }}>{t('common.cancel')}</Button>
+              <Button onClick={handleRun} disabled={runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button>
+            </div>
           </div>
-        </div>
+        )}
       </Modal>
 
       <Modal isOpen={showScheduleModal} onClose={() => setShowScheduleModal(false)} title={`${t('scripts.schedule')}: ${script.name}`}>
@@ -224,22 +274,28 @@ export function ScriptDetail() {
             <div className="flex flex-wrap gap-2">
               {nodes.map((n) => (
                 <label key={n.id} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={scheduleNodeIds.includes(n.id)} onChange={(e) => {
-                    if (e.target.checked) setScheduleNodeIds((prev) => [...prev, n.id])
+                  <Checkbox checked={scheduleNodeIds.includes(n.id)} onChange={(checked) => {
+                    if (checked) setScheduleNodeIds((prev) => [...prev, n.id])
                     else setScheduleNodeIds((prev) => prev.filter((id) => id !== n.id))
-                  }} className="rounded" />
+                  }} />
                   {n.name}
                 </label>
               ))}
             </div>
           </div>
-          <p className="text-xs text-surface-500">{t('scripts.scheduleHint', 'Leave empty to remove schedule')}</p>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowScheduleModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSchedule} disabled={scheduleCron.trim() !== '' && scheduleNodeIds.length === 0}>{t('common.save')}</Button>
+          <div className="flex justify-between pt-2">
+            <Button variant="ghost" className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300" onClick={() => setConfirmRemoveSchedule(true)}>
+              {t('scripts.removeSchedule', 'Remove Schedule')}
+            </Button>
+            <div className="flex gap-3">
+              <Button variant="ghost" onClick={() => setShowScheduleModal(false)}>{t('common.cancel')}</Button>
+              <Button onClick={handleSchedule} disabled={scheduleCron.trim() !== '' && scheduleNodeIds.length === 0}>{t('common.save')}</Button>
+            </div>
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog isOpen={confirmRemoveSchedule} onClose={() => setConfirmRemoveSchedule(false)} onConfirm={handleRemoveSchedule} title={t('scripts.removeScheduleTitle', 'Remove Schedule')} message={t('scripts.removeScheduleMsg', 'Are you sure you want to remove the schedule?')} confirmLabel={t('common.delete')} loading={removeSchedule.isPending} />
 
       <ScriptFormModal
         isOpen={showEditModal}
@@ -371,7 +427,7 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
               </div>
             )}
             <div className="flex items-center gap-3 px-6 py-2 border-b border-surface-200 dark:border-surface-800">
-              <input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="rounded border-surface-300 dark:border-surface-600" />
+              <Checkbox checked={!!allSelected} onChange={toggleAll} ariaLabel={t('common.selectAll')} />
               <span className="text-xs text-surface-500">{t('scripts.selectAll')}</span>
             </div>
             {items.map((exec) => (
@@ -381,8 +437,8 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
                   onClick={() => { if (exec.steps?.length) setExpandedExecId(expandedExecId === exec.id ? null : exec.id) }}
                 >
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', 'Select {{name}}', { name: exec.id.slice(0, 8) })} className="rounded border-surface-300 dark:border-surface-600" />
-                    <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
+                    <Checkbox checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} ariaLabel={t('common.selectItem', 'Select {{name}}', { name: exec.id.slice(0, 8) })} />
+                    <Badge variant={exec.status === 'completed' || exec.status === 'success' ? 'success' : exec.status === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                     <div>
                       <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>
                       <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
@@ -399,7 +455,7 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
                       <div key={idx} className="mt-3 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
-                            {t('scripts.step', 'Step')} {idx + 1}: {step.label}
+                            {t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}
                           </span>
                           <Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>
                             exit {step.exit_code}
@@ -441,7 +497,9 @@ function StatsTab({ scriptId }: { scriptId: string }) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Spinner size="lg" className="mx-auto my-8" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
+          </div>
         ) : error ? (
           <ErrorState error={error} onRetry={refetch} />
         ) : stats ? (
@@ -487,7 +545,7 @@ function ScheduleTab({ scriptId, nodes }: { scriptId: string; nodes: { id: strin
                 {items.map((exec) => (
                   <div key={exec.id} className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
-                      <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
+                      <Badge variant={exec.status === 'completed' || exec.status === 'success' ? 'success' : exec.status === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                       <div>
                       <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>
                         <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>

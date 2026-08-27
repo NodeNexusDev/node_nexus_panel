@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ToastContext, type ToastType, type ToastAction } from './useToast'
 
 export type { ToastType, ToastContextValue } from './useToast'
@@ -70,7 +71,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2" role="status" aria-live="polite">
+      <div className="fixed bottom-4 right-4 z-[var(--z-toast)] flex flex-col gap-2 max-w-[calc(100vw-2rem)] left-4 sm:left-auto" role="status" aria-live="polite">
         {toasts.map((t) => (
           <ToastItem
             key={t.id}
@@ -123,9 +124,18 @@ const typeIcons: Record<ToastType, ReactNode> = {
 }
 
 function ToastItem({ toast, onRemove, onPause, onResume }: { toast: Toast; onRemove: () => void; onPause: () => void; onResume: () => void }) {
+  const { t } = useTranslation()
+  const isError = toast.type === 'error' || toast.type === 'warning'
   return (
     <div
-      className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm shadow-lg transition-all duration-300 ${
+      role={isError ? 'alert' : 'status'}
+      aria-live={isError ? 'assertive' : 'polite'}
+      aria-atomic="true"
+      tabIndex={0}
+      onFocus={onPause}
+      onBlur={onResume}
+      onKeyDown={(e) => { if (e.key === 'Escape') onRemove() }}
+      className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm shadow-lg transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-current ${
         toast.exiting ? 'opacity-0 translate-x-4 scale-95' : 'spring'
       } ${typeStyles[toast.type]}`}
       onMouseEnter={onPause}
@@ -141,7 +151,7 @@ function ToastItem({ toast, onRemove, onPause, onResume }: { toast: Toast; onRem
           {toast.action.label}
         </button>
       )}
-      <button onClick={onRemove} aria-label="Close" className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer">
+      <button onClick={onRemove} aria-label={t('common.close')} className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>

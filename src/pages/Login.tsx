@@ -46,14 +46,14 @@ export function Login() {
       <div className="relative w-full max-w-md mx-4 animate-scale-in">
         <div key={error} className={`glass rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 p-8 border border-white/20 dark:border-surface-700/50 ${error ? 'animate-shake' : ''}`}>
           <div className="text-center mb-8">
-            <img src="/logo.png" alt="NodeNexus" className="w-16 h-16 mx-auto mb-4" />
+            <img src="/logo.png" alt="NodeNexus" className="w-16 h-16 mx-auto mb-4" width={64} height={64} loading="eager" decoding="async" />
             <h1 className="text-3xl font-bold gradient-text">NodeNexus</h1>
             <p className="text-surface-500 dark:text-surface-400 mt-2">{t('login.subtitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-sm text-red-600 dark:text-red-400 animate-slide-up">
+              <div role="alert" aria-live="assertive" className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-sm text-red-600 dark:text-red-400 animate-slide-up">
                 {error}
               </div>
             )}
@@ -66,7 +66,6 @@ export function Login() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError('') }}
                 disabled={submitting}
-                autoFocus
               />
               <div className="space-y-1">
                 <Input
@@ -80,6 +79,8 @@ export function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                   className="text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 transition-colors cursor-pointer"
                 >
                   {showPassword ? t('login.hidePassword', 'Hide password') : t('login.showPassword', 'Show password')}

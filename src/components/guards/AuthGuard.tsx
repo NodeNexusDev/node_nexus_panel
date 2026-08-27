@@ -5,20 +5,25 @@ import { Spinner } from '../ui/Spinner'
 
 export function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isInitialized = useAuthStore((s) => s.isInitialized)
   const refreshUser = useAuthStore((s) => s.refreshUser)
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setChecking(false)
-      return
+    refreshUser().finally(() => setChecking(false))
+  }, [refreshUser])
+
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'logout-event') {
+        refreshUser()
+      }
     }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [refreshUser])
 
-    refreshUser()
-      .finally(() => setChecking(false))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (checking) {
+  if (checking || !isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner size="lg" />

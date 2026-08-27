@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { auditApi } from '../api/audit'
 import type { AuditLogResponse, PaginatedResponse } from '../api/types'
 
@@ -6,6 +6,7 @@ export function useAuditLogs(params?: { page?: number; size?: number; node_id?: 
   return useQuery<PaginatedResponse<AuditLogResponse>>({
     queryKey: ['audit', params],
     queryFn: () => auditApi.getAll(params),
+    placeholderData: keepPreviousData,
   })
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
+import { Checkbox } from '../ui/Checkbox'
 import { Spinner } from '../ui/Spinner'
 import { useNodes } from '../../hooks/useNodes'
 import { useExecuteCommand, useBulkExecuteCommand } from '../../hooks/useCommands'
@@ -142,11 +143,9 @@ export function CommandExecuteModal({ command, onClose }: CommandExecuteModalPro
             <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
               {nodes.map((node) => (
                 <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={selectedNodes.has(node.id)}
                     onChange={() => toggleNode(node.id)}
-                    className="rounded border-surface-300 dark:border-surface-600"
                   />
                   <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
                   <span className="text-xs text-surface-500 font-mono">{node.host}</span>

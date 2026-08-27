@@ -10,8 +10,8 @@ export function NodesSkeleton() {
         </div>
         <div className="h-10 w-32 bg-surface-200 dark:bg-surface-700 rounded-lg animate-pulse" />
       </div>
-      <div className="rounded-xl bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800">
-        <TableSkeleton rows={5} cols={7} />
+      <div className="rounded-xl bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800" aria-busy="true" aria-live="polite">
+        <TableSkeleton rows={5} cols={8} />
       </div>
     </div>
   )

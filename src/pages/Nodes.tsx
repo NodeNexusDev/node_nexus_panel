@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
@@ -9,19 +9,23 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { TagFilter } from '../components/ui/TagFilter'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tooltip } from '../components/ui/Tooltip'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { Pagination } from '../components/ui/Pagination'
+import { Spinner } from '../components/ui/Spinner'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
 import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
+import { Checkbox } from '../components/ui/Checkbox'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
+import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
 import {
   IconNodes,
@@ -48,6 +52,7 @@ import {
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { useSort } from '../hooks/useSort'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
 import { nodeStatusVariant } from '../lib/variants'
 import type { Node, NodeStatus, BulkNodeMetricsResponse, NodeUpdate } from '../api/types'
@@ -55,7 +60,7 @@ import type { NodeCreateFormValues } from '../lib/validators/node-schema'
 import { nodeCreateSchema } from '../lib/validators/node-schema'
 import type { Column } from '../components/ui/table-types'
 
-type SortKey = 'name' | 'host' | 'status' | 'connection_type'
+type SortKey = 'name' | 'host' | 'status' | 'connection_type' | 'tags' | 'created_at' | 'updated_at'
 
 function statusDot(status: NodeStatus): string {
   switch (status) {
@@ -71,19 +76,23 @@ export function Nodes() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
-  const [tagFilter, setTagFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, statusFilter, tagFilter])
+
   const { data, isLoading } = useNodes({
     page,
     size: pageSize,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined,
-    tags: tagFilter || undefined,
-  }, { refetchInterval: 30_000 })
+  })
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
   const updateNode = useUpdateNode()
@@ -135,27 +144,34 @@ export function Nodes() {
   const [showBulkUpdate, setShowBulkUpdate] = useState(false)
   const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', username: '', docker_host: '', tags: '' })
 
-  const nodes = data?.items || []
+  const nodes = (data?.items || []).filter(
+    (node) => tagFilter.length === 0 || tagFilter.some((t) => node.tags.includes(t))
+  )
   const allSelected = nodes.length > 0 && nodes.every((n) => selectedIds.includes(n.id))
 
   const sortedNodes = sort
     ? [...nodes].sort((a, b) => {
         const dir = sort.dir === 'asc' ? 1 : -1
+        if (sort.key === 'tags') {
+          const av = a.tags[0] ?? ''
+          const bv = b.tags[0] ?? ''
+          return av.localeCompare(bv) * dir
+        }
         const av = String(a[sort.key] ?? '')
         const bv = String(b[sort.key] ?? '')
         return av.localeCompare(bv) * dir
       })
     : nodes
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-  }
+  }, [])
 
-  const toggleAll = () => {
+  const toggleAll = useCallback(() => {
     setSelectedIds(allSelected ? [] : nodes.map((n) => n.id))
-  }
+  }, [allSelected, nodes])
 
-  const openEdit = (node: Node) => {
+  const openEdit = useCallback((node: Node) => {
     setEditTarget(node)
     setEditNode({
       name: node.name,
@@ -170,9 +186,9 @@ export function Nodes() {
       tags: node.tags.join(', '),
     })
     setClearFields({})
-  }
+  }, [])
 
-  const handleValidate = (node: Node) => {
+  const handleValidate = useCallback((node: Node) => {
     setValidateTarget(node)
     setValidateResult(null)
     checkNode.mutate(node.id, {
@@ -186,9 +202,9 @@ export function Nodes() {
       },
       onError: () => toast('error', t('nodes.toastValidateFailed')),
     })
-  }
+  }, [checkNode, t, toast])
 
-  const nodeMenu = (node: Node): DropdownMenuItem[] => [
+  const nodeMenu = useCallback((node: Node): DropdownMenuItem[] => [
     { key: 'edit', label: t('common.edit'), onClick: () => openEdit(node) },
     { key: 'validate', label: t('nodes.validate'), onClick: () => handleValidate(node) },
     { key: 'sep-1', label: '', onClick: () => {}, separator: true },
@@ -198,29 +214,24 @@ export function Nodes() {
     { key: 'command-history', label: t('nodes.cmdHistory', 'Command History'), icon: <IconCommands className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=command-history`) },
     { key: 'sep-2', label: '', onClick: () => {}, separator: true },
     { key: 'delete', label: t('common.delete'), icon: <IconXCircle className="w-4 h-4" />, danger: true, onClick: () => setDeleteTarget({ id: node.id, name: node.name }) },
-  ]
+  ], [t, openEdit, handleValidate, navigate])
 
-  const columns: Column<Node>[] = [
+  const columns: Column<Node>[] = useMemo(() => [
     {
       key: 'select',
       header: (
-        <input
-          type="checkbox"
+        <Checkbox
           checked={allSelected}
           onChange={toggleAll}
-          aria-label={t('common.selectAll')}
-          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600"
+          ariaLabel={t('common.selectAll')}
         />
       ),
       className: 'w-10',
       render: (node) => (
-        <input
-          type="checkbox"
+        <Checkbox
           checked={selectedIds.includes(node.id)}
           onChange={() => toggleSelect(node.id)}
-          onClick={(e) => e.stopPropagation()}
-          aria-label={t('common.selectItem', 'Select {{name}}', { name: node.name })}
-          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600"
+          ariaLabel={t('common.selectItem', 'Select {{name}}', { name: node.name })}
         />
       ),
     },
@@ -240,7 +251,7 @@ export function Nodes() {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{node.host}:{node.port}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{node.host}:{node.port}{node.username ? ` (${node.username})` : ''}</p>
           </div>
         </div>
       ),
@@ -262,14 +273,24 @@ export function Nodes() {
     },
     {
       key: 'tags',
-      header: t('nodes.tags'),
+      header: <SortableHeader label={t('nodes.tags')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (node) => (
         <div className="flex flex-wrap gap-1">
           {node.tags.length > 0 ? node.tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
+    },
+    {
+      key: 'created_at',
+      header: <SortableHeader label={t('nodes.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
+      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.created_at).toLocaleDateString()}</span>,
+    },
+    {
+      key: 'updated_at',
+      header: <SortableHeader label={t('nodes.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
+      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.updated_at).toLocaleDateString()}</span>,
     },
     {
       key: 'actions',
@@ -296,9 +317,9 @@ export function Nodes() {
         </div>
       ),
     },
-  ]
+  ], [allSelected, selectedIds, sort, toggleSort, toggleAll, toggleSelect, nodeMenu, t, toast, checkNode])
 
-  const renderMobileNode = (node: Node) => (
+  const renderMobileNode = useCallback((node: Node) => (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -309,15 +330,19 @@ export function Nodes() {
           </div>
           <div>
             <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}{node.username ? ` (${node.username})` : ''}</p>
           </div>
         </div>
         <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
       </div>
       <div className="flex flex-wrap gap-1">
         {node.tags.length > 0 ? node.tags.map((tag) => (
-          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
+      </div>
+      <div className="flex items-center gap-3 text-xs text-surface-500">
+        <span>{t('nodes.created')}: {new Date(node.created_at).toLocaleDateString()}</span>
+        <span>{t('nodes.updated')}: {new Date(node.updated_at).toLocaleDateString()}</span>
       </div>
       <div className="flex items-center gap-1">
         <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
@@ -330,7 +355,7 @@ export function Nodes() {
         <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
       </div>
     </div>
-  )
+  ), [nodeMenu, t])
 
   const handleAdd = (values: NodeCreateFormValues) => {
     createNode.mutate(
@@ -409,13 +434,14 @@ export function Nodes() {
           {(['active', 'unreachable', 'error'] as const).map((s) => (
             <button
               key={s}
+              aria-pressed={statusFilter.has(s)}
               onClick={() => setStatusFilter((prev) => {
                 const next = new Set(prev)
                 if (next.has(s)) next.delete(s)
                 else next.add(s)
                 return next
               })}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${
                 statusFilter.has(s)
                   ? s === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                   : s === 'unreachable' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
@@ -430,11 +456,10 @@ export function Nodes() {
             <button onClick={() => setStatusFilter(new Set())} aria-label={t('nodes.clearFilters', 'Clear filters')} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">×</button>
           )}
         </div>
-        <Select
-          value={tagFilter}
+        <TagFilter
+          available={allTags ?? []}
+          selected={tagFilter}
           onChange={setTagFilter}
-          placeholder={t('nodes.allTags', 'All tags')}
-          options={(allTags ?? []).map((tag) => ({ value: tag, label: tag }))}
         />
       </FilterBar>
 
@@ -472,15 +497,32 @@ export function Nodes() {
               <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('nodes.clearSelection', 'Clear')}</button>
             </div>
           )}
+          {!isLoading && selectedIds.length === 0 && data && data.items.length > 0 && (
+            <div className="px-6 py-2 text-xs text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-800 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{t('nodes.bulkHint')}</span>
+            </div>
+          )}
           {isLoading ? (
-            <TableSkeleton rows={5} cols={6} />
+            <TableSkeleton rows={5} cols={8} />
           ) : nodes.length === 0 ? (
-            <EmptyState
-              icon={<IconNodes className="w-10 h-10" />}
-              title={t('nodes.emptyTitle')}
-              description={t('nodes.emptyDesc')}
-              action={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
-            />
+            data && data.items.length > 0 ? (
+              <EmptyState
+                icon={<IconNodes className="w-10 h-10" />}
+                title={t('common.noResults', 'No results')}
+                description={t('nodes.noResultsDesc', 'No nodes match current filters')}
+                action={<Button variant="ghost" onClick={() => { setSearch(''); setStatusFilter(new Set()); setTagFilter([]) }}>{t('common.clearAll', 'Clear all')}</Button>}
+              />
+            ) : (
+              <EmptyState
+                icon={<IconNodes className="w-10 h-10" />}
+                title={t('nodes.emptyTitle')}
+                description={t('nodes.emptyDesc')}
+                action={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
+              />
+            )
           ) : (
             <ResponsiveTable
               data={sortedNodes}
@@ -493,7 +535,7 @@ export function Nodes() {
           )}
           {data && data.total > pageSize && (
             <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-              <Pagination page={page} totalPages={Math.ceil(data.total / pageSize)} onPageChange={setPage} />
+              <Pagination page={page} totalPages={Math.max(1, Math.ceil(data.total / pageSize))} onPageChange={setPage} />
             </div>
           )}
         </CardContent>
@@ -518,11 +560,7 @@ export function Nodes() {
                 label={t('nodes.connectionType')}
                 value={field.value}
                 onChange={field.onChange}
-                options={[
-                  { value: 'ssh', label: 'SSH' },
-                  { value: 'docker', label: 'Docker' },
-                  { value: 'proxmox', label: 'Proxmox' },
-                ]}
+                options={CONNECTION_TYPE_OPTIONS}
               />
             )}
           />
@@ -559,12 +597,8 @@ export function Nodes() {
           <Select
             label={t('nodes.connectionType')}
             value={editNode.connection_type}
-            onChange={(val) => setEditNode({ ...editNode, connection_type: val as 'ssh' | 'docker' | 'proxmox' })}
-            options={[
-              { value: 'ssh', label: 'SSH' },
-              { value: 'docker', label: 'Docker' },
-              { value: 'proxmox', label: 'Proxmox' },
-            ]}
+            onChange={(val) => setEditNode({ ...editNode, connection_type: val as ConnectionType })}
+            options={CONNECTION_TYPE_OPTIONS}
           />
           <Input label={t('nodes.username', 'Username')} placeholder="root" value={editNode.username} onChange={(e) => setEditNode({ ...editNode, username: e.target.value })} />
           <div className="space-y-1">
@@ -613,7 +647,7 @@ export function Nodes() {
               <p className="text-sm mt-2 text-surface-700 dark:text-surface-300">{validateResult.message}</p>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-surface-500"><span className="animate-spin w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full" /> {t('nodes.toastValidating')}</div>
+            <div className="flex items-center gap-2 text-surface-500"><Spinner size="sm" /> {t('nodes.toastValidating')}</div>
           )}
           <div className="flex justify-end"><Button variant="ghost" onClick={() => { setValidateTarget(null); setValidateResult(null) }}>{t('common.cancel')}</Button></div>
         </div>
@@ -652,7 +686,7 @@ export function Nodes() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-surface-500"><span className="animate-spin w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full" /> {t('common.loading')}</div>
+            <div className="flex items-center gap-2 text-surface-500"><Spinner size="sm" /> {t('common.loading')}</div>
           )}
           <div className="flex justify-end"><Button variant="ghost" onClick={() => { setShowBulkMetrics(false); setBulkMetricsResult(null) }}>{t('common.close')}</Button></div>
         </div>
@@ -661,11 +695,11 @@ export function Nodes() {
       <Modal isOpen={showBulkUpdate} onClose={() => setShowBulkUpdate(false)} title={t('nodes.bulkUpdate', 'Bulk Update')} size="lg">
         <div className="space-y-4">
           <p className="text-sm text-surface-500">{t('nodes.bulkUpdateMsg', { count: selectedIds.length })}</p>
-          <Input label={t('nodes.node')} placeholder="Leave empty to skip" value={bulkUpdateChanges.name} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, name: e.target.value })} />
-          <Input label={t('nodes.host')} placeholder="Leave empty to skip" value={bulkUpdateChanges.host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, host: e.target.value })} />
-          <Input label={t('nodes.port')} placeholder="Leave empty to skip" value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
-          <Input label={t('nodes.username', 'Username')} placeholder="Leave empty to skip" value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
-          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="Leave empty to skip" value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
+          <Input label={t('nodes.node')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.name} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, name: e.target.value })} />
+          <Input label={t('nodes.host')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, host: e.target.value })} />
+          <Input label={t('nodes.port')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
+          <Input label={t('nodes.username', 'Username')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
+          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="comma, separated" value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowBulkUpdate(false)}>{t('common.cancel')}</Button>

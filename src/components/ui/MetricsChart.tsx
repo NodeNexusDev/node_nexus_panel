@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export interface MetricsBucket {
   period: string
@@ -21,11 +22,13 @@ interface TooltipData {
 }
 
 export function MetricsChart({ data, height = 120, className = '' }: MetricsChartProps) {
+  const { t } = useTranslation()
   const [tooltip, setTooltip] = useState<TooltipData | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const uid = useId()
 
   if (data.length === 0) {
-    return <div className={`flex items-center justify-center text-sm text-surface-400 dark:text-surface-500`} style={{ height }}>No data</div>
+    return <div className={`flex items-center justify-center text-sm text-surface-400 dark:text-surface-500`} style={{ height }}>{t('dashboard.noData', 'No data')}</div>
   }
 
   const max = Math.max(...data.map((d) => d.total), 1)
@@ -58,11 +61,11 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
         onMouseLeave={() => setTooltip(null)}
       >
         <defs>
-          <linearGradient id="grad-success" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={`grad-success-${uid}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" className="text-green-400 dark:text-green-500" stopColor="currentColor" />
             <stop offset="100%" className="text-green-600 dark:text-green-400" stopColor="currentColor" />
           </linearGradient>
-          <linearGradient id="grad-failed" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={`grad-failed-${uid}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" className="text-red-400 dark:text-red-500" stopColor="currentColor" />
             <stop offset="100%" className="text-red-600 dark:text-red-400" stopColor="currentColor" />
           </linearGradient>
@@ -89,7 +92,7 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
                   width={w}
                   height={failedH}
                   rx={w > 3 ? 1.5 : 0}
-                  fill="url(#grad-failed)"
+                  fill={`url(#grad-failed-${uid})`}
                   className="transition-opacity"
                   style={{
                     animation: `chart-bar-in 0.4s ease-out ${i * 60}ms both`,
@@ -103,7 +106,7 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
                 width={w}
                 height={successH}
                 rx={w > 3 ? 1.5 : 0}
-                fill="url(#grad-success)"
+                fill={`url(#grad-success-${uid})`}
                 className="transition-opacity"
                 style={{
                   animation: `chart-bar-in 0.4s ease-out ${i * 60}ms both`,
@@ -143,20 +146,20 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
           <p className="font-medium text-surface-900 dark:text-white mb-1.5">{formatDate(tooltip.bucket.period)}</p>
           <div className="space-y-1">
             <div className="flex justify-between gap-4">
-              <span className="text-surface-500">Total</span>
+              <span className="text-surface-500">{t('dashboard.total', 'Total')}</span>
               <span className="font-medium text-surface-900 dark:text-white">{tooltip.bucket.total}</span>
             </div>
             <div className="flex justify-between gap-4">
-              <span className="text-green-600 dark:text-green-400">Successful</span>
+              <span className="text-green-600 dark:text-green-400">{t('dashboard.successful', 'Successful')}</span>
               <span className="font-medium text-green-600 dark:text-green-400">{tooltip.bucket.successful}</span>
             </div>
             <div className="flex justify-between gap-4">
-              <span className="text-red-600 dark:text-red-400">Failed</span>
+              <span className="text-red-600 dark:text-red-400">{t('dashboard.failed', 'Failed')}</span>
               <span className="font-medium text-red-600 dark:text-red-400">{tooltip.bucket.failed}</span>
             </div>
             {tooltip.bucket.avg_duration_ms != null && (
               <div className="flex justify-between gap-4 pt-1 border-t border-surface-200 dark:border-surface-700">
-                <span className="text-surface-500">Avg duration</span>
+                <span className="text-surface-500">{t('dashboard.avgDuration', 'Avg duration')}</span>
                 <span className="font-medium text-surface-900 dark:text-white">{tooltip.bucket.avg_duration_ms}ms</span>
               </div>
             )}

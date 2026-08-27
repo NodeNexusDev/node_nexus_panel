@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { commandsApi } from '../api/commands'
 import type {
   CommandResponse,
@@ -12,14 +12,15 @@ import type {
 
 export function useCommands(params?: { page?: number; size?: number; tag?: string; search?: string }) {
   return useQuery<PaginatedResponse<CommandResponse>>({
-    queryKey: ['commands', params],
+    queryKey: ['commands', 'list', params],
     queryFn: () => commandsApi.getAll(params),
+    placeholderData: keepPreviousData,
   })
 }
 
 export function useCommand(id: string) {
   return useQuery<CommandResponse>({
-    queryKey: ['commands', id],
+    queryKey: ['commands', 'detail', id],
     queryFn: () => commandsApi.getById(id),
     enabled: !!id,
   })
@@ -60,7 +61,7 @@ export function useCloneCommand() {
 
 export function useCommandStats(id: string, params?: { date_from?: string; date_to?: string }) {
   return useQuery<ExecutionStatsResponse>({
-    queryKey: ['commands', id, 'stats', params],
+    queryKey: ['commands', 'detail', id, 'stats', params],
     queryFn: () => commandsApi.getStats(id, params),
     enabled: !!id,
   })
@@ -68,7 +69,7 @@ export function useCommandStats(id: string, params?: { date_from?: string; date_
 
 export function useCommandTags() {
   return useQuery<string[]>({
-    queryKey: ['commands', 'tags'],
+    queryKey: ['commands', 'tags', 'list'],
     queryFn: () => commandsApi.getTags(),
   })
 }

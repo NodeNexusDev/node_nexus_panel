@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader } from '../ui/Card'
-import { Spinner } from '../ui/Spinner'
 import { ErrorState } from '../ui/ErrorState'
+import { TableSkeleton } from '../ui/Skeleton'
 import { useDockerSystemInfo, useDockerSystemDf } from '../../hooks/useDocker'
 
 export function SystemTab({ nodeId }: { nodeId: string }) {
@@ -11,8 +11,9 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
 
   if (infoLoading || dfLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Spinner size="lg" />
+      <div className="space-y-4 p-4" aria-busy="true" aria-live="polite">
+        <TableSkeleton rows={3} cols={4} />
+        <TableSkeleton rows={5} cols={5} />
       </div>
     )
   }

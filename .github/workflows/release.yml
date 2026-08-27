@@ -77,7 +77,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.find_tag.outputs.skip == 'false'
-        run: npm ci
+        run: HUSKY=0 npm ci
 
       - name: Build
         if: steps.find_tag.outputs.skip == 'false'

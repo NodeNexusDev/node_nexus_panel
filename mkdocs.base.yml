@@ -65,5 +65,5 @@ plugins:
 validation:
   nav:
     omitted_files: warn
-  absolute_links: ignore
+  absolute_links: warn
   unrecognized_links: warn

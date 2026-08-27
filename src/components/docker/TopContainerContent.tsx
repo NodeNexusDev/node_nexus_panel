@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { Spinner } from '../ui/Spinner'
+import { TableSkeleton } from '../ui/Skeleton'
 import { useDockerContainerTop } from '../../hooks/useDocker'
 
 export function TopContainerContent({ nodeId, containerId }: { nodeId: string; containerId: string }) {
   const { t } = useTranslation()
   const { data: top, isLoading } = useDockerContainerTop(nodeId, containerId)
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) return <TableSkeleton rows={5} cols={3} />
   if (!top) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noData')}</p>
   return (
     <div className="space-y-4 max-h-96 overflow-y-auto">

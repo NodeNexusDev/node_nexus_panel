@@ -1,6 +1,21 @@
 import type { Preview } from '@storybook/react'
 import '../src/index.css'
 
+export const globalTypes = {
+  theme: {
+    description: 'Global theme',
+    defaultValue: 'light',
+    toolbar: {
+      title: 'Theme',
+      icon: 'circlehub',
+      items: [
+        { value: 'light', title: 'Light' },
+        { value: 'dark', title: 'Dark' },
+      ],
+    },
+  },
+}
+
 const preview: Preview = {
   parameters: {
     controls: {
@@ -16,6 +31,7 @@ const preview: Preview = {
         { name: 'dark', value: '#0f172a' },
       ],
     },
+    a11y: { test: 'error' },
   },
   decorators: [
     (Story, context) => {

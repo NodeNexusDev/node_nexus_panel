@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
@@ -27,7 +27,9 @@ import {
   useDeleteCommand,
 } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
+import { TagFilter } from '../components/ui/TagFilter'
 import { useSort } from '../hooks/useSort'
 import type { CommandResponse, CommandCreate, CommandUpdate } from '../api/types'
 import type { Column } from '../components/ui/table-types'
@@ -41,23 +43,25 @@ import {
   type CommandUpdateFormValues,
 } from '../lib/validators/command-schema'
 
-type SortKey = 'name' | 'updated_at'
+type SortKey = 'name' | 'tags' | 'updated_at' | 'created_at'
 
 export function Commands() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
-  const [tagFilter, setTagFilter] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
+  const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
+  useEffect(() => { setPage(1) }, [debouncedSearch, tagFilter])
+
   const { data: commandsData, isLoading } = useCommands({
     page,
     size: pageSize,
-    search: search || undefined,
-    tag: tagFilter || undefined,
+    search: debouncedSearch || undefined,
   })
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()
@@ -79,11 +83,18 @@ export function Commands() {
     resolver: zodResolver(commandUpdateSchema) as Resolver<CommandUpdateFormValues>,
   })
 
-  const commands = commandsData?.items || []
+  const commands = (commandsData?.items || []).filter(
+    (cmd) => tagFilter.length === 0 || tagFilter.some((t) => cmd.tags.includes(t))
+  )
 
   const sortedCommands = sort
     ? [...commands].sort((a, b) => {
         const dir = sort.dir === 'asc' ? 1 : -1
+        if (sort.key === 'tags') {
+          const av = a.tags[0] ?? ''
+          const bv = b.tags[0] ?? ''
+          return av.localeCompare(bv) * dir
+        }
         return String(a[sort.key] ?? '').localeCompare(String(b[sort.key] ?? '')) * dir
       })
     : commands
@@ -177,20 +188,26 @@ export function Commands() {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{cmd.name}</p>
             <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{cmd.command}</p>
+            {cmd.description && <p className="text-xs text-surface-500 dark:text-surface-500 truncate">{cmd.description}</p>}
           </div>
         </div>
       ),
     },
     {
       key: 'tags',
-      header: t('commands.tagsLabel'),
+      header: <SortableHeader label={t('commands.tags')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (cmd) => (
         <div className="flex flex-wrap gap-1">
           {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
+    },
+    {
+      key: 'created_at',
+      header: <SortableHeader label={t('commands.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
+      render: (cmd) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(cmd.created_at).toLocaleDateString()}</span>,
     },
     {
       key: 'updated',
@@ -222,12 +239,17 @@ export function Commands() {
         <div className="min-w-0">
           <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{cmd.name}</p>
           <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{cmd.command}</p>
+          {cmd.description && <p className="text-xs text-surface-500 dark:text-surface-500 truncate">{cmd.description}</p>}
         </div>
       </div>
       <div className="flex flex-wrap gap-1">
         {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter(tag)} />
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
+      </div>
+      <div className="flex items-center gap-3 text-xs text-surface-500">
+        <span>{t('commands.created')}: {new Date(cmd.created_at).toLocaleDateString()}</span>
+        <span>{t('commands.updated')}: {new Date(cmd.updated_at).toLocaleDateString()}</span>
       </div>
       <div className="flex items-center gap-1">
         <FavoriteButton targetType="command" targetId={cmd.id} resourceName={cmd.name} size="sm" />
@@ -249,14 +271,11 @@ export function Commands() {
       />
 
       <FilterBar search={search} onSearch={setSearch} searchPlaceholder={t('commands.searchPlaceholder', 'Search commands...')}>
-        <select
-          value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
-          className="px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white"
-        >
-          <option value="">{t('commands.allTags', 'All tags')}</option>
-          {tags?.map((tag) => (<option key={tag} value={tag}>{tag}</option>))}
-        </select>
+        <TagFilter
+          available={tags ?? []}
+          selected={tagFilter}
+          onChange={setTagFilter}
+        />
       </FilterBar>
 
       <Card hover className="stagger-item">
@@ -282,7 +301,7 @@ export function Commands() {
           )}
           {commandsData && commandsData.total > pageSize && (
             <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-              <Pagination page={page} totalPages={Math.ceil(commandsData.total / pageSize)} onPageChange={setPage} />
+              <Pagination page={page} totalPages={Math.max(1, Math.ceil(commandsData.total / pageSize))} onPageChange={setPage} />
             </div>
           )}
         </CardContent>
@@ -296,7 +315,7 @@ export function Commands() {
             <Controller
               name="description"
               control={createForm.control}
-              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder="Check disk usage" {...field} value={field.value ?? ''} />}
+              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder={t('commands.description', 'Description')} {...field} value={field.value ?? ''} />}
             />
             <Controller
               name="tags"
@@ -327,7 +346,7 @@ export function Commands() {
             <Controller
               name="description"
               control={editForm.control}
-              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder="Check disk usage" {...field} value={field.value ?? ''} />}
+              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder={t('commands.description', 'Description')} {...field} value={field.value ?? ''} />}
             />
             <Controller
               name="tags"

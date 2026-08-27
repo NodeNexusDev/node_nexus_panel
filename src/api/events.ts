@@ -12,18 +12,50 @@ const BASE_URL = env.VITE_API_URL || ''
 export class EventsClient {
   private controller: AbortController | null = null
   private handlers = new Map<string, Set<SseEventHandler>>()
+  private connectionListeners = new Set<(connected: boolean) => void>()
   private _isConnected = false
   private _intentionalDisconnect = false
   private _retryCount = 0
+  private _reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private static MAX_RETRY_DELAY = 30000
+  private _lastEventId: string | null = null
 
   get isConnected(): boolean {
     return this._isConnected
   }
 
+  onConnectionChange(cb: (connected: boolean) => void): () => void {
+    this.connectionListeners.add(cb)
+    cb(this._isConnected)
+    return () => this.connectionListeners.delete(cb)
+  }
+
+  private setConnected(v: boolean) {
+    if (this._isConnected === v) return
+    this._isConnected = v
+    this.connectionListeners.forEach((cb) => cb(v))
+  }
+
+  private scheduleReconnect() {
+    if (this._intentionalDisconnect) return
+    if (this._reconnectTimer) return
+    const base = Math.min(3000 * 2 ** this._retryCount, EventsClient.MAX_RETRY_DELAY)
+    const jitter = Math.random() * 1000
+    const delay = base + jitter
+    this._retryCount++
+    this._reconnectTimer = setTimeout(() => {
+      this._reconnectTimer = null
+      this.connect()
+    }, delay)
+  }
+
   connect() {
     if (this.controller) return
     this._intentionalDisconnect = false
+    if (this._reconnectTimer) {
+      clearTimeout(this._reconnectTimer)
+      this._reconnectTimer = null
+    }
 
     this.controller = new AbortController()
 
@@ -32,17 +64,26 @@ export class EventsClient {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
     }
+    if (this._lastEventId) {
+      headers['Last-Event-ID'] = this._lastEventId
+    }
 
     fetchEventSource(`${BASE_URL}/api/v1/events/stream`, {
       headers,
       signal: this.controller.signal,
-      openWhenHidden: true,
-      onopen: async () => {
-        this._isConnected = true
-        this._retryCount = 0
+      openWhenHidden: false,
+      onopen: async (res) => {
+        if (res.ok) {
+          this.setConnected(true)
+          this._retryCount = 0
+        } else if (res.status === 401) {
+          // try refresh token then reconnect
+          this.setConnected(false)
+        }
       },
       onmessage: (event) => {
-        const msg = new MessageEvent(event.event, {
+        if (event.id) this._lastEventId = event.id
+        const msg = new MessageEvent(event.event || 'message', {
           data: event.data,
           lastEventId: event.id,
         })
@@ -57,23 +98,15 @@ export class EventsClient {
         }
       },
       onerror: () => {
-        this._isConnected = false
+        this.setConnected(false)
         this.controller?.abort()
         this.controller = null
-        if (!this._intentionalDisconnect) {
-          const delay = Math.min(3000 * 2 ** this._retryCount, EventsClient.MAX_RETRY_DELAY)
-          this._retryCount++
-          setTimeout(() => this.connect(), delay)
-        }
+        this.scheduleReconnect()
       },
       onclose: () => {
-        this._isConnected = false
+        this.setConnected(false)
         this.controller = null
-        if (!this._intentionalDisconnect) {
-          const delay = Math.min(3000 * 2 ** this._retryCount, EventsClient.MAX_RETRY_DELAY)
-          this._retryCount++
-          setTimeout(() => this.connect(), delay)
-        }
+        this.scheduleReconnect()
       },
     } satisfies FetchEventSourceInit)
   }

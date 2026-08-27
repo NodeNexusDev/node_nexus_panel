@@ -11,10 +11,9 @@ import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Pagination } from '../components/ui/Pagination'
-import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
-import { TableSkeleton } from '../components/ui/Skeleton'
+import { Skeleton, StatCardSkeleton, TableSkeleton } from '../components/ui/Skeleton'
 import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
@@ -23,6 +22,7 @@ import { KeyValueList } from '../components/ui/KeyValueList'
 import { formatBytes } from '../lib/format'
 import { nodeStatusVariant } from '../lib/variants'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
+import { CONNECTION_TYPE_OPTIONS } from '../components/nodes/connection-types'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import { Tooltip } from '../components/ui/Tooltip'
 import {
@@ -61,13 +61,11 @@ export function NodeDetail() {
   const { copy } = useCopyToClipboard({ onCopied: () => toast('success', t('nodes.addressCopied')) })
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
-  const TAB_KEYS: Tab[] = ['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes']
-  const tabFromUrl = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState<Tab>(TAB_KEYS.includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview')
+  const tabFromUrl = searchParams.get('tab') as Tab | null
+  const activeTab: Tab = (['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes'] as Tab[]).includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview'
 
   const changeTab = (key: Tab) => {
-    setActiveTab(key)
-    setSearchParams(key === 'overview' ? {} : { tab: key })
+    setSearchParams(key === 'overview' ? {} : { tab: key }, { replace: false })
   }
   const [showEditModal, setShowEditModal] = useState(false)
   const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
@@ -310,11 +308,7 @@ export function NodeDetail() {
                 label={t('nodes.connectionType')}
                 value={field.value ?? 'ssh'}
                 onChange={field.onChange}
-                options={[
-                  { value: 'ssh', label: 'SSH' },
-                  { value: 'docker', label: 'Docker' },
-                  { value: 'proxmox', label: 'Proxmox' },
-                ]}
+                options={CONNECTION_TYPE_OPTIONS}
               />
             )}
           />
@@ -381,14 +375,43 @@ export function NodeDetail() {
 
 function OverviewTab({ node }: { node: Node }) {
   const { t } = useTranslation()
+  const { copy } = useCopyToClipboard()
+  const navigate = useNavigate()
   const connTypeBadge = <Badge variant="info">{node.connection_type}</Badge>
   const statusBadge = <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+  // oxlint-disable-next-line react(jsx-key)
   const rows: [string, React.ReactNode][] = [
-    [t('nodes.host'), `${node.host}:${node.port}`],
+    [t('nodes.host'), (
+      <span key="host" className="inline-flex items-center gap-2 font-mono">
+        {node.host}:{node.port}
+        <button onClick={() => copy(`${node.host}:${node.port}`)} aria-label={t('common.copy')} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors cursor-pointer">
+          <IconCopy className="w-3.5 h-3.5 text-surface-500" />
+        </button>
+      </span>
+    )],
     [t('nodes.connectionType'), connTypeBadge],
     [t('nodes.status'), statusBadge],
-    [t('nodes.username', 'Username'), node.username || '—'],
-    [t('nodes.dockerHost', 'Docker Host'), node.docker_host || '—'],
+    [t('nodes.username', 'Username'), node.username ? (
+      <span key="user" className="inline-flex items-center gap-1">
+        {node.username}
+        <button onClick={() => copy(node.username!)} aria-label={t('common.copy')} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3 h-3 text-surface-400" /></button>
+      </span>
+    ) : '—'],
+    [t('nodes.dockerHost', 'Docker Host'), node.docker_host ? (
+      <span key="docker" className="inline-flex items-center gap-1 font-mono text-xs">
+        {node.docker_host}
+        <button onClick={() => copy(node.docker_host!)} aria-label={t('common.copy')} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3 h-3 text-surface-400" /></button>
+      </span>
+    ) : '—'],
+    [t('nodes.tags', 'Tags'), node.tags.length ? (
+      <span key="tags" className="flex flex-wrap gap-1">
+        {node.tags.map((tag) => (
+          <button key={tag} onClick={() => navigate(`/nodes?tag=${encodeURIComponent(tag)}`)} className="cursor-pointer">
+            <Badge variant="default">{tag}</Badge>
+          </button>
+        ))}
+      </span>
+    ) : '—'],
     [t('nodes.created', 'Created'), new Date(node.created_at).toLocaleString()],
     [t('nodes.updated', 'Updated'), new Date(node.updated_at).toLocaleString()],
   ]
@@ -400,7 +423,7 @@ function OverviewTab({ node }: { node: Node }) {
           {rows.map(([label, value]) => (
             <div key={label} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
               <p className="text-xs text-surface-500 dark:text-surface-400 uppercase">{label}</p>
-              <div className="text-sm font-medium text-surface-900 dark:text-white mt-0.5">{value}</div>
+              <div className="text-sm font-medium text-surface-900 dark:text-white mt-0.5 flex items-center">{value}</div>
             </div>
           ))}
         </div>
@@ -430,7 +453,23 @@ function MetricBar({ label, value, percent }: { label: string; value: string; pe
 function MetricsTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { data: metrics, isLoading, error, refetch } = useNodeMetrics(nodeId)
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader><Skeleton variant="text" className="w-32 h-5" /></CardHeader>
+        <CardContent className="space-y-4" aria-busy="true" aria-live="polite">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex justify-between"><Skeleton variant="text" className="w-16 h-4" /><Skeleton variant="text" className="w-24 h-4" /></div>
+              <Skeleton variant="rectangular" className="w-full h-2" />
+            </div>
+          ))}
+          <Skeleton variant="rectangular" className="w-full h-12" />
+          <Skeleton variant="rectangular" className="w-full h-16" />
+        </CardContent>
+      </Card>
+    )
+  }
   if (error) return <ErrorState error={error} onRetry={refetch} />
   if (!metrics) return <EmptyState title={t('nodes.noMetrics', 'No metrics available')} />
 
@@ -486,7 +525,18 @@ function StatsTab({ nodeId }: { nodeId: string }) {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const { data: stats, isLoading, error, refetch } = useNodeStats(nodeId, { date_from: dateFrom || undefined, date_to: dateTo || undefined })
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader><Skeleton variant="text" className="w-32 h-5" /></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
   if (error) return <ErrorState error={error} onRetry={refetch} />
   if (!stats) return <EmptyState title={t('nodes.noStats', 'No stats available')} />
   return (

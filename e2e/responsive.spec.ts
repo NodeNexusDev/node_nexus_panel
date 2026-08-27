@@ -8,9 +8,15 @@ const UI_STORAGE_MOBILE = {
 
 test.describe('Responsive', () => {
   test('mobile menu toggle', async ({ page }) => {
+    await page.route('**/api/v1/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: '1', email: 'admin@nodenexus.dev', role: 'admin' }),
+      })
+    })
     await page.goto('/login')
     await page.evaluate((ui) => {
-      sessionStorage.setItem('authenticated', 'true')
       localStorage.setItem('ui-storage', JSON.stringify(ui))
     }, UI_STORAGE_MOBILE)
     await page.setViewportSize({ width: 375, height: 812 })

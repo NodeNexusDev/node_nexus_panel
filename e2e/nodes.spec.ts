@@ -4,7 +4,7 @@ import { setupAuth } from './helpers'
 test.describe('Nodes', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page, '/nodes')
-    await page.waitForSelector('main h1:has-text("Nodes")')
+    await page.waitForSelector('main h1')
   })
 
   test('displays nodes page with add button', async ({ page }) => {

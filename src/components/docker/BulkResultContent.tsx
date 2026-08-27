@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Spinner } from '../ui/Spinner'
+import { TableSkeleton } from '../ui/Skeleton'
 import type { BulkDockerResponse } from '../../api/types'
 
 interface BulkResultContentProps {
@@ -11,7 +11,7 @@ interface BulkResultContentProps {
 export function BulkResultContent({ result, isLoading, title }: BulkResultContentProps) {
   const { t } = useTranslation()
 
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) return <TableSkeleton rows={5} cols={3} />
 
   if (!result) return null
 

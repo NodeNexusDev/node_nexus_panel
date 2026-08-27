@@ -17,7 +17,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - run: HUSKY=0 npm ci
 
       - name: Lint
         run: npm run lint
@@ -42,7 +42,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - run: HUSKY=0 npm ci
 
       - name: Install Playwright
         run: npx playwright install --with-deps

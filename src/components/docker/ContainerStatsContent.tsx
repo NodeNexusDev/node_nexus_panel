@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { Spinner } from '../ui/Spinner'
+import { FormSkeleton } from '../ui/Skeleton'
 import { useDockerContainerStats } from '../../hooks/useDocker'
 
 export function ContainerStatsContent({ nodeId, containerId }: { nodeId: string; containerId: string }) {
   const { t } = useTranslation()
   const { data: stats, isLoading } = useDockerContainerStats(nodeId, containerId)
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) return <FormSkeleton fields={4} />
   if (!stats) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noStats')}</p>
   return (
     <div className="space-y-3">

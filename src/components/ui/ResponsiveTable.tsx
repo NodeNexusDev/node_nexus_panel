@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Column } from './table-types'
 
 interface ResponsiveTableProps<T> {
@@ -20,10 +21,11 @@ export function ResponsiveTable<T>({
   className = '',
   onRowClick,
 }: ResponsiveTableProps<T>) {
+  const { t } = useTranslation()
   if (data.length === 0) {
     return (
       <div className="py-12 text-center text-sm text-surface-500 dark:text-surface-400">
-        {emptyMessage || 'No data'}
+        {emptyMessage || t('dashboard.noData', 'No data')}
       </div>
     )
   }
@@ -38,6 +40,7 @@ export function ResponsiveTable<T>({
               {columns.map((col) => (
                 <th
                   key={col.key}
+                  scope="col"
                   className={`px-6 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider ${col.className || ''}`}
                 >
                   {col.header}
@@ -50,7 +53,10 @@ export function ResponsiveTable<T>({
               <tr
                 key={keyExtractor(item)}
                 onClick={onRowClick ? () => onRowClick(item) : undefined}
-                className={`hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(item) } } : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                role={onRowClick ? 'button' : undefined}
+                className={`hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map((col) => (
                   <td key={col.key} className={`px-6 py-4 ${col.className || ''}`}>
@@ -64,12 +70,15 @@ export function ResponsiveTable<T>({
       </div>
 
       {/* Mobile cards */}
-      <div className="md:hidden divide-y divide-surface-200 dark:divide-surface-800">
+      <div role="list" className="md:hidden divide-y divide-surface-200 dark:divide-surface-800">
         {data.map((item) => (
           <div
             key={keyExtractor(item)}
+            role={onRowClick ? 'button' : 'listitem'}
+            tabIndex={onRowClick ? 0 : undefined}
             onClick={onRowClick ? () => onRowClick(item) : undefined}
-            className={`p-4 ${onRowClick ? 'cursor-pointer' : ''}`}
+            onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(item) } } : undefined}
+            className={`p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${onRowClick ? 'cursor-pointer' : ''}`}
           >
             {renderMobileItem(item)}
           </div>

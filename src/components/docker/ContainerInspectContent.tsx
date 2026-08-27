@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { Spinner } from '../ui/Spinner'
+import { FormSkeleton } from '../ui/Skeleton'
 import { useDockerContainerInspect } from '../../hooks/useDocker'
 
 export function ContainerInspectContent({ nodeId, containerId }: { nodeId: string; containerId: string }) {
   const { t } = useTranslation()
   const { data: inspect, isLoading } = useDockerContainerInspect(nodeId, containerId)
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) return <FormSkeleton fields={4} />
   if (!inspect) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noData')}</p>
   const rows: [string, string][] = [
     [t('docker.id'), inspect.Id?.slice(0, 12) || '—'],

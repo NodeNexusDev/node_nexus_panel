@@ -1,4 +1,5 @@
 import type { CommandParameter } from '../../api/types'
+import { Checkbox } from '../ui/Checkbox'
 
 interface CommandParamInputsProps {
   parameters: CommandParameter[]
@@ -18,7 +19,7 @@ export function CommandParamInputs({ parameters, values, onChange, errors }: Com
               {param.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             {param.type === 'boolean' ? (
-              <input type="checkbox" checked={!!values[param.name]} onChange={(e) => onChange(param.name, e.target.checked)} className="rounded border-surface-300 dark:border-surface-600" />
+              <Checkbox checked={!!values[param.name]} onChange={(checked) => onChange(param.name, checked)} />
             ) : (
               <input
                 type={param.type === 'integer' ? 'number' : 'text'}

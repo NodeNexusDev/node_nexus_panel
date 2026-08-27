@@ -35,7 +35,7 @@ interface ScriptFormModalProps {
   onSubmit: (values: ScriptFormValues) => void
 }
 
-const EMPTY_STEP: StepInput = { id: '', label: 'Step 1', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }
+const EMPTY_STEP: StepInput = { id: '', label: '', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }
 
 export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, onClose, onSubmit }: ScriptFormModalProps) {
   const { t } = useTranslation()
@@ -64,7 +64,7 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
       setTags('')
       setSteps([{ ...EMPTY_STEP, id: generateId() }])
     }
-  }, [isOpen])
+  }, [isOpen, t])
 
   const handleSubmit = () => {
     if (steps.some((s) => !s.label.trim())) { toast('error', t('scripts.toastStepLabelRequired', 'Step label is required')); return }
@@ -88,12 +88,12 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="lg">
       <div className="space-y-4">
         <Input label={t('common.name')} placeholder="backup-db.sh" value={name} onChange={(e) => setName(e.target.value)} />
-        <Input label={t('scripts.descriptionLabel', 'Description')} placeholder="Backup PostgreSQL database" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Input label={t('scripts.descriptionLabel', 'Description')} placeholder={t('scripts.descriptionLabel', 'Description')} value={description} onChange={(e) => setDescription(e.target.value)} />
         <Input label={t('scripts.tagsLabel')} placeholder="backup, database" value={tags} onChange={(e) => setTags(e.target.value)} />
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('scripts.steps')}</label>
-            <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { id: generateId(), label: `Step ${prev.length + 1}`, type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { id: generateId(), label: '', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
           </div>
           {steps.map((step, idx) => (
             <div key={step.id} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg space-y-2">

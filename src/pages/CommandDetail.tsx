@@ -9,9 +9,9 @@ import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
-import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
+import { Skeleton, StatCardSkeleton } from '../components/ui/Skeleton'
 import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
@@ -105,7 +105,15 @@ export function CommandDetail() {
     })
   }
 
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-16" />
+  if (isLoading) {
+    return (
+      <div className="space-y-6" aria-busy="true" aria-live="polite">
+        <Skeleton variant="text" className="w-64 h-8" />
+        <Skeleton variant="rectangular" className="w-full h-32" />
+        <Skeleton variant="rectangular" className="w-full h-48" />
+      </div>
+    )
+  }
   if (error || !command) {
     return (
       <ErrorState
@@ -174,7 +182,7 @@ export function CommandDetail() {
             <Controller
               name="description"
               control={editForm.control}
-              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder="Check disk usage" {...field} value={field.value ?? ''} />}
+              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder={t('commands.description', 'Description')} {...field} value={field.value ?? ''} />}
             />
             <Controller
               name="tags"
@@ -291,7 +299,9 @@ function StatsTab({ commandId }: { commandId: string }) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Spinner size="lg" className="mx-auto my-8" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
+          </div>
         ) : error ? (
           <ErrorState error={error} onRetry={refetch} />
         ) : stats ? (

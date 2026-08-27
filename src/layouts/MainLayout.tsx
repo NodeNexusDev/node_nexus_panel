@@ -34,6 +34,7 @@ export function MainLayout() {
   const logout = useAuthStore((s) => s.logout)
   const sidebarOpen = useUiStore((s) => s.sidebarOpen)
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
+  const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen)
   const wsConnected = useSse().isConnected
   const isFetching = useIsFetching() > 0
   const { data: health } = useHealth()
@@ -131,11 +132,13 @@ export function MainLayout() {
 
       {/* Sidebar */}
       <aside
+        id="sidebar"
+        aria-label="Primary navigation"
         className={`
           fixed lg:static inset-y-0 left-0 z-40 w-64 flex flex-col
           bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl
           border-r border-surface-200/50 dark:border-surface-800/50
-          transition-all duration-300 ease-out
+          transition-all duration-300 ease-out motion-reduce:transition-none
           lg:translate-x-0
           ${sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
         `}
@@ -143,7 +146,7 @@ export function MainLayout() {
         {/* Logo */}
         <div className="px-6 py-5 border-b border-surface-200/50 dark:border-surface-800/50">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" />
+            <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" width={40} height={40} loading="eager" decoding="async" />
             <div>
               <p className="text-xl font-bold gradient-text">NodeNexus</p>
               <p className="text-xs text-surface-500 dark:text-surface-500">
@@ -180,12 +183,14 @@ export function MainLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header with glassmorphism */}
-        <header className="h-[84px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0">
+        <header className="min-h-[64px] sm:h-[64px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0 motion-reduce:transition-none">
           <Tooltip content={sidebarOpen ? t('common.closeMenu', 'Close menu') : t('common.openMenu', 'Open menu')}>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-label={sidebarOpen ? t('common.closeMenu') : t('common.openMenu')}
-              className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+              aria-expanded={sidebarOpen}
+              aria-controls="sidebar"
+              className="lg:hidden mr-4 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -197,10 +202,11 @@ export function MainLayout() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
-              aria-label={t('common.switchLanguage')}
+              aria-label={i18n.language === 'en' ? 'Switch to Russian' : 'Переключить на английский'}
+              lang={i18n.language === 'en' ? 'ru' : 'en'}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
             >
-              <IconGlobe className="w-4 h-4" />
+              <IconGlobe className="w-4 h-4" aria-hidden="true" />
               {i18n.language === 'en' ? 'РУ' : 'EN'}
             </button>
 
@@ -220,8 +226,8 @@ export function MainLayout() {
             </Tooltip>
 
             {/* Connection status */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50">
-              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50" role="status" aria-live="polite" aria-label={wsConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}>
+              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 status-online' : 'bg-red-500'}`} aria-hidden="true" />
               <span className="text-xs font-medium text-surface-500 dark:text-surface-400">
                 {wsConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}
               </span>
@@ -230,7 +236,7 @@ export function MainLayout() {
             {/* Command palette trigger */}
             <Tooltip content={t('common.search', 'Search')}>
               <button
-                onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+                onClick={() => setCommandPaletteOpen(true)}
                 aria-label={t('common.search')}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
               >

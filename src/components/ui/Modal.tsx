@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface ModalProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ const sizeClasses = {
 }
 
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+  const { t } = useTranslation()
   const contentRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
   const onCloseRef = useRef(onClose)
@@ -77,7 +79,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     if (!isOpen || initialFocusRef.current) return
     initialFocusRef.current = true
     requestAnimationFrame(() => {
-      const closeBtn = contentRef.current?.querySelector<HTMLElement>('[aria-label="Close"]')
+      const closeBtn = contentRef.current?.querySelector<HTMLElement>('[data-modal-close]')
       closeBtn?.focus()
     })
   }, [isOpen])
@@ -89,9 +91,12 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      aria-labelledby={title ? 'modal-title' : undefined}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
       <div
+        role="presentation"
+        aria-hidden="true"
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
         data-modal-backdrop
         onClick={() => onCloseRef.current()}
@@ -103,10 +108,11 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         <div className="bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800 rounded-2xl shadow-2xl overflow-hidden">
           {title && (
             <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200/50 dark:border-surface-800/50">
-              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{title}</h2>
+              <h2 id="modal-title" className="text-lg font-semibold text-surface-900 dark:text-white">{title}</h2>
               <button
                 onClick={() => onCloseRef.current()}
-                aria-label="Close"
+                aria-label={t('common.close')}
+                data-modal-close
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
