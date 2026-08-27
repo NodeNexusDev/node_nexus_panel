@@ -23,6 +23,7 @@ import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMe
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
+import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
 import {
   IconNodes,
@@ -524,11 +525,7 @@ export function Nodes() {
                 label={t('nodes.connectionType')}
                 value={field.value}
                 onChange={field.onChange}
-                options={[
-                  { value: 'ssh', label: 'SSH' },
-                  { value: 'docker', label: 'SSH + Docker' },
-                  { value: 'proxmox', label: 'Proxmox' },
-                ]}
+                options={CONNECTION_TYPE_OPTIONS}
               />
             )}
           />
@@ -565,12 +562,8 @@ export function Nodes() {
           <Select
             label={t('nodes.connectionType')}
             value={editNode.connection_type}
-            onChange={(val) => setEditNode({ ...editNode, connection_type: val as 'ssh' | 'docker' | 'proxmox' })}
-            options={[
-              { value: 'ssh', label: 'SSH' },
-              { value: 'docker', label: 'Docker' },
-              { value: 'proxmox', label: 'Proxmox' },
-            ]}
+            onChange={(val) => setEditNode({ ...editNode, connection_type: val as ConnectionType })}
+            options={CONNECTION_TYPE_OPTIONS}
           />
           <Input label={t('nodes.username', 'Username')} placeholder="root" value={editNode.username} onChange={(e) => setEditNode({ ...editNode, username: e.target.value })} />
           <div className="space-y-1">

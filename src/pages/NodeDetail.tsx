@@ -23,6 +23,7 @@ import { KeyValueList } from '../components/ui/KeyValueList'
 import { formatBytes } from '../lib/format'
 import { nodeStatusVariant } from '../lib/variants'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
+import { CONNECTION_TYPE_OPTIONS } from '../components/nodes/connection-types'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import { Tooltip } from '../components/ui/Tooltip'
 import {
@@ -310,11 +311,7 @@ export function NodeDetail() {
                 label={t('nodes.connectionType')}
                 value={field.value ?? 'ssh'}
                 onChange={field.onChange}
-                options={[
-                  { value: 'ssh', label: 'SSH' },
-                  { value: 'docker', label: 'SSH + Docker' },
-                  { value: 'proxmox', label: 'Proxmox' },
-                ]}
+                options={CONNECTION_TYPE_OPTIONS}
               />
             )}
           />
