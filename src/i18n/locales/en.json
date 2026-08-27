@@ -293,7 +293,7 @@
     "bulkRetry": "Retry Selected",
     "clearSelection": "Clear selection",
     "selectAll": "Select all",
-    "step": "Step {{number}}",
+    "step": "Step",
     "truncated": "Truncated",
     "toastStepLabelRequired": "Step label is required",
     "toastCommandIdRequired": "Command is required",

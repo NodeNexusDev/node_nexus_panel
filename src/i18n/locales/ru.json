@@ -293,7 +293,7 @@
     "bulkRetry": "Повторить выбранные",
     "clearSelection": "Сбросить выбор",
     "selectAll": "Выбрать все",
-    "step": "Шаг {{number}}",
+    "step": "Шаг",
     "truncated": "Обрезано",
     "toastStepLabelRequired": "Название шага обязательно",
     "toastCommandIdRequired": "Команда обязательна",
