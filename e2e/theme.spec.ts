@@ -26,17 +26,17 @@ test.describe('Theme', () => {
     await page.waitForFunction(() => document.documentElement.classList.contains('light'), null, { timeout: 10000 })
 
     const html = page.locator('html')
-    const themeToggle = page.locator('button[aria-label*="Theme"]').first()
-    await expect(themeToggle).toBeVisible()
+    await expect(page.locator('button[aria-label*="Theme"]').first()).toBeVisible()
 
     // light → system
-    await themeToggle.click()
+    await page.locator('button[aria-label*="Theme"]').first().click()
+    await page.waitForTimeout(300)
     // system → dark
-    await themeToggle.click()
+    await page.locator('button[aria-label*="Theme"]').first().click()
     await expect(html).toHaveClass(/dark/)
 
     // dark → light
-    await themeToggle.click()
+    await page.locator('button[aria-label*="Theme"]').first().click()
     await expect(html).toHaveClass(/light/)
   })
 
@@ -44,12 +44,12 @@ test.describe('Theme', () => {
     await page.goto('/')
     await page.waitForFunction(() => document.documentElement.classList.contains('light'), null, { timeout: 10000 })
 
-    const themeToggle = page.locator('button[aria-label*="Theme"]').first()
-    await expect(themeToggle).toBeVisible()
+    await expect(page.locator('button[aria-label*="Theme"]').first()).toBeVisible()
 
     // light → system → dark
-    await themeToggle.click()
-    await themeToggle.click()
+    await page.locator('button[aria-label*="Theme"]').first().click()
+    await page.waitForTimeout(300)
+    await page.locator('button[aria-label*="Theme"]').first().click()
     await expect(page.locator('html')).toHaveClass(/dark/)
 
     await page.reload()
