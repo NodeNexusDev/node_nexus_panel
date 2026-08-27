@@ -62,7 +62,7 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
       setName('')
       setDescription('')
       setTags('')
-      setSteps([{ ...EMPTY_STEP, id: generateId(), label: t('scripts.stepLabel', 'Step 1') }])
+      setSteps([{ ...EMPTY_STEP, id: generateId() }])
     }
   }, [isOpen, t])
 

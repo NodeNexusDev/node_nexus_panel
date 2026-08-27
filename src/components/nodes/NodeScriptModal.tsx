@@ -68,7 +68,7 @@ export function NodeScriptModal({ node, onClose }: NodeScriptModalProps) {
                   <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>
                 )}
               </div>
-              <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} />
+              <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
             </div>
           ))}
           <div className="flex justify-end gap-3 pt-2">

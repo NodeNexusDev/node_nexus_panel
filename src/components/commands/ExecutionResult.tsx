@@ -7,11 +7,12 @@ interface ExecutionResultProps {
   stdout: string
   stderr: string
   exitCode: number
+  showExitCode?: boolean
 }
 
 type ResultTab = 'stdout' | 'stderr'
 
-export function ExecutionResult({ stdout, stderr, exitCode }: ExecutionResultProps) {
+export function ExecutionResult({ stdout, stderr, exitCode, showExitCode = true }: ExecutionResultProps) {
   const { t } = useTranslation()
   const [tab, setTab] = useState<ResultTab>(stderr ? 'stderr' : 'stdout')
 
@@ -22,10 +23,12 @@ export function ExecutionResult({ stdout, stderr, exitCode }: ExecutionResultPro
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-surface-600 dark:text-surface-400">{t('commands.exitCode')}:</span>
-        <Badge variant={exitCode === 0 ? 'success' : 'danger'}>{exitCode}</Badge>
-      </div>
+      {showExitCode && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-surface-600 dark:text-surface-400">{t('commands.exitCode')}:</span>
+          <Badge variant={exitCode === 0 ? 'success' : 'danger'}>{exitCode}</Badge>
+        </div>
+      )}
       <Tabs tabs={tabs} active={tab} onChange={setTab} />
       <div className="max-h-64 overflow-y-auto rounded-lg bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700">
         {tab === 'stdout' ? (
