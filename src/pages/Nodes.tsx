@@ -269,16 +269,6 @@ export function Nodes() {
       render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</span>,
     },
     {
-      key: 'created_at',
-      header: <SortableHeader label={t('nodes.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
-      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.created_at).toLocaleDateString()}</span>,
-    },
-    {
-      key: 'updated_at',
-      header: <SortableHeader label={t('nodes.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
-      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.updated_at).toLocaleDateString()}</span>,
-    },
-    {
       key: 'tags',
       header: <SortableHeader label={t('nodes.tags')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (node) => (
@@ -288,6 +278,16 @@ export function Nodes() {
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
+    },
+    {
+      key: 'created_at',
+      header: <SortableHeader label={t('nodes.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
+      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.created_at).toLocaleDateString()}</span>,
+    },
+    {
+      key: 'updated_at',
+      header: <SortableHeader label={t('nodes.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
+      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.updated_at).toLocaleDateString()}</span>,
     },
     {
       key: 'actions',

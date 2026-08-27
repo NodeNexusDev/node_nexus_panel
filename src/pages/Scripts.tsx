@@ -170,16 +170,6 @@ export function Scripts() {
       render: (script) => <Badge variant="info">{script.steps.length}</Badge>,
     },
     {
-      key: 'created_at',
-      header: <SortableHeader label={t('scripts.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
-      render: (script) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(script.created_at).toLocaleDateString()}</span>,
-    },
-    {
-      key: 'updated_at',
-      header: <SortableHeader label={t('scripts.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
-      render: (script) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(script.updated_at).toLocaleDateString()}</span>,
-    },
-    {
       key: 'tags',
       header: <SortableHeader label={t('scripts.tagsLabel')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (script) => (
@@ -189,6 +179,16 @@ export function Scripts() {
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
+    },
+    {
+      key: 'created_at',
+      header: <SortableHeader label={t('scripts.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
+      render: (script) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(script.created_at).toLocaleDateString()}</span>,
+    },
+    {
+      key: 'updated_at',
+      header: <SortableHeader label={t('scripts.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
+      render: (script) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(script.updated_at).toLocaleDateString()}</span>,
     },
     {
       key: 'actions',
