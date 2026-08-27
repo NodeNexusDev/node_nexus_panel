@@ -40,6 +40,7 @@ import { ExecContainerContent } from './ExecContainerContent'
 import { ContainerInspectContent } from './ContainerInspectContent'
 import { TopContainerContent } from './TopContainerContent'
 import { BulkResultContent } from './BulkResultContent'
+import { Checkbox } from '../ui/Checkbox'
 import type { DockerContainer, BulkDockerResponse } from '../../api/types'
 
 type SortKey = 'name' | 'image' | 'status' | 'created'
@@ -71,6 +72,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const { sort, toggle } = useSort<SortKey>()
 
   const [deleteTarget, setDeleteTarget] = useState<DockerContainer | null>(null)
+  const [forceDelete, setForceDelete] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [logsTarget, setLogsTarget] = useState<DockerContainer | null>(null)
   const [statsTarget, setStatsTarget] = useState<DockerContainer | null>(null)
@@ -188,7 +190,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
         <table className="w-full table-zebra">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
-              <th className="px-6 py-3"><div className="flex items-center"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="w-4 h-4 rounded border-surface-300 dark:border-surface-600" /></div></th>
+              <th className="px-6 py-3"><div className="flex items-center"><Checkbox checked={!!allSelected} onChange={toggleAll} ariaLabel={t('common.selectAll')} /></div></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.name')} sortKey="name" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.image')} sortKey="image" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.status')} sortKey="status" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
@@ -251,13 +253,10 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('docker.deleteContainer')}>
         <div className="space-y-4">
           <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteContainerMsg', { name: deleteTarget?.Names?.split('/').pop() })}</p>
-          <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-300">
-            <input type="checkbox" id="forceDelete" className="rounded border-surface-300 dark:border-surface-600" />
-            {t('docker.forceDelete', 'Force delete')}
-          </label>
+          <Checkbox checked={forceDelete} onChange={setForceDelete} label={t('docker.forceDelete', 'Force delete')} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
-            <Button variant="danger" onClick={() => { if (deleteTarget) { const force = (document.getElementById('forceDelete') as HTMLInputElement)?.checked; deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID, force: force || undefined }, { onSuccess: () => setDeleteTarget(null), onError: () => toast('error', t('docker.toastDeleteFailed')) }) } }} disabled={deleteContainer.isPending}>{deleteContainer.isPending ? t('common.loading') : t('common.delete')}</Button>
+            <Button variant="danger" onClick={() => { if (deleteTarget) { deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID, force: forceDelete || undefined }, { onSuccess: () => { setDeleteTarget(null); setForceDelete(false) }, onError: () => toast('error', t('docker.toastDeleteFailed')) }) } }} disabled={deleteContainer.isPending}>{deleteContainer.isPending ? t('common.loading') : t('common.delete')}</Button>
           </div>
         </div>
       </Modal>

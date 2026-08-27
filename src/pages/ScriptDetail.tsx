@@ -12,6 +12,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
+import { Checkbox } from '../components/ui/Checkbox'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { TableSkeleton } from '../components/ui/Skeleton'
@@ -234,13 +235,11 @@ export function ScriptDetail() {
               <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
                 {nodes.map((node) => (
                   <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={runNodeIds.includes(node.id)}
                       onChange={() => {
                         setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
                       }}
-                      className="rounded border-surface-300 dark:border-surface-600"
                     />
                     <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
                   </label>
@@ -267,10 +266,10 @@ export function ScriptDetail() {
             <div className="flex flex-wrap gap-2">
               {nodes.map((n) => (
                 <label key={n.id} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={scheduleNodeIds.includes(n.id)} onChange={(e) => {
-                    if (e.target.checked) setScheduleNodeIds((prev) => [...prev, n.id])
+                  <Checkbox checked={scheduleNodeIds.includes(n.id)} onChange={(checked) => {
+                    if (checked) setScheduleNodeIds((prev) => [...prev, n.id])
                     else setScheduleNodeIds((prev) => prev.filter((id) => id !== n.id))
-                  }} className="rounded" />
+                  }} />
                   {n.name}
                 </label>
               ))}
@@ -420,7 +419,7 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
               </div>
             )}
             <div className="flex items-center gap-3 px-6 py-2 border-b border-surface-200 dark:border-surface-800">
-              <input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="rounded border-surface-300 dark:border-surface-600" />
+              <Checkbox checked={!!allSelected} onChange={toggleAll} ariaLabel={t('common.selectAll')} />
               <span className="text-xs text-surface-500">{t('scripts.selectAll')}</span>
             </div>
             {items.map((exec) => (
@@ -430,7 +429,7 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
                   onClick={() => { if (exec.steps?.length) setExpandedExecId(expandedExecId === exec.id ? null : exec.id) }}
                 >
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', 'Select {{name}}', { name: exec.id.slice(0, 8) })} className="rounded border-surface-300 dark:border-surface-600" />
+                    <Checkbox checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} ariaLabel={t('common.selectItem', 'Select {{name}}', { name: exec.id.slice(0, 8) })} />
                     <Badge variant={exec.status === 'completed' || exec.status === 'success' ? 'success' : exec.status === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                     <div>
                       <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>

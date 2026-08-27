@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useFieldArray, useWatch, Controller, useFormContext } from 'react-hook-form'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
+import { Checkbox } from '../ui/Checkbox'
 import type { CommandParameterFormValues } from '../../lib/validators/command-schema'
 
 export type ParameterFormShape = { parameters?: CommandParameterFormValues[] }
@@ -70,15 +71,11 @@ function ParameterRow({ index, onRemove }: { index: number; onRemove: () => void
           render={({ field }) => {
             if (type === 'boolean') {
               return (
-                <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400">
-                  <input
-                    type="checkbox"
-                    checked={!!field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
-                    className="rounded border-surface-300 dark:border-surface-600"
-                  />
-                  {t('commands.paramDefault', 'Default value')}
-                </label>
+                <Checkbox
+                  checked={!!field.value}
+                  onChange={(checked) => field.onChange(checked)}
+                  label={t('commands.paramDefault', 'Default value')}
+                />
               )
             }
             return (
@@ -96,15 +93,12 @@ function ParameterRow({ index, onRemove }: { index: number; onRemove: () => void
           name={`parameters.${index}.required`}
           control={control}
           render={({ field }) => (
-            <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400 self-end">
-              <input
-                type="checkbox"
-                checked={!!field.value}
-                onChange={(e) => field.onChange(e.target.checked)}
-                className="rounded border-surface-300 dark:border-surface-600"
-              />
-              {t('commands.paramRequired', 'Required')}
-            </label>
+            <Checkbox
+              checked={!!field.value}
+              onChange={(checked) => field.onChange(checked)}
+              label={t('commands.paramRequired', 'Required')}
+              className="self-end"
+            />
           )}
         />
       </div>

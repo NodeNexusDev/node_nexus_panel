@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Badge } from './Badge'
+import { Checkbox } from './Checkbox'
 
 interface TagFilterProps {
   available: string[]
@@ -150,11 +151,9 @@ export function TagFilter({ available, selected, onChange }: TagFilterProps) {
                 key={tag}
                 className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selected.includes(tag)}
                   onChange={() => toggle(tag)}
-                  className="w-4 h-4 rounded border-surface-300 dark:border-surface-600 text-accent-500 focus:ring-accent-500"
                 />
                 <span className="text-surface-700 dark:text-surface-300">{tag}</span>
               </label>

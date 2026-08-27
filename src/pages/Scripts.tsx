@@ -36,6 +36,7 @@ import { useNodes } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { TagBadge } from '../components/ui/TagBadge'
 import { TagFilter } from '../components/ui/TagFilter'
+import { Checkbox } from '../components/ui/Checkbox'
 import { useSort } from '../hooks/useSort'
 import type { ScriptResponse, ScriptExecutionBatchResult } from '../api/types'
 import type { Column } from '../components/ui/table-types'
@@ -313,10 +314,10 @@ export function Scripts() {
             <div className="flex flex-wrap gap-2">
               {nodes.map((n) => (
                 <label key={n.id} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={scheduleNodeIds.includes(n.id)} onChange={(e) => {
-                    if (e.target.checked) setScheduleNodeIds((prev) => [...prev, n.id])
+                  <Checkbox checked={scheduleNodeIds.includes(n.id)} onChange={(checked) => {
+                    if (checked) setScheduleNodeIds((prev) => [...prev, n.id])
                     else setScheduleNodeIds((prev) => prev.filter((id) => id !== n.id))
-                  }} className="rounded" />
+                  }} />
                   {n.name}
                 </label>
               ))}
@@ -392,13 +393,11 @@ export function Scripts() {
               <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
                 {nodes.map((node) => (
                   <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={runNodeIds.includes(node.id)}
                       onChange={() => {
                         setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
                       }}
-                      className="rounded border-surface-300 dark:border-surface-600"
                     />
                     <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
                   </label>

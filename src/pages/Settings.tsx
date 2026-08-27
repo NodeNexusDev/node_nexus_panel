@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { Checkbox } from '../components/ui/Checkbox'
 import { Modal } from '../components/ui/Modal'
 import { FormSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/useToast'
@@ -277,10 +278,7 @@ export function Settings() {
               { value: 'read-write', label: t('settings.readWrite') },
             ]}
           />
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={editKeyActive} onChange={(e) => setEditKeyActive(e.target.checked)} className="rounded border-surface-300 dark:border-surface-600" />
-            <span className="text-sm text-surface-700 dark:text-surface-300">{t('settings.active')}</span>
-          </div>
+          <Checkbox checked={editKeyActive} onChange={setEditKeyActive} label={t('settings.active')} />
           <Input label={t('settings.expiresAt', 'Expires At (optional)')} type="datetime-local" value={editKeyExpiresAt} onChange={(e) => setEditKeyExpiresAt(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setEditKeyTarget(null)}>{t('common.cancel')}</Button>
@@ -354,10 +352,7 @@ export function Settings() {
         <div className="space-y-4">
           <Input label={t('settings.userEmail', 'Email')} placeholder="user@example.com" type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
           <Input label={t('settings.userPassword', 'Password')} type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} />
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={newUserSuperuser} onChange={(e) => setNewUserSuperuser(e.target.checked)} className="rounded border-surface-300 dark:border-surface-600" />
-            <span className="text-sm text-surface-700 dark:text-surface-300">{t('settings.superuser', 'Superuser')}</span>
-          </div>
+          <Checkbox checked={newUserSuperuser} onChange={setNewUserSuperuser} label={t('settings.superuser', 'Superuser')} />
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowCreateUserModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreateUser} disabled={createUser.isPending || !newUserEmail || !newUserPassword}>

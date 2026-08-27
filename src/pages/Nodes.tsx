@@ -21,6 +21,7 @@ import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
 import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
+import { Checkbox } from '../components/ui/Checkbox'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
@@ -212,23 +213,18 @@ export function Nodes() {
     {
       key: 'select',
       header: (
-        <input
-          type="checkbox"
+        <Checkbox
           checked={allSelected}
           onChange={toggleAll}
-          aria-label={t('common.selectAll')}
-          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600"
+          ariaLabel={t('common.selectAll')}
         />
       ),
       className: 'w-10',
       render: (node) => (
-        <input
-          type="checkbox"
+        <Checkbox
           checked={selectedIds.includes(node.id)}
           onChange={() => toggleSelect(node.id)}
-          onClick={(e) => e.stopPropagation()}
-          aria-label={t('common.selectItem', 'Select {{name}}', { name: node.name })}
-          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600"
+          ariaLabel={t('common.selectItem', 'Select {{name}}', { name: node.name })}
         />
       ),
     },
