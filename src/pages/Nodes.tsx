@@ -661,11 +661,11 @@ export function Nodes() {
       <Modal isOpen={showBulkUpdate} onClose={() => setShowBulkUpdate(false)} title={t('nodes.bulkUpdate', 'Bulk Update')} size="lg">
         <div className="space-y-4">
           <p className="text-sm text-surface-500">{t('nodes.bulkUpdateMsg', { count: selectedIds.length })}</p>
-          <Input label={t('nodes.node')} placeholder="Leave empty to skip" value={bulkUpdateChanges.name} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, name: e.target.value })} />
-          <Input label={t('nodes.host')} placeholder="Leave empty to skip" value={bulkUpdateChanges.host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, host: e.target.value })} />
-          <Input label={t('nodes.port')} placeholder="Leave empty to skip" value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
-          <Input label={t('nodes.username', 'Username')} placeholder="Leave empty to skip" value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
-          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="Leave empty to skip" value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
+          <Input label={t('nodes.node')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.name} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, name: e.target.value })} />
+          <Input label={t('nodes.host')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, host: e.target.value })} />
+          <Input label={t('nodes.port')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
+          <Input label={t('nodes.username', 'Username')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
+          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="comma, separated" value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowBulkUpdate(false)}>{t('common.cancel')}</Button>

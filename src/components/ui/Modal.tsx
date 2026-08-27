@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface ModalProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ const sizeClasses = {
 }
 
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+  const { t } = useTranslation()
   const contentRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
   const onCloseRef = useRef(onClose)
@@ -77,7 +79,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     if (!isOpen || initialFocusRef.current) return
     initialFocusRef.current = true
     requestAnimationFrame(() => {
-      const closeBtn = contentRef.current?.querySelector<HTMLElement>('[aria-label="Close"]')
+      const closeBtn = contentRef.current?.querySelector<HTMLElement>('[data-modal-close]')
       closeBtn?.focus()
     })
   }, [isOpen])
@@ -106,7 +108,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
               <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{title}</h2>
               <button
                 onClick={() => onCloseRef.current()}
-                aria-label="Close"
+                aria-label={t('common.close')}
+                data-modal-close
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

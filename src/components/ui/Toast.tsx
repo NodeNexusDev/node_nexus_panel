@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ToastContext, type ToastType, type ToastAction } from './useToast'
 
 export type { ToastType, ToastContextValue } from './useToast'
@@ -123,6 +124,7 @@ const typeIcons: Record<ToastType, ReactNode> = {
 }
 
 function ToastItem({ toast, onRemove, onPause, onResume }: { toast: Toast; onRemove: () => void; onPause: () => void; onResume: () => void }) {
+  const { t } = useTranslation()
   return (
     <div
       className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm shadow-lg transition-all duration-300 ${
@@ -141,7 +143,7 @@ function ToastItem({ toast, onRemove, onPause, onResume }: { toast: Toast; onRem
           {toast.action.label}
         </button>
       )}
-      <button onClick={onRemove} aria-label="Close" className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer">
+      <button onClick={onRemove} aria-label={t('common.close')} className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>

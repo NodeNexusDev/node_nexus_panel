@@ -16,8 +16,8 @@ export function ExecutionResult({ stdout, stderr, exitCode }: ExecutionResultPro
   const [tab, setTab] = useState<ResultTab>(stderr ? 'stderr' : 'stdout')
 
   const tabs: { key: ResultTab; label: string }[] = [
-    { key: 'stdout', label: 'stdout' },
-    { key: 'stderr', label: `stderr${stderr ? ` (${stderr.split('\n').length})` : ''}` },
+    { key: 'stdout', label: t('common.stdout', 'stdout') },
+    { key: 'stderr', label: `${t('common.stderr', 'stderr')}${stderr ? ` (${stderr.split('\n').length})` : ''}` },
   ]
 
   return (

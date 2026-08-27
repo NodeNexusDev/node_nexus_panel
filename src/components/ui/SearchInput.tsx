@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface SearchInputProps {
   value: string
@@ -9,6 +10,7 @@ interface SearchInputProps {
 }
 
 export function SearchInput({ value, onChange, placeholder = 'Search...', debounceMs = 300, className = '' }: SearchInputProps) {
+  const { t } = useTranslation()
   const [localValue, setLocalValue] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -56,7 +58,7 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', deboun
       {localValue && (
         <button
           onClick={handleClear}
-          aria-label="Clear search"
+          aria-label={t('common.clearSearch', 'Clear search')}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 dark:text-surface-500 dark:hover:text-white transition-colors cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

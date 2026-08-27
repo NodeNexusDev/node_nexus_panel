@@ -112,7 +112,7 @@ function ParameterRow({ index, onRemove }: { index: number; onRemove: () => void
         name={`parameters.${index}.description`}
         control={control}
         render={({ field }) => (
-          <Input label={t('commands.paramDescription', 'Description')} placeholder="Parameter description" {...field} value={String(field.value ?? '')} />
+          <Input label={t('commands.paramDescription', 'Description')} placeholder={t('commands.paramDescription', 'Description')} {...field} value={String(field.value ?? '')} />
         )}
       />
       <div className="flex justify-end">

@@ -206,6 +206,7 @@ function BulkResultView({ command, results, onClose, onRetry }: { command: strin
 }
 
 function BulkResultItem({ result }: { result: BulkNodeResult }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -217,7 +218,7 @@ function BulkResultItem({ result }: { result: BulkNodeResult }) {
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${result.exit_code === 0 ? 'bg-green-500' : 'bg-red-500'}`} />
           <span className="text-sm font-medium text-surface-900 dark:text-white">{result.node_name}</span>
-          <span className="text-xs text-surface-500">exit {result.exit_code}</span>
+          <span className="text-xs text-surface-500">{t('common.exitCode', 'exit')} {result.exit_code}</span>
         </div>
       </div>
       {expanded && (

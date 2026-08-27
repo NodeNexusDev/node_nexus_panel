@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Column } from './table-types'
 
 interface ResponsiveTableProps<T> {
@@ -20,10 +21,11 @@ export function ResponsiveTable<T>({
   className = '',
   onRowClick,
 }: ResponsiveTableProps<T>) {
+  const { t } = useTranslation()
   if (data.length === 0) {
     return (
       <div className="py-12 text-center text-sm text-surface-500 dark:text-surface-400">
-        {emptyMessage || 'No data'}
+        {emptyMessage || t('dashboard.noData', 'No data')}
       </div>
     )
   }

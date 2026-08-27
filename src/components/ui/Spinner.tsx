@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg'
   className?: string
@@ -10,10 +12,11 @@ const sizeClasses = {
 }
 
 export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
+  const { t } = useTranslation()
   return (
     <svg
       role="status"
-      aria-label="Loading"
+      aria-label={t('common.loading')}
       className={`animate-spin text-current ${sizeClasses[size]} ${className}`}
       fill="none"
       viewBox="0 0 24 24"

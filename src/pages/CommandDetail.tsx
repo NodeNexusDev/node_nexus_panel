@@ -174,7 +174,7 @@ export function CommandDetail() {
             <Controller
               name="description"
               control={editForm.control}
-              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder="Check disk usage" {...field} value={field.value ?? ''} />}
+              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder={t('commands.description', 'Description')} {...field} value={field.value ?? ''} />}
             />
             <Controller
               name="tags"
