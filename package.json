@@ -1,9 +1,11 @@
 {
   "name": "node_nexus_panel",
   "private": true,
-  "version": "1.7.3",
+  "version": "1.7.4",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -59,7 +61,10 @@
     "vitest": "^4.1.10"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["oxlint --fix", "tsc -b --noEmit"]
+    "*.{ts,tsx}": [
+      "oxlint --fix",
+      "tsc -b --noEmit"
+    ]
   },
   "msw": {
     "workerDirectory": [
