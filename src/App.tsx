@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Spinner } from './components/ui/Spinner'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { AuthGuard } from './components/guards/AuthGuard'
 import { MainLayout } from './layouts/MainLayout'
+import { eventsClient } from './api/events'
 
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })))
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })))
@@ -28,6 +29,10 @@ function Loading() {
 }
 
 function App() {
+  useEffect(() => {
+    eventsClient.connect()
+  }, [])
+
   return (
     <ErrorBoundary>
       <BrowserRouter>
