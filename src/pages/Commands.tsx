@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
@@ -27,6 +27,7 @@ import {
   useDeleteCommand,
 } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
 import { TagFilter } from '../components/ui/TagFilter'
 import { useSort } from '../hooks/useSort'
@@ -49,15 +50,18 @@ export function Commands() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
+  useEffect(() => { setPage(1) }, [debouncedSearch, tagFilter])
+
   const { data: commandsData, isLoading } = useCommands({
     page,
     size: pageSize,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
   })
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()
@@ -297,7 +301,7 @@ export function Commands() {
           )}
           {commandsData && commandsData.total > pageSize && (
             <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-              <Pagination page={page} totalPages={Math.ceil(commandsData.total / pageSize)} onPageChange={setPage} />
+              <Pagination page={page} totalPages={Math.max(1, Math.ceil(commandsData.total / pageSize))} onPageChange={setPage} />
             </div>
           )}
         </CardContent>

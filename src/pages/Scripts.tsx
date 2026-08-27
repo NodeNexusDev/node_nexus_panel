@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui/Card'
@@ -34,6 +34,7 @@ import {
 } from '../hooks/useScripts'
 import { useNodes } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
 import { TagFilter } from '../components/ui/TagFilter'
 import { Checkbox } from '../components/ui/Checkbox'
@@ -54,12 +55,15 @@ export function Scripts() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
-  const { data, isLoading } = useScripts({ page, size: pageSize, search: search || undefined })
+  useEffect(() => { setPage(1) }, [debouncedSearch, tagFilter])
+
+  const { data, isLoading } = useScripts({ page, size: pageSize, search: debouncedSearch || undefined })
   const { data: tags } = useScriptTags()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
@@ -272,7 +276,7 @@ export function Scripts() {
           )}
           {data && data.total > pageSize && (
             <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-              <Pagination page={page} totalPages={Math.ceil(data.total / pageSize)} onPageChange={setPage} />
+              <Pagination page={page} totalPages={Math.max(1, Math.ceil(data.total / pageSize))} onPageChange={setPage} />
             </div>
           )}
         </CardContent>
