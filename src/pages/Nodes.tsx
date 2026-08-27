@@ -15,6 +15,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tooltip } from '../components/ui/Tooltip'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { Pagination } from '../components/ui/Pagination'
+import { Spinner } from '../components/ui/Spinner'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
@@ -646,7 +647,7 @@ export function Nodes() {
               <p className="text-sm mt-2 text-surface-700 dark:text-surface-300">{validateResult.message}</p>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-surface-500"><span className="animate-spin w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full" /> {t('nodes.toastValidating')}</div>
+            <div className="flex items-center gap-2 text-surface-500"><Spinner size="sm" /> {t('nodes.toastValidating')}</div>
           )}
           <div className="flex justify-end"><Button variant="ghost" onClick={() => { setValidateTarget(null); setValidateResult(null) }}>{t('common.cancel')}</Button></div>
         </div>
@@ -685,7 +686,7 @@ export function Nodes() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-surface-500"><span className="animate-spin w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full" /> {t('common.loading')}</div>
+            <div className="flex items-center gap-2 text-surface-500"><Spinner size="sm" /> {t('common.loading')}</div>
           )}
           <div className="flex justify-end"><Button variant="ghost" onClick={() => { setShowBulkMetrics(false); setBulkMetricsResult(null) }}>{t('common.close')}</Button></div>
         </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
-import { Spinner } from '../ui/Spinner'
+import { TableSkeleton } from '../ui/Skeleton'
 import { useDockerContainerLogs } from '../../hooks/useDocker'
 
 export function ContainerLogsContent({ nodeId, containerId }: { nodeId: string; containerId: string }) {
@@ -23,7 +23,7 @@ export function ContainerLogsContent({ nodeId, containerId }: { nodeId: string; 
         <Button variant="ghost" size="sm" onClick={() => refetch()}>{t('common.refresh')}</Button>
       </div>
       <div className="max-h-96 overflow-y-auto">
-        {isLoading ? <Spinner size="lg" className="mx-auto my-8" /> : (
+        {isLoading ? <TableSkeleton rows={5} cols={4} /> : (
           <pre className="text-xs font-mono text-surface-700 dark:text-surface-300 whitespace-pre-wrap break-all bg-surface-50 dark:bg-surface-800/50 rounded p-4">{logs || t('docker.noLogs')}</pre>
         )}
       </div>

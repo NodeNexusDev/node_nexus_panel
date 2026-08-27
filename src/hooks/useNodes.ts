@@ -34,6 +34,7 @@ export function useNodeStats(id: string, params?: { date_from?: string; date_to?
     queryKey: ['nodes', 'detail', id, 'stats', params],
     queryFn: () => commandsApi.getStatsByNode({ node_id: id, ...params }),
     enabled: !!id,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -42,6 +43,7 @@ export function useNodeStatusHistory(id: string, params?: { page?: number; size?
     queryKey: ['nodes', 'detail', id, 'status-history', params],
     queryFn: () => nodesApi.getStatusHistory(id, params),
     enabled: !!id,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -126,6 +128,8 @@ export function useNodeMetrics(id: string) {
     queryKey: ['nodes', 'detail', id, 'metrics'],
     queryFn: () => nodesApi.getMetrics(id),
     enabled: !!id,
+    placeholderData: keepPreviousData,
+    staleTime: 10_000,
   })
 }
 
@@ -134,6 +138,7 @@ export function useNodeCommandHistory(id: string, params?: { page?: number; size
     queryKey: ['nodes', 'detail', id, 'commands-history', params],
     queryFn: () => commandsApi.getHistory({ node_id: id, ...params }),
     enabled: !!id,
+    placeholderData: keepPreviousData,
   })
 }
 

@@ -15,7 +15,7 @@ import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Checkbox } from '../components/ui/Checkbox'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
-import { TableSkeleton } from '../components/ui/Skeleton'
+import { Skeleton, StatCardSkeleton, TableSkeleton } from '../components/ui/Skeleton'
 import { IconScripts, IconArrowLeft, IconXCircle, IconZap } from '../components/ui/Icons'
 import { ExecutionResult } from '../components/commands/ExecutionResult'
 import { ScriptBulkNodeResultItem } from '../components/scripts/ScriptBulkNodeResultItem'
@@ -76,7 +76,15 @@ export function ScriptDetail() {
   const [scheduleMisfireGrace, setScheduleMisfireGrace] = useState(60)
   const [confirmRemoveSchedule, setConfirmRemoveSchedule] = useState(false)
 
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-16" />
+  if (isLoading) {
+    return (
+      <div className="space-y-6" aria-busy="true" aria-live="polite">
+        <Skeleton variant="text" className="w-64 h-8" />
+        <Skeleton variant="rectangular" className="w-full h-32" />
+        <Skeleton variant="rectangular" className="w-full h-48" />
+      </div>
+    )
+  }
   if (error || !script) {
     return <ErrorState title={t('scripts.notFound', 'Script not found')} error={error} onRetry={refetch} />
   }
@@ -489,7 +497,9 @@ function StatsTab({ scriptId }: { scriptId: string }) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Spinner size="lg" className="mx-auto my-8" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
+          </div>
         ) : error ? (
           <ErrorState error={error} onRetry={refetch} />
         ) : stats ? (

@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { Spinner } from '../ui/Spinner'
+import { FormSkeleton } from '../ui/Skeleton'
 import { useInspectVolume } from '../../hooks/useDocker'
 
 export function VolumeInspectContent({ nodeId, volumeName }: { nodeId: string; volumeName: string }) {
   const { t } = useTranslation()
   const { data: volume, isLoading } = useInspectVolume(nodeId, volumeName)
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) return <FormSkeleton fields={4} />
   if (!volume) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noData')}</p>
   return (
     <div className="space-y-4 max-h-96 overflow-y-auto">

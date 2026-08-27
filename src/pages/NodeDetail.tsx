@@ -11,10 +11,9 @@ import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Pagination } from '../components/ui/Pagination'
-import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
-import { TableSkeleton } from '../components/ui/Skeleton'
+import { Skeleton, StatCardSkeleton, TableSkeleton } from '../components/ui/Skeleton'
 import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
@@ -454,7 +453,23 @@ function MetricBar({ label, value, percent }: { label: string; value: string; pe
 function MetricsTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { data: metrics, isLoading, error, refetch } = useNodeMetrics(nodeId)
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader><Skeleton variant="text" className="w-32 h-5" /></CardHeader>
+        <CardContent className="space-y-4" aria-busy="true" aria-live="polite">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex justify-between"><Skeleton variant="text" className="w-16 h-4" /><Skeleton variant="text" className="w-24 h-4" /></div>
+              <Skeleton variant="rectangular" className="w-full h-2" />
+            </div>
+          ))}
+          <Skeleton variant="rectangular" className="w-full h-12" />
+          <Skeleton variant="rectangular" className="w-full h-16" />
+        </CardContent>
+      </Card>
+    )
+  }
   if (error) return <ErrorState error={error} onRetry={refetch} />
   if (!metrics) return <EmptyState title={t('nodes.noMetrics', 'No metrics available')} />
 
@@ -510,7 +525,18 @@ function StatsTab({ nodeId }: { nodeId: string }) {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const { data: stats, isLoading, error, refetch } = useNodeStats(nodeId, { date_from: dateFrom || undefined, date_to: dateTo || undefined })
-  if (isLoading) return <Spinner size="lg" className="mx-auto my-8" />
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader><Skeleton variant="text" className="w-32 h-5" /></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
   if (error) return <ErrorState error={error} onRetry={refetch} />
   if (!stats) return <EmptyState title={t('nodes.noStats', 'No stats available')} />
   return (
