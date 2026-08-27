@@ -42,7 +42,7 @@ import {
   type CommandUpdateFormValues,
 } from '../lib/validators/command-schema'
 
-type SortKey = 'name' | 'tags' | 'updated_at'
+type SortKey = 'name' | 'tags' | 'updated_at' | 'created_at'
 
 export function Commands() {
   const { t } = useTranslation()
@@ -184,6 +184,7 @@ export function Commands() {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{cmd.name}</p>
             <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{cmd.command}</p>
+            {cmd.description && <p className="text-xs text-surface-500 dark:text-surface-500 truncate">{cmd.description}</p>}
           </div>
         </div>
       ),
@@ -198,6 +199,11 @@ export function Commands() {
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
+    },
+    {
+      key: 'created_at',
+      header: <SortableHeader label={t('commands.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
+      render: (cmd) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(cmd.created_at).toLocaleDateString()}</span>,
     },
     {
       key: 'updated',
@@ -229,12 +235,17 @@ export function Commands() {
         <div className="min-w-0">
           <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{cmd.name}</p>
           <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{cmd.command}</p>
+          {cmd.description && <p className="text-xs text-surface-500 dark:text-surface-500 truncate">{cmd.description}</p>}
         </div>
       </div>
       <div className="flex flex-wrap gap-1">
         {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
           <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
+      </div>
+      <div className="flex items-center gap-3 text-xs text-surface-500">
+        <span>{t('commands.created')}: {new Date(cmd.created_at).toLocaleDateString()}</span>
+        <span>{t('commands.updated')}: {new Date(cmd.updated_at).toLocaleDateString()}</span>
       </div>
       <div className="flex items-center gap-1">
         <FavoriteButton targetType="command" targetId={cmd.id} resourceName={cmd.name} size="sm" />

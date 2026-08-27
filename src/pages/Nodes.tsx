@@ -57,7 +57,7 @@ import type { NodeCreateFormValues } from '../lib/validators/node-schema'
 import { nodeCreateSchema } from '../lib/validators/node-schema'
 import type { Column } from '../components/ui/table-types'
 
-type SortKey = 'name' | 'host' | 'status' | 'connection_type' | 'tags'
+type SortKey = 'name' | 'host' | 'status' | 'connection_type' | 'tags' | 'created_at' | 'updated_at'
 
 function statusDot(status: NodeStatus): string {
   switch (status) {
@@ -248,7 +248,7 @@ export function Nodes() {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{node.host}:{node.port}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono truncate">{node.host}:{node.port}{node.username ? ` (${node.username})` : ''}</p>
           </div>
         </div>
       ),
@@ -267,6 +267,16 @@ export function Nodes() {
       key: 'type',
       header: <SortableHeader label={t('nodes.type')} sortKey="connection_type" sort={sort} onSort={toggleSort} />,
       render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</span>,
+    },
+    {
+      key: 'created_at',
+      header: <SortableHeader label={t('nodes.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
+      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.created_at).toLocaleDateString()}</span>,
+    },
+    {
+      key: 'updated_at',
+      header: <SortableHeader label={t('nodes.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
+      render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.updated_at).toLocaleDateString()}</span>,
     },
     {
       key: 'tags',
@@ -317,7 +327,7 @@ export function Nodes() {
           </div>
           <div>
             <p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p>
-            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}{node.username ? ` (${node.username})` : ''}</p>
           </div>
         </div>
         <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
@@ -326,6 +336,10 @@ export function Nodes() {
         {node.tags.length > 0 ? node.tags.map((tag) => (
           <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
+      </div>
+      <div className="flex items-center gap-3 text-xs text-surface-500">
+        <span>{t('nodes.created')}: {new Date(node.created_at).toLocaleDateString()}</span>
+        <span>{t('nodes.updated')}: {new Date(node.updated_at).toLocaleDateString()}</span>
       </div>
       <div className="flex items-center gap-1">
         <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />

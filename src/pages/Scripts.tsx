@@ -170,6 +170,11 @@ export function Scripts() {
       render: (script) => <Badge variant="info">{script.steps.length}</Badge>,
     },
     {
+      key: 'updated_at',
+      header: <SortableHeader label={t('scripts.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
+      render: (script) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(script.updated_at).toLocaleDateString()}</span>,
+    },
+    {
       key: 'tags',
       header: <SortableHeader label={t('scripts.tagsLabel')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (script) => (
@@ -213,6 +218,9 @@ export function Scripts() {
         {script.tags.length > 0 ? script.tags.map((tag) => (
           <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
+      </div>
+      <div className="text-xs text-surface-500">
+        {t('scripts.updated')}: {new Date(script.updated_at).toLocaleDateString()}
       </div>
       <div className="flex items-center gap-1">
         <FavoriteButton targetType="script" targetId={script.id} resourceName={script.name} size="sm" />
