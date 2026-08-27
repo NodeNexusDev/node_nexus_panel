@@ -83,8 +83,8 @@ export function useDeleteNode() {
       await queryClient.cancelQueries({ queryKey: ['nodes'] })
       const previous = queryClient.getQueriesData<PaginatedResponse<Node>>({ queryKey: ['nodes'] })
       queryClient.setQueriesData<PaginatedResponse<Node>>({ queryKey: ['nodes'] }, (old) => {
-        if (!old) return old
-        return { ...old, items: old.items.filter((n) => n.id !== id) }
+        if (!old || !('items' in old) || !Array.isArray(old.items)) return old
+        return { ...old, items: old.items.filter((n) => n.id !== id), total: Math.max(0, old.total - 1) }
       })
       return { previous }
     },
@@ -94,6 +94,10 @@ export function useDeleteNode() {
           queryClient.setQueryData(key, data)
         }
       }
+    },
+    onSuccess: (_data, id) => {
+      queryClient.removeQueries({ queryKey: ['nodes', id] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
@@ -178,6 +182,9 @@ export function useBulkDeleteNodes() {
   return useMutation({
     mutationFn: (nodeIds: string[]) => nodesApi.bulkDelete(nodeIds),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
   })
