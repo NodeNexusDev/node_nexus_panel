@@ -91,9 +91,12 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      aria-labelledby={title ? 'modal-title' : undefined}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
       <div
+        role="presentation"
+        aria-hidden="true"
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
         data-modal-backdrop
         onClick={() => onCloseRef.current()}
@@ -105,7 +108,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         <div className="bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800 rounded-2xl shadow-2xl overflow-hidden">
           {title && (
             <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200/50 dark:border-surface-800/50">
-              <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{title}</h2>
+              <h2 id="modal-title" className="text-lg font-semibold text-surface-900 dark:text-white">{title}</h2>
               <button
                 onClick={() => onCloseRef.current()}
                 aria-label={t('common.close')}

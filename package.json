@@ -3,11 +3,13 @@
   "private": true,
   "version": "1.7.0",
   "type": "module",
+  "engines": { "node": ">=22" },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --noEmit",
     "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",

@@ -406,7 +406,6 @@
     "failedToLoadVolumes": "Failed to load volumes",
     "searchContainers": "Search by name or image...",
     "all": "All",
-    "running": "Running",
     "stopped": "Stopped",
     "noMatch": "No containers match the current filters",
     "pause": "Pause",
@@ -479,13 +478,14 @@
     "storageDriver": "Storage Driver",
     "containersRunning": "Running",
     "containersStopped": "Stopped",
-    "images": "Images",
     "type": "Type",
     "activeSize": "Active Size",
     "reclaimableSize": "Reclaimable",
     "reclaimablePercent": "Reclaimable %",
     "failedToLoadSystemInfo": "Failed to load system info",
-    "failedToLoadDiskUsage": "Failed to load disk usage"
+    "failedToLoadDiskUsage": "Failed to load disk usage",
+    "invalidPorts": "Invalid port mappings skipped",
+    "invalidVolumes": "Invalid volume mappings skipped"
   },
   "audit": {
     "title": "Audit",
