@@ -66,6 +66,12 @@ export function NodeDetail() {
   const tabFromUrl = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<Tab>(TAB_KEYS.includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview')
 
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const next = (['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes'] as Tab[]).includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview'
+    if (next !== activeTab) setActiveTab(next)
+  }, [tabFromUrl, activeTab])
+
   const changeTab = (key: Tab) => {
     setActiveTab(key)
     setSearchParams(key === 'overview' ? {} : { tab: key })
@@ -378,14 +384,43 @@ export function NodeDetail() {
 
 function OverviewTab({ node }: { node: Node }) {
   const { t } = useTranslation()
+  const { copy } = useCopyToClipboard()
+  const navigate = useNavigate()
   const connTypeBadge = <Badge variant="info">{node.connection_type}</Badge>
   const statusBadge = <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+  // oxlint-disable-next-line react(jsx-key)
   const rows: [string, React.ReactNode][] = [
-    [t('nodes.host'), `${node.host}:${node.port}`],
+    [t('nodes.host'), (
+      <span key="host" className="inline-flex items-center gap-2 font-mono">
+        {node.host}:{node.port}
+        <button onClick={() => copy(`${node.host}:${node.port}`)} aria-label={t('common.copy')} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors cursor-pointer">
+          <IconCopy className="w-3.5 h-3.5 text-surface-500" />
+        </button>
+      </span>
+    )],
     [t('nodes.connectionType'), connTypeBadge],
     [t('nodes.status'), statusBadge],
-    [t('nodes.username', 'Username'), node.username || '—'],
-    [t('nodes.dockerHost', 'Docker Host'), node.docker_host || '—'],
+    [t('nodes.username', 'Username'), node.username ? (
+      <span key="user" className="inline-flex items-center gap-1">
+        {node.username}
+        <button onClick={() => copy(node.username!)} aria-label={t('common.copy')} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3 h-3 text-surface-400" /></button>
+      </span>
+    ) : '—'],
+    [t('nodes.dockerHost', 'Docker Host'), node.docker_host ? (
+      <span key="docker" className="inline-flex items-center gap-1 font-mono text-xs">
+        {node.docker_host}
+        <button onClick={() => copy(node.docker_host!)} aria-label={t('common.copy')} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3 h-3 text-surface-400" /></button>
+      </span>
+    ) : '—'],
+    [t('nodes.tags', 'Tags'), node.tags.length ? (
+      <span key="tags" className="flex flex-wrap gap-1">
+        {node.tags.map((tag) => (
+          <button key={tag} onClick={() => navigate(`/nodes?tag=${encodeURIComponent(tag)}`)} className="cursor-pointer">
+            <Badge variant="default">{tag}</Badge>
+          </button>
+        ))}
+      </span>
+    ) : '—'],
     [t('nodes.created', 'Created'), new Date(node.created_at).toLocaleString()],
     [t('nodes.updated', 'Updated'), new Date(node.updated_at).toLocaleString()],
   ]
@@ -397,7 +432,7 @@ function OverviewTab({ node }: { node: Node }) {
           {rows.map(([label, value]) => (
             <div key={label} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
               <p className="text-xs text-surface-500 dark:text-surface-400 uppercase">{label}</p>
-              <div className="text-sm font-medium text-surface-900 dark:text-white mt-0.5">{value}</div>
+              <div className="text-sm font-medium text-surface-900 dark:text-white mt-0.5 flex items-center">{value}</div>
             </div>
           ))}
         </div>

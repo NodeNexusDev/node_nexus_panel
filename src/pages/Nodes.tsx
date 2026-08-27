@@ -433,13 +433,14 @@ export function Nodes() {
           {(['active', 'unreachable', 'error'] as const).map((s) => (
             <button
               key={s}
+              aria-pressed={statusFilter.has(s)}
               onClick={() => setStatusFilter((prev) => {
                 const next = new Set(prev)
                 if (next.has(s)) next.delete(s)
                 else next.add(s)
                 return next
               })}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${
                 statusFilter.has(s)
                   ? s === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                   : s === 'unreachable' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
@@ -495,15 +496,29 @@ export function Nodes() {
               <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('nodes.clearSelection', 'Clear')}</button>
             </div>
           )}
+          {!isLoading && selectedIds.length === 0 && data && data.items.length > 0 && (
+            <div className="px-6 py-2 text-xs text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-800 flex items-center gap-2">
+              <span>💡 {t('nodes.bulkHint', 'Tip: select rows for bulk actions')}</span>
+            </div>
+          )}
           {isLoading ? (
             <TableSkeleton rows={5} cols={8} />
           ) : nodes.length === 0 ? (
-            <EmptyState
-              icon={<IconNodes className="w-10 h-10" />}
-              title={t('nodes.emptyTitle')}
-              description={t('nodes.emptyDesc')}
-              action={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
-            />
+            data && data.items.length > 0 ? (
+              <EmptyState
+                icon={<IconNodes className="w-10 h-10" />}
+                title={t('common.noResults', 'No results')}
+                description={t('nodes.noResultsDesc', 'No nodes match current filters')}
+                action={<Button variant="ghost" onClick={() => { setSearch(''); setStatusFilter(new Set()); setTagFilter([]) }}>{t('common.clearAll', 'Clear all')}</Button>}
+              />
+            ) : (
+              <EmptyState
+                icon={<IconNodes className="w-10 h-10" />}
+                title={t('nodes.emptyTitle')}
+                description={t('nodes.emptyDesc')}
+                action={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
+              />
+            )
           ) : (
             <ResponsiveTable
               data={sortedNodes}
