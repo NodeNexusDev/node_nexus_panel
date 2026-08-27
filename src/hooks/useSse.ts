@@ -12,8 +12,6 @@ export function useSse() {
   const [lastEvent, setLastEvent] = useState<SseEvent | null>(null)
 
   useEffect(() => {
-    eventsClient.connect()
-
     const checkConnection = setInterval(() => {
       setIsConnected(eventsClient.isConnected)
     }, 1000)
@@ -30,7 +28,6 @@ export function useSse() {
     return () => {
       clearInterval(checkConnection)
       unsubscribe()
-      eventsClient.disconnect()
     }
   }, [])
 
