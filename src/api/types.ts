@@ -22,6 +22,26 @@ export interface Node {
   updated_at: string
 }
 
+export interface NodeOffsetListResponse {
+  items: Node[]
+  total: number
+  page: number
+  size: number
+}
+
+export interface NodeCursorListResponse {
+  items: Node[]
+  limit: number
+  next_cursor: string | null
+  has_more: boolean
+}
+
+export type NodeListResponse = NodeOffsetListResponse | NodeCursorListResponse
+
+export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursorListResponse {
+  return 'next_cursor' in resp && 'has_more' in resp
+}
+
 export interface NodeCreate {
   name: string
   host: string
@@ -772,6 +792,7 @@ export interface ScriptExport {
 }
 
 export interface ConfigImport {
+  /** @deprecated not in spec 1.3.3 — kept for backward compat with older exports */
   exported_at?: string
   format_version?: string | null
   version?: string | null
@@ -1112,9 +1133,19 @@ export interface BulkNodeDeleteRequest {
   node_ids: string[]
 }
 
-export interface HealthResponse {
+export type HealthResponse = Record<string, string> & {
+  status?: string
+  version?: string
+}
+
+export interface ReadyCheck {
   status: string
-  version: string
+  detail?: string | null
+}
+
+export interface ReadyResponse {
+  status: string
+  checks?: Record<string, ReadyCheck>
 }
 
 // ── Auth (JWT) ─────────────────────────────────────────────────

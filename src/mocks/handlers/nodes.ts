@@ -10,7 +10,6 @@ export const nodeHandlers = [
     const size = Number(url.searchParams.get('size') || '20')
     const tags = url.searchParams.get('tags')
     const search = url.searchParams.get('search')
-    const status = url.searchParams.get('status')
     let filtered = mockNodes
     if (tags) {
       const tagList = tags.split(',')
@@ -19,10 +18,6 @@ export const nodeHandlers = [
     if (search) {
       const q = search.toLowerCase()
       filtered = filtered.filter((n) => n.name.toLowerCase().includes(q) || n.host.toLowerCase().includes(q))
-    }
-    if (status) {
-      const statusList = status.split(',')
-      filtered = filtered.filter((n) => statusList.includes(n.status))
     }
     const start = (page - 1) * size
     const items = filtered.slice(start, start + size)

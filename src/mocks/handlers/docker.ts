@@ -171,10 +171,6 @@ export const dockerHandlers = [
     return HttpResponse.json({ message: 'Container disconnected from network' })
   }),
 
-  http.post(`${API}/api/v1/nodes/:nodeId/docker/networks/prune`, () => {
-    return HttpResponse.json({ networks_deleted: [], space_reclaimed: '0B' })
-  }),
-
   http.get(`${API}/api/v1/nodes/:nodeId/docker/volumes`, () => {
     return HttpResponse.json(mockVolumes)
   }),

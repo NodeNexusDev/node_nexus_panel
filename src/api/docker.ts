@@ -166,9 +166,6 @@ export const dockerApi = {
   getSystemDf: (nodeId: string) =>
     api.get<DockerSystemDfItem[]>(`${nodesBase(nodeId)}/system/df`),
 
-  pruneNetworks: (nodeId: string) =>
-    api.post<void>(`${nodesBase(nodeId)}/networks/prune`),
-
   bulkExec: (data: BulkDockerRequest) =>
     api.post<BulkDockerResponse>('/docker/bulk/exec', data),
 

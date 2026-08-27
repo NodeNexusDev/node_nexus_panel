@@ -56,6 +56,7 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
 import { nodeStatusVariant } from '../lib/variants'
 import type { Node, NodeStatus, BulkNodeMetricsResponse, NodeUpdate } from '../api/types'
+import { isNodeCursorResponse } from '../api/types'
 import type { NodeCreateFormValues } from '../lib/validators/node-schema'
 import { nodeCreateSchema } from '../lib/validators/node-schema'
 import type { Column } from '../components/ui/table-types'
@@ -77,7 +78,6 @@ export function Nodes() {
   const { toast } = useToast()
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
-  const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
@@ -85,13 +85,12 @@ export function Nodes() {
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, statusFilter, tagFilter])
+  }, [debouncedSearch, tagFilter])
 
   const { data, isLoading } = useNodes({
     page,
     size: pageSize,
     search: debouncedSearch || undefined,
-    status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined,
   })
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
@@ -430,32 +429,6 @@ export function Nodes() {
       />
 
       <FilterBar search={search} onSearch={setSearch} searchPlaceholder={t('nodes.searchPlaceholder', 'Search nodes...')}>
-        <div className="flex items-center gap-1">
-          {(['active', 'unreachable', 'error'] as const).map((s) => (
-            <button
-              key={s}
-              aria-pressed={statusFilter.has(s)}
-              onClick={() => setStatusFilter((prev) => {
-                const next = new Set(prev)
-                if (next.has(s)) next.delete(s)
-                else next.add(s)
-                return next
-              })}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${
-                statusFilter.has(s)
-                  ? s === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : s === 'unreachable' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
-              }`}
-            >
-              {t(`nodes.status${s.charAt(0).toUpperCase() + s.slice(1)}`, s)}
-            </button>
-          ))}
-          {statusFilter.size > 0 && (
-            <button onClick={() => setStatusFilter(new Set())} aria-label={t('nodes.clearFilters', 'Clear filters')} className="px-2 py-1.5 text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">×</button>
-          )}
-        </div>
         <TagFilter
           available={allTags ?? []}
           selected={tagFilter}
@@ -513,7 +486,7 @@ export function Nodes() {
                 icon={<IconNodes className="w-10 h-10" />}
                 title={t('common.noResults', 'No results')}
                 description={t('nodes.noResultsDesc', 'No nodes match current filters')}
-                action={<Button variant="ghost" onClick={() => { setSearch(''); setStatusFilter(new Set()); setTagFilter([]) }}>{t('common.clearAll', 'Clear all')}</Button>}
+                action={<Button variant="ghost" onClick={() => { setSearch(''); setTagFilter([]) }}>{t('common.clearAll', 'Clear all')}</Button>}
               />
             ) : (
               <EmptyState
@@ -533,7 +506,7 @@ export function Nodes() {
               onRowClick={(node) => navigate(`/nodes/${node.id}`)}
             />
           )}
-          {data && data.total > pageSize && (
+          {data && !isNodeCursorResponse(data) && data.total > pageSize && (
             <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
               <Pagination page={page} totalPages={Math.max(1, Math.ceil(data.total / pageSize))} onPageChange={setPage} />
             </div>

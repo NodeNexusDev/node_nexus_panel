@@ -9,12 +9,13 @@ import type {
   ExecutionStatsResponse,
   NodeStatusHistoryItem,
   CommandHistoryResponse,
+  NodeListResponse,
   PaginatedResponse,
   ConnectionType,
 } from '../api/types'
 
-export function useNodes(params?: { page?: number; size?: number; status?: string; tags?: string; search?: string }) {
-  return useQuery<PaginatedResponse<Node>>({
+export function useNodes(params?: { page?: number; size?: number; tags?: string; search?: string; cursor?: string; limit?: number }) {
+  return useQuery<NodeListResponse>({
     queryKey: ['nodes', 'list', params],
     queryFn: () => nodesApi.getAll(params),
     placeholderData: keepPreviousData,

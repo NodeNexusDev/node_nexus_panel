@@ -519,17 +519,6 @@ export function usePruneVolumes() {
   })
 }
 
-export function usePruneNetworks() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (nodeId: string) => dockerApi.pruneNetworks(nodeId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-    },
-  })
-}
-
 export function useDockerSystemInfo(nodeId: string) {
   return useQuery<DockerSystemInfo>({
     queryKey: ['docker', nodeId, 'system', 'info'],
