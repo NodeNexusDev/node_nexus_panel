@@ -19,6 +19,7 @@ import { IconScripts, IconArrowLeft, IconXCircle, IconZap } from '../components/
 import { ExecutionResult } from '../components/commands/ExecutionResult'
 import { useToast } from '../components/ui/useToast'
 import { useNodes } from '../hooks/useNodes'
+import { useCommands } from '../hooks/useCommands'
 import { ScriptFormModal, type ScriptFormValues } from '../components/scripts/ScriptFormModal'
 import {
   useScript,
@@ -55,6 +56,8 @@ export function ScriptDetail() {
   const { data: script, isLoading, error, refetch } = useScript(id || '')
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
+  const { data: commandsData } = useCommands({ size: 100 })
+  const commands = commandsData?.items || []
   const runScript = useRunScript()
   const updateScript = useUpdateScript()
   const cloneScript = useCloneScript()
@@ -167,9 +170,9 @@ export function ScriptDetail() {
       <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
       {activeTab === 'overview' && <OverviewTab script={script} />}
-      {activeTab === 'steps' && <StepsTab script={script} />}
-      {activeTab === 'executions' && <ExecutionsTab scriptId={script.id} />}
-      {activeTab === 'schedule' && <ScheduleTab scriptId={script.id} />}
+      {activeTab === 'steps' && <StepsTab script={script} commands={commands} />}
+      {activeTab === 'executions' && <ExecutionsTab scriptId={script.id} nodes={nodes} />}
+      {activeTab === 'schedule' && <ScheduleTab scriptId={script.id} nodes={nodes} />}
       {activeTab === 'stats' && <StatsTab scriptId={script.id} />}
       {activeTab === 'notes' && <NotesTab scriptId={script.id} />}
 
@@ -290,7 +293,7 @@ function OverviewTab({ script }: { script: ScriptResponse }) {
   )
 }
 
-function StepsTab({ script }: { script: ScriptResponse }) {
+function StepsTab({ script, commands }: { script: ScriptResponse; commands: { id: string; name: string }[] }) {
   const { t } = useTranslation()
   return (
     <Card>
@@ -312,7 +315,7 @@ function StepsTab({ script }: { script: ScriptResponse }) {
                   <pre className="text-xs font-mono text-surface-600 dark:text-surface-300 mt-2 whitespace-pre-wrap">{step.command}</pre>
                 )}
                 {step.type === 'command' && step.command_id && (
-                  <p className="text-xs font-mono text-surface-500 mt-2">command_id: {step.command_id}</p>
+                  <p className="text-xs font-mono text-surface-500 mt-2">{t('scripts.command', 'Command')}: {commands.find(c => c.id === step.command_id)?.name || step.command_id}</p>
                 )}
               </div>
             ))}
@@ -323,7 +326,7 @@ function StepsTab({ script }: { script: ScriptResponse }) {
   )
 }
 
-function ExecutionsTab({ scriptId }: { scriptId: string }) {
+function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: string; name: string }[] }) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { data, isLoading } = useScriptExecutions(scriptId, { size: 20 })
@@ -378,10 +381,10 @@ function ExecutionsTab({ scriptId }: { scriptId: string }) {
                   onClick={() => { if (exec.steps?.length) setExpandedExecId(expandedExecId === exec.id ? null : exec.id) }}
                 >
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', 'Select execution {{id}}', { id: exec.id })} className="rounded border-surface-300 dark:border-surface-600" />
+                    <input type="checkbox" checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', 'Select {{name}}', { name: exec.id.slice(0, 8) })} className="rounded border-surface-300 dark:border-surface-600" />
                     <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                     <div>
-                      <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id || 'all'}</p>
+                      <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>
                       <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
                     </div>
                   </div>
@@ -456,7 +459,7 @@ function StatsTab({ scriptId }: { scriptId: string }) {
   )
 }
 
-function ScheduleTab({ scriptId }: { scriptId: string }) {
+function ScheduleTab({ scriptId, nodes }: { scriptId: string; nodes: { id: string; name: string }[] }) {
   const { t } = useTranslation()
   const { data: schedule } = useScriptSchedule(scriptId)
   const { data: historyData, isLoading } = useScriptScheduleHistory(scriptId, { size: 20 })
@@ -486,7 +489,7 @@ function ScheduleTab({ scriptId }: { scriptId: string }) {
                     <div className="flex items-center gap-3">
                       <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                       <div>
-                        <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id || 'all'}</p>
+                      <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>
                         <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
                       </div>
                     </div>

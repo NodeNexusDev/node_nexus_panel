@@ -211,7 +211,7 @@ export function Audit() {
                         <Badge variant={activityVariant(log.action)}>{log.action}</Badge>
                       </td>
                       <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">
-                        <span className="font-mono text-xs">{log.node_id || '—'}</span>
+                        <span className="font-mono text-xs">{log.node_id ? (nodes.find(n => n.id === log.node_id)?.name || log.node_id) : '—'}</span>
                       </td>
                       <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{log.user || '—'}</td>
                       <td className="px-6 py-4 text-xs text-surface-500 max-w-xs truncate">{log.details || '—'}</td>
