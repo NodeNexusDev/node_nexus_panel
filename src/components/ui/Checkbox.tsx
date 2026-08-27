@@ -55,9 +55,9 @@ export function Checkbox({ checked, onChange, label, ariaLabel, disabled, varian
       onKeyDown={handleKeyDown}
       className={`
         ${sizeClasses[size]} rounded-lg border-2 flex items-center justify-center
-        transition-all duration-200 cursor-pointer select-none shrink-0
+        transition-all duration-200 cursor-pointer select-none shrink-0 relative
         focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:ring-offset-0
-        min-w-[44px] min-h-[44px] p-2 -m-2
+        before:absolute before:inset-[-8px] before:content-['']
         ${checked ? checkedClasses[variant] : uncheckedClasses[variant]}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         ${className}

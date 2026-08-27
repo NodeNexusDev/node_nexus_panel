@@ -55,7 +55,15 @@
     "allTime": "All",
     "vsPrevious": "vs prev. period",
     "avgDuration": "Avg duration",
-    "noData": "No data"
+    "noData": "No data",
+    "executeCommand": "Execute Command",
+    "executeCommandDesc": "Run a command on nodes",
+    "addNode": "Add Node",
+    "addNodeDesc": "Connect a new server",
+    "runScript": "Run Script",
+    "runScriptDesc": "Execute an automation script",
+    "viewLogs": "View Logs",
+    "viewLogsDesc": "Browse audit trail"
   },
   "nodes": {
     "title": "Nodes",
@@ -165,7 +173,9 @@
     "execResult": "Exit {{code}}: {{output}}",
     "copyAddress": "Copy address",
     "addressCopied": "Address copied",
-    "openDocker": "Open Docker"
+    "openDocker": "Open Docker",
+    "bulkHint": "Select rows for bulk actions",
+    "noResultsDesc": "No nodes match current filters"
   },
   "commands": {
     "title": "Commands",

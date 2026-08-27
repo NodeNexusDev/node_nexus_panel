@@ -55,7 +55,15 @@
     "allTime": "Всё",
     "vsPrevious": "к пред. периоду",
     "avgDuration": "Ср. время",
-    "noData": "Нет данных"
+    "noData": "Нет данных",
+    "executeCommand": "Выполнить команду",
+    "executeCommandDesc": "Запустить команду на нодах",
+    "addNode": "Добавить ноду",
+    "addNodeDesc": "Подключить новый сервер",
+    "runScript": "Запустить скрипт",
+    "runScriptDesc": "Выполнить скрипт автоматизации",
+    "viewLogs": "Просмотр логов",
+    "viewLogsDesc": "Открыть журнал аудита"
   },
   "nodes": {
     "title": "Ноды",
@@ -165,7 +173,9 @@
     "execResult": "Код {{code}}: {{output}}",
     "copyAddress": "Копировать адрес",
     "addressCopied": "Адрес скопирован",
-    "openDocker": "Docker"
+    "openDocker": "Docker",
+    "bulkHint": "Выделите строки для массовых действий",
+    "noResultsDesc": "Нет нод по текущим фильтрам"
   },
   "commands": {
     "title": "Команды",
@@ -362,7 +372,7 @@
     "command": "Команда",
     "environment": "Переменные среды",
     "inspect": "Инспектировать",
-    "running": "Запущен",
+    "running": "Работает",
     "exitCode": "Код выхода",
     "hostname": "Хостнейм",
     "yes": "Да",
@@ -406,7 +416,6 @@
     "failedToLoadVolumes": "Не удалось загрузить тома",
     "searchContainers": "Поиск по имени или образу...",
     "all": "Все",
-    "running": "Работает",
     "stopped": "Остановлен",
     "noMatch": "Нет контейнеров, соответствующих текущим фильтрам",
     "pause": "Пауза",
@@ -479,7 +488,6 @@
     "storageDriver": "Драйвер хранилища",
     "containersRunning": "Работает",
     "containersStopped": "Остановлено",
-    "images": "Образы",
     "type": "Тип",
     "activeSize": "Активный размер",
     "reclaimableSize": "Можно освободить",

@@ -497,8 +497,11 @@ export function Nodes() {
             </div>
           )}
           {!isLoading && selectedIds.length === 0 && data && data.items.length > 0 && (
-            <div className="px-6 py-2 text-xs text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-800 flex items-center gap-2">
-              <span>💡 {t('nodes.bulkHint', 'Tip: select rows for bulk actions')}</span>
+            <div className="px-6 py-2 text-xs text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-800 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{t('nodes.bulkHint')}</span>
             </div>
           )}
           {isLoading ? (

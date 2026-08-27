@@ -62,19 +62,11 @@ export function NodeDetail() {
   const { copy } = useCopyToClipboard({ onCopied: () => toast('success', t('nodes.addressCopied')) })
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
-  const TAB_KEYS: Tab[] = ['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes']
-  const tabFromUrl = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState<Tab>(TAB_KEYS.includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview')
-
-  // oxlint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const next = (['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes'] as Tab[]).includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview'
-    if (next !== activeTab) setActiveTab(next)
-  }, [tabFromUrl, activeTab])
+  const tabFromUrl = searchParams.get('tab') as Tab | null
+  const activeTab: Tab = (['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes'] as Tab[]).includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview'
 
   const changeTab = (key: Tab) => {
-    setActiveTab(key)
-    setSearchParams(key === 'overview' ? {} : { tab: key })
+    setSearchParams(key === 'overview' ? {} : { tab: key }, { replace: false })
   }
   const [showEditModal, setShowEditModal] = useState(false)
   const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
