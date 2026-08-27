@@ -93,7 +93,7 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('scripts.steps')}</label>
-            <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { id: generateId(), label: `Step ${prev.length + 1}`, type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { id: generateId(), label: '', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
           </div>
           {steps.map((step, idx) => (
             <div key={step.id} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg space-y-2">
