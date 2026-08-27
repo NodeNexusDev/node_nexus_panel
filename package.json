@@ -21,7 +21,7 @@
     "test:e2e:report": "playwright show-report",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "prepare": "husky install"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.0",
@@ -53,6 +53,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
+    "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "msw": "^2.15.0",
     "oxlint": "^1.75.0",
