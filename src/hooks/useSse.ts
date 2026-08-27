@@ -8,14 +8,11 @@ export type SseEvent = {
 }
 
 export function useSse() {
-  const [isConnected, setIsConnected] = useState(false)
+  const [isConnected, setIsConnected] = useState(eventsClient.isConnected)
   const [lastEvent, setLastEvent] = useState<SseEvent | null>(null)
 
   useEffect(() => {
-    const checkConnection = setInterval(() => {
-      setIsConnected(eventsClient.isConnected)
-    }, 1000)
-
+    const unsubConn = eventsClient.onConnectionChange(setIsConnected)
     const unsubscribe = eventsClient.on('*', (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data)
@@ -26,7 +23,7 @@ export function useSse() {
     })
 
     return () => {
-      clearInterval(checkConnection)
+      unsubConn()
       unsubscribe()
     }
   }, [])

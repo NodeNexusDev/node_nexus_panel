@@ -20,6 +20,13 @@ class ApiClient {
     return this.accessToken
   }
 
+  private async parseError(response: Response): Promise<ApiError> {
+    return response.json().catch(() => ({
+      code: 'UNKNOWN_ERROR',
+      message: response.statusText,
+    })) as Promise<ApiError>
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
@@ -27,7 +34,8 @@ class ApiClient {
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string>),
     }
-    if (options.body) {
+    const isFormData = options.body instanceof FormData
+    if (options.body && !isFormData && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json'
     }
 
@@ -35,39 +43,61 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.accessToken}`
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-    })
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15_000)
+    const signal = options.signal ?? controller.signal
+
+    let response: Response
+    try {
+      response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers,
+        signal,
+        credentials: 'include',
+      })
+    } catch (err) {
+      clearTimeout(timeoutId)
+      if ((err as Error).name === 'AbortError') {
+        throw new ApiRequestError(408, { code: 'TIMEOUT', message: 'Request timeout' })
+      }
+      throw err
+    }
+    clearTimeout(timeoutId)
 
     if (response.status === 401) {
       const newToken = await this.tryRefresh()
       if (newToken) {
         headers['Authorization'] = `Bearer ${newToken}`
-        const retryResponse = await fetch(`${this.baseUrl}${endpoint}`, {
-          ...options,
-          headers,
-        })
-        if (!retryResponse.ok) {
-          const error: ApiError = await retryResponse.json().catch(() => ({
-            code: 'UNKNOWN_ERROR',
-            message: retryResponse.statusText,
-          }))
-          throw new ApiRequestError(retryResponse.status, error)
+        const retryController = new AbortController()
+        const retryTimeout = setTimeout(() => retryController.abort(), 15_000)
+        try {
+          const retryResponse = await fetch(`${this.baseUrl}${endpoint}`, {
+            ...options,
+            headers,
+            signal: options.signal ?? retryController.signal,
+            credentials: 'include',
+          })
+          clearTimeout(retryTimeout)
+          if (!retryResponse.ok) {
+            const error = await this.parseError(retryResponse)
+            throw new ApiRequestError(retryResponse.status, error)
+          }
+          if (retryResponse.status === 204) {
+            return undefined as T
+          }
+          return retryResponse.json() as Promise<T>
+        } catch (err) {
+          clearTimeout(retryTimeout)
+          if ((err as Error).name === 'AbortError') {
+            throw new ApiRequestError(408, { code: 'TIMEOUT', message: 'Request timeout' })
+          }
+          throw err
         }
-        if (retryResponse.status === 204) {
-          return undefined as T
-        }
-        return retryResponse.json() as Promise<T>
       }
     }
 
     if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
-        code: 'UNKNOWN_ERROR',
-        message: response.statusText,
-      }))
-
+      const error = await this.parseError(response)
       throw new ApiRequestError(response.status, error)
     }
 
