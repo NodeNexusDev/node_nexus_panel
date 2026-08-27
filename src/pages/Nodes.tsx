@@ -526,7 +526,7 @@ export function Nodes() {
                 onChange={field.onChange}
                 options={[
                   { value: 'ssh', label: 'SSH' },
-                  { value: 'docker', label: 'Docker' },
+                  { value: 'docker', label: 'SSH + Docker' },
                   { value: 'proxmox', label: 'Proxmox' },
                 ]}
               />
