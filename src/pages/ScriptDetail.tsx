@@ -431,7 +431,7 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
                 >
                   <div className="flex items-center gap-3">
                     <input type="checkbox" checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} onClick={(e) => e.stopPropagation()} aria-label={t('common.selectItem', 'Select {{name}}', { name: exec.id.slice(0, 8) })} className="rounded border-surface-300 dark:border-surface-600" />
-                    <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
+                    <Badge variant={exec.status === 'completed' || exec.status === 'success' ? 'success' : exec.status === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                     <div>
                       <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>
                       <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
@@ -536,7 +536,7 @@ function ScheduleTab({ scriptId, nodes }: { scriptId: string; nodes: { id: strin
                 {items.map((exec) => (
                   <div key={exec.id} className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
-                      <Badge variant={exec.status === 'completed' ? 'success' : exec.status === 'failed' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
+                      <Badge variant={exec.status === 'completed' || exec.status === 'success' ? 'success' : exec.status === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                       <div>
                       <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>
                         <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
