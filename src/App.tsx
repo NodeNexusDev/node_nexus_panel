@@ -31,32 +31,31 @@ function Loading() {
 function App() {
   useEffect(() => {
     eventsClient.connect()
+    return () => eventsClient.disconnect()
   }, [])
 
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <Suspense fallback={<Loading />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<AuthGuard />}>
-              <Route element={<MainLayout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/nodes" element={<Nodes />} />
-                <Route path="/nodes/:id" element={<NodeDetail />} />
-                <Route path="/commands" element={<Commands />} />
-                <Route path="/commands/:id" element={<CommandDetail />} />
-                <Route path="/scripts" element={<Scripts />} />
-                <Route path="/scripts/:id" element={<ScriptDetail />} />
-                <Route path="/docker" element={<Docker />} />
-                <Route path="/audit" element={<Audit />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/favorites" element={<Favorites />} />
-              </Route>
+        <Routes>
+          <Route path="/login" element={<Suspense fallback={<Loading />}><Login /></Suspense>} />
+          <Route element={<AuthGuard />}>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Suspense fallback={<Loading />}><Dashboard /></Suspense>} />
+              <Route path="/nodes" element={<Suspense fallback={<Loading />}><Nodes /></Suspense>} />
+              <Route path="/nodes/:id" element={<Suspense fallback={<Loading />}><NodeDetail /></Suspense>} />
+              <Route path="/commands" element={<Suspense fallback={<Loading />}><Commands /></Suspense>} />
+              <Route path="/commands/:id" element={<Suspense fallback={<Loading />}><CommandDetail /></Suspense>} />
+              <Route path="/scripts" element={<Suspense fallback={<Loading />}><Scripts /></Suspense>} />
+              <Route path="/scripts/:id" element={<Suspense fallback={<Loading />}><ScriptDetail /></Suspense>} />
+              <Route path="/docker" element={<Suspense fallback={<Loading />}><Docker /></Suspense>} />
+              <Route path="/audit" element={<Suspense fallback={<Loading />}><Audit /></Suspense>} />
+              <Route path="/settings" element={<Suspense fallback={<Loading />}><Settings /></Suspense>} />
+              <Route path="/favorites" element={<Suspense fallback={<Loading />}><Favorites /></Suspense>} />
             </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+          </Route>
+          <Route path="*" element={<Suspense fallback={<Loading />}><NotFound /></Suspense>} />
+        </Routes>
       </BrowserRouter>
     </ErrorBoundary>
   )

@@ -6,8 +6,12 @@ vi.mock('../api/events', () => ({
   eventsClient: {
     connect: vi.fn(),
     disconnect: vi.fn(),
-    isConnected: true,
+    get isConnected() { return false },
     on: vi.fn().mockReturnValue(vi.fn()),
+    onConnectionChange: vi.fn((cb: (v: boolean) => void) => {
+      cb(false)
+      return vi.fn()
+    }),
   },
 }))
 

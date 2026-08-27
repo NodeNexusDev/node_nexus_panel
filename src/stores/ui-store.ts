@@ -7,11 +7,13 @@ interface UiState {
   theme: Theme
   sidebarOpen: boolean
   activeModal: string | null
+  commandPaletteOpen: boolean
   setTheme: (theme: Theme) => void
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
   openModal: (id: string) => void
   closeModal: () => void
+  setCommandPaletteOpen: (open: boolean) => void
 }
 
 function getSystemTheme(): 'dark' | 'light' {
@@ -33,6 +35,7 @@ export const useUiStore = create<UiState>()(
       theme: 'dark',
       sidebarOpen: false,
       activeModal: null,
+      commandPaletteOpen: false,
       setTheme: (theme) => {
         applyTheme(theme)
         set({ theme })
@@ -41,6 +44,7 @@ export const useUiStore = create<UiState>()(
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       openModal: (id) => set({ activeModal: id }),
       closeModal: () => set({ activeModal: null }),
+      setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
     }),
     {
       name: 'ui-storage',

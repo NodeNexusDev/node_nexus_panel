@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useHotkey } from '../../hooks/useHotkey'
 import { useSearch } from '../../hooks/useSearch'
+import { useUiStore } from '../../stores/ui-store'
 import { IconDashboard, IconNodes, IconCommands, IconScripts, IconDocker, IconAudit, IconSettings, IconStar } from './Icons'
 import { Spinner } from './Spinner'
 
@@ -17,7 +18,8 @@ interface CommandItem {
 export function CommandPalette() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [isOpen, setIsOpen] = useState(false)
+  const isOpen = useUiStore((s) => s.commandPaletteOpen)
+  const setIsOpen = useUiStore((s) => s.setCommandPaletteOpen)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)

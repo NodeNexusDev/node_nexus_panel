@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { scriptsApi } from '../api/scripts'
 import type {
   ScriptResponse,
@@ -14,14 +14,15 @@ import type {
 
 export function useScripts(params?: { page?: number; size?: number; tag?: string; search?: string }) {
   return useQuery<PaginatedResponse<ScriptResponse>>({
-    queryKey: ['scripts', params],
+    queryKey: ['scripts', 'list', params],
     queryFn: () => scriptsApi.getAll(params),
+    placeholderData: keepPreviousData,
   })
 }
 
 export function useScript(id: string) {
   return useQuery<ScriptResponse>({
-    queryKey: ['scripts', id],
+    queryKey: ['scripts', 'detail', id],
     queryFn: () => scriptsApi.getById(id),
     enabled: !!id,
   })
@@ -29,7 +30,7 @@ export function useScript(id: string) {
 
 export function useScriptExecutions(id: string, params?: { page?: number; size?: number }) {
   return useQuery<PaginatedResponse<ScriptExecutionResponse>>({
-    queryKey: ['scripts', id, 'executions', params],
+    queryKey: ['scripts', 'detail', id, 'executions', params],
     queryFn: () => scriptsApi.getExecutions(id, params),
     enabled: !!id,
   })
@@ -37,7 +38,7 @@ export function useScriptExecutions(id: string, params?: { page?: number; size?:
 
 export function useScriptScheduleHistory(id: string, params?: { page?: number; size?: number }) {
   return useQuery<PaginatedResponse<ScriptExecutionResponse>>({
-    queryKey: ['scripts', id, 'schedule-history', params],
+    queryKey: ['scripts', 'detail', id, 'schedule-history', params],
     queryFn: () => scriptsApi.getScheduleHistory(id, params),
     enabled: !!id,
   })
@@ -148,14 +149,14 @@ export function useRemoveScriptSchedule() {
 
 export function useScriptTags() {
   return useQuery<string[]>({
-    queryKey: ['scripts', 'tags'],
+    queryKey: ['scripts', 'tags', 'list'],
     queryFn: () => scriptsApi.getTags(),
   })
 }
 
 export function useScriptSchedule(id: string) {
   return useQuery<ScheduledJob | null>({
-    queryKey: ['scripts', id, 'schedule'],
+    queryKey: ['scripts', 'detail', id, 'schedule'],
     queryFn: () => scriptsApi.getSchedule(id),
     enabled: !!id,
   })
@@ -185,7 +186,7 @@ export function useBulkRetryScriptExecutions() {
 
 export function useScriptStats(scriptId: string | null, params?: { date_from?: string; date_to?: string }) {
   return useQuery<ExecutionStatsResponse>({
-    queryKey: ['scripts', scriptId, 'stats', params],
+    queryKey: ['scripts', 'detail', scriptId, 'stats', params],
     queryFn: () => scriptsApi.getStats(scriptId!, params),
     enabled: !!scriptId,
   })

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
@@ -51,6 +51,7 @@ import {
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { useSort } from '../hooks/useSort'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
 import { nodeStatusVariant } from '../lib/variants'
 import type { Node, NodeStatus, BulkNodeMetricsResponse, NodeUpdate } from '../api/types'
@@ -74,18 +75,23 @@ export function Nodes() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [tagFilter, setTagFilter] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, statusFilter, tagFilter])
+
   const { data, isLoading } = useNodes({
     page,
     size: pageSize,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined,
-  }, { refetchInterval: 30_000 })
+  })
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
   const updateNode = useUpdateNode()
@@ -156,15 +162,15 @@ export function Nodes() {
       })
     : nodes
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-  }
+  }, [])
 
-  const toggleAll = () => {
+  const toggleAll = useCallback(() => {
     setSelectedIds(allSelected ? [] : nodes.map((n) => n.id))
-  }
+  }, [allSelected, nodes])
 
-  const openEdit = (node: Node) => {
+  const openEdit = useCallback((node: Node) => {
     setEditTarget(node)
     setEditNode({
       name: node.name,
@@ -179,9 +185,9 @@ export function Nodes() {
       tags: node.tags.join(', '),
     })
     setClearFields({})
-  }
+  }, [])
 
-  const handleValidate = (node: Node) => {
+  const handleValidate = useCallback((node: Node) => {
     setValidateTarget(node)
     setValidateResult(null)
     checkNode.mutate(node.id, {
@@ -195,9 +201,9 @@ export function Nodes() {
       },
       onError: () => toast('error', t('nodes.toastValidateFailed')),
     })
-  }
+  }, [checkNode, t, toast])
 
-  const nodeMenu = (node: Node): DropdownMenuItem[] => [
+  const nodeMenu = useCallback((node: Node): DropdownMenuItem[] => [
     { key: 'edit', label: t('common.edit'), onClick: () => openEdit(node) },
     { key: 'validate', label: t('nodes.validate'), onClick: () => handleValidate(node) },
     { key: 'sep-1', label: '', onClick: () => {}, separator: true },
@@ -207,9 +213,9 @@ export function Nodes() {
     { key: 'command-history', label: t('nodes.cmdHistory', 'Command History'), icon: <IconCommands className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=command-history`) },
     { key: 'sep-2', label: '', onClick: () => {}, separator: true },
     { key: 'delete', label: t('common.delete'), icon: <IconXCircle className="w-4 h-4" />, danger: true, onClick: () => setDeleteTarget({ id: node.id, name: node.name }) },
-  ]
+  ], [t, openEdit, handleValidate, navigate])
 
-  const columns: Column<Node>[] = [
+  const columns: Column<Node>[] = useMemo(() => [
     {
       key: 'select',
       header: (
@@ -310,9 +316,9 @@ export function Nodes() {
         </div>
       ),
     },
-  ]
+  ], [allSelected, selectedIds, sort, toggleSort, toggleAll, toggleSelect, nodeMenu, t, toast, checkNode])
 
-  const renderMobileNode = (node: Node) => (
+  const renderMobileNode = useCallback((node: Node) => (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -348,7 +354,7 @@ export function Nodes() {
         <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
       </div>
     </div>
-  )
+  ), [nodeMenu, t])
 
   const handleAdd = (values: NodeCreateFormValues) => {
     createNode.mutate(
@@ -490,7 +496,7 @@ export function Nodes() {
             </div>
           )}
           {isLoading ? (
-            <TableSkeleton rows={5} cols={6} />
+            <TableSkeleton rows={5} cols={8} />
           ) : nodes.length === 0 ? (
             <EmptyState
               icon={<IconNodes className="w-10 h-10" />}
@@ -510,7 +516,7 @@ export function Nodes() {
           )}
           {data && data.total > pageSize && (
             <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-              <Pagination page={page} totalPages={Math.ceil(data.total / pageSize)} onPageChange={setPage} />
+              <Pagination page={page} totalPages={Math.max(1, Math.ceil(data.total / pageSize))} onPageChange={setPage} />
             </div>
           )}
         </CardContent>

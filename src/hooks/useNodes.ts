@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { nodesApi } from '../api/nodes'
 import { commandsApi } from '../api/commands'
 import type {
@@ -13,17 +13,17 @@ import type {
   ConnectionType,
 } from '../api/types'
 
-export function useNodes(params?: { page?: number; size?: number; status?: string; tags?: string; search?: string }, options?: { refetchInterval?: number }) {
+export function useNodes(params?: { page?: number; size?: number; status?: string; tags?: string; search?: string }) {
   return useQuery<PaginatedResponse<Node>>({
-    queryKey: ['nodes', params],
+    queryKey: ['nodes', 'list', params],
     queryFn: () => nodesApi.getAll(params),
-    refetchInterval: options?.refetchInterval,
+    placeholderData: keepPreviousData,
   })
 }
 
 export function useNode(id: string) {
   return useQuery<Node>({
-    queryKey: ['nodes', id],
+    queryKey: ['nodes', 'detail', id],
     queryFn: () => nodesApi.getById(id),
     enabled: !!id,
   })
@@ -31,7 +31,7 @@ export function useNode(id: string) {
 
 export function useNodeStats(id: string, params?: { date_from?: string; date_to?: string }) {
   return useQuery<ExecutionStatsResponse>({
-    queryKey: ['nodes', id, 'stats', params],
+    queryKey: ['nodes', 'detail', id, 'stats', params],
     queryFn: () => commandsApi.getStatsByNode({ node_id: id, ...params }),
     enabled: !!id,
   })
@@ -39,7 +39,7 @@ export function useNodeStats(id: string, params?: { date_from?: string; date_to?
 
 export function useNodeStatusHistory(id: string, params?: { page?: number; size?: number }) {
   return useQuery<PaginatedResponse<NodeStatusHistoryItem>>({
-    queryKey: ['nodes', id, 'status-history', params],
+    queryKey: ['nodes', 'detail', id, 'status-history', params],
     queryFn: () => nodesApi.getStatusHistory(id, params),
     enabled: !!id,
   })
@@ -112,7 +112,7 @@ export function useRetryNodeCommand() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ executionId }: { nodeId: string; executionId: string }) =>
+    mutationFn: ({ executionId }: { nodeId?: string; executionId: string }) =>
       commandsApi.retryExecution(executionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
@@ -123,7 +123,7 @@ export function useRetryNodeCommand() {
 
 export function useNodeMetrics(id: string) {
   return useQuery<NodeMetrics>({
-    queryKey: ['nodes', id, 'metrics'],
+    queryKey: ['nodes', 'detail', id, 'metrics'],
     queryFn: () => nodesApi.getMetrics(id),
     enabled: !!id,
   })
@@ -131,7 +131,7 @@ export function useNodeMetrics(id: string) {
 
 export function useNodeCommandHistory(id: string, params?: { page?: number; size?: number }) {
   return useQuery<PaginatedResponse<CommandHistoryResponse>>({
-    queryKey: ['nodes', id, 'commands-history', params],
+    queryKey: ['nodes', 'detail', id, 'commands-history', params],
     queryFn: () => commandsApi.getHistory({ node_id: id, ...params }),
     enabled: !!id,
   })
@@ -139,7 +139,7 @@ export function useNodeCommandHistory(id: string, params?: { page?: number; size
 
 export function useNodeTags() {
   return useQuery<string[]>({
-    queryKey: ['nodes', 'tags'],
+    queryKey: ['nodes', 'tags', 'list'],
     queryFn: () => nodesApi.getTags(),
   })
 }
@@ -149,9 +149,6 @@ export function useBulkDeleteNodes() {
 
   return useMutation({
     mutationFn: (nodeIds: string[]) => nodesApi.bulkDelete(nodeIds),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
