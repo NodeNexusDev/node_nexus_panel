@@ -190,7 +190,7 @@ export function Commands() {
     },
     {
       key: 'tags',
-      header: <SortableHeader label={t('commands.tagsLabel')} sortKey="tags" sort={sort} onSort={toggleSort} />,
+      header: <SortableHeader label={t('commands.tags')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (cmd) => (
         <div className="flex flex-wrap gap-1">
           {cmd.tags.length > 0 ? cmd.tags.map((tag) => (

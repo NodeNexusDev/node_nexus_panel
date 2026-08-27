@@ -178,6 +178,7 @@
     "name": "Name",
     "command": "Command",
     "descriptionField": "Description",
+    "tags": "Tags",
     "tagsLabel": "Tags (comma separated)",
     "allTags": "All tags",
     "searchPlaceholder": "Search commands...",

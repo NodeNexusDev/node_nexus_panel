@@ -178,6 +178,7 @@
     "name": "Название",
     "command": "Команда",
     "descriptionField": "Описание",
+    "tags": "Теги",
     "tagsLabel": "Теги (через запятую)",
     "allTags": "Все теги",
     "searchPlaceholder": "Поиск команд...",
