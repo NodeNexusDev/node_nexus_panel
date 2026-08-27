@@ -40,7 +40,7 @@ import { useSort } from '../hooks/useSort'
 import type { ScriptResponse, ScriptExecutionBatchResult } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 
-type SortKey = 'name' | 'steps' | 'tags' | 'updated_at'
+type SortKey = 'name' | 'steps' | 'tags' | 'updated_at' | 'created_at'
 
 function scriptSortValue(script: ScriptResponse, key: SortKey): string | number {
   if (key === 'steps') return script.steps.length
@@ -170,6 +170,11 @@ export function Scripts() {
       render: (script) => <Badge variant="info">{script.steps.length}</Badge>,
     },
     {
+      key: 'created_at',
+      header: <SortableHeader label={t('scripts.created')} sortKey="created_at" sort={sort} onSort={toggleSort} />,
+      render: (script) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(script.created_at).toLocaleDateString()}</span>,
+    },
+    {
       key: 'updated_at',
       header: <SortableHeader label={t('scripts.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
       render: (script) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(script.updated_at).toLocaleDateString()}</span>,
@@ -220,7 +225,7 @@ export function Scripts() {
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="text-xs text-surface-500">
-        {t('scripts.updated')}: {new Date(script.updated_at).toLocaleDateString()}
+        {t('scripts.created')}: {new Date(script.created_at).toLocaleDateString()} · {t('scripts.updated')}: {new Date(script.updated_at).toLocaleDateString()}
       </div>
       <div className="flex items-center gap-1">
         <FavoriteButton targetType="script" targetId={script.id} resourceName={script.name} size="sm" />
