@@ -56,7 +56,7 @@ import type { NodeCreateFormValues } from '../lib/validators/node-schema'
 import { nodeCreateSchema } from '../lib/validators/node-schema'
 import type { Column } from '../components/ui/table-types'
 
-type SortKey = 'name' | 'host' | 'status' | 'connection_type'
+type SortKey = 'name' | 'host' | 'status' | 'connection_type' | 'tags'
 
 function statusDot(status: NodeStatus): string {
   switch (status) {
@@ -143,6 +143,11 @@ export function Nodes() {
   const sortedNodes = sort
     ? [...nodes].sort((a, b) => {
         const dir = sort.dir === 'asc' ? 1 : -1
+        if (sort.key === 'tags') {
+          const av = a.tags[0] ?? ''
+          const bv = b.tags[0] ?? ''
+          return av.localeCompare(bv) * dir
+        }
         const av = String(a[sort.key] ?? '')
         const bv = String(b[sort.key] ?? '')
         return av.localeCompare(bv) * dir
@@ -264,7 +269,7 @@ export function Nodes() {
     },
     {
       key: 'tags',
-      header: t('nodes.tags'),
+      header: <SortableHeader label={t('nodes.tags')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (node) => (
         <div className="flex flex-wrap gap-1">
           {node.tags.length > 0 ? node.tags.map((tag) => (

@@ -42,7 +42,7 @@ import {
   type CommandUpdateFormValues,
 } from '../lib/validators/command-schema'
 
-type SortKey = 'name' | 'updated_at'
+type SortKey = 'name' | 'tags' | 'updated_at'
 
 export function Commands() {
   const { t } = useTranslation()
@@ -86,6 +86,11 @@ export function Commands() {
   const sortedCommands = sort
     ? [...commands].sort((a, b) => {
         const dir = sort.dir === 'asc' ? 1 : -1
+        if (sort.key === 'tags') {
+          const av = a.tags[0] ?? ''
+          const bv = b.tags[0] ?? ''
+          return av.localeCompare(bv) * dir
+        }
         return String(a[sort.key] ?? '').localeCompare(String(b[sort.key] ?? '')) * dir
       })
     : commands
@@ -185,7 +190,7 @@ export function Commands() {
     },
     {
       key: 'tags',
-      header: t('commands.tagsLabel'),
+      header: <SortableHeader label={t('commands.tagsLabel')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (cmd) => (
         <div className="flex flex-wrap gap-1">
           {cmd.tags.length > 0 ? cmd.tags.map((tag) => (

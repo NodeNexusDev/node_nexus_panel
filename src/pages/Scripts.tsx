@@ -40,10 +40,11 @@ import { useSort } from '../hooks/useSort'
 import type { ScriptResponse, ScriptExecutionBatchResult } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 
-type SortKey = 'name' | 'steps' | 'updated_at'
+type SortKey = 'name' | 'steps' | 'tags' | 'updated_at'
 
 function scriptSortValue(script: ScriptResponse, key: SortKey): string | number {
   if (key === 'steps') return script.steps.length
+  if (key === 'tags') return script.tags[0] ?? ''
   return script[key] ?? ''
 }
 
@@ -92,6 +93,11 @@ export function Scripts() {
   const sortedScripts = sort
     ? [...scripts].sort((a, b) => {
         const dir = sort.dir === 'asc' ? 1 : -1
+        if (sort.key === 'tags') {
+          const av = a.tags[0] ?? ''
+          const bv = b.tags[0] ?? ''
+          return av.localeCompare(bv) * dir
+        }
         const av = scriptSortValue(a, sort.key)
         const bv = scriptSortValue(b, sort.key)
         return (typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv))) * dir
@@ -165,7 +171,7 @@ export function Scripts() {
     },
     {
       key: 'tags',
-      header: t('scripts.tagsLabel'),
+      header: <SortableHeader label={t('scripts.tagsLabel')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (script) => (
         <div className="flex flex-wrap gap-1">
           {script.tags.length > 0 ? script.tags.map((tag) => (
