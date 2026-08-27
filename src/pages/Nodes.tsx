@@ -83,7 +83,6 @@ export function Nodes() {
     size: pageSize,
     search: search || undefined,
     status: statusFilter.size > 0 ? Array.from(statusFilter).join(',') : undefined,
-    tags: tagFilter.length > 0 ? tagFilter.join(',') : undefined,
   }, { refetchInterval: 30_000 })
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
@@ -136,7 +135,9 @@ export function Nodes() {
   const [showBulkUpdate, setShowBulkUpdate] = useState(false)
   const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', username: '', docker_host: '', tags: '' })
 
-  const nodes = data?.items || []
+  const nodes = (data?.items || []).filter(
+    (node) => tagFilter.length === 0 || tagFilter.some((t) => node.tags.includes(t))
+  )
   const allSelected = nodes.length > 0 && nodes.every((n) => selectedIds.includes(n.id))
 
   const sortedNodes = sort

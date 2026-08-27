@@ -19,11 +19,11 @@ import type {
 } from './types'
 
 export const scriptsApi = {
-  getAll: (params?: { page?: number; size?: number; tags?: string; search?: string }) => {
+  getAll: (params?: { page?: number; size?: number; tag?: string; search?: string }) => {
     const query = new URLSearchParams()
     if (params?.page) query.set('page', String(params.page))
     if (params?.size) query.set('size', String(params.size))
-    if (params?.tags) query.set('tags', params.tags)
+    if (params?.tag) query.set('tag', params.tag)
     if (params?.search) query.set('search', params.search)
     const qs = query.toString()
     return api.get<PaginatedResponse<ScriptResponse>>(`/scripts/${qs ? `?${qs}` : ''}`)

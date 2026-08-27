@@ -58,7 +58,6 @@ export function Commands() {
     page,
     size: pageSize,
     search: search || undefined,
-    tags: tagFilter.length > 0 ? tagFilter.join(',') : undefined,
   })
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()
@@ -80,7 +79,9 @@ export function Commands() {
     resolver: zodResolver(commandUpdateSchema) as Resolver<CommandUpdateFormValues>,
   })
 
-  const commands = commandsData?.items || []
+  const commands = (commandsData?.items || []).filter(
+    (cmd) => tagFilter.length === 0 || tagFilter.some((t) => cmd.tags.includes(t))
+  )
 
   const sortedCommands = sort
     ? [...commands].sort((a, b) => {

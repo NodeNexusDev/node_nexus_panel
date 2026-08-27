@@ -57,7 +57,7 @@ export function Scripts() {
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const pageSize = 20
 
-  const { data, isLoading } = useScripts({ page, size: pageSize, search: search || undefined, tags: tagFilter.length > 0 ? tagFilter.join(',') : undefined })
+  const { data, isLoading } = useScripts({ page, size: pageSize, search: search || undefined })
   const { data: tags } = useScriptTags()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
@@ -85,7 +85,9 @@ export function Scripts() {
   const [scheduleMisfireGrace, setScheduleMisfireGrace] = useState(60)
   const [confirmRemoveSchedule, setConfirmRemoveSchedule] = useState(false)
 
-  const scripts = data?.items || []
+  const scripts = (data?.items || []).filter(
+    (script) => tagFilter.length === 0 || tagFilter.some((t) => script.tags.includes(t))
+  )
 
   const sortedScripts = sort
     ? [...scripts].sort((a, b) => {
