@@ -20,6 +20,7 @@ export function Checkbox({ checked, onChange, label, ariaLabel, disabled, classN
       disabled={disabled}
       aria-label={ariaLabel}
       className={`w-4 h-4 rounded border-surface-300 dark:border-surface-600 text-accent-500 focus:ring-accent-500 focus:ring-2 focus:ring-offset-0 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      onClick={(e) => e.stopPropagation()}
       {...props}
     />
   )
