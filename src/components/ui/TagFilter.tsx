@@ -76,7 +76,7 @@ export function TagFilter({ available, selected, onChange }: TagFilterProps) {
   }
 
   return (
-    <div className="space-y-1">
+    <div className="flex flex-wrap items-center gap-2">
       <button
         ref={triggerRef}
         type="button"
@@ -96,6 +96,35 @@ export function TagFilter({ available, selected, onChange }: TagFilterProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
+
+      {selected.map((tag) => (
+        <span
+          key={tag}
+          className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent-50 text-accent-700 border border-accent-200 rounded-full text-xs font-medium dark:bg-accent-500/10 dark:text-accent-400 dark:border-accent-500/20"
+        >
+          {tag}
+          <button
+            type="button"
+            onClick={() => remove(tag)}
+            className="ml-0.5 hover:text-accent-900 dark:hover:text-accent-200 cursor-pointer"
+            aria-label={t('common.remove')}
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </span>
+      ))}
+
+      {selected.length > 0 && (
+        <button
+          type="button"
+          onClick={() => onChange([])}
+          className="text-xs text-surface-400 hover:text-surface-600 dark:text-surface-500 dark:hover:text-surface-300 cursor-pointer px-1"
+        >
+          {t('common.clearAll', 'Clear all')}
+        </button>
+      )}
 
       {open && createPortal(
         <div
@@ -144,36 +173,6 @@ export function TagFilter({ available, selected, onChange }: TagFilterProps) {
           )}
         </div>,
         document.body,
-      )}
-
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {selected.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent-50 text-accent-700 border border-accent-200 rounded-full text-xs font-medium dark:bg-accent-500/10 dark:text-accent-400 dark:border-accent-500/20"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => remove(tag)}
-                className="ml-0.5 hover:text-accent-900 dark:hover:text-accent-200 cursor-pointer"
-                aria-label={t('common.remove')}
-              >
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
-          ))}
-          <button
-            type="button"
-            onClick={() => onChange([])}
-            className="text-xs text-surface-400 hover:text-surface-600 dark:text-surface-500 dark:hover:text-surface-300 cursor-pointer px-1"
-          >
-            {t('common.clearAll', 'Clear all')}
-          </button>
-        </div>
       )}
     </div>
   )
