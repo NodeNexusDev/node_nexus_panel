@@ -99,15 +99,17 @@ export function DropdownMenu({ items, align = 'right', ariaLabel }: DropdownMenu
         }
       }
     }
-    const handleScroll = () => setOpen(false)
+    const handleScroll = () => updatePosition()
 
     document.addEventListener('mousedown', handleClickOutside)
     document.addEventListener('keydown', handleKey)
     window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', updatePosition)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleKey)
       window.removeEventListener('scroll', handleScroll, true)
+      window.removeEventListener('resize', updatePosition)
     }
   }, [open, updatePosition])
 
@@ -120,7 +122,7 @@ export function DropdownMenu({ items, align = 'right', ariaLabel }: DropdownMenu
         aria-label={ariaLabel}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="px-2"
+        className="px-2 min-w-[44px] min-h-[44px]"
       >
         <IconDots className="w-4 h-4" />
       </Button>
@@ -128,7 +130,7 @@ export function DropdownMenu({ items, align = 'right', ariaLabel }: DropdownMenu
         <div
           ref={panelRef}
           role="menu"
-          className="fixed z-[9999] w-48 rounded-xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 shadow-lg py-1 animate-fade-in"
+          className="fixed z-[var(--z-dropdown)] w-48 rounded-xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 shadow-lg py-1 animate-fade-in"
           style={{ top: pos.top, left: pos.left }}
         >
           {items.map((item) => (
@@ -138,7 +140,7 @@ export function DropdownMenu({ items, align = 'right', ariaLabel }: DropdownMenu
                 role="menuitem"
                 tabIndex={-1}
                 onClick={(e) => { e.stopPropagation(); setOpen(false); item.onClick() }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors cursor-pointer ${
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus:bg-surface-100 dark:focus:bg-surface-800 ${
                   item.danger
                     ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
                     : 'text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800'

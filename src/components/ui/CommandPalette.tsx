@@ -50,21 +50,34 @@ export function CommandPalette() {
     ? searchResults.nodes.length + searchResults.commands.length + searchResults.scripts.length
     : 0
 
-  const flatSearchResults = searchResults
+  const flatSearchResults = useMemo(() => searchResults
     ? [
         ...searchResults.nodes.map((r) => ({ ...r, entity_type: 'node' as const })),
         ...searchResults.commands.map((r) => ({ ...r, entity_type: 'command' as const })),
         ...searchResults.scripts.map((r) => ({ ...r, entity_type: 'script' as const })),
       ]
-    : []
+    : [], [searchResults])
+
+  const allItems = useMemo(() => {
+    const base: { type: 'cmd' | 'search'; path: string; id: string }[] = filtered.map((c) => ({ type: 'cmd' as const, path: c.path, id: c.id }))
+    if (query.length >= 2) {
+      flatSearchResults.slice(0, 5).forEach((r) => base.push({ type: 'search' as const, path: `/${r.entity_type}s/${r.id}`, id: `${r.entity_type}-${r.id}` }))
+    }
+    return base
+  }, [filtered, flatSearchResults, query])
 
   useHotkey('k', () => setIsOpen(true), { ctrl: true })
 
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
   useEffect(() => {
     if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement
       setQuery('')
       setSelectedIndex(0)
-      setTimeout(() => inputRef.current?.focus(), 0)
+      requestAnimationFrame(() => inputRef.current?.focus())
+    } else {
+      previousFocusRef.current?.focus()
     }
   }, [isOpen])
 
@@ -84,18 +97,19 @@ export function CommandPalette() {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    const len = allItems.length
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedIndex((i) => filtered.length > 0 ? (i + 1) % filtered.length : 0)
+        setSelectedIndex((i) => len > 0 ? (i + 1) % len : 0)
         break
       case 'ArrowUp':
         e.preventDefault()
-        setSelectedIndex((i) => filtered.length > 0 ? (i - 1 + filtered.length) % filtered.length : 0)
+        setSelectedIndex((i) => len > 0 ? (i - 1 + len) % len : 0)
         break
       case 'Enter':
         e.preventDefault()
-        if (filtered[selectedIndex]) select(filtered[selectedIndex].path)
+        if (allItems[selectedIndex]) select(allItems[selectedIndex].path)
         break
       case 'Escape':
         setIsOpen(false)
@@ -107,16 +121,22 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('commandPalette.placeholder')}
+      className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[20vh]"
       onClick={() => setIsOpen(false)}
     >
-      <div className="fixed inset-0 bg-black/50 dark:bg-black/60 backdrop-blur-sm" />
+      <div className="fixed inset-0 bg-black/50 dark:bg-black/60 backdrop-blur-sm" aria-hidden="true" />
       <div
+        role="combobox"
+        aria-expanded="true"
+        aria-haspopup="listbox"
         className="relative w-full max-w-md bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800 rounded-xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 px-4 border-b border-surface-200 dark:border-surface-800">
-          <svg className="w-5 h-5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg aria-hidden="true" className="w-5 h-5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -126,26 +146,33 @@ export function CommandPalette() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('commandPalette.placeholder')}
-            className="flex-1 py-3 bg-transparent text-surface-900 dark:text-white placeholder-surface-400 focus:outline-none text-sm"
+            aria-label={t('commandPalette.placeholder')}
+            aria-controls="cmd-listbox"
+            aria-activedescendant={allItems[selectedIndex] ? `cmd-${allItems[selectedIndex].id}` : undefined}
+            aria-keyshortcuts="Control+K Meta+K"
+            className="flex-1 py-3 bg-transparent text-surface-900 dark:text-white placeholder-surface-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded text-sm"
           />
           <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs text-surface-400 bg-surface-100 dark:bg-surface-800 rounded">
             ESC
           </kbd>
         </div>
 
-        <div ref={listRef} className="max-h-64 overflow-y-auto p-2">
+        <div ref={listRef} id="cmd-listbox" role="listbox" className="max-h-64 overflow-y-auto p-2">
           {filtered.length === 0 && !searchLoading && !(totalSearchResults > 0) ? (
             <div className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">
               {t('commandPalette.noResults')}
             </div>
           ) : (
             <>
-              {filtered.map((cmd, i) => (
+              {filtered.map((cmd) => (
                 <button
                   key={cmd.id}
+                  id={`cmd-${cmd.id}`}
+                  role="option"
+                  aria-selected={allItems.findIndex((x) => x.id === cmd.id) === selectedIndex}
                   onClick={() => select(cmd.path)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer ${
-                    i === selectedIndex
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${
+                    allItems.findIndex((x) => x.id === cmd.id) === selectedIndex
                       ? 'bg-surface-100 dark:bg-surface-800'
                       : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'
                   }`}
@@ -167,23 +194,30 @@ export function CommandPalette() {
                     <div className="flex items-center justify-center py-4"><Spinner size="sm" /></div>
                   ) : flatSearchResults.length > 0 ? (
                     <>
-                      {flatSearchResults.slice(0, 5).map((result) => (
+                      {flatSearchResults.slice(0, 5).map((result) => {
+                        const rid = `${result.entity_type}-${result.id}`
+                        const isSelected = allItems.findIndex((x) => x.id === rid) === selectedIndex
+                        return (
                         <button
-                          key={`${result.entity_type}-${result.id}`}
+                          key={rid}
+                          id={`cmd-${rid}`}
+                          role="option"
+                          aria-selected={isSelected}
                           onClick={() => {
                             if (result.entity_type === 'node') select(`/nodes/${result.id}`)
                             else if (result.entity_type === 'script') select(`/scripts/${result.id}`)
                             else if (result.entity_type === 'command') select(`/commands/${result.id}`)
                             else select('/')
                           }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50"
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${isSelected ? 'bg-surface-100 dark:bg-surface-800' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}
                         >
                           <span className="text-surface-400 text-xs uppercase font-mono w-12">{result.entity_type}</span>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{result.name || result.id}</p>
                           </div>
                         </button>
-                      ))}
+                        )
+                      })}
                       {flatSearchResults.length > 5 && (
                         <p className="px-3 py-1.5 text-xs text-surface-400 text-center">
                           +{flatSearchResults.length - 5} {t('commandPalette.moreResults', 'more results')}

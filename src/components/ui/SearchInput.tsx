@@ -48,18 +48,19 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', deboun
       </svg>
       <input
         ref={inputRef}
-        type="text"
+        type="search"
         value={localValue}
         onChange={handleChange}
         placeholder={placeholder}
         aria-label={placeholder}
+        autoComplete="off"
         className="w-full pl-10 pr-9 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all duration-200 dark:bg-surface-800 dark:border-surface-700 dark:text-white dark:placeholder-surface-500"
       />
       {localValue && (
         <button
           onClick={handleClear}
           aria-label={t('common.clearSearch', 'Clear search')}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 dark:text-surface-500 dark:hover:text-white transition-colors cursor-pointer"
+          className="absolute right-1 top-1/2 -translate-y-1/2 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center text-surface-400 hover:text-surface-600 dark:text-surface-500 dark:hover:text-white transition-colors cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

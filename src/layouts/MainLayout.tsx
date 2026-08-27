@@ -132,11 +132,13 @@ export function MainLayout() {
 
       {/* Sidebar */}
       <aside
+        id="sidebar"
+        aria-label="Primary navigation"
         className={`
           fixed lg:static inset-y-0 left-0 z-40 w-64 flex flex-col
           bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl
           border-r border-surface-200/50 dark:border-surface-800/50
-          transition-all duration-300 ease-out
+          transition-all duration-300 ease-out motion-reduce:transition-none
           lg:translate-x-0
           ${sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
         `}
@@ -181,12 +183,14 @@ export function MainLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header with glassmorphism */}
-        <header className="h-[84px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0">
+        <header className="min-h-[64px] sm:h-[64px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0 motion-reduce:transition-none">
           <Tooltip content={sidebarOpen ? t('common.closeMenu', 'Close menu') : t('common.openMenu', 'Open menu')}>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-label={sidebarOpen ? t('common.closeMenu') : t('common.openMenu')}
-              className="lg:hidden mr-4 p-2 rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+              aria-expanded={sidebarOpen}
+              aria-controls="sidebar"
+              className="lg:hidden mr-4 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

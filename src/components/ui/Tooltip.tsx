@@ -39,13 +39,22 @@ export function Tooltip({ children, content, position = 'top' }: TooltipProps) {
     updatePosition()
   }, [hovered, updatePosition])
 
+  useEffect(() => {
+    if (!hovered) return
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setHovered(false) }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [hovered])
+
   return (
     <div
       ref={triggerRef}
       className="inline-flex"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      aria-describedby={hovered ? tooltipId : undefined}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+      aria-describedby={tooltipId}
     >
       {children}
       {hovered && createPortal(
@@ -53,7 +62,7 @@ export function Tooltip({ children, content, position = 'top' }: TooltipProps) {
           ref={tooltipRef}
           id={tooltipId}
           role="tooltip"
-          className="fixed z-[9999] px-3 py-1.5 text-xs font-medium text-white rounded-lg pointer-events-none animate-fade-in"
+          className="fixed z-[var(--z-tooltip)] px-3 py-2 text-xs font-medium text-white rounded-lg pointer-events-none animate-fade-in max-w-xs text-center shadow-lg"
           style={{
             top: pos.top,
             left: pos.left,

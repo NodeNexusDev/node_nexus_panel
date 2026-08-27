@@ -29,6 +29,17 @@ function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle('light', resolved === 'light')
 }
 
+if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      const state = useUiStore.getState()
+      if (state.theme === 'system') applyTheme('system')
+    })
+  } catch {
+    // ignore - jsdom may not support addEventListener
+  }
+}
+
 export const useUiStore = create<UiState>()(
   persist(
     (set) => ({

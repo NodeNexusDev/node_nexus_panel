@@ -57,6 +57,7 @@ export function Checkbox({ checked, onChange, label, ariaLabel, disabled, varian
         ${sizeClasses[size]} rounded-lg border-2 flex items-center justify-center
         transition-all duration-200 cursor-pointer select-none shrink-0
         focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:ring-offset-0
+        min-w-[44px] min-h-[44px] p-2 -m-2
         ${checked ? checkedClasses[variant] : uncheckedClasses[variant]}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         ${className}
@@ -81,10 +82,10 @@ export function Checkbox({ checked, onChange, label, ariaLabel, disabled, varian
 
   if (label) {
     return (
-      <span className="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-300 cursor-pointer select-none">
+      <label className="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-300 cursor-pointer select-none">
         {box}
         {label}
-      </span>
+      </label>
     )
   }
 

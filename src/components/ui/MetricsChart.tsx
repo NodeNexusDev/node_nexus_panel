@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export interface MetricsBucket {
@@ -25,6 +25,7 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
   const { t } = useTranslation()
   const [tooltip, setTooltip] = useState<TooltipData | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const uid = useId()
 
   if (data.length === 0) {
     return <div className={`flex items-center justify-center text-sm text-surface-400 dark:text-surface-500`} style={{ height }}>{t('dashboard.noData', 'No data')}</div>
@@ -60,11 +61,11 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
         onMouseLeave={() => setTooltip(null)}
       >
         <defs>
-          <linearGradient id="grad-success" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={`grad-success-${uid}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" className="text-green-400 dark:text-green-500" stopColor="currentColor" />
             <stop offset="100%" className="text-green-600 dark:text-green-400" stopColor="currentColor" />
           </linearGradient>
-          <linearGradient id="grad-failed" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={`grad-failed-${uid}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" className="text-red-400 dark:text-red-500" stopColor="currentColor" />
             <stop offset="100%" className="text-red-600 dark:text-red-400" stopColor="currentColor" />
           </linearGradient>
@@ -91,7 +92,7 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
                   width={w}
                   height={failedH}
                   rx={w > 3 ? 1.5 : 0}
-                  fill="url(#grad-failed)"
+                  fill={`url(#grad-failed-${uid})`}
                   className="transition-opacity"
                   style={{
                     animation: `chart-bar-in 0.4s ease-out ${i * 60}ms both`,
@@ -105,7 +106,7 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
                 width={w}
                 height={successH}
                 rx={w > 3 ? 1.5 : 0}
-                fill="url(#grad-success)"
+                fill={`url(#grad-success-${uid})`}
                 className="transition-opacity"
                 style={{
                   animation: `chart-bar-in 0.4s ease-out ${i * 60}ms both`,

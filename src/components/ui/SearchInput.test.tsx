@@ -11,7 +11,7 @@ describe('SearchInput', () => {
 
   it('displays current value', () => {
     render(<SearchInput value="hello" onChange={vi.fn()} />)
-    expect(screen.getByRole('textbox')).toHaveValue('hello')
+    expect(screen.getByDisplayValue('hello')).toHaveValue('hello')
   })
 
   it('shows clear button when value is not empty', () => {

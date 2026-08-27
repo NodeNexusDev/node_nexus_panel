@@ -50,8 +50,9 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
     <div className={`flex items-center justify-between gap-4 ${className}`}>
       {showPerPage && onPerPageChange && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-surface-500 dark:text-surface-400">{t('common.perPage')}</span>
+          <label htmlFor="perpage-select" className="text-xs text-surface-500 dark:text-surface-400">{t('common.perPage')}</label>
           <select
+            id="perpage-select"
             value={perPage}
             onChange={(e) => onPerPageChange(Number(e.target.value))}
             className="px-2 py-1 text-xs bg-white border border-surface-300 rounded dark:bg-surface-800 dark:border-surface-700 dark:text-white"
@@ -78,14 +79,16 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
 
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`dots-${i}`} className="px-2 text-surface-400 dark:text-surface-500">
+            <span key={`dots-${i}`} aria-hidden="true" className="px-2 text-surface-400 dark:text-surface-500">
               ...
             </span>
           ) : (
             <button
               key={p}
               onClick={() => onPageChange(p)}
-              className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              aria-current={p === page ? 'page' : undefined}
+              aria-label={p === page ? `${p} current` : `Go to page ${p}`}
+              className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${
                 p === page
                   ? 'bg-accent-600 text-white dark:bg-accent-500'
                   : 'text-surface-600 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800'
@@ -114,6 +117,8 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
           <span className="text-xs text-surface-500 dark:text-surface-400">{t('common.goToPage')}</span>
           <input
             type="number"
+            inputMode="numeric"
+            aria-label={t('common.goToPage')}
             min={1}
             max={totalPages}
             value={jumpValue}

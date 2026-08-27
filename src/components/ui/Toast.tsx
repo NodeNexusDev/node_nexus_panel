@@ -71,7 +71,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2" role="status" aria-live="polite">
+      <div className="fixed bottom-4 right-4 z-[var(--z-toast)] flex flex-col gap-2 max-w-[calc(100vw-2rem)] left-4 sm:left-auto" role="status" aria-live="polite">
         {toasts.map((t) => (
           <ToastItem
             key={t.id}
@@ -125,9 +125,17 @@ const typeIcons: Record<ToastType, ReactNode> = {
 
 function ToastItem({ toast, onRemove, onPause, onResume }: { toast: Toast; onRemove: () => void; onPause: () => void; onResume: () => void }) {
   const { t } = useTranslation()
+  const isError = toast.type === 'error' || toast.type === 'warning'
   return (
     <div
-      className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm shadow-lg transition-all duration-300 ${
+      role={isError ? 'alert' : 'status'}
+      aria-live={isError ? 'assertive' : 'polite'}
+      aria-atomic="true"
+      tabIndex={0}
+      onFocus={onPause}
+      onBlur={onResume}
+      onKeyDown={(e) => { if (e.key === 'Escape') onRemove() }}
+      className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm shadow-lg transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-current ${
         toast.exiting ? 'opacity-0 translate-x-4 scale-95' : 'spring'
       } ${typeStyles[toast.type]}`}
       onMouseEnter={onPause}
