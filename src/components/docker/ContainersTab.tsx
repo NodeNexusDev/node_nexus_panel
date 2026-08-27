@@ -188,7 +188,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
         <table className="w-full table-zebra">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
-              <th className="px-6 py-3"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="rounded border-surface-300 dark:border-surface-600" /></th>
+              <th className="px-6 py-3"><div className="flex items-center"><input type="checkbox" checked={!!allSelected} onChange={toggleAll} aria-label={t('common.selectAll')} className="w-4 h-4 rounded border-surface-300 dark:border-surface-600" /></div></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.name')} sortKey="name" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.image')} sortKey="image" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.status')} sortKey="status" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>

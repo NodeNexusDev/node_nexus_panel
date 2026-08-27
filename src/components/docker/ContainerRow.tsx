@@ -42,7 +42,7 @@ export function ContainerRow({
   return (
     <tr className={`table-row-hover cursor-pointer ${expanded ? 'bg-surface-50 dark:bg-surface-800/50' : ''}`} onClick={onToggleExpand}>
       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-        <input type="checkbox" checked={selected} onChange={onSelect} aria-label={t('common.selectItem', 'Select {{name}}', { name: containerName })} className="rounded border-surface-300 dark:border-surface-600" />
+        <div className="flex items-center"><input type="checkbox" checked={selected} onChange={onSelect} aria-label={t('common.selectItem', 'Select {{name}}', { name: containerName })} className="w-4 h-4 rounded border-surface-300 dark:border-surface-600" /></div>
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
