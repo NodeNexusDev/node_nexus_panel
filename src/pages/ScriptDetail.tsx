@@ -17,6 +17,7 @@ import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { IconScripts, IconArrowLeft, IconXCircle, IconZap } from '../components/ui/Icons'
 import { ExecutionResult } from '../components/commands/ExecutionResult'
+import { ScriptBulkNodeResultItem } from '../components/scripts/ScriptBulkNodeResultItem'
 import { useToast } from '../components/ui/useToast'
 import { useNodes } from '../hooks/useNodes'
 import { useCommands } from '../hooks/useCommands'
@@ -38,7 +39,7 @@ import {
   useBulkCancelScriptExecutions,
   useBulkRetryScriptExecutions,
 } from '../hooks/useScripts'
-import type { ScriptResponse } from '../api/types'
+import type { ScriptResponse, ScriptExecutionBatchResult } from '../api/types'
 
 type Tab = 'overview' | 'steps' | 'executions' | 'schedule' | 'stats' | 'notes'
 
@@ -67,10 +68,12 @@ export function ScriptDetail() {
 
   const [runNodeIds, setRunNodeIds] = useState<string[]>([])
   const [runTags, setRunTags] = useState('')
+  const [runResult, setRunResult] = useState<ScriptExecutionBatchResult | null>(null)
   const [scheduleCron, setScheduleCron] = useState('')
   const [scheduleNodeIds, setScheduleNodeIds] = useState<string[]>([])
   const [scheduleTimezone, setScheduleTimezone] = useState('UTC')
   const [scheduleMisfireGrace, setScheduleMisfireGrace] = useState(60)
+  const [confirmRemoveSchedule, setConfirmRemoveSchedule] = useState(false)
 
   if (isLoading) return <Spinner size="lg" className="mx-auto my-16" />
   if (error || !script) {
@@ -97,25 +100,26 @@ export function ScriptDetail() {
         },
       },
       {
-        onSuccess: () => { toast('success', t('scripts.toastStarted', { name: script.name })); setShowRunModal(false); setRunNodeIds([]); setRunTags('') },
+        onSuccess: (response) => { toast('success', t('scripts.toastStarted', { name: script.name })); setRunResult(response) },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),
       },
     )
   }
 
   const handleSchedule = () => {
+    if (!script || !scheduleCron.trim()) return
+    setSchedule.mutate({ id: script.id, data: { cron: scheduleCron, node_ids: scheduleNodeIds, timezone: scheduleTimezone, misfire_grace_seconds: scheduleMisfireGrace } }, {
+      onSuccess: () => { toast('success', t('scripts.toastScheduleSet')); setShowScheduleModal(false) },
+      onError: () => toast('error', t('scripts.toastScheduleFailed')),
+    })
+  }
+
+  const handleRemoveSchedule = () => {
     if (!script) return
-    if (!scheduleCron.trim()) {
-      removeSchedule.mutate(script.id, {
-        onSuccess: () => { toast('success', t('scripts.toastScheduleRemoved')); setShowScheduleModal(false) },
-        onError: () => toast('error', t('scripts.toastScheduleFailed')),
-      })
-    } else {
-      setSchedule.mutate({ id: script.id, data: { cron: scheduleCron, node_ids: scheduleNodeIds, timezone: scheduleTimezone, misfire_grace_seconds: scheduleMisfireGrace } }, {
-        onSuccess: () => { toast('success', t('scripts.toastScheduleSet')); setShowScheduleModal(false) },
-        onError: () => toast('error', t('scripts.toastScheduleFailed')),
-      })
-    }
+    removeSchedule.mutate(script.id, {
+      onSuccess: () => { toast('success', t('scripts.toastScheduleRemoved')); setShowScheduleModal(false); setConfirmRemoveSchedule(false) },
+      onError: () => toast('error', t('scripts.toastScheduleFailed')),
+    })
   }
 
   const handleClone = () => {
@@ -176,44 +180,83 @@ export function ScriptDetail() {
       {activeTab === 'stats' && <StatsTab scriptId={script.id} />}
       {activeTab === 'notes' && <NotesTab scriptId={script.id} />}
 
-      <Modal isOpen={showRunModal} onClose={() => setShowRunModal(false)} title={`${t('scripts.run')}: ${script.name}`}>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNodes', 'Target Nodes')}</p>
-              <button
-                type="button"
-                onClick={() => setRunNodeIds(runNodeIds.length === nodes.length ? [] : nodes.map((n) => n.id))}
-                className="text-xs text-accent-600 dark:text-accent-400 hover:underline cursor-pointer"
-              >
-                {runNodeIds.length === nodes.length ? t('common.deselectAll', 'Deselect all') : t('common.selectAll', 'Select all')}
-              </button>
-            </div>
-            <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
-              {nodes.map((node) => (
-                <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={runNodeIds.includes(node.id)}
-                    onChange={() => {
-                      setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
-                    }}
-                    className="rounded border-surface-300 dark:border-surface-600"
-                  />
-                  <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
-                </label>
-              ))}
-            </div>
-            {runNodeIds.length > 0 && (
-              <p className="text-xs text-surface-500">{t('scripts.selectedNodes', { count: runNodeIds.length })}</p>
+      <Modal isOpen={showRunModal} onClose={() => { setShowRunModal(false); setRunResult(null) }} title={`${t('scripts.run')}: ${script.name}`}>
+        {runResult ? (
+          <div className="space-y-4">
+            {runResult.results.length === 1 ? (
+              runResult.results[0].steps.map((step, idx) => (
+                <div key={idx} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                      {t('scripts.step', 'Step')} {idx + 1}: {step.label}
+                    </span>
+                    <Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>
+                      exit {step.exit_code}
+                    </Badge>
+                    {step.truncated && (
+                      <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>
+                    )}
+                  </div>
+                  <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} />
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="flex gap-4 text-sm">
+                  <span className="text-green-600 dark:text-green-400">{t('scripts.succeeded', 'Succeeded')}: {runResult.results.filter((r) => r.status === 'success').length}</span>
+                  <span className="text-red-600 dark:text-red-400">{t('scripts.failed', 'Failed')}: {runResult.results.filter((r) => r.status === 'error').length}</span>
+                </div>
+                <div className="max-h-96 overflow-y-auto space-y-3">
+                  {runResult.results.map((r) => (
+                    <ScriptBulkNodeResultItem key={r.node_id} result={r} />
+                  ))}
+                </div>
+              </>
             )}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="ghost" onClick={() => { setShowRunModal(false); setRunResult(null) }}>{t('common.close')}</Button>
+              <Button onClick={() => setRunResult(null)}>{t('scripts.runAgain', 'Run Again')}</Button>
+            </div>
           </div>
-          <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowRunModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleRun} disabled={runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.targetNodes', 'Target Nodes')}</p>
+                <button
+                  type="button"
+                  onClick={() => setRunNodeIds(runNodeIds.length === nodes.length ? [] : nodes.map((n) => n.id))}
+                  className="text-xs text-accent-600 dark:text-accent-400 hover:underline cursor-pointer"
+                >
+                  {runNodeIds.length === nodes.length ? t('common.deselectAll', 'Deselect all') : t('common.selectAll', 'Select all')}
+                </button>
+              </div>
+              <div className="max-h-48 overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg divide-y divide-surface-200 dark:divide-surface-700">
+                {nodes.map((node) => (
+                  <label key={node.id} className="flex items-center gap-3 px-3 py-2 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={runNodeIds.includes(node.id)}
+                      onChange={() => {
+                        setRunNodeIds((prev) => prev.includes(node.id) ? prev.filter((id) => id !== node.id) : [...prev, node.id])
+                      }}
+                      className="rounded border-surface-300 dark:border-surface-600"
+                    />
+                    <span className="text-sm text-surface-900 dark:text-white">{node.name}</span>
+                  </label>
+                ))}
+              </div>
+              {runNodeIds.length > 0 && (
+                <p className="text-xs text-surface-500">{t('scripts.selectedNodes', { count: runNodeIds.length })}</p>
+              )}
+            </div>
+            <Input label={t('scripts.targetTags', 'Target Tags (optional, comma separated)')} placeholder="production, linux" value={runTags} onChange={(e) => setRunTags(e.target.value)} />
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="ghost" onClick={() => { setShowRunModal(false); setRunResult(null) }}>{t('common.cancel')}</Button>
+              <Button onClick={handleRun} disabled={runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button>
+            </div>
           </div>
-        </div>
+        )}
       </Modal>
 
       <Modal isOpen={showScheduleModal} onClose={() => setShowScheduleModal(false)} title={`${t('scripts.schedule')}: ${script.name}`}>
@@ -233,13 +276,19 @@ export function ScriptDetail() {
               ))}
             </div>
           </div>
-          <p className="text-xs text-surface-500">{t('scripts.scheduleHint', 'Leave empty to remove schedule')}</p>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowScheduleModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSchedule} disabled={scheduleCron.trim() !== '' && scheduleNodeIds.length === 0}>{t('common.save')}</Button>
+          <div className="flex justify-between pt-2">
+            <Button variant="ghost" className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300" onClick={() => setConfirmRemoveSchedule(true)}>
+              {t('scripts.removeSchedule', 'Remove Schedule')}
+            </Button>
+            <div className="flex gap-3">
+              <Button variant="ghost" onClick={() => setShowScheduleModal(false)}>{t('common.cancel')}</Button>
+              <Button onClick={handleSchedule} disabled={scheduleCron.trim() !== '' && scheduleNodeIds.length === 0}>{t('common.save')}</Button>
+            </div>
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog isOpen={confirmRemoveSchedule} onClose={() => setConfirmRemoveSchedule(false)} onConfirm={handleRemoveSchedule} title={t('scripts.removeScheduleTitle', 'Remove Schedule')} message={t('scripts.removeScheduleMsg', 'Are you sure you want to remove the schedule?')} confirmLabel={t('common.delete')} loading={removeSchedule.isPending} />
 
       <ScriptFormModal
         isOpen={showEditModal}
