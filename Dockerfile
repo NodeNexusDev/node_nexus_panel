@@ -6,7 +6,9 @@ COPY . .
 RUN npm run build
 
 FROM nginx:alpine
-RUN apk add --no-cache gettext curl && adduser -S appuser && chown -R appuser /usr/share/nginx/html /var/cache/nginx /var/run
+RUN apk add --no-cache gettext curl && adduser -S appuser && chown -R appuser /usr/share/nginx/html /var/cache/nginx /var/run \
+    && sed -i 's|pid.*|pid /var/cache/nginx/nginx.pid;|' /etc/nginx/nginx.conf \
+    && sed -i '/^user /d' /etc/nginx/nginx.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/entrypoint.sh /entrypoint.sh
