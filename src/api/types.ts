@@ -1,3 +1,4 @@
+// Synced with OpenAPI 1.6.0: ConnectionType, NodeStatus
 export type ConnectionType = 'ssh' | 'docker' | 'proxmox'
 export type NodeStatus = 'active' | 'unreachable' | 'error'
 
@@ -223,6 +224,7 @@ export interface MetricsBucket {
   total: number
   successful: number
   failed: number
+  cancelled?: number
   avg_duration_ms?: number | null
 }
 
@@ -265,6 +267,9 @@ export interface ApiKeyCreated {
 export interface ApiError {
   code: string
   message: string
+  detail?: unknown
+  request_id?: string | null
+  /** @deprecated use detail — legacy field from pre-1.6.0 */
   details?: Record<string, string[]>
 }
 
@@ -274,6 +279,7 @@ export interface ExecutionStatsResponse {
   total: number
   successful: number
   failed: number
+  cancelled?: number
   success_rate: number
   avg_duration_ms?: number | null
   min_duration_ms?: number | null
@@ -893,11 +899,11 @@ export interface ScriptNodeResult {
 export interface ScriptStepResult {
   step_index: number
   label: string
-  command_fingerprint: string
+  command_fingerprint?: string
   stdout: string
   stderr: string
-  stdout_bytes: number
-  stderr_bytes: number
+  stdout_bytes?: number
+  stderr_bytes?: number
   exit_code: number
   truncated?: boolean
 }
@@ -1157,12 +1163,12 @@ export interface LoginRequest {
 
 export interface TokenResponse {
   access_token: string
-  token_type: string
+  token_type?: 'bearer' | string
 }
 
 export interface UserCreate {
   email: string
-  password: string
+  password: string // minLength 12, maxLength 1024 per OpenAPI 1.6.0
   is_superuser?: boolean
 }
 

@@ -34,12 +34,12 @@ export const dashboardHandlers = [
       command_metrics: periods.map((period, i) => {
         const total = cmdBase[i % cmdBase.length] + Math.floor(Math.random() * 4)
         const successful = total - Math.floor(Math.random() * 2)
-        return { period, total, successful, failed: total - successful, avg_duration_ms: 800 + Math.floor(Math.random() * 700) }
+        return { period, total, successful, failed: total - successful, cancelled: 0, avg_duration_ms: 800 + Math.floor(Math.random() * 700) }
       }),
       script_metrics: periods.map((period, i) => {
         const total = scrBase[i % scrBase.length] + Math.floor(Math.random() * 2)
         const successful = total - (Math.random() > 0.8 ? 1 : 0)
-        return { period, total, successful, failed: total - successful, avg_duration_ms: 3000 + Math.floor(Math.random() * 3000) }
+        return { period, total, successful, failed: total - successful, cancelled: 0, avg_duration_ms: 3000 + Math.floor(Math.random() * 3000) }
       }),
     })
   }),

@@ -6,6 +6,7 @@ export interface MetricsBucket {
   total: number
   successful: number
   failed: number
+  cancelled?: number
   avg_duration_ms?: number | null
 }
 

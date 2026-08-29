@@ -131,6 +131,14 @@ export function Settings() {
   }
 
   const handleCreateUser = () => {
+    if (newUserPassword.length < 12) {
+      toast('error', t('settings.passwordTooShort', 'Password must be at least 12 characters'))
+      return
+    }
+    if (newUserPassword.length > 1024) {
+      toast('error', t('settings.passwordTooLong', 'Password must be at most 1024 characters'))
+      return
+    }
     createUser.mutate({ email: newUserEmail, password: newUserPassword, is_superuser: newUserSuperuser }, {
       onSuccess: () => { toast('success', t('settings.toastUserCreated')); setShowCreateUserModal(false); setNewUserEmail(''); setNewUserPassword(''); setNewUserSuperuser(false) },
       onError: () => toast('error', t('settings.toastUserCreateFailed')),

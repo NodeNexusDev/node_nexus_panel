@@ -94,6 +94,7 @@ export const scriptHandlers = [
       total: 10,
       successful: 8,
       failed: 2,
+      cancelled: 0,
       success_rate: 80.0,
       avg_duration_ms: 1250,
       min_duration_ms: 200,
