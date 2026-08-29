@@ -18,6 +18,7 @@ import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { Skeleton, StatCardSkeleton, TableSkeleton } from '../components/ui/Skeleton'
 import { IconScripts, IconArrowLeft, IconXCircle, IconZap } from '../components/ui/Icons'
 import { ExecutionResult } from '../components/commands/ExecutionResult'
+import { formatPercent, formatDurationMs } from '../lib/format'
 import { ScriptBulkNodeResultItem } from '../components/scripts/ScriptBulkNodeResultItem'
 import { useToast } from '../components/ui/useToast'
 import { useNodes } from '../hooks/useNodes'
@@ -505,9 +506,10 @@ function StatsTab({ scriptId }: { scriptId: string }) {
         ) : stats ? (
           <StatsGrid>
             <StatCard label={t('scripts.totalExecutions', 'Total Executions')} value={stats.total} />
-            <StatCard label={t('scripts.successRate', 'Success Rate')} value={stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'} tone="success" />
-            <StatCard label={t('scripts.avgDuration', 'Avg Duration')} value={stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'} />
+            <StatCard label={t('scripts.successRate', 'Success Rate')} value={formatPercent(stats.success_rate)} tone="success" />
+            <StatCard label={t('scripts.avgDuration', 'Avg Duration')} value={formatDurationMs(stats.avg_duration_ms)} />
             <StatCard label={t('scripts.failed', 'Failed')} value={stats.failed} tone="danger" />
+            {stats.cancelled != null && stats.cancelled > 0 && <StatCard label={t('scripts.cancelled', 'Cancelled')} value={stats.cancelled} tone="warning" />}
           </StatsGrid>
         ) : (
           <EmptyState title={t('scripts.noStats', 'No stats available')} />

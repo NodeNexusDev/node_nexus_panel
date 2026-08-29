@@ -1,3 +1,4 @@
+// Synced with OpenAPI 1.6.0: ConnectionType, NodeStatus
 export type ConnectionType = 'ssh' | 'docker' | 'proxmox'
 export type NodeStatus = 'active' | 'unreachable' | 'error'
 
@@ -22,11 +23,31 @@ export interface Node {
   updated_at: string
 }
 
+export interface NodeOffsetListResponse {
+  items: Node[]
+  total: number
+  page: number
+  size: number
+}
+
+export interface NodeCursorListResponse {
+  items: Node[]
+  limit: number
+  next_cursor: string | null
+  has_more: boolean
+}
+
+export type NodeListResponse = NodeOffsetListResponse | NodeCursorListResponse
+
+export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursorListResponse {
+  return 'next_cursor' in resp && 'has_more' in resp
+}
+
 export interface NodeCreate {
   name: string
   host: string
   port?: number
-  connection_type: ConnectionType
+  connection_type?: ConnectionType
   username?: string | null
   password?: string | null
   ssh_key?: string | null
@@ -203,6 +224,7 @@ export interface MetricsBucket {
   total: number
   successful: number
   failed: number
+  cancelled?: number
   avg_duration_ms?: number | null
 }
 
@@ -245,6 +267,9 @@ export interface ApiKeyCreated {
 export interface ApiError {
   code: string
   message: string
+  detail?: unknown
+  request_id?: string | null
+  /** @deprecated use detail — legacy field from pre-1.6.0 */
   details?: Record<string, string[]>
 }
 
@@ -254,6 +279,8 @@ export interface ExecutionStatsResponse {
   total: number
   successful: number
   failed: number
+  cancelled?: number
+  /** 0..1 (0.8 = 80%) */
   success_rate: number
   avg_duration_ms?: number | null
   min_duration_ms?: number | null
@@ -751,9 +778,10 @@ export interface NodeExport {
   name: string
   host: string
   port: number
-  connection_type: string
+  connection_type: ConnectionType
   tags?: string[]
   username?: string | null
+  docker_host?: string | null
 }
 
 export interface CommandExport {
@@ -766,12 +794,13 @@ export interface CommandExport {
 
 export interface ScriptExport {
   name: string
-  description?: string
+  description?: string | null
   steps?: ScriptStep[]
   tags?: string[]
 }
 
 export interface ConfigImport {
+  /** @deprecated not in spec 1.3.3 — kept for backward compat with older exports */
   exported_at?: string
   format_version?: string | null
   version?: string | null
@@ -872,11 +901,11 @@ export interface ScriptNodeResult {
 export interface ScriptStepResult {
   step_index: number
   label: string
-  command_fingerprint: string
+  command_fingerprint?: string
   stdout: string
   stderr: string
-  stdout_bytes: number
-  stderr_bytes: number
+  stdout_bytes?: number
+  stderr_bytes?: number
   exit_code: number
   truncated?: boolean
 }
@@ -1112,9 +1141,19 @@ export interface BulkNodeDeleteRequest {
   node_ids: string[]
 }
 
-export interface HealthResponse {
+export type HealthResponse = Record<string, string> & {
+  status?: string
+  version?: string
+}
+
+export interface ReadyCheck {
   status: string
-  version: string
+  detail?: string | null
+}
+
+export interface ReadyResponse {
+  status: string
+  checks?: Record<string, ReadyCheck>
 }
 
 // ── Auth (JWT) ─────────────────────────────────────────────────
@@ -1126,12 +1165,12 @@ export interface LoginRequest {
 
 export interface TokenResponse {
   access_token: string
-  token_type: string
+  token_type?: 'bearer'
 }
 
 export interface UserCreate {
   email: string
-  password: string
+  password: string // minLength 12, maxLength 1024 per OpenAPI 1.6.0
   is_superuser?: boolean
 }
 

@@ -13,21 +13,21 @@ import type {
   BulkNodeMetricsResponse,
   BulkValidateCredentialsRequest,
   BulkValidateCredentialsResponse,
+  NodeListResponse,
   PaginatedResponse,
 } from './types'
 
 export const nodesApi = {
-  getAll: (params?: { page?: number; size?: number; status?: string; tags?: string; search?: string; cursor?: string; limit?: number }) => {
+  getAll: (params?: { page?: number; size?: number; tags?: string; search?: string; cursor?: string; limit?: number }) => {
     const query = new URLSearchParams()
     if (params?.page != null) query.set('page', String(params.page))
     if (params?.size != null) query.set('size', String(params.size))
-    if (params?.status) query.set('status', params.status)
     if (params?.tags) query.set('tags', params.tags)
     if (params?.search) query.set('search', params.search)
     if (params?.cursor) query.set('cursor', params.cursor)
     if (params?.limit != null) query.set('limit', String(params.limit))
     const qs = query.toString()
-    return api.get<PaginatedResponse<Node>>(`/nodes/${qs ? `?${qs}` : ''}`)
+    return api.get<NodeListResponse>(`/nodes/${qs ? `?${qs}` : ''}`)
   },
 
   getById: (id: string) =>

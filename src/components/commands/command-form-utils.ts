@@ -15,7 +15,7 @@ export function getDefaultParams(parameters: CommandParameter[] | null | undefin
   }, {} as Record<string, unknown>)
 }
 
-export function normalizeParameters(params?: CommandParameterFormValues[]): CommandParameter[] | undefined {
+export function normalizeParameters(params?: CommandParameterFormValues[] | null): CommandParameter[] | undefined {
   if (!params || params.length === 0) return undefined
   return params.map((p) => ({
     name: p.name,

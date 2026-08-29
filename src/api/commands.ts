@@ -93,7 +93,7 @@ export const commandsApi = {
     return api.get<PaginatedResponse<BulkCommandHistoryItem>>(`/commands/bulk/history?${qs}`)
   },
 
-  bulkExecuteGlobal: (data: { command: string; node_ids?: string[]; tags?: string[] }) =>
+  bulkExecuteGlobal: (data: BulkCommandRequest) =>
     api.post<BulkCommandResult>('/commands/bulk/execute', data),
 
   bulkCancel: (data: BulkCancelCommandRequest) =>

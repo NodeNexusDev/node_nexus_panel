@@ -8,7 +8,7 @@ import { Input } from '../ui/Input'
 import { TableSkeleton } from '../ui/Skeleton'
 import { IconDocker } from '../ui/Icons'
 import { useToast } from '../ui/useToast'
-import { useDockerNetworks, useCreateNetwork, useDeleteNetwork, useConnectNetwork, useDisconnectNetwork, usePruneNetworks } from '../../hooks/useDocker'
+import { useDockerNetworks, useCreateNetwork, useDeleteNetwork, useConnectNetwork, useDisconnectNetwork } from '../../hooks/useDocker'
 import { NetworkInspectContent } from './NetworkInspectContent'
 
 export function NetworksTab({ nodeId }: { nodeId: string }) {
@@ -19,7 +19,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
   const deleteNetwork = useDeleteNetwork()
   const connectNetwork = useConnectNetwork()
   const disconnectNetwork = useDisconnectNetwork()
-  const pruneNetworks = usePruneNetworks()
   
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createName, setCreateName] = useState('')
@@ -30,7 +29,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
   const [connectContainer, setConnectContainer] = useState('')
   const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; name: string } | null>(null)
   const [disconnectContainer, setDisconnectContainer] = useState('')
-  const [showPruneConfirm, setShowPruneConfirm] = useState(false)
 
   if (isLoading) return <TableSkeleton rows={3} cols={4} />
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadNetworks')} />
@@ -39,7 +37,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
   return (
     <>
       <div className="flex justify-end mb-4 px-4 gap-2">
-        <Button variant="ghost" onClick={() => setShowPruneConfirm(true)} disabled={pruneNetworks.isPending}>{pruneNetworks.isPending ? t('common.loading') : t('docker.pruneNetworks')}</Button>
         <Button onClick={() => setShowCreateModal(true)}>{t('docker.createNetwork')}</Button>
       </div>
       <div className="overflow-x-auto">
@@ -117,15 +114,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
         </div>
       </Modal>
 
-      <Modal isOpen={showPruneConfirm} onClose={() => setShowPruneConfirm(false)} title={t('docker.pruneNetworks')}>
-        <div className="space-y-4">
-          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.confirmPruneNetworks')}</p>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowPruneConfirm(false)}>{t('common.cancel')}</Button>
-            <Button variant="danger" onClick={() => { pruneNetworks.mutate(nodeId, { onSuccess: () => { toast('success', t('docker.toastPruneNetworksDone')); setShowPruneConfirm(false) }, onError: () => toast('error', t('docker.toastPruneNetworksFailed')) }) }} disabled={pruneNetworks.isPending}>{pruneNetworks.isPending ? t('common.loading') : t('docker.pruneNetworks')}</Button>
-          </div>
-        </div>
-      </Modal>
     </>
   )
 }

@@ -21,10 +21,19 @@ class ApiClient {
   }
 
   private async parseError(response: Response): Promise<ApiError> {
-    return response.json().catch(() => ({
-      code: 'UNKNOWN_ERROR',
-      message: response.statusText,
-    })) as Promise<ApiError>
+    try {
+      const data = (await response.json()) as ApiError
+      // Back-compat: map legacy details -> detail
+      if (data.details && !data.detail) {
+        return { ...data, detail: data.details } as ApiError
+      }
+      return data
+    } catch {
+      return {
+        code: 'UNKNOWN_ERROR',
+        message: response.statusText,
+      }
+    }
   }
 
   private async request<T>(

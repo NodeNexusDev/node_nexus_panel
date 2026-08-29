@@ -18,6 +18,7 @@ import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { IconCommands, IconArrowLeft, IconXCircle, IconCheckCircle } from '../components/ui/Icons'
 import { useToast } from '../components/ui/useToast'
+import { formatPercent, formatDurationMs } from '../lib/format'
 import {
   useCommand,
   useCommandStats,
@@ -307,9 +308,10 @@ function StatsTab({ commandId }: { commandId: string }) {
         ) : stats ? (
           <StatsGrid>
             <StatCard label={t('commands.totalExecutions', 'Total Executions')} value={stats.total} />
-            <StatCard label={t('commands.successRate', 'Success Rate')} value={stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'} tone="success" />
-            <StatCard label={t('commands.avgDuration', 'Avg Duration')} value={stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'} />
+            <StatCard label={t('commands.successRate', 'Success Rate')} value={formatPercent(stats.success_rate)} tone="success" />
+            <StatCard label={t('commands.avgDuration', 'Avg Duration')} value={formatDurationMs(stats.avg_duration_ms)} />
             <StatCard label={t('commands.failed', 'Failed')} value={stats.failed} tone="danger" />
+            {stats.cancelled != null && stats.cancelled > 0 && <StatCard label={t('commands.cancelled', 'Cancelled')} value={stats.cancelled} tone="warning" />}
           </StatsGrid>
         ) : (
           <EmptyState title={t('commands.noStats', 'No stats available')} />

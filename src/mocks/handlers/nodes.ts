@@ -10,7 +10,6 @@ export const nodeHandlers = [
     const size = Number(url.searchParams.get('size') || '20')
     const tags = url.searchParams.get('tags')
     const search = url.searchParams.get('search')
-    const status = url.searchParams.get('status')
     let filtered = mockNodes
     if (tags) {
       const tagList = tags.split(',')
@@ -19,10 +18,6 @@ export const nodeHandlers = [
     if (search) {
       const q = search.toLowerCase()
       filtered = filtered.filter((n) => n.name.toLowerCase().includes(q) || n.host.toLowerCase().includes(q))
-    }
-    if (status) {
-      const statusList = status.split(',')
-      filtered = filtered.filter((n) => statusList.includes(n.status))
     }
     const start = (page - 1) * size
     const items = filtered.slice(start, start + size)
@@ -36,7 +31,7 @@ export const nodeHandlers = [
 
   http.get(`${API_URL}/api/v1/nodes/:id`, ({ params }) => {
     const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
+    if (!node) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json(node)
   }),
 
@@ -61,7 +56,7 @@ export const nodeHandlers = [
 
   http.patch(`${API_URL}/api/v1/nodes/:id`, async ({ params, request }) => {
     const idx = mockNodes.findIndex((n) => n.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const body = (await request.json()) as Record<string, unknown>
     Object.assign(mockNodes[idx], body, { updated_at: new Date().toISOString() })
     return HttpResponse.json(mockNodes[idx])
@@ -69,14 +64,14 @@ export const nodeHandlers = [
 
   http.delete(`${API_URL}/api/v1/nodes/:id`, ({ params }) => {
     const idx = mockNodes.findIndex((n) => n.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     mockNodes.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API_URL}/api/v1/nodes/:id/check`, ({ params }) => {
     const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
+    if (!node) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     node.status = 'active'
     node.updated_at = new Date().toISOString()
     return HttpResponse.json(node)
@@ -84,7 +79,7 @@ export const nodeHandlers = [
 
   http.get(`${API_URL}/api/v1/nodes/:id/metrics`, ({ params }) => {
     const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
+    if (!node) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({
       cpu: { usage_percent: 45.2, cores: 4 },
       memory: { total_bytes: 8589934592, used_bytes: 5368709120, percent: 62.5 },
@@ -117,7 +112,7 @@ export const nodeHandlers = [
 
   http.get(`${API_URL}/api/v1/nodes/:id/status-history`, ({ params, request }) => {
     const node = mockNodes.find((n) => n.id === params.id)
-    if (!node) return new HttpResponse(null, { status: 404 })
+    if (!node) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')

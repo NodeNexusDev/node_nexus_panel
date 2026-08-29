@@ -32,6 +32,16 @@ export const imageBuildSchema = z.object({
   no_cache: z.boolean().default(false),
 })
 
+export const bulkImageBuildSchema = z.object({
+  dockerfile: z.string().min(1).max(4096),
+  tag: z.string().min(1).max(255),
+  build_args: z.record(z.string(), z.string()).optional(),
+  no_cache: z.boolean().default(false),
+  node_ids: z.array(z.string().uuid()).optional(),
+  node_tags: z.array(z.string()).optional(),
+  timeout: z.number().int().min(1).max(3600).nullable().optional(),
+})
+
 export const imageTagSchema = z.object({
   repo: z.string().min(1).max(255),
   tag: z.string().min(1).max(128),

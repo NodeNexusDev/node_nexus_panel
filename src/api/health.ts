@@ -1,5 +1,5 @@
 import { env } from '../lib/env'
-import type { HealthResponse } from './types'
+import type { HealthResponse, ReadyResponse } from './types'
 
 const API_URL = env.VITE_API_URL
 
@@ -8,5 +8,5 @@ export const healthApi = {
     fetch(`${API_URL}/health`).then((r) => r.json() as Promise<HealthResponse>),
 
   getReady: () =>
-    fetch(`${API_URL}/ready`).then((r) => r.json() as Promise<unknown>),
+    fetch(`${API_URL}/ready`).then((r) => r.json() as Promise<ReadyResponse>),
 }

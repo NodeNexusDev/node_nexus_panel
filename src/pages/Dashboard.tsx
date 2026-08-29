@@ -15,7 +15,7 @@ import { useNodes } from '../hooks/useNodes'
 import { useFavorites } from '../hooks/useFavorites'
 import { useSse } from '../hooks/useSse'
 import { nodeStatusVariant, activityVariant } from '../lib/variants'
-import type { MetricsBucket } from '../components/ui/MetricsChart'
+import type { MetricsBucket } from '../api/types'
 
 type DatePreset = '7d' | '30d' | '90d' | 'all'
 
@@ -72,10 +72,12 @@ export function Dashboard() {
   const cmdTotal = metrics?.command_metrics?.reduce((s, m) => s + m.total, 0) || 0
   const cmdOk = metrics?.command_metrics?.reduce((s, m) => s + m.successful, 0) || 0
   const cmdFail = metrics?.command_metrics?.reduce((s, m) => s + m.failed, 0) || 0
+  const cmdCancelled = metrics?.command_metrics?.reduce((s, m) => s + (m.cancelled ?? 0), 0) || 0
 
   const scrTotal = metrics?.script_metrics?.reduce((s, m) => s + m.total, 0) || 0
   const scrOk = metrics?.script_metrics?.reduce((s, m) => s + m.successful, 0) || 0
   const scrFail = metrics?.script_metrics?.reduce((s, m) => s + m.failed, 0) || 0
+  const scrCancelled = metrics?.script_metrics?.reduce((s, m) => s + (m.cancelled ?? 0), 0) || 0
 
   const quickActions = [
     { key: 'executeCommand', Icon: IconZap, descKey: 'executeCommandDesc', path: '/commands' },
@@ -252,7 +254,7 @@ export function Dashboard() {
               ) : (
                 <MetricsChart data={metrics?.command_metrics || []} height={180} />
               )}
-              <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+              <div className="mt-4 grid grid-cols-4 gap-4 text-center">
                 <div className="p-2 rounded-lg bg-surface-50 dark:bg-surface-800/50">
                   <p className="text-xl font-bold text-surface-900 dark:text-white">{cmdTotal}</p>
                   <p className="text-xs text-surface-500">{t('dashboard.total')}</p>
@@ -264,6 +266,10 @@ export function Dashboard() {
                 <div className="p-2 rounded-lg bg-red-50 dark:bg-red-500/10">
                   <p className="text-xl font-bold text-red-600 dark:text-red-400">{cmdFail}</p>
                   <p className="text-xs text-surface-500">{t('dashboard.failed')}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-surface-100 dark:bg-surface-700/50">
+                  <p className="text-xl font-bold text-surface-600 dark:text-surface-300">{cmdCancelled}</p>
+                  <p className="text-xs text-surface-500">{t('dashboard.cancelled', 'Cancelled')}</p>
                 </div>
               </div>
             </div>
@@ -282,7 +288,7 @@ export function Dashboard() {
               ) : (
                 <MetricsChart data={metrics?.script_metrics || []} height={180} />
               )}
-              <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+              <div className="mt-4 grid grid-cols-4 gap-4 text-center">
                 <div className="p-2 rounded-lg bg-surface-50 dark:bg-surface-800/50">
                   <p className="text-xl font-bold text-surface-900 dark:text-white">{scrTotal}</p>
                   <p className="text-xs text-surface-500">{t('dashboard.total')}</p>
@@ -294,6 +300,10 @@ export function Dashboard() {
                 <div className="p-2 rounded-lg bg-red-50 dark:bg-red-500/10">
                   <p className="text-xl font-bold text-red-600 dark:text-red-400">{scrFail}</p>
                   <p className="text-xs text-surface-500">{t('dashboard.failed')}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-surface-100 dark:bg-surface-700/50">
+                  <p className="text-xl font-bold text-surface-600 dark:text-surface-300">{scrCancelled}</p>
+                  <p className="text-xs text-surface-500">{t('dashboard.cancelled', 'Cancelled')}</p>
                 </div>
               </div>
             </div>

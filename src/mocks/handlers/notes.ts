@@ -27,7 +27,7 @@ export const notesHandlers = [
 
   http.put(`${API}/api/v1/notes/:noteId`, async ({ params, request }) => {
     const idx = mockNotes.findIndex((n) => n.id === params.noteId)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const body = await request.json() as { content: string }
     Object.assign(mockNotes[idx], body, { updated_at: new Date().toISOString() })
     return HttpResponse.json(mockNotes[idx])

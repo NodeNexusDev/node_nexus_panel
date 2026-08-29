@@ -30,7 +30,7 @@ export const scriptHandlers = [
 
   http.get(`${API_URL}/api/v1/scripts/:id`, ({ params }) => {
     const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json(script)
   }),
 
@@ -51,7 +51,7 @@ export const scriptHandlers = [
 
   http.patch(`${API_URL}/api/v1/scripts/:id`, async ({ params, request }) => {
     const idx = mockScripts.findIndex((s) => s.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const body = (await request.json()) as Record<string, unknown>
     Object.assign(mockScripts[idx], body, { updated_at: new Date().toISOString() })
     return HttpResponse.json(mockScripts[idx])
@@ -59,14 +59,14 @@ export const scriptHandlers = [
 
   http.delete(`${API_URL}/api/v1/scripts/:id`, ({ params }) => {
     const idx = mockScripts.findIndex((s) => s.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     mockScripts.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API_URL}/api/v1/scripts/:id/execute`, ({ params }) => {
     const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({
       script_id: script.id,
       results: [],
@@ -75,7 +75,7 @@ export const scriptHandlers = [
 
   http.post(`${API_URL}/api/v1/scripts/:id/clone`, ({ params }) => {
     const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const cloned = {
       ...script,
       id: String(mockScripts.length + 1),
@@ -89,11 +89,12 @@ export const scriptHandlers = [
 
   http.get(`${API_URL}/api/v1/scripts/:id/stats`, ({ params }) => {
     const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({
       total: 10,
       successful: 8,
       failed: 2,
+      cancelled: 0,
       success_rate: 80.0,
       avg_duration_ms: 1250,
       min_duration_ms: 200,
@@ -104,7 +105,7 @@ export const scriptHandlers = [
 
   http.get(`${API_URL}/api/v1/scripts/:id/schedule`, ({ params }) => {
     const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({
       id: 'sched-1',
       script_id: script.id,
@@ -125,7 +126,7 @@ export const scriptHandlers = [
 
   http.post(`${API_URL}/api/v1/scripts/:id/schedule`, async ({ params, request }) => {
     const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const body = await request.json() as { cron: string; node_ids: string[]; timezone?: string }
     return HttpResponse.json({
       script_id: script.id,
@@ -141,7 +142,7 @@ export const scriptHandlers = [
 
   http.get(`${API_URL}/api/v1/scripts/:id/executions`, ({ params, request }) => {
     const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')
@@ -155,7 +156,7 @@ export const scriptHandlers = [
 
   http.get(`${API_URL}/api/v1/scripts/:id/schedule/history`, ({ params, request }) => {
     const script = mockScripts.find((s) => s.id === params.id)
-    if (!script) return new HttpResponse(null, { status: 404 })
+    if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')

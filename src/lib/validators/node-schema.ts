@@ -17,17 +17,17 @@ export const nodeCreateSchema = z.object({
 })
 
 export const nodeUpdateSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  host: z.string().min(1).max(255).optional(),
-  port: z.number().int().min(1).max(65535).optional(),
-  connection_type: z.enum(CONNECTION_TYPES).optional(),
-  status: z.enum(NODE_STATUSES).optional(),
+  name: z.string().min(1).max(255).nullable().optional(),
+  host: z.string().min(1).max(255).nullable().optional(),
+  port: z.number().int().min(1).max(65535).nullable().optional(),
+  connection_type: z.enum(CONNECTION_TYPES).nullable().optional(),
+  status: z.enum(NODE_STATUSES).nullable().optional(),
   username: z.string().max(255).transform(v => v === '' ? null : v).nullable().optional(),
   password: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   ssh_key: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   passphrase: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   docker_host: z.string().max(255).transform(v => v === '' ? null : v).nullable().optional(),
-  tags: z.array(z.string().min(1).max(100)).optional(),
+  tags: z.array(z.string().min(1).max(100)).nullable().optional(),
 })
 
 export const nodeValidateSchema = z.object({
