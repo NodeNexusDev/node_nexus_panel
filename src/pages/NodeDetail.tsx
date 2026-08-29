@@ -19,7 +19,7 @@ import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { KeyValueList } from '../components/ui/KeyValueList'
-import { formatBytes } from '../lib/format'
+import { formatBytes, formatPercent, formatDurationMs } from '../lib/format'
 import { nodeStatusVariant } from '../lib/variants'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { CONNECTION_TYPE_OPTIONS } from '../components/nodes/connection-types'
@@ -554,9 +554,10 @@ function StatsTab({ nodeId }: { nodeId: string }) {
       <CardContent>
         <StatsGrid>
           <StatCard label={t('nodes.totalExecutions')} value={stats.total} />
-          <StatCard label={t('nodes.successRate')} value={stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : '—'} tone="success" />
-          <StatCard label={t('nodes.avgDuration')} value={stats.avg_duration_ms ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : '—'} />
+          <StatCard label={t('nodes.successRate')} value={formatPercent(stats.success_rate)} tone="success" />
+          <StatCard label={t('nodes.avgDuration')} value={formatDurationMs(stats.avg_duration_ms)} />
           <StatCard label={t('nodes.failed')} value={stats.failed} tone="danger" />
+          {stats.cancelled != null && stats.cancelled > 0 && <StatCard label={t('nodes.cancelled', 'Cancelled')} value={stats.cancelled} tone="warning" />}
         </StatsGrid>
       </CardContent>
     </Card>

@@ -11,3 +11,8 @@ export function formatDurationMs(ms?: number | null): string {
   if (ms < 1000) return `${ms}ms`
   return `${(ms / 1000).toFixed(1)}s`
 }
+
+export function formatPercent(rate?: number | null): string {
+  if (rate == null) return '—'
+  return `${(rate * 100).toFixed(1)}%`
+}

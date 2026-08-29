@@ -20,10 +20,10 @@ export const scriptCreateSchema = z.object({
 })
 
 export const scriptUpdateSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
+  name: z.string().min(1).max(255).nullable().optional(),
   description: z.string().max(1000).nullable().optional(),
-  steps: z.array(scriptStepSchema).min(1).optional(),
-  tags: z.array(z.string().min(1).max(100)).optional(),
+  steps: z.array(scriptStepSchema).min(1).nullable().optional(),
+  tags: z.array(z.string().min(1).max(100)).nullable().optional(),
 })
 
 export const scheduleSchema = z.object({

@@ -28,7 +28,7 @@ export const userHandlers = [
 
   http.delete(`${API_URL}/api/v1/users/:userId`, ({ params }) => {
     const idx = mockUsers.findIndex((u) => u.id === params.userId)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     mockUsers.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),

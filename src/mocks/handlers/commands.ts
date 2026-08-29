@@ -58,7 +58,7 @@ export const commandHandlers = [
 
   http.get(`${API_URL}/api/v1/commands/:id`, ({ params }) => {
     const cmd = mockCommands.find((c) => c.id === params.id)
-    if (!cmd) return new HttpResponse(null, { status: 404 })
+    if (!cmd) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json(cmd)
   }),
 
@@ -80,7 +80,7 @@ export const commandHandlers = [
 
   http.patch(`${API_URL}/api/v1/commands/:id`, async ({ params, request }) => {
     const idx = mockCommands.findIndex((c) => c.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const body = (await request.json()) as Record<string, unknown>
     Object.assign(mockCommands[idx], body, { updated_at: new Date().toISOString() })
     return HttpResponse.json(mockCommands[idx])
@@ -88,14 +88,14 @@ export const commandHandlers = [
 
   http.delete(`${API_URL}/api/v1/commands/:id`, ({ params }) => {
     const idx = mockCommands.findIndex((c) => c.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     mockCommands.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API_URL}/api/v1/commands/:id/execute`, async ({ params }) => {
     const cmd = mockCommands.find((c) => c.id === params.id)
-    if (!cmd) return new HttpResponse(null, { status: 404 })
+    if (!cmd) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({
       stdout: 'Command executed successfully',
       stderr: '',
@@ -105,7 +105,7 @@ export const commandHandlers = [
 
   http.post(`${API_URL}/api/v1/commands/:id/clone`, ({ params }) => {
     const cmd = mockCommands.find((c) => c.id === params.id)
-    if (!cmd) return new HttpResponse(null, { status: 404 })
+    if (!cmd) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const cloned = {
       ...cmd,
       id: String(mockCommands.length + 1),
@@ -119,7 +119,7 @@ export const commandHandlers = [
 
   http.get(`${API_URL}/api/v1/commands/:id/stats`, ({ params }) => {
     const cmd = mockCommands.find((c) => c.id === params.id)
-    if (!cmd) return new HttpResponse(null, { status: 404 })
+    if (!cmd) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({
       total: 15,
       successful: 13,

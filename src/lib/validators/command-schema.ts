@@ -19,11 +19,11 @@ export const commandCreateSchema = z.object({
 })
 
 export const commandUpdateSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  command: z.string().min(1).max(4096).optional(),
+  name: z.string().min(1).max(255).nullable().optional(),
+  command: z.string().min(1).max(4096).nullable().optional(),
   description: z.string().max(1000).nullable().optional(),
-  parameters: z.array(commandParameterSchema).optional(),
-  tags: z.array(z.string().min(1).max(100)).optional(),
+  parameters: z.array(commandParameterSchema).nullable().optional(),
+  tags: z.array(z.string().min(1).max(100)).nullable().optional(),
 })
 
 export type CommandParameterFormValues = z.infer<typeof commandParameterSchema>

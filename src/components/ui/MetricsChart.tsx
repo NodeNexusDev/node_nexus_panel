@@ -1,14 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
-export interface MetricsBucket {
-  period: string
-  total: number
-  successful: number
-  failed: number
-  cancelled?: number
-  avg_duration_ms?: number | null
-}
+import type { MetricsBucket } from '../../api/types'
 
 interface MetricsChartProps {
   data: MetricsBucket[]
@@ -70,14 +62,19 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
             <stop offset="0%" className="text-red-400 dark:text-red-500" stopColor="currentColor" />
             <stop offset="100%" className="text-red-600 dark:text-red-400" stopColor="currentColor" />
           </linearGradient>
+          <linearGradient id={`grad-cancelled-${uid}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" className="text-surface-400 dark:text-surface-500" stopColor="currentColor" />
+            <stop offset="100%" className="text-surface-500 dark:text-surface-400" stopColor="currentColor" />
+          </linearGradient>
         </defs>
 
         {data.map((bucket, i) => {
           const x = (i / data.length) * chartWidth + padding / 2
           const w = (barWidth - padding)
+          const cancelledH = ((bucket.cancelled ?? 0) / max) * chartHeight
           const successH = (bucket.successful / max) * chartHeight
           const failedH = (bucket.failed / max) * chartHeight
-          const totalH = successH + failedH
+          const totalH = successH + failedH + cancelledH
           const y = chartHeight - totalH
 
           return (
@@ -86,10 +83,25 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
               onMouseMove={(e) => handleMouseMove(e, bucket, i)}
               className="cursor-pointer"
             >
-              {bucket.failed > 0 && (
+              {(bucket.cancelled ?? 0) > 0 && (
                 <rect
                   x={x}
                   y={y}
+                  width={w}
+                  height={cancelledH}
+                  rx={w > 3 ? 1.5 : 0}
+                  fill={`url(#grad-cancelled-${uid})`}
+                  className="transition-opacity"
+                  style={{
+                    animation: `chart-bar-in 0.4s ease-out ${i * 60}ms both`,
+                    transformOrigin: `${x + w / 2}px ${chartHeight}px`,
+                  }}
+                />
+              )}
+              {bucket.failed > 0 && (
+                <rect
+                  x={x}
+                  y={y + cancelledH}
                   width={w}
                   height={failedH}
                   rx={w > 3 ? 1.5 : 0}
@@ -158,6 +170,12 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
               <span className="text-red-600 dark:text-red-400">{t('dashboard.failed', 'Failed')}</span>
               <span className="font-medium text-red-600 dark:text-red-400">{tooltip.bucket.failed}</span>
             </div>
+            {(tooltip.bucket.cancelled ?? 0) > 0 && (
+              <div className="flex justify-between gap-4">
+                <span className="text-surface-500">{t('dashboard.cancelled', 'Cancelled')}</span>
+                <span className="font-medium text-surface-500">{tooltip.bucket.cancelled}</span>
+              </div>
+            )}
             {tooltip.bucket.avg_duration_ms != null && (
               <div className="flex justify-between gap-4 pt-1 border-t border-surface-200 dark:border-surface-700">
                 <span className="text-surface-500">{t('dashboard.avgDuration', 'Avg duration')}</span>
@@ -177,6 +195,10 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-red-500" />
           <span className="text-xs text-surface-500">Failed</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-sm bg-surface-400" />
+          <span className="text-xs text-surface-500">Cancelled</span>
         </div>
       </div>
     </div>

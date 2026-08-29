@@ -27,7 +27,7 @@ export const dockerHandlers = [
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/containers/:containerId`, ({ params }) => {
     const c = mockContainers.find((c) => c.ID === params.containerId)
-    if (!c) return new HttpResponse(null, { status: 404 })
+    if (!c) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({ Id: c.ID, Name: c.Names, State: { status: c.State, running: c.State === 'running', exit_code: 0 }, Config: { image: c.Image } })
   }),
 
@@ -112,7 +112,7 @@ export const dockerHandlers = [
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/images/:imageId`, ({ params }) => {
     const img = mockImages.find((i) => i.ID === params.imageId)
-    if (!img) return new HttpResponse(null, { status: 404 })
+    if (!img) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({ id: img.ID, repo_tags: [`${img.Repository}:${img.Tag}`], size: 100000000 })
   }),
 
@@ -153,7 +153,7 @@ export const dockerHandlers = [
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/networks/:networkId`, ({ params }) => {
     const net = mockNetworks.find((n) => n.ID === params.networkId)
-    if (!net) return new HttpResponse(null, { status: 404 })
+    if (!net) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({
       id: net.ID,
       name: net.Name,
@@ -193,7 +193,7 @@ export const dockerHandlers = [
 
   http.get(`${API}/api/v1/nodes/:nodeId/docker/volumes/:volumeName`, ({ params }) => {
     const vol = mockVolumes.find((v) => v.Name === params.volumeName)
-    if (!vol) return new HttpResponse(null, { status: 404 })
+    if (!vol) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({
       name: vol.Name,
       driver: vol.Driver,

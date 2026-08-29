@@ -37,14 +37,14 @@ export const apiKeyHandlers = [
 
   http.delete(`${API_URL}/api/v1/api-keys/:id`, ({ params }) => {
     const idx = mockApiKeys.findIndex((k) => k.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     mockApiKeys.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.patch(`${API_URL}/api/v1/api-keys/:id`, async ({ params, request }) => {
     const idx = mockApiKeys.findIndex((k) => k.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
+    if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const body = (await request.json()) as Record<string, unknown>
     Object.assign(mockApiKeys[idx], body)
     return HttpResponse.json(mockApiKeys[idx])

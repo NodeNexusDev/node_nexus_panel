@@ -47,7 +47,7 @@ export interface NodeCreate {
   name: string
   host: string
   port?: number
-  connection_type: ConnectionType
+  connection_type?: ConnectionType
   username?: string | null
   password?: string | null
   ssh_key?: string | null
@@ -280,6 +280,7 @@ export interface ExecutionStatsResponse {
   successful: number
   failed: number
   cancelled?: number
+  /** 0..1 (0.8 = 80%) */
   success_rate: number
   avg_duration_ms?: number | null
   min_duration_ms?: number | null
@@ -777,9 +778,10 @@ export interface NodeExport {
   name: string
   host: string
   port: number
-  connection_type: string
+  connection_type: ConnectionType
   tags?: string[]
   username?: string | null
+  docker_host?: string | null
 }
 
 export interface CommandExport {
@@ -792,7 +794,7 @@ export interface CommandExport {
 
 export interface ScriptExport {
   name: string
-  description?: string
+  description?: string | null
   steps?: ScriptStep[]
   tags?: string[]
 }
@@ -1163,7 +1165,7 @@ export interface LoginRequest {
 
 export interface TokenResponse {
   access_token: string
-  token_type?: 'bearer' | string
+  token_type?: 'bearer'
 }
 
 export interface UserCreate {
