@@ -1,5 +1,5 @@
-// Synced with OpenAPI 1.7.1: ConnectionType, NodeStatus, has_docker, refresh-host-key
-export type ConnectionType = 'ssh' | 'docker' | 'proxmox'
+// Synced with OpenAPI 1.7.1: ConnectionType const ssh, NodeStatus, has_docker, refresh-host-key
+export type ConnectionType = 'ssh'
 export type NodeStatus = 'active' | 'unreachable' | 'error'
 
 export interface PaginatedResponse<T> {
@@ -841,7 +841,7 @@ export interface DryRunNodePreview {
   name: string
   host: string
   port: number
-  connection_type: string
+  connection_type: ConnectionType
   docker_host?: string | null
   has_docker?: boolean
   tags?: string[]

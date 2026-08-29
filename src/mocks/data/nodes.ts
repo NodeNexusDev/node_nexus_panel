@@ -48,7 +48,7 @@ export const mockNodes: Node[] = [
     name: 'docker-host-01',
     host: '10.0.0.50',
     port: 2376,
-    connection_type: 'docker',
+    connection_type: 'ssh',
     status: 'active',
     username: null,
     docker_host: 'unix:///var/run/docker.sock',

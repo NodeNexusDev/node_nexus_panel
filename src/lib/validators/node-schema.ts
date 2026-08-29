@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const CONNECTION_TYPES = ['ssh', 'docker', 'proxmox'] as const
+const CONNECTION_TYPES = ['ssh'] as const
 const NODE_STATUSES = ['active', 'unreachable', 'error'] as const
 
 export const nodeCreateSchema = z.object({
