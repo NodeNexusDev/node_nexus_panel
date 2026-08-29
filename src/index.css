@@ -26,6 +26,18 @@
   --color-accent-800: #004D66;
   --color-accent-900: #002633;
 
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-warning-50: #fefce8;
+  --color-warning-500: #eab308;
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-info-50: #eff6ff;
+  --color-info-500: #3b82f6;
+  --color-purple-500: #a855f7;
+  --color-indigo-500: #6366f1;
+
   --animate-fade-in: fade-in 0.3s ease-out;
   --animate-slide-up: slide-up 0.5s ease-out;
   --animate-slide-in-left: slide-in-left 0.3s ease-out;
@@ -148,7 +160,7 @@
 }
 
 @keyframes row-highlight {
-  0% { background-color: rgba(99, 102, 241, 0.1); }
+  0% { background-color: color-mix(in srgb, var(--color-accent-500) 12%, transparent); }
   100% { background-color: transparent; }
 }
 
@@ -215,13 +227,13 @@ body {
 
 /* Glass effect */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
 .dark .glass {
-  background: rgba(15, 23, 42, 0.7);
+  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
 }
 
 /* Gradient backgrounds */
@@ -232,11 +244,11 @@ body {
 }
 
 .gradient-subtle {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-indigo-500) 10%, transparent), color-mix(in srgb, var(--color-purple-500) 5%, transparent));
 }
 
 .dark .gradient-subtle {
-  background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(167, 139, 250, 0.05));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-indigo-500) 12%, transparent), color-mix(in srgb, var(--color-purple-500) 7%, transparent));
 }
 
 /* Card hover effect */
@@ -246,11 +258,11 @@ body {
 
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
 .dark .card-hover:hover {
-  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-2xl);
 }
 
 /* Node glow on hover */
@@ -308,7 +320,7 @@ body {
 
 /* Glow on focus */
 .focus-glow:focus {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-500) 30%, transparent);
 }
 
 /* Animated border gradient */
@@ -387,11 +399,11 @@ body {
 
 /* Table styles */
 .table-zebra tbody tr:nth-child(even) {
-  background-color: rgba(99, 102, 241, 0.02);
+  background-color: color-mix(in srgb, var(--color-accent-500) 2%, transparent);
 }
 
 .dark .table-zebra tbody tr:nth-child(even) {
-  background-color: rgba(99, 102, 241, 0.04);
+  background-color: color-mix(in srgb, var(--color-accent-500) 5%, transparent);
 }
 
 .table-row-hover {
@@ -399,11 +411,11 @@ body {
 }
 
 .table-row-hover:hover {
-  background-color: rgba(99, 102, 241, 0.05);
+  background-color: color-mix(in srgb, var(--color-accent-500) 6%, transparent);
 }
 
 .dark .table-row-hover:hover {
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: color-mix(in srgb, var(--color-accent-500) 10%, transparent);
 }
 
 .table-row-highlight {
@@ -441,11 +453,11 @@ body {
 
 .drag-over {
   border: 2px dashed var(--accent);
-  background: rgba(99, 102, 241, 0.05);
+  background: color-mix(in srgb, var(--color-accent-500) 6%, transparent);
 }
 
 .dark .drag-over {
-  background: rgba(99, 102, 241, 0.1);
+  background: color-mix(in srgb, var(--color-accent-500) 12%, transparent);
 }
 
 /* Chart bar animation */
@@ -537,11 +549,11 @@ body {
 .form-control {
   width: 100%;
   padding: 0.625rem 1rem;
-  background: white;
-  border: 1px solid var(--color-surface-300);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-size: 0.875rem;
-  color: var(--color-surface-900);
+  color: var(--text-primary);
   transition: all 0.2s ease;
 }
 .form-control:focus {
@@ -550,9 +562,9 @@ body {
   box-shadow: 0 0 0 2px var(--form-ring);
 }
 .dark .form-control {
-  background: var(--color-surface-800);
-  border-color: var(--color-surface-700);
-  color: white;
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 /* Reduced motion */

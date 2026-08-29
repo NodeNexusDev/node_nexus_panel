@@ -62,12 +62,12 @@ export function Tooltip({ children, content, position = 'top' }: TooltipProps) {
           ref={tooltipRef}
           id={tooltipId}
           role="tooltip"
-          className="fixed z-[var(--z-tooltip)] px-3 py-2 text-xs font-medium text-white rounded-lg pointer-events-none animate-fade-in max-w-xs text-center shadow-lg"
+          className="fixed z-[var(--z-tooltip)] px-3 py-2 text-xs font-medium text-white rounded-[var(--radius-md)] pointer-events-none animate-fade-in max-w-xs text-center shadow-[var(--shadow-lg)]"
           style={{
             top: pos.top,
             left: pos.left,
             transform: 'translateX(-50%)',
-            background: 'var(--color-surface-900)',
+            background: 'var(--color-surface-800)',
           }}
         >
           {content}

@@ -92,12 +92,12 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       aria-modal="true"
       aria-label={title}
       aria-labelledby={title ? 'modal-title' : undefined}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4"
     >
       <div
         role="presentation"
         aria-hidden="true"
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         data-modal-backdrop
         onClick={() => onCloseRef.current()}
       />
@@ -105,7 +105,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         ref={contentRef}
         className={`relative w-full ${sizeClasses[size]} spring max-h-[calc(100vh-2rem)] overflow-y-auto`}
       >
-        <div className="bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800 rounded-[var(--radius-lg)] shadow-[var(--shadow-2xl)] overflow-hidden">
           {title && (
             <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200/50 dark:border-surface-800/50">
               <h2 id="modal-title" className="text-lg font-semibold text-surface-900 dark:text-white">{title}</h2>
@@ -113,7 +113,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
                 onClick={() => onCloseRef.current()}
                 aria-label={t('common.close')}
                 data-modal-close
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+                className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-surface-900"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

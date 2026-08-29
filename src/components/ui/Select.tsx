@@ -101,9 +101,10 @@ export function Select({ options, value, onChange, label, placeholder, error, id
         onClick={() => !disabled && setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`w-full flex items-center justify-between px-4 py-2.5 bg-white border rounded-xl text-sm text-left transition-all duration-200 dark:bg-surface-800 dark:text-white ${
-          error ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-surface-300 dark:border-surface-700'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-surface-400 dark:hover:border-surface-600 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent'}`}
+        aria-invalid={!!error}
+        className={`w-full flex items-center justify-between px-4 py-2.5 bg-white border rounded-[var(--radius-md)] text-sm text-left transition-all duration-200 dark:bg-surface-800 dark:text-white ${
+          error ? 'border-red-500 focus-visible:ring-2 focus-visible:ring-red-500' : 'border-surface-300 dark:border-surface-700'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-surface-400 dark:hover:border-surface-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent'}`}
       >
         <span className={selected ? 'text-surface-900 dark:text-white' : 'text-surface-400 dark:text-surface-500'}>
           {selected?.label ?? placeholder ?? 'Select...'}
@@ -112,12 +113,12 @@ export function Select({ options, value, onChange, label, placeholder, error, id
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-500 dark:text-red-400">{error}</p>}
       {open && createPortal(
         <div
           ref={panelRef}
           role="listbox"
-          className="fixed z-[9999] rounded-xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 shadow-lg py-1 animate-fade-in max-h-60 overflow-y-auto"
+          className="fixed z-[var(--z-dropdown)] rounded-[var(--radius-md)] bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 shadow-[var(--shadow-lg)] py-1 animate-fade-in max-h-60 overflow-y-auto"
           style={{ top: pos.top, left: pos.left, width: pos.width }}
         >
           {options.map((opt) => (

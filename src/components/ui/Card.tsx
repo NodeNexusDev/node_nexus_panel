@@ -9,14 +9,14 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ children, className = '', hover = false, gradient = false, glass = false, ...props }: CardProps) {
-  const base = 'rounded-xl border transition-all duration-300'
+  const base = 'rounded-[var(--radius-md)] border transition-all duration-300 motion-reduce:transition-none'
   const bg = glass
     ? 'glass border-surface-200/50 dark:border-surface-700/50'
     : gradient
       ? 'gradient-subtle border-surface-200/50 dark:border-surface-700/50'
       : 'bg-white border-surface-200 dark:bg-surface-900 dark:border-surface-800'
   const hoverClass = hover ? 'card-hover' : ''
-  const shadow = glass ? 'shadow-lg shadow-surface-200/20 dark:shadow-surface-900/30' : 'shadow-sm'
+  const shadow = glass ? 'shadow-[var(--shadow-lg)]' : 'shadow-[var(--shadow-sm)]'
 
   return (
     <div className={`${base} ${bg} ${hoverClass} ${shadow} ${className}`} {...props}>
