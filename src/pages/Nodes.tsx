@@ -119,11 +119,12 @@ export function Nodes() {
       ssh_key: null,
       passphrase: null,
       docker_host: null,
+      has_docker: false,
       tags: undefined,
     },
   })
 
-  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', tags: '' })
+  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh' | 'docker' | 'proxmox', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', has_docker: false, tags: '' })
   const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
 
   const toggleClear = (field: string) => {
@@ -141,7 +142,7 @@ export function Nodes() {
   const [showBulkMetrics, setShowBulkMetrics] = useState(false)
   const [bulkMetricsResult, setBulkMetricsResult] = useState<BulkNodeMetricsResponse | null>(null)
   const [showBulkUpdate, setShowBulkUpdate] = useState(false)
-  const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', username: '', docker_host: '', tags: '' })
+  const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', username: '', docker_host: '', has_docker: undefined as boolean | undefined, tags: '' })
 
   const nodes = (data?.items || []).filter(
     (node) => tagFilter.length === 0 || tagFilter.some((t) => node.tags.includes(t))
@@ -182,6 +183,7 @@ export function Nodes() {
       ssh_key: '',
       passphrase: '',
       docker_host: node.docker_host || '',
+      has_docker: node.has_docker ?? false,
       tags: node.tags.join(', '),
     })
     setClearFields({})
@@ -368,6 +370,7 @@ export function Nodes() {
         ssh_key: values.ssh_key ?? undefined,
         passphrase: values.passphrase ?? undefined,
         docker_host: values.docker_host ?? undefined,
+        has_docker: values.has_docker ?? false,
         tags: values.tags,
       },
       {
@@ -402,6 +405,7 @@ export function Nodes() {
           ssh_key: editNode.ssh_key ? editNode.ssh_key : clearFields.ssh_key ? null : undefined,
           passphrase: editNode.passphrase ? editNode.passphrase : clearFields.passphrase ? null : undefined,
           docker_host: toNull(editNode.docker_host),
+          has_docker: editNode.has_docker,
           tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         },
       },
@@ -458,7 +462,7 @@ export function Nodes() {
               }} disabled={bulkMetrics.isPending}>{bulkMetrics.isPending ? t('common.loading') : t('nodes.bulkMetrics', 'Bulk Metrics')}</Button>
               <Button variant="ghost" size="sm" onClick={() => {
                 setShowBulkUpdate(true)
-                setBulkUpdateChanges({ name: '', host: '', port: '', username: '', docker_host: '', tags: '' })
+                setBulkUpdateChanges({ name: '', host: '', port: '', username: '', docker_host: '', has_docker: undefined, tags: '' })
               }}>{t('nodes.bulkUpdate', 'Bulk Update')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkValidateCreds.isPending} onClick={() => {
                 bulkValidateCreds.mutate({ node_ids: selectedIds }, {
@@ -547,6 +551,13 @@ export function Nodes() {
           <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder="••••••" {...addForm.register('passphrase')} error={addForm.formState.errors.passphrase?.message} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...addForm.register('docker_host')} error={addForm.formState.errors.docker_host?.message} />
           <Controller
+            name="has_docker"
+            control={addForm.control}
+            render={({ field }) => (
+              <Checkbox checked={field.value ?? false} onChange={field.onChange} label={t('nodes.hasDocker', 'Has Docker')} />
+            )}
+          />
+          <Controller
             name="tags"
             control={addForm.control}
             render={({ field }) => (
@@ -602,6 +613,7 @@ export function Nodes() {
             <Input type="password" placeholder={clearFields.passphrase ? t('common.willBeCleared') : t('common.leaveBlank')} value={editNode.passphrase} onChange={(e) => setEditNode({ ...editNode, passphrase: e.target.value })} disabled={clearFields.passphrase} />
           </div>
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={editNode.docker_host} onChange={(e) => setEditNode({ ...editNode, docker_host: e.target.value })} />
+          <Checkbox checked={editNode.has_docker} onChange={(v) => setEditNode({ ...editNode, has_docker: v })} label={t('nodes.hasDocker', 'Has Docker')} />
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={editNode.tags} onChange={(e) => setEditNode({ ...editNode, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
@@ -673,6 +685,10 @@ export function Nodes() {
           <Input label={t('nodes.port')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
           <Input label={t('nodes.username', 'Username')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
+          <div className="flex items-center gap-2">
+            <Checkbox checked={bulkUpdateChanges.has_docker ?? false} onChange={(v) => setBulkUpdateChanges({ ...bulkUpdateChanges, has_docker: v })} label={t('nodes.hasDocker', 'Has Docker')} />
+            <span className="text-xs text-surface-500">{t('nodes.bulkHasDockerHint', 'Toggle to set, leave unchecked to keep unchanged (check twice to clear)')}</span>
+          </div>
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="comma, separated" value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowBulkUpdate(false)}>{t('common.cancel')}</Button>
@@ -683,6 +699,7 @@ export function Nodes() {
               if (bulkUpdateChanges.port) changes.port = parseInt(bulkUpdateChanges.port, 10)
               if (bulkUpdateChanges.username) changes.username = bulkUpdateChanges.username
               if (bulkUpdateChanges.docker_host) changes.docker_host = bulkUpdateChanges.docker_host
+              if (bulkUpdateChanges.has_docker !== undefined) changes.has_docker = bulkUpdateChanges.has_docker
               if (bulkUpdateChanges.tags) changes.tags = bulkUpdateChanges.tags.split(',').map((s) => s.trim()).filter(Boolean)
               bulkUpdateNodes.mutate({ node_ids: selectedIds, changes }, {
                 onSuccess: (data) => { toast('success', t('nodes.toastBulkUpdateDone', { succeeded: data.succeeded, failed: data.failed })); setShowBulkUpdate(false); setSelectedIds([]) },

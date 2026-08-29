@@ -13,6 +13,7 @@ export const nodeCreateSchema = z.object({
   ssh_key: z.string().min(1).nullable().optional(),
   passphrase: z.string().min(1).nullable().optional(),
   docker_host: z.string().min(1).max(255).nullable().optional(),
+  has_docker: z.boolean().default(false),
   tags: z.array(z.string().min(1).max(100)).optional(),
 })
 
@@ -27,6 +28,7 @@ export const nodeUpdateSchema = z.object({
   ssh_key: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   passphrase: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   docker_host: z.string().max(255).transform(v => v === '' ? null : v).nullable().optional(),
+  has_docker: z.boolean().nullable().optional(),
   tags: z.array(z.string().min(1).max(100)).nullable().optional(),
 })
 

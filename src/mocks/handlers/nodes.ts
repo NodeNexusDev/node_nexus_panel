@@ -46,6 +46,7 @@ export const nodeHandlers = [
       status: 'active' as const,
       username: (body.username as string) || null,
       docker_host: (body.docker_host as string) || null,
+      has_docker: (body.has_docker as boolean) ?? false,
       tags: (body.tags as string[]) || [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -73,6 +74,13 @@ export const nodeHandlers = [
     const node = mockNodes.find((n) => n.id === params.id)
     if (!node) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     node.status = 'active'
+    node.updated_at = new Date().toISOString()
+    return HttpResponse.json(node)
+  }),
+
+  http.post(`${API_URL}/api/v1/nodes/:id/refresh-host-key`, ({ params }) => {
+    const node = mockNodes.find((n) => n.id === params.id)
+    if (!node) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     node.updated_at = new Date().toISOString()
     return HttpResponse.json(node)
   }),

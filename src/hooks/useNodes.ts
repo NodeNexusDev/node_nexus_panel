@@ -100,6 +100,18 @@ export function useCheckNode() {
   })
 }
 
+export function useRefreshHostKey() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => nodesApi.refreshHostKey(id),
+    onSettled: (_data, _err, id) => {
+      queryClient.invalidateQueries({ queryKey: ['nodes', id] })
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
 export function useBulkCheck() {
   const queryClient = useQueryClient()
 

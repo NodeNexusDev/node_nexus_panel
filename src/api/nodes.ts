@@ -45,6 +45,9 @@ export const nodesApi = {
   check: (id: string) =>
     api.post<Node>(`/nodes/${id}/check`),
 
+  refreshHostKey: (id: string) =>
+    api.post<Node>(`/nodes/${id}/refresh-host-key`),
+
   getMetrics: (id: string) =>
     api.get<NodeMetrics>(`/nodes/${id}/metrics`),
 

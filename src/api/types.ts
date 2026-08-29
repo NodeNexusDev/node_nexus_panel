@@ -1,4 +1,4 @@
-// Synced with OpenAPI 1.6.0: ConnectionType, NodeStatus
+// Synced with OpenAPI 1.7.1: ConnectionType, NodeStatus, has_docker, refresh-host-key
 export type ConnectionType = 'ssh' | 'docker' | 'proxmox'
 export type NodeStatus = 'active' | 'unreachable' | 'error'
 
@@ -18,6 +18,7 @@ export interface Node {
   status: NodeStatus
   username: string | null
   docker_host: string | null
+  has_docker: boolean
   tags: string[]
   created_at: string
   updated_at: string
@@ -53,6 +54,7 @@ export interface NodeCreate {
   ssh_key?: string | null
   passphrase?: string | null
   docker_host?: string | null
+  has_docker?: boolean
   tags?: string[]
 }
 
@@ -67,6 +69,7 @@ export interface NodeUpdate {
   ssh_key?: string | null
   passphrase?: string | null
   docker_host?: string | null
+  has_docker?: boolean | null
   tags?: string[] | null
 }
 
@@ -782,6 +785,7 @@ export interface NodeExport {
   tags?: string[]
   username?: string | null
   docker_host?: string | null
+  has_docker?: boolean
 }
 
 export interface CommandExport {
@@ -839,6 +843,7 @@ export interface DryRunNodePreview {
   port: number
   connection_type: string
   docker_host?: string | null
+  has_docker?: boolean
   tags?: string[]
   username?: string | null
 }
