@@ -44,6 +44,7 @@
     "total": "Всего",
     "successful": "Успешно",
     "failed": "Неудачно",
+    "cancelled": "Отменено",
     "byDay": "День",
     "byWeek": "Неделя",
     "byMonth": "Месяц",
@@ -175,7 +176,13 @@
     "addressCopied": "Адрес скопирован",
     "openDocker": "Docker",
     "bulkHint": "Выделите строки для массовых действий",
-    "noResultsDesc": "Нет нод по текущим фильтрам"
+    "noResultsDesc": "Нет нод по текущим фильтрам",
+    "hasDocker": "Есть Docker",
+    "bulkHasDockerHint": "Переключите, чтобы задать, оставьте пустым, чтобы не менять",
+    "refreshHostKey": "Обновить ключ хоста",
+    "toastHostKeyRefreshed": "Ключ хоста обновлён",
+    "toastHostKeyRefreshFailed": "Не удалось обновить ключ хоста",
+    "cancelled": "Отменено"
   },
   "commands": {
     "title": "Команды",
@@ -230,7 +237,8 @@
     "toastBulkExecuted": "Команда выполнена на {{count}} нодах",
     "succeeded": "Успешно",
     "selectNodes": "Выберите ноды",
-    "selectedCount": "Выбрано: {{count}}"
+    "selectedCount": "Выбрано: {{count}}",
+    "cancelled": "Отменено"
   },
   "scripts": {
     "title": "Скрипты",
@@ -318,7 +326,8 @@
     "result": "Результат",
     "runAgain": "Запустить снова",
     "selected": "выбрано",
-    "succeeded": "Успешно"
+    "succeeded": "Успешно",
+    "cancelled": "Отменено"
   },
   "docker": {
     "title": "Docker",
@@ -581,7 +590,9 @@
     "toastUserDeleted": "Пользователь удалён",
     "toastUserDeleteFailed": "Не удалось удалить пользователя",
     "deleteUserTitle": "Удалить пользователя",
-    "deleteUserMsg": "Вы уверены, что хотите удалить пользователя {{email}}?"
+    "deleteUserMsg": "Вы уверены, что хотите удалить пользователя {{email}}?",
+    "passwordTooShort": "Пароль должен содержать минимум 12 символов",
+    "passwordTooLong": "Пароль должен содержать не более 1024 символов"
   },
   "common": {
     "connected": "Подключено",
@@ -643,7 +654,8 @@
     "leaveEmptyToSkip": "Оставьте пустым для пропуска",
     "avgDuration": "Ср. время",
     "tagsFilter": "Теги",
-    "clearAll": "Очистить все"
+    "clearAll": "Очистить все",
+    "selectPlaceholder": "Выберите..."
   },
   "notes": {
     "title": "Заметки",
