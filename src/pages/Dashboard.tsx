@@ -107,12 +107,10 @@ export function Dashboard() {
   ]
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between animate-slide-up">
-        <div>
-          <h1 className="text-3xl font-bold gradient-text">{t('dashboard.title')}</h1>
-          <p className="text-surface-500 dark:text-surface-400 mt-1">{t('dashboard.description')}</p>
-        </div>
+    <div className="space-y-6">
+      <div className="animate-slide-up">
+        <h1 className="text-3xl font-bold gradient-text">{t('dashboard.title')}</h1>
+        <p className="text-surface-500 dark:text-surface-400 mt-1">{t('dashboard.description')}</p>
       </div>
 
       {/* Stats */}

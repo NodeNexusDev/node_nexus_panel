@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { ReactNode } from 'react'
 import { ResponsiveTable } from './ResponsiveTable'
 import { TableSkeleton } from './Skeleton'
@@ -38,6 +39,8 @@ export function DataTable<T>({
   onRowClick,
   className,
 }: DataTableProps<T>) {
+  const { t } = useTranslation()
+
   if (isLoading) {
     return (
       <div aria-busy="true" aria-live="polite">
@@ -50,7 +53,7 @@ export function DataTable<T>({
     return (
       <EmptyState
         icon={emptyIcon}
-        title={emptyTitle ?? 'No data'}
+        title={emptyTitle ?? t('common.noData')}
         description={emptyDescription}
         action={emptyAction}
       />

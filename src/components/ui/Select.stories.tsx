@@ -15,8 +15,6 @@ type Story = StoryObj<typeof meta>
 
 const options = [
   { value: 'ssh', label: 'SSH' },
-  { value: 'docker', label: 'Docker' },
-  { value: 'proxmox', label: 'Proxmox' },
 ]
 
 export const Default: Story = {

@@ -9,10 +9,11 @@ source_revision: 2026-08-17
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (see `.env.example`):
 
 ```bash
-VITE_API_URL=http://localhost:8000
+VITE_API_URL= # empty = same-origin
+VITE_ENABLE_MOCKS=false
 ```
 
 In Docker, environment variables are injected at runtime via `docker/entrypoint.sh`. See [Environment Variables](../operations/environment.md) for details.

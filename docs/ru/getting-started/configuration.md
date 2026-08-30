@@ -9,10 +9,11 @@ source_revision: 2026-08-17
 
 ## Переменные окружения
 
-Создайте файл `.env` в корне проекта:
+Создайте файл `.env` в корне проекта (см. `.env.example`):
 
 ```bash
-VITE_API_URL=http://localhost:8000
+VITE_API_URL= # пусто = same-origin
+VITE_ENABLE_MOCKS=false
 ```
 
 В Docker переменные инжектируются при запуске через `docker/entrypoint.sh`. Подробности в [Переменные окружения](../operations/environment.md).

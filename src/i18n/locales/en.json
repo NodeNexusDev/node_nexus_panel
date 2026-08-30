@@ -44,6 +44,7 @@
     "total": "Total",
     "successful": "Successful",
     "failed": "Failed",
+    "cancelled": "Cancelled",
     "byDay": "Day",
     "byWeek": "Week",
     "byMonth": "Month",
@@ -175,7 +176,13 @@
     "addressCopied": "Address copied",
     "openDocker": "Open Docker",
     "bulkHint": "Select rows for bulk actions",
-    "noResultsDesc": "No nodes match current filters"
+    "noResultsDesc": "No nodes match current filters",
+    "hasDocker": "Has Docker",
+    "bulkHasDockerHint": "Toggle to set, leave unchecked to keep unchanged",
+    "refreshHostKey": "Refresh Host Key",
+    "toastHostKeyRefreshed": "Host key refreshed",
+    "toastHostKeyRefreshFailed": "Failed to refresh host key",
+    "cancelled": "Cancelled"
   },
   "commands": {
     "title": "Commands",
@@ -230,7 +237,8 @@
     "toastBulkExecuted": "Command executed on {{count}} nodes",
     "succeeded": "Succeeded",
     "selectNodes": "Select nodes",
-    "selectedCount": "{{count}} selected"
+    "selectedCount": "{{count}} selected",
+    "cancelled": "Cancelled"
   },
   "scripts": {
     "title": "Scripts",
@@ -318,7 +326,8 @@
     "result": "Result",
     "runAgain": "Run Again",
     "selected": "selected",
-    "succeeded": "Succeeded"
+    "succeeded": "Succeeded",
+    "cancelled": "Cancelled"
   },
   "docker": {
     "title": "Docker",
@@ -581,7 +590,9 @@
     "toastUserDeleted": "User deleted",
     "toastUserDeleteFailed": "Failed to delete user",
     "deleteUserTitle": "Delete User",
-    "deleteUserMsg": "Are you sure you want to delete user {{email}}?"
+    "deleteUserMsg": "Are you sure you want to delete user {{email}}?",
+    "passwordTooShort": "Password must be at least 12 characters",
+    "passwordTooLong": "Password must be at most 1024 characters"
   },
   "common": {
     "connected": "Connected",
@@ -643,7 +654,8 @@
     "leaveEmptyToSkip": "Leave empty to skip",
     "avgDuration": "Avg duration",
     "tagsFilter": "Tags",
-    "clearAll": "Clear all"
+    "clearAll": "Clear all",
+    "selectPlaceholder": "Select..."
   },
   "notes": {
     "title": "Notes",

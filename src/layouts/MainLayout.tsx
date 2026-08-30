@@ -88,7 +88,7 @@ export function MainLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-accent-600 focus:text-white focus:rounded-lg">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[var(--z-tooltip)] focus:px-4 focus:py-2 focus:bg-accent-600 focus:text-white focus:rounded-[var(--radius-md)]">
         {t('common.skipToContent', 'Skip to content')}
       </a>
       {/* Background layer — z-10 is below content but above body */}
@@ -124,7 +124,7 @@ export function MainLayout() {
 
       {/* Mobile backdrop */}
       <div
-        className={`fixed inset-0 z-30 bg-black/50 dark:bg-black/60 backdrop-blur-sm transition-all duration-300 lg:hidden ${
+        className={`fixed inset-0 z-[var(--z-sticky)] bg-black/50 dark:bg-black/60 backdrop-blur-sm transition-all duration-300 lg:hidden ${
           sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setSidebarOpen(false)}
@@ -135,12 +135,12 @@ export function MainLayout() {
         id="sidebar"
         aria-label="Primary navigation"
         className={`
-          fixed lg:static inset-y-0 left-0 z-40 w-64 flex flex-col
+          fixed lg:static inset-y-0 left-0 z-[var(--z-sticky)] w-64 flex flex-col
           bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl
           border-r border-surface-200/50 dark:border-surface-800/50
           transition-all duration-300 ease-out motion-reduce:transition-none
           lg:translate-x-0
-          ${sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+          ${sidebarOpen ? 'translate-x-0 shadow-[var(--shadow-2xl)]' : '-translate-x-full'}
         `}
       >
         {/* Logo */}
@@ -183,7 +183,7 @@ export function MainLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header with glassmorphism */}
-        <header className="min-h-[64px] sm:h-[64px] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0 motion-reduce:transition-none">
+        <header className="min-h-[var(--header-height)] sm:h-[var(--header-height)] glass border-b border-surface-200/50 dark:border-surface-800/50 flex items-center px-6 shrink-0 motion-reduce:transition-none">
           <Tooltip content={sidebarOpen ? t('common.closeMenu', 'Close menu') : t('common.openMenu', 'Open menu')}>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}

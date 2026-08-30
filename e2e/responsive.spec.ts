@@ -34,8 +34,8 @@ test.describe('Responsive', () => {
 
     await expect(sidebar).toHaveClass(/translate-x-0/)
 
-    // Click the backdrop to the right of the sidebar (which is z-30, behind sidebar z-40)
-    await page.locator('.fixed.inset-0.z-30').click({ position: { x: 350, y: 400 } })
+    // Click the backdrop to the right of the sidebar (z-sticky, behind sidebar)
+    await page.locator('.fixed.inset-0.backdrop-blur-sm').click({ position: { x: 350, y: 400 } })
     await expect(sidebar).toHaveClass(/-translate-x-full/)
   })
 

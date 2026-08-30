@@ -28,7 +28,7 @@ export function Docker() {
   const [searchParams] = useSearchParams()
   const { data: nodesData } = useNodes({ size: 100 })
   const dockerNodes = useMemo(
-    () => (nodesData?.items || []).filter((n) => n.connection_type === 'docker'),
+    () => (nodesData?.items || []).filter((n) => n.has_docker),
     [nodesData]
   )
   const [selectedNodeId, setSelectedNodeId] = useState(() => searchParams.get('node') ?? '')

@@ -190,15 +190,15 @@ export function MetricsChart({ data, height = 120, className = '' }: MetricsChar
       <div className="flex items-center justify-center gap-4 mt-2">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-green-500" />
-          <span className="text-xs text-surface-500">Successful</span>
+          <span className="text-xs text-surface-500">{t('dashboard.successful')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-red-500" />
-          <span className="text-xs text-surface-500">Failed</span>
+          <span className="text-xs text-surface-500">{t('dashboard.failed')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-surface-400" />
-          <span className="text-xs text-surface-500">Cancelled</span>
+          <span className="text-xs text-surface-500">{t('dashboard.cancelled')}</span>
         </div>
       </div>
     </div>

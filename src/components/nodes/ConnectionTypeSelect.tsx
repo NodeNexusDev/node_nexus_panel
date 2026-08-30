@@ -1,4 +1,4 @@
-export type ConnectionType = 'ssh' | 'docker' | 'proxmox'
+export type ConnectionType = 'ssh'
 
 interface ConnectionTypeSelectProps {
   value: ConnectionType
@@ -22,8 +22,6 @@ export function ConnectionTypeSelect({ value, onChange, label, id }: ConnectionT
         className="w-full px-4 py-2 bg-white border border-surface-300 rounded-lg text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 dark:bg-surface-800 dark:border-surface-700 dark:text-white"
       >
         <option value="ssh">SSH</option>
-        <option value="docker">Docker</option>
-        <option value="proxmox">Proxmox</option>
       </select>
     </div>
   )

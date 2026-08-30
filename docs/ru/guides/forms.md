@@ -36,12 +36,13 @@ export const nodeCreateSchema = z.object({
   name: z.string().min(1).max(255),
   host: z.string().min(1).max(255),
   port: z.number().int().min(1).max(65535).default(22),
-  connection_type: z.enum(['ssh', 'docker', 'proxmox']),
+  connection_type: z.enum(['ssh']),
   username: z.string().min(1).max(255).nullable().optional(),
   password: z.string().min(1).nullable().optional(),
   ssh_key: z.string().min(1).nullable().optional(),
   passphrase: z.string().min(1).nullable().optional(),
   docker_host: z.string().min(1).max(255).nullable().optional(),
+  has_docker: z.boolean().default(false),
   tags: z.array(z.string().min(1).max(100)).optional(),
 })
 

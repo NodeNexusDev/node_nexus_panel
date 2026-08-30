@@ -19,6 +19,7 @@ import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { KeyValueList } from '../components/ui/KeyValueList'
+import { Checkbox } from '../components/ui/Checkbox'
 import { formatBytes, formatPercent, formatDurationMs } from '../lib/format'
 import { nodeStatusVariant } from '../lib/variants'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
@@ -46,6 +47,7 @@ import {
   useRetryNodeCommand,
   useUpdateNode,
   useCheckNode,
+  useRefreshHostKey,
   useDeleteNode,
 } from '../hooks/useNodes'
 import type { NodeUpdate, Node } from '../api/types'
@@ -103,6 +105,7 @@ export function NodeDetail() {
       username: node?.username ?? null,
       passphrase: null,
       docker_host: node?.docker_host ?? null,
+      has_docker: node?.has_docker ?? false,
       tags: node?.tags,
     },
   })
@@ -116,6 +119,7 @@ export function NodeDetail() {
       connection_type: node.connection_type,
       username: node.username ?? null,
       docker_host: node.docker_host ?? null,
+      has_docker: node.has_docker ?? false,
       tags: node.tags,
     })
   }, [node, reset])
@@ -132,6 +136,7 @@ export function NodeDetail() {
       connection_type: node?.connection_type,
       username: node?.username ?? null,
       docker_host: node?.docker_host ?? null,
+      has_docker: node?.has_docker ?? false,
       tags: node?.tags,
     })
     setClearFields({})
@@ -147,6 +152,7 @@ export function NodeDetail() {
       connection_type: values.connection_type,
       username: values.username,
       docker_host: values.docker_host,
+      has_docker: values.has_docker,
       tags: values.tags,
     }
     if (values.password) data.password = values.password
@@ -186,6 +192,15 @@ export function NodeDetail() {
     checkNode.mutate(id, {
       onSuccess: () => toast('success', t('nodes.toastNodeChecked')),
       onError: () => toast('error', t('nodes.toastCheckFailed')),
+    })
+  }
+
+  const refreshHostKey = useRefreshHostKey()
+  const handleRefreshHostKey = () => {
+    if (!id) return
+    refreshHostKey.mutate(id, {
+      onSuccess: () => toast('success', t('nodes.toastHostKeyRefreshed', 'Host key refreshed')),
+      onError: () => toast('error', t('nodes.toastHostKeyRefreshFailed', 'Failed to refresh host key')),
     })
   }
 
@@ -251,6 +266,9 @@ export function NodeDetail() {
           <Button variant="secondary" size="sm" onClick={handleCheck} disabled={checkNode.isPending}>
             <IconCheckCircle className="w-4 h-4 mr-1" />
             {t('nodes.checkNode')}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleRefreshHostKey} disabled={refreshHostKey.isPending}>
+            {t('nodes.refreshHostKey', 'Refresh Host Key')}
           </Button>
           <Button variant="secondary" size="sm" onClick={() => setShowCommandModal(true)}>
             <IconCommands className="w-4 h-4 mr-1" />
@@ -343,6 +361,13 @@ export function NodeDetail() {
           </div>
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...register('docker_host')} error={errors.docker_host?.message} />
           <Controller
+            name="has_docker"
+            control={control}
+            render={({ field }) => (
+              <Checkbox checked={field.value ?? false} onChange={field.onChange} label={t('nodes.hasDocker', 'Has Docker')} />
+            )}
+          />
+          <Controller
             name="tags"
             control={control}
             render={({ field }) => (
@@ -403,6 +428,7 @@ function OverviewTab({ node }: { node: Node }) {
         <button onClick={() => copy(node.docker_host!)} aria-label={t('common.copy')} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3 h-3 text-surface-400" /></button>
       </span>
     ) : '—'],
+    [t('nodes.hasDocker', 'Has Docker'), node.has_docker ? <Badge key="hasdocker" variant="success">Yes</Badge> : <Badge key="hasdocker" variant="default">No</Badge>],
     [t('nodes.tags', 'Tags'), node.tags.length ? (
       <span key="tags" className="flex flex-wrap gap-1">
         {node.tags.map((tag) => (
