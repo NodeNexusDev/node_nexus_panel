@@ -13,7 +13,10 @@ source_revision: 2026-08-17
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| `VITE_API_URL` | URL Backend API | `http://localhost:8000` |
+| `VITE_API_URL` | URL Backend API (пусто = same-origin через nginx/Vite proxy) | `` (пусто) |
+| `VITE_ENABLE_MOCKS` | Включить MSW моки в dev (`true`/`false`) | `false` |
+
+Полный пример с бэкенд переменными (`DATABASE_URL`, `SECRET_KEY`, `SSH_*` и т.д.) смотрите в `.env.example`. Бэкенд переменные документированы в [API репозитории](https://github.com/NodeNexusDev/node_nexus_api).
 
 ## Как это работает
 

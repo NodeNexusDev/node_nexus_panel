@@ -13,7 +13,10 @@ These variables are injected at runtime via `docker/entrypoint.sh` (Docker) or `
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VITE_API_URL` | Backend API URL | `http://localhost:8000` |
+| `VITE_API_URL` | Backend API URL (empty = same-origin via nginx/Vite proxy) | `` (empty) |
+| `VITE_ENABLE_MOCKS` | Enable MSW mocks in dev (`true`/`false`) | `false` |
+
+See `.env.example` for the full stack example (includes backend `DATABASE_URL`, `SECRET_KEY`, `MASTER_API_KEY`, `SSH_*`, `SCHEDULER_*`, `RATE_LIMIT_*`, `OTEL_*`, etc). Backend variables are documented in the [API repository](https://github.com/NodeNexusDev/node_nexus_api).
 
 ## How It Works
 
