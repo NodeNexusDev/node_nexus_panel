@@ -124,7 +124,7 @@ export function Nodes() {
     },
   })
 
-  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as 'ssh', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', has_docker: false, tags: '' })
+  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as const, username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', has_docker: false, tags: '' })
   const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
 
   const toggleClear = (field: string) => {
