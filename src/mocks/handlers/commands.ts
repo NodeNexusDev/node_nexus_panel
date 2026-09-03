@@ -315,13 +315,5 @@ export const commandHandlers = [
     return HttpResponse.json({ items, limit, next_cursor, has_more, batch_id })
   }),
 
-  // v2 history with cursor
-  http.get(`${API_URL}/api/v2/commands/history`, ({ request }) => {
-    const url = new URL(request.url)
-    const _cursor = url.searchParams.get('cursor')
-    const limit = Number(url.searchParams.get('limit') || '20')
-    const items: unknown[] = []
-    const has_more = false
-    return HttpResponse.json({ items, limit, next_cursor: null, has_more })
-  }),
+
 ]

@@ -135,7 +135,7 @@ export function MainLayout() {
       {/* Sidebar */}
       <aside
         id="sidebar"
-        aria-label="Primary navigation"
+        aria-label={t('common.primaryNavigation', 'Primary navigation')}
         className={`
           fixed lg:static inset-y-0 left-0 z-[var(--z-sticky)] w-64 flex flex-col
           bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl

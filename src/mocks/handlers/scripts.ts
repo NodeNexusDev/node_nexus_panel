@@ -176,13 +176,19 @@ export const scriptHandlers = [
     return HttpResponse.json({ items, limit, next_cursor, has_more, total: all.length, page, size: limit })
   }),
 
+  http.get(`${API_URL}/api/v2/scripts/stats`, () => HttpResponse.json({ total: mockScripts.length, successful: 8, failed:2, cancelled:0, success_rate:80, avg_duration_ms:1250, buckets:[] })),
   http.get(`${API_URL}/api/v2/scripts/:id/schedule/history`, ({ params, request }) => {
     const script = mockScripts.find((s) => s.id === params.id)
     if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const url = new URL(request.url)
+    const cursor = url.searchParams.get('cursor')
     const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
     const page = Number(url.searchParams.get('page') || '1')
-    return HttpResponse.json({ items: [], limit, next_cursor: null, has_more: false, total: 0, page, size: limit })
+    let offset=0; if(cursor) offset=parseCursor(cursor); else if(url.searchParams.get('page')) offset=(page-1)*limit
+    const items: unknown[] = []
+    const has_more = false
+    const next_cursor = null
+    return HttpResponse.json({ items, limit, next_cursor, has_more, total: 0, page, size: limit })
   }),
 
   http.post(`${API_URL}/api/v2/scripts/executions/:executionId/cancel`, ({ params }) => {

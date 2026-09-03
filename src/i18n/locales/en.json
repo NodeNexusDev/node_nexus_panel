@@ -5,6 +5,7 @@
     "commands": "Commands",
     "scripts": "Scripts",
     "docker": "Docker",
+    "templates": "Templates",
     "audit": "Audit",
     "settings": "Settings",
     "favorites": "Favorites"
@@ -16,7 +17,8 @@
     "submit": "Sign In",
     "error": "Invalid login or password",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "placeholder": "admin"
   },
   "notFound": {
     "description": "The page you're looking for doesn't exist.",
@@ -64,7 +66,10 @@
     "runScript": "Run Script",
     "runScriptDesc": "Execute an automation script",
     "viewLogs": "View Logs",
-    "viewLogsDesc": "Browse audit trail"
+    "viewLogsDesc": "Browse audit trail",
+    "scripts": "Scripts",
+    "templates": "Templates",
+    "installed": "installed"
   },
   "nodes": {
     "title": "Nodes",
@@ -500,7 +505,37 @@
     "failedToLoadSystemInfo": "Failed to load system info",
     "failedToLoadDiskUsage": "Failed to load disk usage",
     "invalidPorts": "Invalid port mappings skipped",
-    "invalidVolumes": "Invalid volume mappings skipped"
+    "invalidVolumes": "Invalid volume mappings skipped",
+    "compose": "Compose",
+    "createCompose": "Create Compose Project",
+    "composeYaml": "Compose YAML",
+    "projectName": "Project Name",
+    "noCompose": "No compose projects",
+    "noComposeDesc": "No Docker Compose projects found on this node",
+    "details": "Details",
+    "up": "Up",
+    "down": "Down",
+    "composeCreated": "Compose project created",
+    "composeCreateFailed": "Failed to create compose project",
+    "composeUp": "Compose up started",
+    "composeUpFailed": "Failed to start compose",
+    "composeDown": "Compose down done",
+    "composeDownFailed": "Failed to stop compose",
+    "composeDeleted": "Compose project deleted",
+    "composeDeleteFailed": "Failed to delete compose project",
+    "deleteCompose": "Delete Compose Project",
+    "deleteComposeMsg": "Delete \"{{name}}\"? This cannot be undone.",
+    "ps": "Services",
+    "failedToLoadCompose": "Failed to load compose projects",
+    "start": "Start",
+    "stop": "Stop",
+    "restartCompose": "Restart",
+    "pull": "Pull",
+    "build": "Build",
+    "composeUpdated": "Compose project updated",
+    "composeUpdateFailed": "Failed to update compose project",
+    "editCompose": "Edit Compose Project",
+    "config": "Config"
   },
   "audit": {
     "title": "Audit",
@@ -651,7 +686,9 @@
     "avgDuration": "Avg duration",
     "tagsFilter": "Tags",
     "clearAll": "Clear all",
-    "selectPlaceholder": "Select..."
+    "selectPlaceholder": "Select...",
+    "loadMore": "Load more",
+    "primaryNavigation": "Primary navigation"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -669,6 +706,7 @@
     "descAudit": "View audit logs",
     "descSettings": "System settings",
     "descFavorites": "View favorites",
+    "descTemplates": "Browse templates",
     "moreResults": "more results"
   },
   "errorPage": {
@@ -693,5 +731,36 @@
     "toastRemoveFailed": "Failed to remove favorite",
     "add": "Add to favorites",
     "remove": "Remove from favorites"
+  },
+  "templates": {
+    "title": "Templates",
+    "description": "Browse and install template packs",
+    "packs": "Packs",
+    "registries": "Registries",
+    "searchPacks": "Search packs...",
+    "searchRegistries": "Search registries...",
+    "total": "Total",
+    "installed": "Installed",
+    "notInstalled": "Not installed",
+    "noPacks": "No packs",
+    "noPacksDesc": "No template packs found",
+    "noRegistries": "No registries",
+    "noRegistriesDesc": "No registries configured",
+    "install": "Install",
+    "uninstall": "Uninstall",
+    "installStarted": "Install started",
+    "installFailed": "Failed to install",
+    "uninstallStarted": "Uninstall started",
+    "uninstallFailed": "Failed to uninstall",
+    "addRegistry": "Add Registry",
+    "sync": "Sync",
+    "synced": "Registry synced",
+    "syncFailed": "Failed to sync registry",
+    "deleted": "Registry deleted",
+    "deleteFailed": "Failed to delete registry",
+    "name": "Name",
+    "url": "URL",
+    "created": "Created",
+    "createFailed": "Failed to create registry"
   }
 }

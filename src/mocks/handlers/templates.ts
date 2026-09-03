@@ -32,6 +32,20 @@ export const templatesHandlers = [
     if (!pack) return HttpResponse.json({ code: 'not_found', message: 'Pack not found' }, { status: 404 })
     return HttpResponse.json({ ...pack, assets: [] })
   }),
+  http.post(`${API_URL}/api/v2/templates/packs`, async ({ request }) => {
+    const body = await request.json() as { name: string; description?: string; tags?: string[] }
+    const pack = { id: crypto.randomUUID(), name: body.name, description: body.description||'', tags: body.tags||[], installed:false, created_at:new Date().toISOString(), updated_at:new Date().toISOString(), assets:[] }
+    packs.push(pack); return HttpResponse.json(pack,{status:201})
+  }),
+  http.get(`${API_URL}/api/v2/templates/packs/:packId/archive`, ({ params }) => {
+    const pack = packs.find((p)=> p.id===params.packId); if(!pack) return HttpResponse.json({code:'not_found',message:'Pack not found'},{status:404})
+    return HttpResponse.json({ pack_id: pack.id, archive: 'mock-archive-base64' })
+  }),
+  http.get(`${API_URL}/api/v2/templates/packs/:packId/installations`, () => HttpResponse.json({ items: [], limit: 20, next_cursor: null, has_more: false })),
+  http.post(`${API_URL}/api/v2/templates/packs/:packId/updates`, async ({ params, request }) => {
+    const pack = packs.find((p)=> p.id===params.packId); if(!pack) return HttpResponse.json({code:'not_found',message:'Pack not found'},{status:404})
+    const body = await request.json() as { name?: string }; if(body.name) pack.name = body.name; pack.updated_at=new Date().toISOString(); return HttpResponse.json(pack)
+  }),
   http.post(`${API_URL}/api/v2/templates/packs/:packId/installations`, ({ params }) => {
     const pack = packs.find((p) => p.id === params.packId)
     if (pack) pack.installed = true
@@ -48,6 +62,9 @@ export const templatesHandlers = [
     const reg = { id: crypto.randomUUID(), name: body.name, url: body.url, enabled: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     registries.push(reg)
     return HttpResponse.json(reg, { status: 201 })
+  }),
+  http.get(`${API_URL}/api/v2/templates/registries/:registryId`, ({ params }) => {
+    const reg = registries.find((r)=> r.id===params.registryId); if(!reg) return HttpResponse.json({code:'not_found',message:'Registry not found'},{status:404}); return HttpResponse.json(reg)
   }),
   http.delete(`${API_URL}/api/v2/templates/registries/:registryId`, ({ params }) => {
     registries = registries.filter((r) => r.id !== params.registryId)

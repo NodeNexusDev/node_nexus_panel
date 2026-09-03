@@ -100,6 +100,12 @@ export const dockerHandlers = [
   http.get(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/stats`, () => {
     return HttpResponse.json({ Container: 'c1', Name: 'nginx', CPUPerc: '2.50%', MemUsage: '128MiB / 1GiB', MemPerc: '12.50%', NetIO: '1MB / 512KB', BlockIO: '10MB / 0B', MemLimit: '1GiB', PIDs: '5' })
   }),
+  http.get(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/archive`, () => HttpResponse.json({ data: 'mock-archive-base64' })),
+  http.put(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/archive`, async () => HttpResponse.json({ status: 'ok' })),
+  http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/kill`, () => new HttpResponse(null,{status:204})),
+  http.get(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/port`, ({ request }) => { const url=new URL(request.url); return HttpResponse.json({ port: url.searchParams.get('port')||'80', host: '0.0.0.0' }) }),
+  http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/update`, async () => HttpResponse.json({ status: 'ok' })),
+  http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/wait`, async () => HttpResponse.json({ statusCode: 0 })),
 
   http.get(`${API}/api/v2/nodes/:nodeId/docker/images`, ({ request }) => {
     const url = new URL(request.url)
@@ -130,6 +136,9 @@ export const dockerHandlers = [
     return HttpResponse.json({ source: 'old', target: `${body.repo}:${body.tag}` })
   }),
 
+  http.post(`${API}/api/v2/nodes/:nodeId/docker/images/push`, async ({ request }) => { const body=await request.json() as { image?: string }; return HttpResponse.json({ status:'ok', image: body.image }) }),
+  http.get(`${API}/api/v2/nodes/:nodeId/docker/images/:imageId/history`, () => HttpResponse.json([{ id:'layer1', created:'2025-01-01', size: 1024 }])),
+  http.post(`${API}/api/v2/nodes/:nodeId/docker/images/:imageId/push`, () => HttpResponse.json({ status:'ok' })),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/images/prune`, () => {
     return HttpResponse.json({ images_deleted: [], space_reclaimed: '0B' })
   }),
@@ -212,6 +221,9 @@ export const dockerHandlers = [
   http.post(`${API}/api/v2/nodes/:nodeId/docker/volumes/prune`, () => {
     return HttpResponse.json({ volumes_deleted: [], space_reclaimed: '0B' })
   }),
+  http.post(`${API}/api/v2/nodes/:nodeId/docker/networks/prune`, () => HttpResponse.json({ networks_deleted: [], space_reclaimed:'0B' })),
+  http.post(`${API}/api/v2/nodes/:nodeId/docker/system/prune`, () => HttpResponse.json({ space_reclaimed:'0B' })),
+  http.get(`${API}/api/v2/nodes/:nodeId/docker/system/version`, () => HttpResponse.json({ version:'24.0.7', api_version:'1.43' })),
 
   http.get(`${API}/api/v2/nodes/:nodeId/docker/system/info`, () => {
     return HttpResponse.json({
