@@ -97,6 +97,7 @@ export function NodeDetail() {
       host: node?.host,
       port: node?.port,
       connection_type: node?.connection_type,
+      description: (node as unknown as { description?: string | null })?.description ?? null,
       username: node?.username ?? null,
       passphrase: null,
       docker_host: node?.docker_host ?? null,
@@ -112,6 +113,7 @@ export function NodeDetail() {
       host: node.host,
       port: node.port,
       connection_type: node.connection_type,
+      description: (node as unknown as { description?: string | null })?.description ?? null,
       username: node.username ?? null,
       docker_host: node.docker_host ?? null,
       has_docker: node.has_docker ?? false,
@@ -129,6 +131,7 @@ export function NodeDetail() {
       host: node?.host,
       port: node?.port,
       connection_type: node?.connection_type,
+      description: (node as unknown as { description?: string | null })?.description ?? null,
       username: node?.username ?? null,
       docker_host: node?.docker_host ?? null,
       has_docker: node?.has_docker ?? false,
@@ -145,6 +148,7 @@ export function NodeDetail() {
       host: values.host,
       port: values.port,
       connection_type: values.connection_type,
+      description: values.description,
       username: values.username,
       docker_host: values.docker_host,
       has_docker: values.has_docker,
@@ -307,6 +311,12 @@ export function NodeDetail() {
               />
             )}
           />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.description', 'Description')}</label>
+            <textarea {...register('description')} placeholder="Main production node" maxLength={1000} rows={3} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description.message}</p>}
+            <p className="text-xs text-surface-400 text-right">{(control._formValues.description?.length ?? 0)}/1000</p>
+          </div>
           <Input label={t('nodes.username', 'Username')} placeholder="root" {...register('username')} error={errors.username?.message} />
           <div className="space-y-1">
             <div className="flex items-center justify-between">
@@ -391,6 +401,7 @@ function OverviewTab({ node }: { node: Node }) {
         </button>
       </span>
     )],
+    [t('nodes.description', 'Description'), (node as unknown as { description?: string | null }).description ? <span key="desc">{(node as unknown as { description: string }).description}</span> : '—'],
     [t('nodes.connectionType'), connTypeBadge],
     [t('nodes.status'), statusBadge],
     [t('nodes.username', 'Username'), node.username ? (

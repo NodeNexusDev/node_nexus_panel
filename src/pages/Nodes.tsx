@@ -540,6 +540,12 @@ export function Nodes() {
               />
             )}
           />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.description', 'Description')}</label>
+            <textarea placeholder="Main production node" {...addForm.register('description')} maxLength={1000} rows={3} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            {addForm.formState.errors.description && <p className="text-xs text-red-500 mt-1">{addForm.formState.errors.description.message}</p>}
+            <p className="text-xs text-surface-400 text-right">{(addForm.watch('description')?.length ?? 0)}/1000</p>
+          </div>
           <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
             <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.credentialsSection','Credentials')} {t('common.requiredMark','*')}</p>
             <div className="space-y-3 p-3 bg-surface-50 dark:bg-surface-800/30 rounded-lg border border-surface-200 dark:border-surface-800">
@@ -572,7 +578,6 @@ export function Nodes() {
               <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={(field.value ?? []).join(', ')} onChange={(e) => field.onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} error={addForm.formState.errors.tags?.message} />
             )}
           />
-          <Input label={t('nodes.description', 'Description')} placeholder="Main production node" {...addForm.register('description')} error={addForm.formState.errors.description?.message} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" type="button" onClick={() => setShowAddModal(false)}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={createNode.isPending}>
@@ -593,7 +598,14 @@ export function Nodes() {
             onChange={(val) => setEditNode({ ...editNode, connection_type: val as ConnectionType })}
             options={CONNECTION_TYPE_OPTIONS}
           />
-          <Input label={t('nodes.description', 'Description')} placeholder="Production node" value={editNode.description} onChange={(e) => setEditNode({ ...editNode, description: e.target.value })} />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.description', 'Description')}</label>
+              <Button variant="ghost" size="sm" onClick={() => setEditNode({ ...editNode, description: '' })} className="h-6 px-2 text-xs">{t('common.clear', 'Clear')}</Button>
+            </div>
+            <textarea placeholder="Main production node" value={editNode.description} onChange={(e) => setEditNode({ ...editNode, description: e.target.value })} maxLength={1000} rows={3} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            <p className="text-xs text-surface-400 text-right">{editNode.description.length}/1000</p>
+          </div>
           <Input label={t('nodes.username', 'Username')} placeholder="root" value={editNode.username} onChange={(e) => setEditNode({ ...editNode, username: e.target.value })} />
           <div className="space-y-1">
             <div className="flex items-center justify-between">
