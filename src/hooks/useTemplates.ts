@@ -98,6 +98,16 @@ export function usePackInstallations(packId: string, params?: { cursor?: string 
   })
 }
 
+export function useInfinitePackInstallations(packId: string, params?: { limit?: number }) {
+  return useInfiniteQuery({
+    queryKey: ['templates', 'packs', packId, 'installations', 'infinite', params],
+    queryFn: ({ pageParam }) => templatesApi.listInstallations(packId, { cursor: pageParam as string | null, limit: params?.limit }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    enabled: !!packId,
+  })
+}
+
 export function useCreateRegistry() {
   const qc = useQueryClient()
   return useMutation({

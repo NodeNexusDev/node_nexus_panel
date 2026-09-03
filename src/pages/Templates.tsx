@@ -8,7 +8,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/useToast'
-import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack, usePackInstallations, useCreatePack, useUpdatePack } from '../hooks/useTemplates'
+import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack, useInfinitePackInstallations, useCreatePack, useUpdatePack, useRegistry } from '../hooks/useTemplates'
 import { templatesApi } from '../api/templates'
 import { Modal } from '../components/ui/Modal'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
@@ -56,13 +56,17 @@ function PacksTab() {
   const uninstall = useUninstallPack()
   const [detailId, setDetailId] = useState<string | null>(null)
   const { data: detail } = usePack(detailId ?? '')
-  const { data: installations } = usePackInstallations(detailId ?? '')
+  const { data: instInfinite, fetchNextPage: fetchInstNext, hasNextPage: hasInstNext, isFetchingNextPage: isInstFetching } = useInfinitePackInstallations(detailId ?? '')
   const createPack = useCreatePack()
   const updatePack = useUpdatePack()
   const [showCreatePack, setShowCreatePack] = useState(false)
   const [cpPackId, setCpPackId] = useState('')
   const [cpName, setCpName] = useState('')
   const [cpVersion, setCpVersion] = useState('1.0.0')
+  const [cpDesc, setCpDesc] = useState('')
+  const [cpTags, setCpTags] = useState('')
+  const [cpCommands, setCpCommands] = useState('[]')
+  const [cpScripts, setCpScripts] = useState('[]')
   const packs = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; name: string; description?: string | null; tags?: string[]; installed?: boolean }> }).items) : []
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   const allTags = useMemo(() => [...new Set(packs.flatMap((p)=> p.tags ?? []))], [infiniteData])
@@ -160,16 +164,21 @@ function PacksTab() {
             {detail.description && <p className="text-sm text-surface-600 dark:text-surface-300">{detail.description}</p>}
             <div className="flex gap-1 flex-wrap">{(detail.tags ?? []).map((tag:string)=> <Badge key={tag} variant="default">{tag}</Badge>)}</div>
             <div className="text-xs text-surface-500 space-y-1">
-              {(detail as unknown as {version?:string}).version && <p>Version: {(detail as unknown as {version:string}).version}</p>}
-              {(detail as unknown as {author?:string}).author && <p>Author: {(detail as unknown as {author:string}).author}</p>}
+              {(detail as unknown as {version?:string}).version && <p>{t('templates.version')}: {(detail as unknown as {version:string}).version}</p>}
+              {(detail as unknown as {author?:string}).author && <p>{t('templates.author','Author')}: {(detail as unknown as {author:string}).author}</p>}
               {detail.created_at && <p>{t('common.created')}: {new Date(detail.created_at).toLocaleString()}</p>}
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={async()=> { try{ const blob = await templatesApi.getPackArchive(detail.id); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${detail.name}.tar`; a.click(); URL.revokeObjectURL(url)} catch{ toast('error', t('templates.downloadFailed','Download failed')) } }}>{t('templates.download','Download')}</Button>
             </div>
             <div>
-              <h4 className="text-sm font-medium mb-1">{t('templates.installations','Installations')} {installations?.items?.length ? `(${installations.items.length})` : ''}</h4>
-              <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-32 overflow-auto">{JSON.stringify(installations?.items ?? [], null, 2)}</pre>
+              <h4 className="text-sm font-medium mb-1">{t('templates.installations','Installations')}</h4>
+              {(() => { const instItems = instInfinite ? instInfinite.pages.flatMap((p)=> (p as unknown as {items:unknown[]}).items) : []; return instItems.length? (
+                <div className="space-y-2">
+                  <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-32 overflow-auto">{JSON.stringify(instItems, null, 2)}</pre>
+                  <InfiniteScroll hasMore={!!hasInstNext} isFetchingNextPage={isInstFetching} onLoadMore={()=> fetchInstNext()} />
+                </div>
+              ) : <p className="text-xs text-surface-500">{t('templates.noInstallations','No installations')}</p> })()}
             </div>
             <div>
               <h4 className="text-sm font-medium mb-1">{t('templates.assets','Assets')}</h4>
@@ -178,16 +187,30 @@ function PacksTab() {
           </div>
         ) : <p className="text-sm text-surface-500">{t('common.loading')}</p>}
       </Modal>
-      <Modal isOpen={showCreatePack} onClose={()=> setShowCreatePack(false)} title={t('templates.createPack')} size="sm">
+      <Modal isOpen={showCreatePack} onClose={()=> setShowCreatePack(false)} title={t('templates.createPack')} size="lg">
         <div className="space-y-4">
           <Input label={t('templates.packId')} placeholder="my-pack" value={cpPackId} onChange={(e)=> setCpPackId(e.target.value)} />
           <Input label={t('templates.name')} placeholder="My Pack" value={cpName} onChange={(e)=> setCpName(e.target.value)} />
           <Input label={t('templates.version')} placeholder="1.0.0" value={cpVersion} onChange={(e)=> setCpVersion(e.target.value)} />
+          <Input label={t('templates.descriptionLabel', 'Description')} placeholder="Pack description" value={cpDesc} onChange={(e)=> setCpDesc(e.target.value)} />
+          <Input label={t('docker.tags', 'Tags')} placeholder="web, proxy" value={cpTags} onChange={(e)=> setCpTags(e.target.value)} />
+          <div className="space-y-1">
+            <label className="text-sm font-medium">{t('templates.commandsJson','Commands JSON')}</label>
+            <textarea value={cpCommands} onChange={(e)=> setCpCommands(e.target.value)} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-xs font-mono dark:bg-surface-800 dark:border-surface-700" placeholder='[{"name":"cmd1","command":"echo hi"}]' />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">{t('templates.scriptsJson','Scripts JSON')}</label>
+            <textarea value={cpScripts} onChange={(e)=> setCpScripts(e.target.value)} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-xs font-mono dark:bg-surface-800 dark:border-surface-700" placeholder='[{"name":"script1","steps":[]}]' />
+          </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={()=> setShowCreatePack(false)}>{t('common.cancel')}</Button>
             <Button onClick={()=> {
               if(!cpPackId.trim()||!cpName.trim()){ toast('error', t('templates.createFailed')); return }
-              createPack.mutate({ manifest:{ pack_id: cpPackId.trim(), name: cpName.trim(), version: cpVersion.trim()||'1.0.0', tags:[] }, commands:[], scripts:[] } as never, { onSuccess:()=>{ toast('success', t('templates.created','Created')); setShowCreatePack(false); setCpPackId(''); setCpName(''); setCpVersion('1.0.0') }, onError:()=> toast('error', t('templates.createFailed')) })
+              let cmds: unknown[] = []; let scrips: unknown[] = [];
+              try{ cmds = cpCommands.trim()? JSON.parse(cpCommands):[] } catch{ toast('error','Invalid commands JSON'); return }
+              try{ scrips = cpScripts.trim()? JSON.parse(cpScripts):[] } catch{ toast('error','Invalid scripts JSON'); return }
+              const tags = cpTags.split(',').map((s)=>s.trim()).filter(Boolean)
+              createPack.mutate({ manifest:{ pack_id: cpPackId.trim(), name: cpName.trim(), version: cpVersion.trim()||'1.0.0', description: cpDesc||undefined, tags }, commands: cmds as never, scripts: scrips as never } as never, { onSuccess:()=>{ toast('success', t('templates.created','Created')); setShowCreatePack(false); setCpPackId(''); setCpName(''); setCpVersion('1.0.0'); setCpDesc(''); setCpTags(''); setCpCommands('[]'); setCpScripts('[]') }, onError:()=> toast('error', t('templates.createFailed')) })
             }} disabled={!cpPackId.trim()||!cpName.trim()||createPack.isPending}>{createPack.isPending? t('common.loading'): t('common.create')}</Button>
           </div>
         </div>
@@ -209,6 +232,8 @@ function RegistriesTab() {
   const [name, setName] = useState('')
   const [branch, setBranch] = useState('main')
   const [search, setSearch] = useState('')
+  const [regDetailId, setRegDetailId] = useState<string | null>(null)
+  const { data: regDetail } = useRegistry(regDetailId ?? '')
   const filtered = regs.filter((r)=> !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.owner.toLowerCase().includes(search.toLowerCase()))
   const columns: Column<{ id: string; owner: string; name: string; default_branch: string; last_synced_at: string | null }>[] = [
     { key:'owner', header: t('templates.owner', 'Owner'), render:(r)=> <span className="text-sm">{r.owner}</span> },
@@ -217,6 +242,7 @@ function RegistriesTab() {
     { key:'synced', header: t('templates.lastSyncedAt', 'Synced'), render:(r)=> <span className="text-xs text-surface-500">{r.last_synced_at ? new Date(r.last_synced_at).toLocaleString() : '—'}</span> },
     { key:'actions', header: t('common.actions'), render:(r)=> (
       <div className="flex gap-1">
+        <Button variant="ghost" size="sm" onClick={()=> setRegDetailId(r.id)}>{t('common.view')}</Button>
         <Button variant="ghost" size="sm" onClick={() => sync.mutate(r.id, { onSuccess: (res) => toast('success', `${t('templates.synced')} ${res.succeeded}/${res.total}`), onError: () => toast('error', t('templates.syncFailed')) })} disabled={sync.isPending}>{t('templates.sync')}</Button>
         <Button variant="ghost" size="sm" onClick={() => del.mutate(r.id, { onSuccess: () => toast('success', t('templates.deleted')), onError: () => toast('error', t('templates.deleteFailed')) })} className="text-red-500" disabled={del.isPending}>{t('common.delete')}</Button>
       </div>
@@ -265,6 +291,17 @@ function RegistriesTab() {
             <Button onClick={() => { if (owner.trim() && name.trim()) create.mutate({ owner: owner.trim(), name: name.trim(), default_branch: branch.trim()||'main' } as never, { onSuccess: () => { toast('success', t('templates.created', 'Created')); setShowCreate(false); setOwner(''); setName(''); setBranch('main') }, onError: () => toast('error', t('templates.createFailed')) }) }} disabled={!owner.trim() || !name.trim() || create.isPending}>{create.isPending ? t('common.loading') : t('common.create')}</Button>
           </div>
         </div>
+      </Modal>
+      <Modal isOpen={!!regDetailId} onClose={()=> setRegDetailId(null)} title={regDetail ? `${regDetail.owner}/${regDetail.name}` : t('templates.registries')} size="sm">
+        {regDetail ? (
+          <div className="space-y-2 text-sm">
+            <p><span className="text-surface-500">{t('templates.owner')}:</span> {regDetail.owner}</p>
+            <p><span className="text-surface-500">{t('templates.name')}:</span> {regDetail.name}</p>
+            <p><span className="text-surface-500">{t('templates.defaultBranch')}:</span> {regDetail.default_branch}</p>
+            <p><span className="text-surface-500">{t('templates.lastSyncedAt')}:</span> {regDetail.last_synced_at ? new Date(regDetail.last_synced_at).toLocaleString() : '—'}</p>
+            <p><span className="text-surface-500">{t('common.created')}:</span> {new Date(regDetail.created_at).toLocaleString()}</p>
+          </div>
+        ) : <p className="text-sm text-surface-500">{t('common.loading')}</p>}
       </Modal>
     </div>
   )

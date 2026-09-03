@@ -773,6 +773,14 @@
     "updatePack": "Обновить пакет",
     "packId": "ID пакета",
     "version": "Версия",
-    "descriptionLabel": "Описание"
+    "author": "Автор",
+    "descriptionLabel": "Описание",
+    "noInstallations": "Нет установок",
+    "onConflictFail": "Ошибка",
+    "onConflictRename": "Переименовать",
+    "bulkResult": "Результат",
+    "commandsJson": "Команды JSON",
+    "scriptsJson": "Скрипты JSON",
+    "updateFailed": "Не удалось обновить"
   }
 }

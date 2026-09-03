@@ -773,6 +773,14 @@
     "updatePack": "Update Pack",
     "packId": "Pack ID",
     "version": "Version",
-    "descriptionLabel": "Description"
+    "author": "Author",
+    "descriptionLabel": "Description",
+    "noInstallations": "No installations",
+    "onConflictFail": "Fail",
+    "onConflictRename": "Rename",
+    "bulkResult": "Bulk result",
+    "commandsJson": "Commands JSON",
+    "scriptsJson": "Scripts JSON",
+    "updateFailed": "Update failed"
   }
 }
