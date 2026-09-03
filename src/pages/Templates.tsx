@@ -46,6 +46,10 @@ function PacksTab() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [installedFilter, setInstalledFilter] = useState<'all'|'installed'|'notInstalled'>('all')
   const [registryFilter, setRegistryFilter] = useState<string | null>(null)
+  const [onConflict, setOnConflict] = useState<'fail'|'rename'>('fail')
+  const [lastBulk, setLastBulk] = useState<{ total:number; succeeded:number; failed:number; results:Array<{name:string; entity_type:string; status:string; error:string}> } | null>(null)
+  const { data: regData } = useInfiniteRegistries({ limit: 50 })
+  const regsForFilter = regData ? regData.pages.flatMap((p)=> (p as unknown as { items: Array<{ id:string; owner:string; name:string }> }).items) : []
   const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinitePacks({ limit: 20, search: debouncedSearch || null, tag: selectedTag, installed: installedFilter==='all'? null : installedFilter==='installed', registry_id: registryFilter })
   const { data: stats } = usePackStats()
   const install = useInstallPack()
@@ -75,10 +79,10 @@ function PacksTab() {
         {p.installed ? (
           <>
             <Button variant="ghost" size="sm" onClick={()=> uninstall.mutate(p.id,{onSuccess:()=>toast('success',t('templates.uninstallStarted')), onError:()=>toast('error',t('templates.uninstallFailed'))})} disabled={uninstall.isPending}>{t('templates.uninstall')}</Button>
-            <Button variant="ghost" size="sm" onClick={()=> updatePack.mutate({packId:p.id, on_conflict:'fail'},{onSuccess:(res)=>toast('success',`${t('templates.updatePack')} ${res.succeeded}/${res.total}`), onError:()=>toast('error',t('templates.updateFailed','Update failed'))})} disabled={updatePack.isPending}>{t('templates.updatePack')}</Button>
+            <Button variant="ghost" size="sm" onClick={()=> updatePack.mutate({packId:p.id, on_conflict: onConflict},{onSuccess:(res)=>{ setLastBulk(res as never); toast('success',`${t('templates.updatePack')} ${res.succeeded}/${res.total}`)}, onError:()=>toast('error',t('templates.updateFailed','Update failed'))})} disabled={updatePack.isPending}>{t('templates.updatePack')}</Button>
           </>
         ) : (
-          <Button variant="ghost" size="sm" onClick={() => install.mutate({ packId: p.id, on_conflict: 'fail' }, { onSuccess: (res) => toast('success', `${t('templates.installStarted')} ${res.succeeded}/${res.total}`), onError: () => toast('error', t('templates.installFailed')) })} disabled={install.isPending}>{t('templates.install')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => install.mutate({ packId: p.id, on_conflict: onConflict }, { onSuccess: (res) => { setLastBulk(res as never); toast('success', `${t('templates.installStarted')} ${res.succeeded}/${res.total}`)}, onError: () => toast('error', t('templates.installFailed')) })} disabled={install.isPending}>{t('templates.install')}</Button>
         )}
         <Button variant="ghost" size="sm" onClick={()=> setDetailId(p.id)}>{t('common.view')}</Button>
       </div>
@@ -106,6 +110,11 @@ function PacksTab() {
             </select>
             <select value={registryFilter ?? ''} onChange={(e)=> setRegistryFilter(e.target.value||null)} className="px-2 py-1 text-xs bg-white border border-surface-300 rounded dark:bg-surface-800 dark:border-surface-700">
               <option value="">{t('templates.registries')}</option>
+              {regsForFilter.map((r)=> <option key={r.id} value={r.id}>{r.owner}/{r.name}</option>)}
+            </select>
+            <select value={onConflict} onChange={(e)=> setOnConflict(e.target.value as never)} className="px-2 py-1 text-xs bg-white border border-surface-300 rounded dark:bg-surface-800 dark:border-surface-700">
+              <option value="fail">{t('templates.onConflictFail','Fail')}</option>
+              <option value="rename">{t('templates.onConflictRename','Rename')}</option>
             </select>
             {stats && (
               <div className="flex items-center gap-2 text-xs">
@@ -133,6 +142,14 @@ function PacksTab() {
                 </div>
               )} onRowClick={(p)=> setDetailId(p.id)} />
               <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+              {lastBulk && (
+                <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
+                  <h4 className="text-xs font-medium mb-2">{t('templates.bulkResult','Bulk result')}: {lastBulk.succeeded}/{lastBulk.total}</h4>
+                  <div className="space-y-1 max-h-32 overflow-auto">
+                    {lastBulk.results.map((r,i)=> <div key={i} className="text-xs flex gap-2"><Badge variant={r.status==='success'?'success':'danger'}>{r.status}</Badge><span>{r.entity_type}:{r.name}</span>{r.error && <span className="text-red-500">{r.error}</span>}</div>)}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CardContent>

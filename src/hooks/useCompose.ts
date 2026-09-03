@@ -8,6 +8,11 @@ import type {
   ComposePsResponse,
   ComposeLogsResponse,
   ComposeConfigResponse,
+  ComposeImagesResponse,
+  ComposeTopResponse,
+  ComposePortResponse,
+  ComposeVersionResponse,
+  ComposeExecRequest,
 } from '../api/types'
 
 export function useComposeProjects(nodeId: string, params?: { cursor?: string | null; limit?: number }) {
@@ -115,3 +120,15 @@ export function useComposePull() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: ({ nodeId, projectName }: { nodeId: string; projectName: string }) => composeApi.pulls(nodeId, projectName), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
 }
+export function useComposeCreate() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.creates(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeKill() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.kills(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposePause() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.pauses(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeUnpause() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.unpauses(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposePort(nodeId:string,projectName:string,service:string,port:string,enabled=true){ return useQuery<ComposePortResponse>({ queryKey:['compose',nodeId,projectName,'port',service,port], queryFn:()=> composeApi.port(nodeId,projectName,{service,private_port:port}), enabled: !!nodeId && !!projectName && enabled })}
+export function useComposeImages(nodeId:string,projectName:string,enabled=true){ return useQuery<ComposeImagesResponse>({ queryKey:['compose',nodeId,projectName,'images'], queryFn:()=> composeApi.images(nodeId,projectName), enabled: !!nodeId && !!projectName && enabled })}
+export function useComposeTop(nodeId:string,projectName:string,enabled=true){ return useQuery<ComposeTopResponse>({ queryKey:['compose',nodeId,projectName,'top'], queryFn:()=> composeApi.top(nodeId,projectName), enabled: !!nodeId && !!projectName && enabled })}
+export function useComposeVersion(nodeId:string,projectName:string,enabled=true){ return useQuery<ComposeVersionResponse>({ queryKey:['compose',nodeId,projectName,'version'], queryFn:()=> composeApi.version(nodeId,projectName), enabled: !!nodeId && !!projectName && enabled })}
+export function useComposePush() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.pushs(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeRm() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.rms(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeRun() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:import('../api/types').ComposeRunRequest})=> composeApi.runs(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeExec() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:ComposeExecRequest})=> composeApi.executions(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}

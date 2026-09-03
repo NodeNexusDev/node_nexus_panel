@@ -27,6 +27,15 @@ import {
   useComposePs,
   useComposeLogs,
   useComposeConfig,
+  useComposePause,
+  useComposeUnpause,
+  useComposeKill,
+  useComposePush,
+  useComposeRm,
+  useComposeImages,
+  useComposeTop,
+  useComposePort,
+  useComposeVersion,
 } from '../../hooks/useCompose'
 
 export function ComposeTab({ nodeId }: { nodeId: string }) {
@@ -44,6 +53,11 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
   const restart = useComposeRestart()
   const pull = useComposePull()
   const build = useComposeBuild()
+  const pause = useComposePause()
+  const unpause = useComposeUnpause()
+  const kill = useComposeKill()
+  const push = useComposePush()
+  const rm = useComposeRm()
 
   const [showCreate, setShowCreate] = useState(false)
   const [editTarget, setEditTarget] = useState<string | null>(null)
@@ -85,6 +99,11 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
         <Button variant="ghost" size="sm" onClick={()=> stop.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Stopped'), onError:()=>toast('error','Failed')})} disabled={stop.isPending}>{t('docker.stop')}</Button>
         <Button variant="ghost" size="sm" onClick={()=> restart.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Restarted'), onError:()=>toast('error','Failed')})} disabled={restart.isPending}>{t('docker.restartCompose')}</Button>
         <Button variant="ghost" size="sm" onClick={()=> pull.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Pulled'), onError:()=>toast('error','Failed')})} disabled={pull.isPending}>{t('docker.pull')}</Button>
+        <Button variant="ghost" size="sm" onClick={()=> push.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Pushed'), onError:()=>toast('error','Failed')})} disabled={push.isPending}>{t('docker.push','Push')}</Button>
+        <Button variant="ghost" size="sm" onClick={()=> pause.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Paused'), onError:()=>toast('error','Failed')})} disabled={pause.isPending}>{t('docker.pause')}</Button>
+        <Button variant="ghost" size="sm" onClick={()=> unpause.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Unpaused'), onError:()=>toast('error','Failed')})} disabled={unpause.isPending}>{t('docker.unpause')}</Button>
+        <Button variant="ghost" size="sm" onClick={()=> kill.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Killed'), onError:()=>toast('error','Failed')})} disabled={kill.isPending}>Kill</Button>
+        <Button variant="ghost" size="sm" onClick={()=> rm.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Removed'), onError:()=>toast('error','Failed')})} disabled={rm.isPending}>RM</Button>
         <Button variant="ghost" size="sm" onClick={()=> build.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Built'), onError:()=>toast('error','Failed')})} disabled={build.isPending}>{t('docker.build')}</Button>
         <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(p.project_name)} className="text-red-500">{t('common.delete')}</Button>
       </div>
@@ -160,18 +179,26 @@ function ComposeDetailModal({ nodeId, projectName, onClose }: { nodeId: string; 
   const { data: ps } = useComposePs(nodeId, projectName, !!projectName)
   const { data: logs } = useComposeLogs(nodeId, projectName, !!projectName)
   const { data: cfg } = useComposeConfig(nodeId, projectName, !!projectName)
-  const [tab, setTab] = useState<'ps' | 'logs' | 'config'>('ps')
+  const { data: images } = useComposeImages(nodeId, projectName, !!projectName)
+  const { data: top } = useComposeTop(nodeId, projectName, !!projectName)
+  const { data: version } = useComposeVersion(nodeId, projectName, !!projectName)
+  const { data: port } = useComposePort(nodeId, projectName, 'web', '80', false)
+  const [tab, setTab] = useState<'ps' | 'logs' | 'config' | 'images' | 'top' | 'version' | 'port'>('ps')
   return (
     <Modal isOpen={!!projectName} onClose={onClose} title={`${projectName}`} size="lg">
       <div className="space-y-4">
-        <div className="flex gap-2 border-b border-surface-200 dark:border-surface-800">
-          {(['ps','logs','config'] as const).map((k)=> (
-            <button key={k} onClick={() => setTab(k)} className={`pb-2 text-sm font-medium border-b-2 ${tab === k ? 'border-accent-500 text-accent-600' : 'border-transparent text-surface-500'}`}>{t(`docker.${k}`, k)}</button>
+        <div className="flex gap-2 border-b border-surface-200 dark:border-surface-800 overflow-x-auto">
+          {(['ps','logs','config','images','top','version','port'] as const).map((k)=> (
+            <button key={k} onClick={() => setTab(k)} className={`pb-2 text-sm font-medium border-b-2 whitespace-nowrap ${tab === k ? 'border-accent-500 text-accent-600' : 'border-transparent text-surface-500'}`}>{t(`docker.${k}`, k)}</button>
           ))}
         </div>
         {tab === 'ps' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(ps ?? {}, null, 2)}</pre>}
         {tab === 'logs' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{typeof logs === 'string' ? logs : JSON.stringify(logs ?? {}, null, 2)}</pre>}
         {tab === 'config' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{typeof cfg === 'string' ? cfg : JSON.stringify(cfg ?? {}, null, 2)}</pre>}
+        {tab === 'images' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(images ?? {}, null, 2)}</pre>}
+        {tab === 'top' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(top ?? {}, null, 2)}</pre>}
+        {tab === 'version' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(version ?? {}, null, 2)}</pre>}
+        {tab === 'port' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(port ?? {}, null, 2)}</pre>}
         <div className="flex justify-end">
           <Button variant="ghost" onClick={onClose}>{t('common.close')}</Button>
         </div>
