@@ -80,7 +80,12 @@ export const scriptsApi = {
     return api.get<ExecutionStatsResponse>(`/scripts/stats${qs ? `?${qs}` : ''}`)
   },
 
-  getTags: () => api.get<string[]>('/scripts/tags').catch(() => [] as string[]),
+  getTags: async () => {
+    try {
+      const page = await api.get<CursorPage_ScriptResponse_>('/scripts/?limit=100')
+      return [...new Set(page.items.flatMap((s) => s.tags ?? []))]
+    } catch { return [] as string[] }
+  },
 
   // Schedules (plural in v2)
   getSchedule: (id: string) => api.get<ScheduledJob | null>(`/scripts/${id}/schedules`),

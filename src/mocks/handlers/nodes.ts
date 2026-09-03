@@ -340,9 +340,5 @@ export const nodeHandlers = [
     })
   }),
 
-  // Tags (removed in v2, keep for legacy)
-  http.get(`${API_URL}/api/v2/nodes/tags`, () => {
-    const tags = [...new Set(mockNodes.flatMap((n) => n.tags))]
-    return HttpResponse.json(tags)
-  }),
+
 ]

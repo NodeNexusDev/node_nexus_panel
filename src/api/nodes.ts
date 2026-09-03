@@ -115,5 +115,10 @@ export const nodesApi = {
       return first.metrics
     }),
   /** @deprecated removed in v2, tags derived from list */
-  getTags: () => api.get<string[]>('/nodes/tags').catch(() => [] as string[]),
+  getTags: async () => {
+    try {
+      const page = await api.get<NodeCursorListResponse>('/nodes/?limit=100')
+      return [...new Set(page.items.flatMap((n) => n.tags ?? []))]
+    } catch { return [] as string[] }
+  },
 }

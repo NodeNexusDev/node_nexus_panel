@@ -19,10 +19,15 @@ export const templatesHandlers = [
   http.get(`${API_URL}/api/v2/templates/packs`, ({ request }) => {
     const url = new URL(request.url)
     const cursor = url.searchParams.get('cursor')
+    const tag = url.searchParams.get('tag')
+    const search = url.searchParams.get('search')
     const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || 50)
+    let filtered = packs
+    if (tag) filtered = filtered.filter((p)=> p.tags.includes(tag))
+    if (search) { const q=search.toLowerCase(); filtered = filtered.filter((p)=> p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)) }
     const offset = cursor ? parseCursor(cursor) : 0
-    const items = packs.slice(offset, offset+limit)
-    const has_more = offset+limit < packs.length
+    const items = filtered.slice(offset, offset+limit)
+    const has_more = offset+limit < filtered.length
     const next_cursor = has_more?encodeCursor(offset+limit):null
     return HttpResponse.json({ items, limit, next_cursor, has_more })
   }),

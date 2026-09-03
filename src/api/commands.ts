@@ -140,5 +140,10 @@ export const commandsApi = {
     return api.get<ExecutionStatsResponse>(`/commands/stats?${qs}`)
   },
 
-  getTags: () => api.get<string[]>('/commands/tags').catch(() => [] as string[]),
+  getTags: async () => {
+    try {
+      const page = await api.get<CursorPage_CommandResponse_>('/commands/?limit=100')
+      return [...new Set(page.items.flatMap((c) => c.tags ?? []))]
+    } catch { return [] as string[] }
+  },
 }
