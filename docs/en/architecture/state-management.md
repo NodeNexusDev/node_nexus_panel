@@ -40,13 +40,13 @@ import { queryClient } from './lib/query-client'
 | `useScripts` | Script CRUD, execution, scheduling, statistics |
 | `useDashboard` | Dashboard statistics and activity |
 | `useSettings` | User profile, API keys, notifications |
-| `useDocker` | Docker containers, images, networks, volumes |
+| `useDocker` | Docker containers, images, networks, volumes + Compose |
+| `useCompose` | Compose per-node stacks (infinite scroll) |
+| `useTemplates` | Packs/registries/templates |
 | `useDockerContainerSse` | Real-time container status via SSE |
 | `useSse` | Generic SSE event stream hook |
-| `useAudit` | Audit log entries |
-| `useNotes` | Per-entity notes CRUD |
-| `useTags` | Tag management |
-| `useFavorites` | Favorites management |
+| `useAudit` | Audit log entries (cursor pagination) |
+| `useFavorites` | Favorites management (cursor pagination) |
 | `useSearch` | Global search |
 | `useSort` | Reusable sorting logic |
 | `useHotkey` | Keyboard shortcut handler |

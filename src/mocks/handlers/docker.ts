@@ -2,10 +2,14 @@ import { http, HttpResponse } from 'msw'
 import { mockContainers, mockImages, mockNetworks, mockVolumes } from '../data/docker'
 
 const API = '*'
+function parseCursor(c: string | null){ if(!c) return 0; try{ const d=atob(c); const n=Number(d); return Number.isNaN(n)?0:n }catch{ const n=Number(c); return Number.isNaN(n)?0:n } }
+function encodeCursor(o:number){ return btoa(String(o)) }
+function paginate<T>(all: T[], url: URL) { const cursor=url.searchParams.get('cursor'); const limit=Number(url.searchParams.get('limit')||url.searchParams.get('size')||'20'); const page=Number(url.searchParams.get('page')||'1'); let off=0; if(cursor) off=parseCursor(cursor); else if(url.searchParams.get('page')) off=(page-1)*limit; const items=all.slice(off, off+limit); const has_more=off+limit<all.length; const next_cursor=has_more?encodeCursor(off+limit):null; return {items, limit, next_cursor, has_more, total: all.length, page, size: limit} }
 
 export const dockerHandlers = [
-  http.get(`${API}/api/v2/nodes/:nodeId/docker/containers`, () => {
-    return HttpResponse.json(mockContainers)
+  http.get(`${API}/api/v2/nodes/:nodeId/docker/containers`, ({ request }) => {
+    const url = new URL(request.url)
+    return HttpResponse.json(paginate(mockContainers as unknown[], url))
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers`, async ({ request }) => {
@@ -97,8 +101,9 @@ export const dockerHandlers = [
     return HttpResponse.json({ Container: 'c1', Name: 'nginx', CPUPerc: '2.50%', MemUsage: '128MiB / 1GiB', MemPerc: '12.50%', NetIO: '1MB / 512KB', BlockIO: '10MB / 0B', MemLimit: '1GiB', PIDs: '5' })
   }),
 
-  http.get(`${API}/api/v2/nodes/:nodeId/docker/images`, () => {
-    return HttpResponse.json(mockImages)
+  http.get(`${API}/api/v2/nodes/:nodeId/docker/images`, ({ request }) => {
+    const url = new URL(request.url)
+    return HttpResponse.json(paginate(mockImages as unknown[], url))
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/images/pull`, async ({ request }) => {
@@ -129,8 +134,9 @@ export const dockerHandlers = [
     return HttpResponse.json({ images_deleted: [], space_reclaimed: '0B' })
   }),
 
-  http.get(`${API}/api/v2/nodes/:nodeId/docker/networks`, () => {
-    return HttpResponse.json(mockNetworks)
+  http.get(`${API}/api/v2/nodes/:nodeId/docker/networks`, ({ request }) => {
+    const url = new URL(request.url)
+    return HttpResponse.json(paginate(mockNetworks as unknown[], url))
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/networks`, async ({ request }) => {
@@ -171,8 +177,9 @@ export const dockerHandlers = [
     return HttpResponse.json({ message: 'Container disconnected from network' })
   }),
 
-  http.get(`${API}/api/v2/nodes/:nodeId/docker/volumes`, () => {
-    return HttpResponse.json(mockVolumes)
+  http.get(`${API}/api/v2/nodes/:nodeId/docker/volumes`, ({ request }) => {
+    const url = new URL(request.url)
+    return HttpResponse.json(paginate(mockVolumes as unknown[], url))
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/volumes`, async ({ request }) => {
@@ -471,11 +478,4 @@ export const dockerHandlers = [
     const body = (await request.json()) as { volume_names: string[] }
     return HttpResponse.json({ total: body.volume_names.length, succeeded: body.volume_names.length, failed: 0, results: body.volume_names.map((n) => ({ volume_name: n, status: 'success', error: '' })) })
   }),
-  // Compose stubs
-  http.get(`${API}/api/v2/nodes/:nodeId/docker/compose/projects`, () => HttpResponse.json({ items: [], limit: 20, next_cursor: null, has_more: false })),
-  http.post(`${API}/api/v2/nodes/:nodeId/docker/compose/projects`, async ({ request }) => {
-    const body = (await request.json()) as { project_name: string }
-    return HttpResponse.json({ project_name: body.project_name, status: 'created' }, { status: 201 })
-  }),
-  http.get(`${API}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName`, ({ params }) => HttpResponse.json({ project_name: params.projectName, status: 'running' })),
 ]

@@ -4,24 +4,33 @@ import { mockCommands } from '../data/commands'
 
 const API_URL = '*'
 
+function parseCursor(cursor: string | null): number {
+  if (!cursor) return 0
+  try { const d = atob(cursor); const n = Number(d); return Number.isNaN(n) ? 0 : n } catch { const n = Number(cursor); return Number.isNaN(n) ? 0 : n }
+}
+function encodeCursor(offset: number): string { return btoa(String(offset)) }
+
 export const commandHandlers = [
   http.get(`${API_URL}/api/v2/commands/`, ({ request }) => {
     const url = new URL(request.url)
+    const cursor = url.searchParams.get('cursor')
+    const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
     const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
     const tag = url.searchParams.get('tag')
     const search = url.searchParams.get('search')
     let filtered = mockCommands
-    if (tag) {
-      filtered = filtered.filter((c) => c.tags.includes(tag))
-    }
+    if (tag) filtered = filtered.filter((c) => c.tags.includes(tag))
     if (search) {
       const q = search.toLowerCase()
       filtered = filtered.filter((c) => c.name.toLowerCase().includes(q) || c.command.toLowerCase().includes(q))
     }
-    const start = (page - 1) * size
-    const items = filtered.slice(start, start + size)
-    return HttpResponse.json({ items, total: filtered.length, page, size })
+    let offset = 0
+    if (cursor) offset = parseCursor(cursor)
+    else if (url.searchParams.get('page')) offset = (page - 1) * limit
+    const items = filtered.slice(offset, offset + limit)
+    const has_more = offset + limit < filtered.length
+    const next_cursor = has_more ? encodeCursor(offset + limit) : null
+    return HttpResponse.json({ items, limit, next_cursor, has_more, total: filtered.length, page, size: limit })
   }),
 
   http.get(`${API_URL}/api/v2/commands/tags`, () => {
@@ -31,9 +40,12 @@ export const commandHandlers = [
 
   http.get(`${API_URL}/api/v2/commands/history`, ({ request }) => {
     const url = new URL(request.url)
-    const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
-    return HttpResponse.json({ items: [], total: 0, page, size })
+    const cursor = url.searchParams.get('cursor')
+    const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
+    const offset = cursor ? parseCursor(cursor) : Number(url.searchParams.get('page') || '1') - 1 ? (Number(url.searchParams.get('page')||'1')-1)*limit : 0
+    const items: unknown[] = []
+    const has_more = false
+    return HttpResponse.json({ items, limit, next_cursor: null, has_more, total: 0, page: Math.floor(offset/limit)+1, size: limit })
   }),
 
   http.get(`${API_URL}/api/v2/commands/stats`, () => {
@@ -52,9 +64,10 @@ export const commandHandlers = [
 
   http.get(`${API_URL}/api/v2/commands/bulk/history`, ({ request }) => {
     const url = new URL(request.url)
-    const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
-    return HttpResponse.json({ items: [], total: 0, page, size })
+    const cursor = url.searchParams.get('cursor')
+    const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
+    const offset = cursor ? parseCursor(cursor) : 0
+    return HttpResponse.json({ items: [], limit, next_cursor: null, has_more: false, total: 0, page: Math.floor(offset/limit)+1, size: limit })
   }),
 
   http.get(`${API_URL}/api/v2/commands/:id`, ({ params }) => {
@@ -305,10 +318,9 @@ export const commandHandlers = [
   // v2 history with cursor
   http.get(`${API_URL}/api/v2/commands/history`, ({ request }) => {
     const url = new URL(request.url)
-    const cursor = url.searchParams.get('cursor')
+    const _cursor = url.searchParams.get('cursor')
     const limit = Number(url.searchParams.get('limit') || '20')
-    const offset = cursor ? Number(atob(cursor)) || 0 : 0
-    const items = []
+    const items: unknown[] = []
     const has_more = false
     return HttpResponse.json({ items, limit, next_cursor: null, has_more })
   }),

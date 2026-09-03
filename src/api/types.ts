@@ -263,10 +263,6 @@ export interface RecentActivity { id: string; action: string; node_id?: string |
 export interface DashboardResponse { nodes: NodeStats; docker: DashboardDockerStats; scripts: EntityStats; commands: EntityStats; recent_activity: RecentActivity[] }
 export interface MetricsBucket { period: string; total: number; successful: number; failed: number; cancelled?: number; avg_duration_ms?: number | null }
 export interface DashboardMetricsResponse { command_metrics: MetricsBucket[]; script_metrics: MetricsBucket[] }
-export interface NoteResponse { id: string; target_type: 'node' | 'command' | 'script'; target_id: string; content: string; created_at: string; updated_at: string }
-export interface NoteCreate { target_type: 'node' | 'command' | 'script'; target_id: string; content: string }
-export interface NoteUpdate { content: string }
-
 // ── Stats compatibility ─────────────────────────────────────────
 export type ExecutionStatsResponse = { total: number; successful: number; failed: number; cancelled?: number; success_rate: number; avg_duration_ms?: number | null; min_duration_ms?: number | null; max_duration_ms?: number | null; last_executed_at?: string | null }
 export type HealthResponse = Record<string, string> & { status?: string; version?: string }

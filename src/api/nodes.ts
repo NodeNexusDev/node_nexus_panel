@@ -107,8 +107,6 @@ export const nodesApi = {
   // ── Deprecated / removed in v2 (kept for type compat, will 404) ─
   /** @deprecated removed in v2, use bulkCheck */
   check: (id: string) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/checks', { ids: [id] }),
-  /** @deprecated removed in v2 */
-  refreshHostKey: (_id: string) => Promise.reject(new Error('refreshHostKey removed in API v2')),
   /** @deprecated removed in v2, use bulkMetrics */
   getMetrics: (id: string) =>
     api.post<BulkResult_BulkNodeMetricsResult_>('/nodes/metrics', { ids: [id] }).then((r) => {
@@ -118,6 +116,4 @@ export const nodesApi = {
     }),
   /** @deprecated removed in v2, tags derived from list */
   getTags: () => api.get<string[]>('/nodes/tags').catch(() => [] as string[]),
-  /** @deprecated removed in v2, use credential-validations with ids */
-  validateCredentials: (_data: unknown) => Promise.reject(new Error('validateCredentials removed in API v2')),
 }

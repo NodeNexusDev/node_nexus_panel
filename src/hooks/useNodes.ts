@@ -15,7 +15,6 @@ import type {
   BulkResult_BulkValidateCredentialsResult_,
   CredentialValidationsRequest,
   NodeBulkUpdatesRequest,
-  ConnectionType,
 } from '../api/types'
 
 export function useNodes(params?: { page?: number; size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
@@ -143,18 +142,6 @@ export function useCheckNode() {
   })
 }
 
-export function useRefreshHostKey() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (id: string) => nodesApi.refreshHostKey(id),
-    onSettled: (_data, _err, id) => {
-      queryClient.invalidateQueries({ queryKey: ['nodes', id] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
 export function useBulkCheck() {
   const queryClient = useQueryClient()
 
@@ -265,9 +252,4 @@ export function useBulkUpdateNodesLegacy() {
   })
 }
 
-export function useValidateCredentials() {
-  return useMutation({
-    mutationFn: (data: { host: string; port?: number; connection_type?: ConnectionType; username?: string; password?: string; ssh_key?: string; passphrase?: string }) =>
-      nodesApi.validateCredentials(data),
-  })
-}
+

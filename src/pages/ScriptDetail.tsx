@@ -43,7 +43,7 @@ import {
 } from '../hooks/useScripts'
 import type { ScriptResponse, ScriptExecutionBatchResult, ScriptUpdate } from '../api/types'
 
-type Tab = 'overview' | 'steps' | 'executions' | 'schedule' | 'stats' | 'notes'
+type Tab = 'overview' | 'steps' | 'executions' | 'schedule' | 'stats'
 
 export function ScriptDetail() {
   const { t } = useTranslation()
@@ -96,7 +96,6 @@ export function ScriptDetail() {
     { key: 'executions', label: t('scripts.executions') },
     { key: 'schedule', label: t('scripts.schedule') },
     { key: 'stats', label: t('scripts.stats', 'Stats') },
-    { key: 'notes', label: t('notes.title') },
   ]
 
   const handleRun = () => {
@@ -188,7 +187,6 @@ export function ScriptDetail() {
       {activeTab === 'executions' && <ExecutionsTab scriptId={script.id} nodes={nodes} />}
       {activeTab === 'schedule' && <ScheduleTab scriptId={script.id} nodes={nodes} />}
       {activeTab === 'stats' && <StatsTab scriptId={script.id} />}
-      {activeTab === 'notes' && <NotesTab scriptId={script.id} />}
 
       <Modal isOpen={showRunModal} onClose={() => { setShowRunModal(false); setRunResult(null) }} title={`${t('scripts.run')}: ${script.name}`}>
         {runResult ? (
@@ -569,12 +567,4 @@ function ScheduleTab({ scriptId, nodes }: { scriptId: string; nodes: { id: strin
   )
 }
 
-function NotesTab({ scriptId: _scriptId }: { scriptId: string }) {
-  return (
-    <Card>
-      <CardContent>
-        <p className="text-sm text-surface-500">—</p>
-      </CardContent>
-    </Card>
-  )
-}
+

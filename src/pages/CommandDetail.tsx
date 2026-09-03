@@ -31,7 +31,7 @@ import { normalizeParameters } from '../components/commands/command-form-utils'
 import { commandUpdateSchema, type CommandUpdateFormValues } from '../lib/validators/command-schema'
 import type { CommandResponse, CommandUpdate } from '../api/types'
 
-type Tab = 'overview' | 'parameters' | 'stats' | 'notes'
+type Tab = 'overview' | 'parameters' | 'stats'
 
 export function CommandDetail() {
   const { t } = useTranslation()
@@ -128,7 +128,6 @@ export function CommandDetail() {
     { key: 'overview', label: t('commands.overview', 'Overview') },
     { key: 'parameters', label: t('commands.parameters', 'Parameters') },
     { key: 'stats', label: t('commands.stats', 'Stats') },
-    { key: 'notes', label: t('notes.title') },
   ]
 
   return (
@@ -170,7 +169,6 @@ export function CommandDetail() {
       {activeTab === 'overview' && <OverviewTab command={command} />}
       {activeTab === 'parameters' && <ParametersTab command={command} />}
       {activeTab === 'stats' && <StatsTab commandId={command.id} />}
-      {activeTab === 'notes' && <NotesTab commandId={command.id} />}
 
       <CommandExecuteModal command={showExecModal ? command : null} onClose={() => setShowExecModal(false)} />
 
@@ -320,12 +318,4 @@ function StatsTab({ commandId }: { commandId: string }) {
   )
 }
 
-function NotesTab({ commandId: _commandId }: { commandId: string }) {
-  return (
-    <Card>
-      <CardContent>
-        <p className="text-sm text-surface-500">—</p>
-      </CardContent>
-    </Card>
-  )
-}
+

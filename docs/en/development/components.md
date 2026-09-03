@@ -32,9 +32,9 @@ src/
 │   │   ├── Modal.tsx
 │   │   ├── ModalFooter.tsx
 │   │   ├── NodeSelect.tsx
-│   │   ├── NotesPanel.tsx
 │   │   ├── PageHeader.tsx
-│   │   ├── Pagination.tsx
+│   │   ├── Pagination.tsx          # legacy (users/api-keys page/size)
+│   │   ├── InfiniteScroll.tsx      # cursor pagination
 │   │   ├── ResponsiveTable.tsx
 │   │   ├── SearchInput.tsx
 │   │   ├── Skeleton.tsx
@@ -288,12 +288,12 @@ Star toggle for marking items as favorites.
 <FavoriteButton entityId="node-1" entityType="node" isFavorite={true} onToggle={handleToggle} />
 ```
 
-### NotesPanel
+### InfiniteScroll
 
-Entity notes with markdown preview and CRUD.
+Cursor-based infinite scroll with IntersectionObserver and Load more fallback.
 
 ```tsx
-<NotesPanel entityType="node" entityId="node-1" />
+<InfiniteScroll hasMore={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
 ```
 
 ### NodeSelect

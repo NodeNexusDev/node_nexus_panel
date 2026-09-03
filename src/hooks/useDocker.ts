@@ -256,9 +256,9 @@ export function useBulkDockerImageBuild() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: { node_ids?: string[]; node_tags?: string[]; dockerfile: string; tag: string } | { nodeId: string; dockerfile: string; tag: string }) => {
-      const d = data as { node_ids?: string[]; nodeId?: string; dockerfile: string; tag: string }
+      const d = data as { node_ids?: string[]; nodeId?: string; dockerfile: string; tag: string; no_cache?: boolean }
       const nodeId = d.nodeId || d.node_ids?.[0] || ''
-      return (dockerApi as unknown as { bulkImageBuild: (a:string,b:unknown)=>Promise<unknown> }).bulkImageBuild ? (dockerApi as unknown as { bulkImageBuild: (a:string,b:unknown)=>Promise<unknown> }).bulkImageBuild(nodeId, { images: [d.tag] } as unknown as Parameters<typeof dockerApi.bulkImagePulls>[1]) : Promise.resolve({} as unknown as ReturnType<typeof dockerApi.bulkExec>)
+      return dockerApi.buildImage(nodeId, { dockerfile: d.dockerfile, tag: d.tag, no_cache: d.no_cache })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker'] })

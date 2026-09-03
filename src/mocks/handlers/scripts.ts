@@ -3,25 +3,25 @@ import { http, HttpResponse } from 'msw'
 import { mockScripts } from '../data/scripts'
 
 const API_URL = '*'
+function parseCursor(c: string | null){ if(!c) return 0; try{ const d=atob(c); const n=Number(d); return Number.isNaN(n)?0:n }catch{ const n=Number(c); return Number.isNaN(n)?0:n } }
+function encodeCursor(o:number){ return btoa(String(o)) }
 
 export const scriptHandlers = [
   http.get(`${API_URL}/api/v2/scripts/`, ({ request }) => {
     const url = new URL(request.url)
+    const cursor = url.searchParams.get('cursor')
+    const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
     const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
     const tag = url.searchParams.get('tag')
     const search = url.searchParams.get('search')
     let filtered = mockScripts
-    if (tag) {
-      filtered = filtered.filter((s) => s.tags.includes(tag))
-    }
-    if (search) {
-      const q = search.toLowerCase()
-      filtered = filtered.filter((s) => s.name.toLowerCase().includes(q) || (s.description && s.description.toLowerCase().includes(q)))
-    }
-    const start = (page - 1) * size
-    const items = filtered.slice(start, start + size)
-    return HttpResponse.json({ items, total: filtered.length, page, size })
+    if (tag) filtered = filtered.filter((s) => s.tags.includes(tag))
+    if (search) { const q=search.toLowerCase(); filtered = filtered.filter((s)=> s.name.toLowerCase().includes(q) || (s.description && s.description.toLowerCase().includes(q))) }
+    let offset=0; if(cursor) offset=parseCursor(cursor); else if(url.searchParams.get('page')) offset=(page-1)*limit
+    const items = filtered.slice(offset, offset+limit)
+    const has_more = offset+limit < filtered.length
+    const next_cursor = has_more ? encodeCursor(offset+limit):null
+    return HttpResponse.json({ items, limit, next_cursor, has_more, total: filtered.length, page, size: limit })
   }),
 
   http.get(`${API_URL}/api/v2/scripts/tags`, () => {
@@ -161,23 +161,28 @@ export const scriptHandlers = [
     const script = mockScripts.find((s) => s.id === params.id)
     if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const url = new URL(request.url)
+    const cursor = url.searchParams.get('cursor')
+    const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
     const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
-    const items = [
+    let offset=0; if(cursor) offset=parseCursor(cursor); else if(url.searchParams.get('page')) offset=(page-1)*limit
+    const all = [
       { id: 'e1', script_id: script.id, node_id: '1', params: null, status: 'completed', steps: [{ label: 'Step 1', status: 'completed' }], started_at: '2025-08-18T08:00:00Z', finished_at: '2025-08-18T08:01:30Z' },
       { id: 'e2', script_id: script.id, node_id: '2', params: null, status: 'failed', steps: [{ label: 'Step 1', status: 'failed' }], started_at: '2025-08-17T14:00:00Z', finished_at: '2025-08-17T14:00:45Z' },
       { id: 'e3', script_id: script.id, node_id: '1', params: null, status: 'running', steps: [{ label: 'Step 1', status: 'completed' }], started_at: '2025-08-18T10:00:00Z', finished_at: null },
     ]
-    return HttpResponse.json({ items: items.slice((page - 1) * size, page * size), total: items.length, page, size })
+    const items = all.slice(offset, offset+limit)
+    const has_more = offset+limit < all.length
+    const next_cursor = has_more ? encodeCursor(offset+limit):null
+    return HttpResponse.json({ items, limit, next_cursor, has_more, total: all.length, page, size: limit })
   }),
 
   http.get(`${API_URL}/api/v2/scripts/:id/schedule/history`, ({ params, request }) => {
     const script = mockScripts.find((s) => s.id === params.id)
     if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const url = new URL(request.url)
+    const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
     const page = Number(url.searchParams.get('page') || '1')
-    const size = Number(url.searchParams.get('size') || '20')
-    return HttpResponse.json({ items: [], total: 0, page, size })
+    return HttpResponse.json({ items: [], limit, next_cursor: null, has_more: false, total: 0, page, size: limit })
   }),
 
   http.post(`${API_URL}/api/v2/scripts/executions/:executionId/cancel`, ({ params }) => {

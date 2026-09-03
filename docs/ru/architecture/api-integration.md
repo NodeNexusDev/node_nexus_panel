@@ -23,12 +23,12 @@ src/api/
 ├── settings.ts     # Профиль пользователя, API-ключи, уведомления
 ├── dashboard.ts    # Статистика дашборда и активность
 ├── docker.ts       # Docker-контейнеры, образы, сети, тома
+├── compose.ts      # Стеки Compose (per-node)
+├── templates.ts    # Паки/реестры/шаблоны
 ├── audit.ts        # Записи журнала аудита
-├── notes.ts        # Заметки сущностей (CRUD)
-├── tags.ts         # Переименование, удаление тегов
 ├── favorites.ts    # Управление избранным
-├── search.go       # Глобальный поиск
-├── config.go       # Runtime-конфигурация
+├── search.ts       # Глобальный поиск
+├── config.ts       # Runtime-конфигурация
 ├── events.ts       # SSE-поток событий
 └── index.ts        # Реэкспорт
 ```
@@ -45,11 +45,11 @@ src/api/
 ```typescript
 import { api } from './api'
 
-// GET-запрос
-const nodes = await api.get<PaginatedResponse<Node>>('/nodes')
+// GET-запрос (курсорная пагинация)
+const nodes = await api.get<CursorPage<NodeResponse>>('/nodes?limit=20')
 
 // POST-запрос
-const result = await api.post<Node>('/nodes/', {
+const result = await api.post<NodeResponse>('/nodes/', {
   name: 'server-01',
   host: '192.168.1.10',
   connection_type: 'ssh',
@@ -66,9 +66,9 @@ const result = await api.post<Node>('/nodes/', {
 - `ScheduledJob`, `ScheduleRequest`, `ScheduleResponse` — планирование
 - `User`, `AuthResponse`, `LoginRequest` — сущности аутентификации
 - `ApiKey`, `ApiKeyCreate`, `NotificationSettings` — сущности настроек
-- `DockerContainer`, `DockerImage`, `DockerNetwork`, `DockerVolume` — Docker-сущности
-- `AuditEntry`, `Note`, `Tag` — прочие сущности
-- `PaginatedResponse<T>`, `ApiRequestError` — обёртки API
+ - `DockerContainer`, `DockerImage`, `DockerNetwork`, `DockerVolume` — Docker-сущности
+ - `AuditEntry`, `Tag` — прочие сущности
+ - `CursorPage<T>`, `ApiRequestError` — обёртки API
 
 ## Сервисные модули
 
@@ -153,10 +153,10 @@ const result = await api.post<Node>('/nodes/', {
 
 | Модуль | Описание |
 |--------|----------|
-| `auditApi` | Записи журнала аудита |
-| `notesApi` | CRUD-заметок по сущностям |
-| `tagsApi` | Глобальное переименование/удаление тегов |
-| `favoritesApi` | Управление избранным |
+| `auditApi` | Записи журнала аудита (курсорная пагинация) |
+| `composeApi` | Стеки Compose per-node |
+| `templatesApi` | Паки/реестры |
+| `favoritesApi` | Управление избранным (курсорная пагинация) |
 | `searchApi` | Глобальный поиск по сущностям |
 | `configApi` | Runtime-конфигурация |
 | `eventsApi` | SSE-поток событий |

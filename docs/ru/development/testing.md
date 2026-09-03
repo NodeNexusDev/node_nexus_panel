@@ -93,7 +93,8 @@ src/mocks/
 │   ├── audit.ts
 │   ├── api-keys.ts
 │   ├── favorites.ts
-│   └── notes.ts
+│   ├── compose.ts
+│   └── templates.ts
 └── handlers/             # Обработчики запросов MSW
     ├── index.ts          # Объединяет все обработчики
     ├── nodes.ts
@@ -106,7 +107,8 @@ src/mocks/
     ├── config.ts
     ├── events.ts
     ├── favorites.ts
-    ├── notes.ts
+    ├── compose.ts
+    ├── templates.ts
     ├── search.ts
     └── tags.ts
 ```
@@ -119,8 +121,8 @@ import { http, HttpResponse } from 'msw'
 import { mockNodes } from '../data/nodes'
 
 export const nodeHandlers = [
-  http.get(`${API_URL}/api/v1/nodes`, () => {
-    return HttpResponse.json({ data: mockNodes, total: mockNodes.length })
+  http.get(`${API_URL}/api/v2/nodes/`, () => {
+    return HttpResponse.json({ items: mockNodes, limit: 20, next_cursor: null, has_more: false })
   }),
 ]
 ```
@@ -133,7 +135,7 @@ import { http, HttpResponse } from 'msw'
 
 it('handles error', async () => {
   server.use(
-    http.get('/api/v1/nodes', () => {
+    http.get('/api/v2/nodes/', () => {
       return new HttpResponse(null, { status: 500 })
     })
   )

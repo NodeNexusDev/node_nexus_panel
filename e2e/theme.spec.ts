@@ -8,7 +8,7 @@ const UI_STORAGE_LIGHT = {
 test.describe('Theme', () => {
   test.beforeEach(async ({ page }) => {
     // Mock auth/me so AuthGuard passes without real backend
-    await page.route('**/api/v1/auth/me', async (route) => {
+    await page.route('**/api/v2/auth/me', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

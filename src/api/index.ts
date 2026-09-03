@@ -15,4 +15,4 @@ export { authApi } from './auth'
 export { usersApi } from './users'
 export { eventsClient, EventsClient } from './events'
 export type * from './types'
-// Deprecated: dashboardApi and notesApi removed in v2 (no spec)
+// notesApi removed in v2 (no spec)

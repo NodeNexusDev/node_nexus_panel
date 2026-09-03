@@ -151,7 +151,6 @@
     "noCommands": "Команд нет",
     "noScripts": "Скриптов нет",
     "overview": "Обзор",
-    "notes": "Заметки",
     "password": "Пароль",
     "sshKey": "SSH ключ",
     "disk": "Диск",
@@ -179,9 +178,6 @@
     "noResultsDesc": "Нет нод по текущим фильтрам",
     "hasDocker": "Есть Docker",
     "bulkHasDockerHint": "Переключите, чтобы задать, оставьте пустым, чтобы не менять",
-    "refreshHostKey": "Обновить ключ хоста",
-    "toastHostKeyRefreshed": "Ключ хоста обновлён",
-    "toastHostKeyRefreshFailed": "Не удалось обновить ключ хоста",
     "cancelled": "Отменено"
   },
   "commands": {
@@ -656,14 +652,6 @@
     "tagsFilter": "Теги",
     "clearAll": "Очистить все",
     "selectPlaceholder": "Выберите..."
-  },
-  "notes": {
-    "title": "Заметки",
-    "placeholder": "Добавить заметку...",
-    "empty": "Заметок пока нет",
-    "deleteTitle": "Удалить заметку",
-    "deleteMsg": "Вы уверены, что хотите удалить эту заметку?",
-    "editTitle": "Редактировать заметку"
   },
   "errorBoundary": {
     "title": "Что-то пошло не так",

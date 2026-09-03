@@ -151,7 +151,6 @@
     "noCommands": "No commands",
     "noScripts": "No scripts",
     "overview": "Overview",
-    "notes": "Notes",
     "password": "Password",
     "sshKey": "SSH Key",
     "disk": "Disk",
@@ -179,9 +178,6 @@
     "noResultsDesc": "No nodes match current filters",
     "hasDocker": "Has Docker",
     "bulkHasDockerHint": "Toggle to set, leave unchecked to keep unchanged",
-    "refreshHostKey": "Refresh Host Key",
-    "toastHostKeyRefreshed": "Host key refreshed",
-    "toastHostKeyRefreshFailed": "Failed to refresh host key",
     "cancelled": "Cancelled"
   },
   "commands": {
@@ -656,14 +652,6 @@
     "tagsFilter": "Tags",
     "clearAll": "Clear all",
     "selectPlaceholder": "Select..."
-  },
-  "notes": {
-    "title": "Notes",
-    "placeholder": "Add a note...",
-    "empty": "No notes yet",
-    "deleteTitle": "Delete Note",
-    "deleteMsg": "Are you sure you want to delete this note?",
-    "editTitle": "Edit Note"
   },
   "errorBoundary": {
     "title": "Something went wrong",

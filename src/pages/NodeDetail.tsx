@@ -46,14 +46,13 @@ import {
   useRetryNodeCommand,
   useUpdateNode,
   useCheckNode,
-  useRefreshHostKey,
   useDeleteNode,
 } from '../hooks/useNodes'
 import type { NodeUpdate, Node } from '../api/types'
 import { nodeUpdateSchema, type NodeUpdateFormValues } from '../lib/validators/node-schema'
 import { NodeDetailSkeleton } from './NodeDetailSkeleton'
 
-type Tab = 'overview' | 'metrics' | 'stats' | 'status-history' | 'command-history' | 'notes'
+type Tab = 'overview' | 'metrics' | 'stats' | 'status-history' | 'command-history'
 
 export function NodeDetail() {
   const { t } = useTranslation()
@@ -63,7 +62,7 @@ export function NodeDetail() {
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromUrl = searchParams.get('tab') as Tab | null
-  const activeTab: Tab = (['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes'] as Tab[]).includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview'
+  const activeTab: Tab = (['overview', 'metrics', 'stats', 'status-history', 'command-history'] as Tab[]).includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview'
 
   const changeTab = (key: Tab) => {
     setSearchParams(key === 'overview' ? {} : { tab: key }, { replace: false })
@@ -191,15 +190,6 @@ export function NodeDetail() {
     })
   }
 
-  const refreshHostKey = useRefreshHostKey()
-  const handleRefreshHostKey = () => {
-    if (!id) return
-    refreshHostKey.mutate(id, {
-      onSuccess: () => toast('success', t('nodes.toastHostKeyRefreshed', 'Host key refreshed')),
-      onError: () => toast('error', t('nodes.toastHostKeyRefreshFailed', 'Failed to refresh host key')),
-    })
-  }
-
   const handleCopyAddress = () => {
     const address = `${node?.host ?? ''}:${node?.port ?? ''}`
     copy(address)
@@ -223,7 +213,6 @@ export function NodeDetail() {
     { key: 'stats', label: t('nodes.stats', 'Stats') },
     { key: 'status-history', label: t('nodes.statusHistory', 'Status History') },
     { key: 'command-history', label: t('nodes.cmdHistory', 'Command History') },
-    { key: 'notes', label: t('nodes.notes', 'Notes') },
   ]
 
   return (
@@ -263,9 +252,6 @@ export function NodeDetail() {
             <IconCheckCircle className="w-4 h-4 mr-1" />
             {t('nodes.checkNode')}
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleRefreshHostKey} disabled={refreshHostKey.isPending}>
-            {t('nodes.refreshHostKey', 'Refresh Host Key')}
-          </Button>
           <Button variant="secondary" size="sm" onClick={() => setShowCommandModal(true)}>
             <IconCommands className="w-4 h-4 mr-1" />
             {t('nodes.execCommand')}
@@ -297,7 +283,6 @@ export function NodeDetail() {
       {activeTab === 'stats' && <StatsTab nodeId={node.id} />}
       {activeTab === 'status-history' && <StatusHistoryTab nodeId={node.id} />}
       {activeTab === 'command-history' && <CommandHistoryTab nodeId={node.id} />}
-      {activeTab === 'notes' && <NotesTab nodeId={node.id} />}
 
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title={t('nodes.editNode', 'Edit Node')} size="lg">
         <form onSubmit={handleSubmit(onSubmitEdit)} className="space-y-4">
@@ -662,12 +647,4 @@ function CommandHistoryTab({ nodeId }: { nodeId: string }) {
   )
 }
 
-function NotesTab({ nodeId: _nodeId }: { nodeId: string }) {
-  return (
-    <Card>
-      <CardContent>
-        <p className="text-sm text-surface-500">—</p>
-      </CardContent>
-    </Card>
-  )
-}
+

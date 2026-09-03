@@ -65,7 +65,7 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "oxlint --fix",
-      "tsc -b --noEmit"
+      "bash -c 'tsc -b --noEmit'"
     ]
   },
   "msw": {

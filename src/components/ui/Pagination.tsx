@@ -2,6 +2,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
 
+/**
+ * @deprecated legacy offset pagination — kept for users/api-keys and stories.
+ * Prefer `InfiniteScroll` with cursor pagination for v2 lists.
+ */
 interface PaginationProps {
   page: number
   totalPages: number
