@@ -760,7 +760,19 @@
     "deleteFailed": "Failed to delete registry",
     "name": "Name",
     "url": "URL",
+    "owner": "Owner",
+    "defaultBranch": "Branch",
+    "lastSyncedAt": "Synced",
     "created": "Created",
-    "createFailed": "Failed to create registry"
+    "createFailed": "Failed to create registry",
+    "download": "Download",
+    "downloadFailed": "Download failed",
+    "assets": "Assets",
+    "installations": "Installations",
+    "createPack": "Create Pack",
+    "updatePack": "Update Pack",
+    "packId": "Pack ID",
+    "version": "Version",
+    "descriptionLabel": "Description"
   }
 }

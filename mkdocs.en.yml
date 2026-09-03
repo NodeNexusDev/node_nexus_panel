@@ -26,6 +26,7 @@ nav:
       - Commands: guides/commands.md
       - Scripts: guides/scripts.md
       - Docker: guides/docker.md
+      - Templates: guides/templates.md
       - Forms: guides/forms.md
       - Theming: guides/theming.md
       - Settings: guides/settings.md

@@ -760,7 +760,19 @@
     "deleteFailed": "Не удалось удалить реестр",
     "name": "Имя",
     "url": "URL",
+    "owner": "Владелец",
+    "defaultBranch": "Ветка",
+    "lastSyncedAt": "Синхронизирован",
     "created": "Создан",
-    "createFailed": "Не удалось создать реестр"
+    "createFailed": "Не удалось создать реестр",
+    "download": "Скачать",
+    "downloadFailed": "Не удалось скачать",
+    "assets": "Ресурсы",
+    "installations": "Установки",
+    "createPack": "Создать пакет",
+    "updatePack": "Обновить пакет",
+    "packId": "ID пакета",
+    "version": "Версия",
+    "descriptionLabel": "Описание"
   }
 }

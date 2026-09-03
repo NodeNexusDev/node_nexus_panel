@@ -6,9 +6,13 @@ import type {
   CursorPage_PackResponse_,
   CursorPage_RegistryResponse_,
   CursorPage_PackInstallationResponse_,
+  BulkResult_PackInstallResult_,
+  RegistryResponse,
+  PackLocalCreateRequest,
+  PackResponse,
 } from '../api/types'
 
-export function usePacks(params?: { cursor?: string | null; limit?: number; search?: string | null; tag?: string | null; installed?: boolean | null }) {
+export function usePacks(params?: { cursor?: string | null; limit?: number; search?: string | null; tag?: string | null; installed?: boolean | null; registry_id?: string | null }) {
   return useQuery<CursorPage_PackResponse_>({
     queryKey: ['templates', 'packs', params],
     queryFn: () => templatesApi.listPacks(params as never),
@@ -16,10 +20,10 @@ export function usePacks(params?: { cursor?: string | null; limit?: number; sear
   })
 }
 
-export function useInfinitePacks(params?: { limit?: number; search?: string | null; tag?: string | null }) {
+export function useInfinitePacks(params?: { limit?: number; search?: string | null; tag?: string | null; installed?: boolean | null; registry_id?: string | null }) {
   return useInfiniteQuery({
     queryKey: ['templates', 'packs', 'infinite', params],
-    queryFn: ({ pageParam }) => templatesApi.listPacks({ cursor: pageParam as string | null, limit: params?.limit, search: params?.search, tag: params?.tag }),
+    queryFn: ({ pageParam }) => templatesApi.listPacks({ cursor: pageParam as string | null, limit: params?.limit, search: params?.search, tag: params?.tag, installed: params?.installed, registry_id: params?.registry_id }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
   })
@@ -33,10 +37,40 @@ export function usePack(packId: string) {
   })
 }
 
-export function usePackStats() {
+export function usePackStats(params?: { group_by?: string | null }) {
   return useQuery<PackStatsResponse>({
-    queryKey: ['templates', 'packs', 'stats'],
-    queryFn: () => templatesApi.getPackStats(),
+    queryKey: ['templates', 'packs', 'stats', params],
+    queryFn: () => templatesApi.getPackStats(params as never),
+  })
+}
+
+export function usePackArchive(packId: string, enabled = true) {
+  return useQuery<Blob>({
+    queryKey: ['templates', 'packs', packId, 'archive'],
+    queryFn: () => templatesApi.getPackArchive(packId),
+    enabled: !!packId && enabled,
+  })
+}
+
+export function useCreatePack() {
+  return useMutation<PackResponse, Error, PackLocalCreateRequest>({
+    mutationFn: (data) => templatesApi.createPack(data),
+  })
+}
+
+export function useRegistry(registryId: string) {
+  return useQuery<RegistryResponse>({
+    queryKey: ['templates', 'registries', registryId],
+    queryFn: () => templatesApi.getRegistry(registryId),
+    enabled: !!registryId,
+  })
+}
+
+export function useUpdatePack() {
+  const qc = useQueryClient()
+  return useMutation<BulkResult_PackInstallResult_, Error, { packId: string; on_conflict?: 'fail' | 'rename' }>({
+    mutationFn: ({ packId, on_conflict }) => templatesApi.updatePack(packId, { on_conflict } as never),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['templates'] }),
   })
 }
 
@@ -90,16 +124,16 @@ export function useDeleteRegistry() {
 
 export function useInstallPack() {
   const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ packId, data }: { packId: string; data?: unknown }) => templatesApi.installPack(packId, data),
+  return useMutation<BulkResult_PackInstallResult_, Error, { packId: string; on_conflict?: 'fail' | 'rename' }>({
+    mutationFn: ({ packId, on_conflict }) => templatesApi.installPack(packId, { on_conflict } as never),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['templates'] }),
   })
 }
 
 export function useUninstallPack() {
   const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ packId, data }: { packId: string; data?: unknown }) => templatesApi.uninstallPack(packId, data),
+  return useMutation<void, Error, string>({
+    mutationFn: (packId) => templatesApi.uninstallPack(packId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['templates'] }),
   })
 }

@@ -10,7 +10,7 @@ import type {
   CursorPage_PackResponse_,
   CursorPage_RegistryResponse_,
   CursorPage_PackInstallationResponse_,
-  PackInstallationResponse,
+  BulkResult_PackInstallResult_,
 } from './types'
 
 export const templatesApi = {
@@ -38,9 +38,12 @@ export const templatesApi = {
 
   createPack: (data: PackLocalCreateRequest) => api.post<PackResponse>('/templates/packs', data),
 
-  getPackStats: () => api.get<PackStatsResponse>('/templates/packs/stats'),
+  getPackStats: (params?: { group_by?: string | null }) => {
+    const qs = params?.group_by ? `?group_by=${encodeURIComponent(params.group_by)}` : ''
+    return api.get<PackStatsResponse>(`/templates/packs/stats${qs}`)
+  },
 
-  getPackArchive: (packId: string) => api.get<Blob>(`/templates/packs/${packId}/archive`),
+  getPackArchive: (packId: string) => api.getBlob(`/templates/packs/${packId}/archive`),
 
   listInstallations: (packId: string, params?: { cursor?: string | null; limit?: number }) => {
     const query = new URLSearchParams()
@@ -50,14 +53,18 @@ export const templatesApi = {
     return api.get<CursorPage_PackInstallationResponse_>(`/templates/packs/${packId}/installations${qs ? `?${qs}` : ''}`)
   },
 
-  installPack: (packId: string, data?: unknown) =>
-    api.post<PackInstallationResponse>(`/templates/packs/${packId}/installations`, data),
+  installPack: (packId: string, params?: { on_conflict?: 'fail' | 'rename' }) => {
+    const qs = params?.on_conflict ? `?on_conflict=${params.on_conflict}` : ''
+    return api.post<BulkResult_PackInstallResult_>(`/templates/packs/${packId}/installations${qs}`)
+  },
 
-  uninstallPack: (packId: string, data?: unknown) =>
-    api.post<unknown>(`/templates/packs/${packId}/uninstallations`, data),
+  uninstallPack: (packId: string) =>
+    api.post<void>(`/templates/packs/${packId}/uninstallations`),
 
-  updatePack: (packId: string, data?: unknown) =>
-    api.post<PackResponse>(`/templates/packs/${packId}/updates`, data),
+  updatePack: (packId: string, params?: { on_conflict?: 'fail' | 'rename' }) => {
+    const qs = params?.on_conflict ? `?on_conflict=${params.on_conflict}` : ''
+    return api.post<BulkResult_PackInstallResult_>(`/templates/packs/${packId}/updates${qs}`)
+  },
 
   // ── Registries ──────────────────────────────────────────────
   listRegistries: (params?: { cursor?: string | null; limit?: number }) => {

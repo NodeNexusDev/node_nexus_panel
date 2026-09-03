@@ -9,7 +9,7 @@ let packs = [
 ]
 
 let registries = [
-  { id: 'reg-1', name: 'Official', url: 'https://registry.nodenexus.dev/packs.json', enabled: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'reg-1', owner: 'NodeNexusDev', name: 'official', default_branch: 'main', last_synced_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
 ]
 
 function parseCursor(c:string|null){ if(!c) return 0; try{ const d=atob(c); const n=Number(d); return Number.isNaN(n)?0:n }catch{ const n=Number(c); return Number.isNaN(n)?0:n } }
@@ -39,27 +39,29 @@ export const templatesHandlers = [
   }),
   http.get(`${API_URL}/api/v2/templates/packs/:packId/archive`, ({ params }) => {
     const pack = packs.find((p)=> p.id===params.packId); if(!pack) return HttpResponse.json({code:'not_found',message:'Pack not found'},{status:404})
-    return HttpResponse.json({ pack_id: pack.id, archive: 'mock-archive-base64' })
+    const tar = new TextEncoder().encode('mock-tar-content')
+    return new HttpResponse(tar, { headers: { 'Content-Type': 'application/x-tar', 'Content-Disposition': `attachment; filename="${pack.name}.tar"` } })
   }),
   http.get(`${API_URL}/api/v2/templates/packs/:packId/installations`, () => HttpResponse.json({ items: [], limit: 20, next_cursor: null, has_more: false })),
   http.post(`${API_URL}/api/v2/templates/packs/:packId/updates`, async ({ params, request }) => {
     const pack = packs.find((p)=> p.id===params.packId); if(!pack) return HttpResponse.json({code:'not_found',message:'Pack not found'},{status:404})
-    const body = await request.json() as { name?: string }; if(body.name) pack.name = body.name; pack.updated_at=new Date().toISOString(); return HttpResponse.json(pack)
+    pack.updated_at=new Date().toISOString(); return HttpResponse.json({ total:1, succeeded:1, failed:0, results:[{ entity_type:'command', name: pack.name, status:'success', entity_id: crypto.randomUUID(), error:'' }] })
   }),
-  http.post(`${API_URL}/api/v2/templates/packs/:packId/installations`, ({ params }) => {
+  http.post(`${API_URL}/api/v2/templates/packs/:packId/installations`, ({ params, request }) => {
     const pack = packs.find((p) => p.id === params.packId)
     if (pack) pack.installed = true
-    return HttpResponse.json({ id: crypto.randomUUID(), pack_id: params.packId, status: 'installed', created_at: new Date().toISOString() })
+    const url = new URL(request.url); const onConflict = url.searchParams.get('on_conflict')||'fail'
+    return HttpResponse.json({ total:1, succeeded:1, failed:0, results:[{ entity_type:'command', name: pack?.name ?? 'entity', status:'success', entity_id: crypto.randomUUID(), error:`on_conflict=${onConflict}` }] })
   }),
   http.post(`${API_URL}/api/v2/templates/packs/:packId/uninstallations`, ({ params }) => {
     const pack = packs.find((p) => p.id === params.packId)
     if (pack) pack.installed = false
-    return HttpResponse.json({ status: 'uninstalled' })
+    return new HttpResponse(null,{status:204})
   }),
   http.get(`${API_URL}/api/v2/templates/registries`, ({ request }) => { const url=new URL(request.url); const cursor=url.searchParams.get('cursor'); const limit=Number(url.searchParams.get('limit')||url.searchParams.get('size')||50); const offset=cursor?parseCursor(cursor):0; const items=registries.slice(offset, offset+limit); const has_more=offset+limit<registries.length; const next_cursor=has_more?encodeCursor(offset+limit):null; return HttpResponse.json({ items, limit, next_cursor, has_more }) }),
   http.post(`${API_URL}/api/v2/templates/registries`, async ({ request }) => {
-    const body = await request.json() as { name: string; url: string }
-    const reg = { id: crypto.randomUUID(), name: body.name, url: body.url, enabled: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    const body = await request.json() as { owner: string; name: string; default_branch?: string; github_token?: string | null }
+    const reg = { id: crypto.randomUUID(), owner: body.owner, name: body.name, default_branch: body.default_branch||'main', last_synced_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     registries.push(reg)
     return HttpResponse.json(reg, { status: 201 })
   }),
@@ -70,5 +72,5 @@ export const templatesHandlers = [
     registries = registries.filter((r) => r.id !== params.registryId)
     return new HttpResponse(null, { status: 204 })
   }),
-  http.post(`${API_URL}/api/v2/templates/registries/:registryId/syncs`, () => HttpResponse.json({ status: 'synced', synced_at: new Date().toISOString() })),
+  http.post(`${API_URL}/api/v2/templates/registries/:registryId/syncs`, ({ params }) => HttpResponse.json({ registry_id: params.registryId, total:2, succeeded:2, failed:0, results:[{ pack_id:'pack-1', status:'success' },{ pack_id:'pack-2', status:'success' }] })),
 ]

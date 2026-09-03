@@ -8,7 +8,8 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/useToast'
-import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack } from '../hooks/useTemplates'
+import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack, usePackInstallations, useCreatePack, useUpdatePack } from '../hooks/useTemplates'
+import { templatesApi } from '../api/templates'
 import { Modal } from '../components/ui/Modal'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
@@ -43,12 +44,21 @@ function PacksTab() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
-  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinitePacks({ limit: 20, search: debouncedSearch || null, tag: selectedTag })
+  const [installedFilter, setInstalledFilter] = useState<'all'|'installed'|'notInstalled'>('all')
+  const [registryFilter, setRegistryFilter] = useState<string | null>(null)
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinitePacks({ limit: 20, search: debouncedSearch || null, tag: selectedTag, installed: installedFilter==='all'? null : installedFilter==='installed', registry_id: registryFilter })
   const { data: stats } = usePackStats()
   const install = useInstallPack()
   const uninstall = useUninstallPack()
   const [detailId, setDetailId] = useState<string | null>(null)
   const { data: detail } = usePack(detailId ?? '')
+  const { data: installations } = usePackInstallations(detailId ?? '')
+  const createPack = useCreatePack()
+  const updatePack = useUpdatePack()
+  const [showCreatePack, setShowCreatePack] = useState(false)
+  const [cpPackId, setCpPackId] = useState('')
+  const [cpName, setCpName] = useState('')
+  const [cpVersion, setCpVersion] = useState('1.0.0')
   const packs = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; name: string; description?: string | null; tags?: string[]; installed?: boolean }> }).items) : []
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   const allTags = useMemo(() => [...new Set(packs.flatMap((p)=> p.tags ?? []))], [infiniteData])
@@ -61,11 +71,14 @@ function PacksTab() {
     { key: 'desc', header: t('common.description', 'Description'), render: (p) => <span className="text-xs text-surface-500 truncate max-w-[260px] inline-block">{p.description ?? '—'}</span> },
     { key: 'tags', header: t('common.tagsFilter'), render: (p) => <span className="flex gap-1 flex-wrap">{(p.tags ?? []).map((tag)=> <Badge key={tag} variant="default">{tag}</Badge>)} {p.installed && <Badge variant="success">{t('templates.installed')}</Badge>}</span> },
     { key: 'actions', header: t('common.actions'), render: (p) => (
-      <div className="flex gap-1">
+      <div className="flex gap-1 flex-wrap">
         {p.installed ? (
-          <Button variant="ghost" size="sm" onClick={()=> uninstall.mutate({packId:p.id},{onSuccess:()=>toast('success',t('templates.uninstallStarted')), onError:()=>toast('error',t('templates.uninstallFailed'))})} disabled={uninstall.isPending}>{t('templates.uninstall')}</Button>
+          <>
+            <Button variant="ghost" size="sm" onClick={()=> uninstall.mutate(p.id,{onSuccess:()=>toast('success',t('templates.uninstallStarted')), onError:()=>toast('error',t('templates.uninstallFailed'))})} disabled={uninstall.isPending}>{t('templates.uninstall')}</Button>
+            <Button variant="ghost" size="sm" onClick={()=> updatePack.mutate({packId:p.id, on_conflict:'fail'},{onSuccess:(res)=>toast('success',`${t('templates.updatePack')} ${res.succeeded}/${res.total}`), onError:()=>toast('error',t('templates.updateFailed','Update failed'))})} disabled={updatePack.isPending}>{t('templates.updatePack')}</Button>
+          </>
         ) : (
-          <Button variant="ghost" size="sm" onClick={() => install.mutate({ packId: p.id }, { onSuccess: () => toast('success', t('templates.installStarted')), onError: () => toast('error', t('templates.installFailed')) })} disabled={install.isPending}>{t('templates.install')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => install.mutate({ packId: p.id, on_conflict: 'fail' }, { onSuccess: (res) => toast('success', `${t('templates.installStarted')} ${res.succeeded}/${res.total}`), onError: () => toast('error', t('templates.installFailed')) })} disabled={install.isPending}>{t('templates.install')}</Button>
         )}
         <Button variant="ghost" size="sm" onClick={()=> setDetailId(p.id)}>{t('common.view')}</Button>
       </div>
@@ -86,6 +99,14 @@ function PacksTab() {
                 {allTags.slice(0,8).map((tag)=> <Button key={tag} variant={selectedTag===tag?'secondary':'ghost'} size="sm" onClick={()=> setSelectedTag(tag===selectedTag?null:tag)}>{tag}</Button>)}
               </div>
             )}
+            <select value={installedFilter} onChange={(e)=> setInstalledFilter(e.target.value as never)} className="px-2 py-1 text-xs bg-white border border-surface-300 rounded dark:bg-surface-800 dark:border-surface-700">
+              <option value="all">{t('templates.total')}</option>
+              <option value="installed">{t('templates.installed')}</option>
+              <option value="notInstalled">{t('templates.notInstalled')}</option>
+            </select>
+            <select value={registryFilter ?? ''} onChange={(e)=> setRegistryFilter(e.target.value||null)} className="px-2 py-1 text-xs bg-white border border-surface-300 rounded dark:bg-surface-800 dark:border-surface-700">
+              <option value="">{t('templates.registries')}</option>
+            </select>
             {stats && (
               <div className="flex items-center gap-2 text-xs">
                 <Badge variant="default">{t('templates.total')}: {stats.total}</Badge>
@@ -94,6 +115,7 @@ function PacksTab() {
               </div>
             )}
             <Button variant="ghost" onClick={() => refetch()}>{t('common.refresh')}</Button>
+            <Button onClick={()=> setShowCreatePack(true)}>{t('templates.createPack','Create Pack')}</Button>
           </div>
         </CardContent>
       </Card>
@@ -120,12 +142,38 @@ function PacksTab() {
           <div className="space-y-3">
             {detail.description && <p className="text-sm text-surface-600 dark:text-surface-300">{detail.description}</p>}
             <div className="flex gap-1 flex-wrap">{(detail.tags ?? []).map((tag:string)=> <Badge key={tag} variant="default">{tag}</Badge>)}</div>
+            <div className="text-xs text-surface-500 space-y-1">
+              {(detail as unknown as {version?:string}).version && <p>Version: {(detail as unknown as {version:string}).version}</p>}
+              {(detail as unknown as {author?:string}).author && <p>Author: {(detail as unknown as {author:string}).author}</p>}
+              {detail.created_at && <p>{t('common.created')}: {new Date(detail.created_at).toLocaleString()}</p>}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={async()=> { try{ const blob = await templatesApi.getPackArchive(detail.id); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${detail.name}.tar`; a.click(); URL.revokeObjectURL(url)} catch{ toast('error', t('templates.downloadFailed','Download failed')) } }}>{t('templates.download','Download')}</Button>
+            </div>
             <div>
-              <h4 className="text-sm font-medium mb-1">{t('docker.compose')}</h4>
+              <h4 className="text-sm font-medium mb-1">{t('templates.installations','Installations')} {installations?.items?.length ? `(${installations.items.length})` : ''}</h4>
+              <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-32 overflow-auto">{JSON.stringify(installations?.items ?? [], null, 2)}</pre>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium mb-1">{t('templates.assets','Assets')}</h4>
               <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-64 overflow-auto">{JSON.stringify((detail as unknown as {assets?: unknown}).assets ?? [], null, 2)}</pre>
             </div>
           </div>
         ) : <p className="text-sm text-surface-500">{t('common.loading')}</p>}
+      </Modal>
+      <Modal isOpen={showCreatePack} onClose={()=> setShowCreatePack(false)} title={t('templates.createPack')} size="sm">
+        <div className="space-y-4">
+          <Input label={t('templates.packId')} placeholder="my-pack" value={cpPackId} onChange={(e)=> setCpPackId(e.target.value)} />
+          <Input label={t('templates.name')} placeholder="My Pack" value={cpName} onChange={(e)=> setCpName(e.target.value)} />
+          <Input label={t('templates.version')} placeholder="1.0.0" value={cpVersion} onChange={(e)=> setCpVersion(e.target.value)} />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={()=> setShowCreatePack(false)}>{t('common.cancel')}</Button>
+            <Button onClick={()=> {
+              if(!cpPackId.trim()||!cpName.trim()){ toast('error', t('templates.createFailed')); return }
+              createPack.mutate({ manifest:{ pack_id: cpPackId.trim(), name: cpName.trim(), version: cpVersion.trim()||'1.0.0', tags:[] }, commands:[], scripts:[] } as never, { onSuccess:()=>{ toast('success', t('templates.created','Created')); setShowCreatePack(false); setCpPackId(''); setCpName(''); setCpVersion('1.0.0') }, onError:()=> toast('error', t('templates.createFailed')) })
+            }} disabled={!cpPackId.trim()||!cpName.trim()||createPack.isPending}>{createPack.isPending? t('common.loading'): t('common.create')}</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
@@ -135,21 +183,24 @@ function RegistriesTab() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useInfiniteRegistries({ limit: 20 })
-  const regs = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; name: string; url: string; enabled?: boolean }> }).items) : []
+  const regs = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; owner: string; name: string; default_branch: string; last_synced_at: string | null }> }).items) : []
   const sync = useSyncRegistry()
   const del = useDeleteRegistry()
   const create = useCreateRegistry()
   const [showCreate, setShowCreate] = useState(false)
+  const [owner, setOwner] = useState('')
   const [name, setName] = useState('')
-  const [url, setUrl] = useState('')
+  const [branch, setBranch] = useState('main')
   const [search, setSearch] = useState('')
-  const filtered = regs.filter((r)=> !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.url.toLowerCase().includes(search.toLowerCase()))
-  const columns: Column<{ id: string; name: string; url: string; enabled?: boolean }>[] = [
+  const filtered = regs.filter((r)=> !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.owner.toLowerCase().includes(search.toLowerCase()))
+  const columns: Column<{ id: string; owner: string; name: string; default_branch: string; last_synced_at: string | null }>[] = [
+    { key:'owner', header: t('templates.owner', 'Owner'), render:(r)=> <span className="text-sm">{r.owner}</span> },
     { key:'name', header: t('templates.name'), render:(r)=> <span className="font-medium">{r.name}</span> },
-    { key:'url', header: t('templates.url'), render:(r)=> <span className="text-xs font-mono text-surface-500 break-all">{r.url}</span> },
+    { key:'branch', header: t('templates.defaultBranch', 'Branch'), render:(r)=> <Badge variant="default">{r.default_branch}</Badge> },
+    { key:'synced', header: t('templates.lastSyncedAt', 'Synced'), render:(r)=> <span className="text-xs text-surface-500">{r.last_synced_at ? new Date(r.last_synced_at).toLocaleString() : '—'}</span> },
     { key:'actions', header: t('common.actions'), render:(r)=> (
       <div className="flex gap-1">
-        <Button variant="ghost" size="sm" onClick={() => sync.mutate(r.id, { onSuccess: () => toast('success', t('templates.synced')), onError: () => toast('error', t('templates.syncFailed')) })} disabled={sync.isPending}>{t('templates.sync')}</Button>
+        <Button variant="ghost" size="sm" onClick={() => sync.mutate(r.id, { onSuccess: (res) => toast('success', `${t('templates.synced')} ${res.succeeded}/${res.total}`), onError: () => toast('error', t('templates.syncFailed')) })} disabled={sync.isPending}>{t('templates.sync')}</Button>
         <Button variant="ghost" size="sm" onClick={() => del.mutate(r.id, { onSuccess: () => toast('success', t('templates.deleted')), onError: () => toast('error', t('templates.deleteFailed')) })} className="text-red-500" disabled={del.isPending}>{t('common.delete')}</Button>
       </div>
     )},
@@ -177,8 +228,8 @@ function RegistriesTab() {
             <>
               <ResponsiveTable data={filtered} columns={columns} keyExtractor={(r)=>r.id} renderMobileItem={(r)=> (
                 <div className="p-3 space-y-1">
-                  <p className="font-medium">{r.name}</p>
-                  <p className="text-xs font-mono text-surface-500 break-all">{r.url}</p>
+                  <p className="font-medium">{r.owner}/{r.name}</p>
+                  <p className="text-xs text-surface-500">branch: {r.default_branch}</p>
                 </div>
               )} />
               <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
@@ -189,11 +240,12 @@ function RegistriesTab() {
 
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={t('templates.addRegistry')} size="sm">
         <div className="space-y-4">
-          <Input label={t('templates.name')} placeholder="my-registry" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input label={t('templates.url')} placeholder="https://example.com/registry.json" value={url} onChange={(e) => setUrl(e.target.value)} />
+          <Input label={t('templates.owner', 'Owner')} placeholder="NodeNexusDev" value={owner} onChange={(e) => setOwner(e.target.value)} />
+          <Input label={t('templates.name')} placeholder="official" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input label={t('templates.defaultBranch', 'Branch')} placeholder="main" value={branch} onChange={(e) => setBranch(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { let ok=true; try{ new URL(url); } catch{ ok=false } if(!ok){ toast('error', t('templates.createFailed')); return } if (name.trim() && url.trim()) create.mutate({ name: name.trim(), url: url.trim() } as never, { onSuccess: () => { toast('success', t('templates.created', 'Created')); setShowCreate(false); setName(''); setUrl('') }, onError: () => toast('error', t('templates.createFailed')) }) }} disabled={!name.trim() || !url.trim() || create.isPending}>{create.isPending ? t('common.loading') : t('common.create')}</Button>
+            <Button onClick={() => { if (owner.trim() && name.trim()) create.mutate({ owner: owner.trim(), name: name.trim(), default_branch: branch.trim()||'main' } as never, { onSuccess: () => { toast('success', t('templates.created', 'Created')); setShowCreate(false); setOwner(''); setName(''); setBranch('main') }, onError: () => toast('error', t('templates.createFailed')) }) }} disabled={!owner.trim() || !name.trim() || create.isPending}>{create.isPending ? t('common.loading') : t('common.create')}</Button>
           </div>
         </div>
       </Modal>
