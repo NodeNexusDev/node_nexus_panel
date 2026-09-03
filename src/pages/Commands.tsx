@@ -27,7 +27,6 @@ import {
   useDeleteCommand,
 } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
-import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
 import { TagFilter } from '../components/ui/TagFilter'
 import { useSort } from '../hooks/useSort'
@@ -50,12 +49,11 @@ export function Commands() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
-  const debouncedSearch = useDebouncedValue(search, 300)
   const [tagFilter, setTagFilter] = useState<string[]>([])
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteCommands({ limit, search: debouncedSearch || undefined })
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteCommands({ limit, search: search || undefined })
   const commandsData = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: CommandResponse[] } : undefined
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()

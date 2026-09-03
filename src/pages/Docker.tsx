@@ -9,6 +9,7 @@ import { Select } from '../components/ui/Select'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { PageHeader } from '../components/ui/PageHeader'
+import { Tabs } from '../components/ui/Tabs'
 import { IconDocker } from '../components/ui/Icons'
 import { usePullImage } from '../hooks/useDocker'
 import { useNodes } from '../hooks/useNodes'
@@ -66,6 +67,7 @@ export function Docker() {
     { key: 'system', label: t('docker.system', 'System') },
     { key: 'compose', label: t('docker.compose', 'Compose') },
   ]
+  const tabsForComp = tabs.map((tab) => ({ key: tab.key, label: tab.label }))
 
   return (
     <div className="space-y-6">
@@ -86,20 +88,12 @@ export function Docker() {
         </div>
       </div>
 
-      <div className="border-b border-surface-200 dark:border-surface-800">
-        <nav className="flex gap-4">
-          {tabs.map((tab) => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key ? 'border-accent-500 text-accent-600 dark:text-accent-400' : 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-400'}`}>
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+      <Tabs tabs={tabsForComp} active={activeTab} onChange={(k)=> setActiveTab(k as Tab)} />
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
           {dockerNodes.length === 0 ? (
-            <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noDockerNodes', 'No Docker nodes')} description={t('docker.noDockerNodesDesc', 'Add a Docker node to manage containers, images, networks and volumes')} />
+            <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noDockerNodes', 'No Docker nodes')} description={t('docker.noDockerNodesDesc', 'Add a Docker node to manage containers, images, networks and volumes')} action={<Button onClick={()=> window.location.href='/nodes'}>{t('nodes.addNode')}</Button>} />
           ) : !selectedNodeId ? (
             <TableSkeleton rows={6} cols={6} />
           ) : (

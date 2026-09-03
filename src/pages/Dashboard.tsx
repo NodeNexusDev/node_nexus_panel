@@ -119,13 +119,13 @@ export function Dashboard() {
           ? Array.from({ length: 7 }).map((_, i) => (<StatCardSkeleton key={i} />))
           : (
             <>
-              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.totalNodes')} value={dashboard?.nodes.total ?? 0} icon={<IconNodes className="w-5 h-5" />} /></CardContent></Card>
-              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.online')} value={dashboard?.nodes.active ?? 0} icon={<IconCheckCircle className="w-5 h-5" />} tone="success" /></CardContent></Card>
-              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.offline')} value={dashboard?.nodes.unreachable ?? 0} icon={<IconXCircle className="w-5 h-5" />} tone="danger" /></CardContent></Card>
-              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.totalCommands')} value={dashboard?.commands.total ?? 0} icon={<IconZap className="w-5 h-5" />} /></CardContent></Card>
-              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.scripts', 'Scripts')} value={(dashboard as unknown as { scripts?: { total: number } })?.scripts?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} /></CardContent></Card>
-              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.dockerContainers')} value={dashboard?.docker.total ?? 0} icon={<IconDocker className="w-5 h-5" />} sub={`${dashboard?.docker.running ?? 0} / ${dashboard?.docker.stopped ?? 0}`} /></CardContent></Card>
-              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.templates', 'Templates')} value={(dashboard as unknown as { packs?: { total: number } })?.packs?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} sub={`${(dashboard as unknown as { packs?: { installed: number } })?.packs?.installed ?? 0} ${t('dashboard.installed', 'installed')}`} /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes')}><CardContent><StatCard label={t('dashboard.totalNodes')} value={dashboard?.nodes.total ?? 0} icon={<IconNodes className="w-5 h-5" />} /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes?status=active')}><CardContent><StatCard label={t('dashboard.online')} value={dashboard?.nodes.active ?? 0} icon={<IconCheckCircle className="w-5 h-5" />} tone="success" /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes?status=unreachable')}><CardContent><StatCard label={t('dashboard.offline')} value={dashboard?.nodes.unreachable ?? 0} icon={<IconXCircle className="w-5 h-5" />} tone="danger" /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/commands')}><CardContent><StatCard label={t('dashboard.totalCommands')} value={dashboard?.commands.total ?? 0} icon={<IconZap className="w-5 h-5" />} /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/scripts')}><CardContent><StatCard label={t('dashboard.scripts', 'Scripts')} value={(dashboard as unknown as { scripts?: { total: number } })?.scripts?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/docker')}><CardContent><StatCard label={t('dashboard.dockerContainers')} value={dashboard?.docker.total ?? 0} icon={<IconDocker className="w-5 h-5" />} sub={`${dashboard?.docker.running ?? 0} / ${dashboard?.docker.stopped ?? 0}`} /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/templates')}><CardContent><StatCard label={t('dashboard.templates', 'Templates')} value={(dashboard as unknown as { packs?: { total: number } })?.packs?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} sub={`${(dashboard as unknown as { packs?: { installed: number } })?.packs?.installed ?? 0} ${t('dashboard.installed', 'installed')}`} /></CardContent></Card>
             </>
             )}
       </div>
@@ -251,6 +251,8 @@ export function Dashboard() {
               </div>
               {metricsLoading ? (
                 <MetricsChartSkeleton />
+              ) : cmdTotal === 0 ? (
+                <EmptyState title={t('dashboard.noData')} description={t('dashboard.emptyMetrics','No metrics in selected period')} />
               ) : (
                 <MetricsChart data={metrics?.command_metrics || []} height={180} />
               )}
@@ -285,6 +287,8 @@ export function Dashboard() {
               </div>
               {metricsLoading ? (
                 <MetricsChartSkeleton />
+              ) : scrTotal === 0 ? (
+                <EmptyState title={t('dashboard.noData')} description={t('dashboard.emptyMetrics','No metrics in selected period')} />
               ) : (
                 <MetricsChart data={metrics?.script_metrics || []} height={180} />
               )}

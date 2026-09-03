@@ -34,7 +34,6 @@ import {
 } from '../hooks/useScripts'
 import { useNodes } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
-import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
 import { TagFilter } from '../components/ui/TagFilter'
 import { Checkbox } from '../components/ui/Checkbox'
@@ -55,12 +54,11 @@ export function Scripts() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
-  const debouncedSearch = useDebouncedValue(search, 300)
   const [tagFilter, setTagFilter] = useState<string[]>([])
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScripts({ limit, search: debouncedSearch || undefined })
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScripts({ limit, search: search || undefined })
   const data = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: ScriptResponse[] } : undefined
   const { data: tags } = useScriptTags()
   const { data: nodesData } = useNodes({ size: 100 })

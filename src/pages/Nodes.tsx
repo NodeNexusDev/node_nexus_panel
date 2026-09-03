@@ -52,7 +52,6 @@ import {
 } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { useSort } from '../hooks/useSort'
-import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { TagBadge } from '../components/ui/TagBadge'
 import { nodeStatusVariant } from '../lib/variants'
 import type { Node, NodeStatus, NodeUpdate } from '../api/types'
@@ -76,7 +75,6 @@ export function Nodes() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
-  const debouncedSearch = useDebouncedValue(search, 300)
   const [tagFilter, setTagFilter] = useState<string[]>([])
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
@@ -84,7 +82,7 @@ export function Nodes() {
   const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodes({
     limit,
     tag: tagFilter[0] || undefined,
-    search: debouncedSearch || undefined,
+    search: search || undefined,
   })
   const data = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as unknown as { items: Node[] } : undefined
   // keep hasNextPage for InfiniteScroll
@@ -537,22 +535,31 @@ export function Nodes() {
               />
             )}
           />
-          <Input label={t('nodes.username', 'Username')} placeholder="root" {...addForm.register('username')} error={addForm.formState.errors.username?.message} />
-          <Input label={t('nodes.password', 'Password')} type="password" placeholder="••••••" {...addForm.register('password')} error={addForm.formState.errors.password?.message} />
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-            <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" {...addForm.register('ssh_key')} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
-            {addForm.formState.errors.ssh_key && <p className="text-xs text-red-500 mt-1">{addForm.formState.errors.ssh_key.message}</p>}
+          <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
+            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.credentialsSection','Credentials')} {t('common.requiredMark','*')}</p>
+            <div className="space-y-3 p-3 bg-surface-50 dark:bg-surface-800/30 rounded-lg border border-surface-200 dark:border-surface-800">
+              <Input label={`${t('nodes.username', 'Username')}`} placeholder="root" {...addForm.register('username')} error={addForm.formState.errors.username?.message} />
+              <Input label={t('nodes.password', 'Password')} type="password" placeholder="••••••" {...addForm.register('password')} error={addForm.formState.errors.password?.message} />
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
+                <textarea placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" {...addForm.register('ssh_key')} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
+                {addForm.formState.errors.ssh_key && <p className="text-xs text-red-500 mt-1">{addForm.formState.errors.ssh_key.message}</p>}
+              </div>
+              <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder="••••••" {...addForm.register('passphrase')} error={addForm.formState.errors.passphrase?.message} />
+              <p className="text-xs text-surface-500">{t('nodes.credentialsHint','Provide password or SSH key, leave others blank')}</p>
+            </div>
           </div>
-          <Input label={t('nodes.passphrase', 'Passphrase')} type="password" placeholder="••••••" {...addForm.register('passphrase')} error={addForm.formState.errors.passphrase?.message} />
-          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...addForm.register('docker_host')} error={addForm.formState.errors.docker_host?.message} />
-          <Controller
-            name="has_docker"
-            control={addForm.control}
-            render={({ field }) => (
-              <Checkbox checked={field.value ?? false} onChange={field.onChange} label={t('nodes.hasDocker', 'Has Docker')} />
-            )}
-          />
+          <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
+            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.dockerSection','Docker')}</p>
+            <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...addForm.register('docker_host')} error={addForm.formState.errors.docker_host?.message} />
+            <Controller
+              name="has_docker"
+              control={addForm.control}
+              render={({ field }) => (
+                <Checkbox checked={field.value ?? false} onChange={field.onChange} label={t('nodes.hasDocker', 'Has Docker')} />
+              )}
+            />
+          </div>
           <Controller
             name="tags"
             control={addForm.control}
@@ -681,9 +688,9 @@ export function Nodes() {
           <Input label={t('nodes.port')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
           <Input label={t('nodes.username', 'Username')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
-          <div className="flex items-center gap-2">
-            <Checkbox checked={bulkUpdateChanges.has_docker ?? false} onChange={(v) => setBulkUpdateChanges({ ...bulkUpdateChanges, has_docker: v })} label={t('nodes.hasDocker', 'Has Docker')} />
-            <span className="text-xs text-surface-500">{t('nodes.bulkHasDockerHint', 'Toggle to set, leave unchecked to keep unchanged (check twice to clear)')}</span>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.hasDocker', 'Has Docker')}</label>
+            <Select value={bulkUpdateChanges.has_docker === undefined ? 'keep' : bulkUpdateChanges.has_docker ? 'yes' : 'no'} onChange={(v)=> setBulkUpdateChanges({ ...bulkUpdateChanges, has_docker: v==='keep'? undefined : v==='yes' })} options={[{value:'keep',label:t('common.keep','Keep')},{value:'yes',label:t('common.yes','Yes')},{value:'no',label:t('common.no','No')}]} />
           </div>
           <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="comma, separated" value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
