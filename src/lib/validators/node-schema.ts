@@ -8,13 +8,14 @@ export const nodeCreateSchema = z.object({
   host: z.string().min(1).max(255),
   port: z.number().int().min(1).max(65535).default(22),
   connection_type: z.enum(CONNECTION_TYPES),
-  username: z.string().min(1).max(255).nullable().optional(),
-  password: z.string().min(1).nullable().optional(),
-  ssh_key: z.string().min(1).nullable().optional(),
-  passphrase: z.string().min(1).nullable().optional(),
-  docker_host: z.string().min(1).max(255).nullable().optional(),
+  description: z.string().max(1000).nullable().optional(),
+  username: z.string().nullable().optional(),
+  password: z.string().nullable().optional(),
+  ssh_key: z.string().nullable().optional(),
+  passphrase: z.string().nullable().optional(),
+  docker_host: z.string().nullable().optional(),
   has_docker: z.boolean().default(false),
-  tags: z.array(z.string().min(1).max(100)).optional(),
+  tags: z.array(z.string()).optional(),
 })
 
 export const nodeUpdateSchema = z.object({
@@ -23,13 +24,14 @@ export const nodeUpdateSchema = z.object({
   port: z.number().int().min(1).max(65535).nullable().optional(),
   connection_type: z.enum(CONNECTION_TYPES).nullable().optional(),
   status: z.enum(NODE_STATUSES).nullable().optional(),
-  username: z.string().max(255).transform(v => v === '' ? null : v).nullable().optional(),
+  description: z.string().max(1000).nullable().optional(),
+  username: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   password: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   ssh_key: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   passphrase: z.string().transform(v => v === '' ? null : v).nullable().optional(),
-  docker_host: z.string().max(255).transform(v => v === '' ? null : v).nullable().optional(),
+  docker_host: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   has_docker: z.boolean().nullable().optional(),
-  tags: z.array(z.string().min(1).max(100)).nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
 })
 
 export const nodeValidateSchema = z.object({

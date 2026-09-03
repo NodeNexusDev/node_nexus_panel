@@ -33,7 +33,7 @@ export const imageBuildSchema = z.object({
 })
 
 export const bulkImageBuildSchema = z.object({
-  dockerfile: z.string().min(1).max(4096),
+  dockerfile: z.string().min(1).max(1048576),
   tag: z.string().min(1).max(255),
   build_args: z.record(z.string(), z.string()).optional(),
   no_cache: z.boolean().default(false),
@@ -57,6 +57,7 @@ export const containerCreateFormSchema = z.object({
   network: z.string().max(255).default(''),
   labels: z.string().default(''),
   restart_policy: z.string().default(''),
+  detach: z.boolean().default(true),
 })
 
 export type ContainerCreateFormValues = z.infer<typeof containerCreateSchema>
