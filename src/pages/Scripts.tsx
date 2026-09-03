@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui/Card'
@@ -10,7 +10,6 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { TableSkeleton } from '../components/ui/Skeleton'
-import { Pagination } from '../components/ui/Pagination'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
@@ -21,8 +20,9 @@ import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { ScriptFormModal, type ScriptFormValues } from '../components/scripts/ScriptFormModal'
 import { ScriptBulkNodeResultItem } from '../components/scripts/ScriptBulkNodeResultItem'
 import { ExecutionResult } from '../components/commands/ExecutionResult'
+import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import {
-  useScripts,
+  useInfiniteScripts,
   useScriptTags,
   useCreateScript,
   useDeleteScript,
@@ -39,7 +39,7 @@ import { TagBadge } from '../components/ui/TagBadge'
 import { TagFilter } from '../components/ui/TagFilter'
 import { Checkbox } from '../components/ui/Checkbox'
 import { useSort } from '../hooks/useSort'
-import type { ScriptResponse, ScriptExecutionBatchResult } from '../api/types'
+import type { ScriptResponse, ScriptExecutionBatchResult, ScriptCreate, ScriptUpdate } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 
 type SortKey = 'name' | 'steps' | 'tags' | 'updated_at' | 'created_at'
@@ -57,13 +57,11 @@ export function Scripts() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
   const [tagFilter, setTagFilter] = useState<string[]>([])
-  const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
-  const pageSize = 20
+  const limit = 20
 
-  useEffect(() => { setPage(1) }, [debouncedSearch, tagFilter])
-
-  const { data, isLoading } = useScripts({ page, size: pageSize, search: debouncedSearch || undefined })
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScripts({ limit, search: debouncedSearch || undefined })
+  const data = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: ScriptResponse[] } : undefined
   const { data: tags } = useScriptTags()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
@@ -274,11 +272,7 @@ export function Scripts() {
               onRowClick={(script) => navigate(`/scripts/${script.id}`)}
             />
           )}
-          {data && data.total > pageSize && (
-            <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-              <Pagination page={page} totalPages={Math.max(1, Math.ceil(data.total / pageSize))} onPageChange={setPage} />
-            </div>
-          )}
+          <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
         </CardContent>
       </Card>
 
@@ -288,7 +282,7 @@ export function Scripts() {
         pending={createScript.isPending}
         onClose={() => setShowCreateModal(false)}
         onSubmit={(values: ScriptFormValues) => {
-          createScript.mutate(values, {
+          createScript.mutate(values as unknown as ScriptCreate, {
             onSuccess: () => { toast('success', t('scripts.toastCreated', { name: values.name })); setShowCreateModal(false) },
             onError: () => toast('error', t('scripts.toastCreateFailed')),
           })
@@ -303,7 +297,7 @@ export function Scripts() {
         onClose={() => setEditScript(null)}
         onSubmit={(values: ScriptFormValues) => {
           if (!editScript) return
-          updateScript.mutate({ id: editScript.id, data: values }, {
+          updateScript.mutate({ id: editScript.id, data: values as unknown as ScriptUpdate }, {
             onSuccess: () => { toast('success', t('scripts.toastUpdated')); setEditScript(null) },
             onError: () => toast('error', t('scripts.toastUpdateFailed')),
           })
@@ -419,7 +413,7 @@ export function Scripts() {
                   const data: { node_ids?: string[]; node_tags?: string[] } = {}
                   if (runNodeIds.length > 0) data.node_ids = runNodeIds
                   if (runTags) data.node_tags = runTags.split(',').map((s) => s.trim()).filter(Boolean)
-                  runScript.mutate({ id: runTarget.id, data }, { onSuccess: (response) => { toast('success', t('scripts.toastStarted', { name: runTarget.name })); setRunResult(response) }, onError: () => toast('error', t('scripts.toastRunFailed', { name: runTarget.name })) })
+                  runScript.mutate({ id: runTarget.id, data }, { onSuccess: (response) => { toast('success', t('scripts.toastStarted', { name: runTarget.name })); setRunResult(response as unknown as ScriptExecutionBatchResult) }, onError: () => toast('error', t('scripts.toastRunFailed', { name: runTarget.name })) })
                 }
               }} disabled={runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button>
             </div>

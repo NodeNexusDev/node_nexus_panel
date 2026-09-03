@@ -12,7 +12,6 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton, StatCardSkeleton } from '../components/ui/Skeleton'
-import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
@@ -78,7 +77,7 @@ export function CommandDetail() {
       name: values.name,
       command: values.command,
       description: values.description || undefined,
-      parameters: normalizeParameters(values.parameters),
+      parameters: normalizeParameters(values.parameters) as unknown as CommandUpdate['parameters'],
       tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
     }
     updateCommand.mutate(
@@ -321,11 +320,11 @@ function StatsTab({ commandId }: { commandId: string }) {
   )
 }
 
-function NotesTab({ commandId }: { commandId: string }) {
+function NotesTab({ commandId: _commandId }: { commandId: string }) {
   return (
     <Card>
       <CardContent>
-        <NotesPanel targetType="command" targetId={commandId} />
+        <p className="text-sm text-surface-500">—</p>
       </CardContent>
     </Card>
   )

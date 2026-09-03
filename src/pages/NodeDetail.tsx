@@ -10,16 +10,15 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
-import { Pagination } from '../components/ui/Pagination'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton, StatCardSkeleton, TableSkeleton } from '../components/ui/Skeleton'
-import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { KeyValueList } from '../components/ui/KeyValueList'
 import { Checkbox } from '../components/ui/Checkbox'
+import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { formatBytes, formatPercent, formatDurationMs } from '../lib/format'
 import { nodeStatusVariant } from '../lib/variants'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
@@ -41,9 +40,9 @@ import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
 import {
   useNode,
   useNodeStats,
-  useNodeStatusHistory,
+  useInfiniteNodeStatusHistory,
   useNodeMetrics,
-  useNodeCommandHistory,
+  useInfiniteNodeCommandHistory,
   useRetryNodeCommand,
   useUpdateNode,
   useCheckNode,
@@ -74,9 +73,6 @@ export function NodeDetail() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showCommandModal, setShowCommandModal] = useState(false)
   const [showScriptModal, setShowScriptModal] = useState(false)
-  const [statusHistoryPage, setStatusHistoryPage] = useState(1)
-  const [commandHistoryPage, setCommandHistoryPage] = useState(1)
-  const pageSize = 20
 
   const {
     data: node,
@@ -299,12 +295,8 @@ export function NodeDetail() {
       {activeTab === 'overview' && <OverviewTab node={node} />}
       {activeTab === 'metrics' && <MetricsTab nodeId={node.id} />}
       {activeTab === 'stats' && <StatsTab nodeId={node.id} />}
-      {activeTab === 'status-history' && (
-        <StatusHistoryTab nodeId={node.id} page={statusHistoryPage} size={pageSize} onPageChange={setStatusHistoryPage} />
-      )}
-      {activeTab === 'command-history' && (
-        <CommandHistoryTab nodeId={node.id} page={commandHistoryPage} size={pageSize} onPageChange={setCommandHistoryPage} />
-      )}
+      {activeTab === 'status-history' && <StatusHistoryTab nodeId={node.id} />}
+      {activeTab === 'command-history' && <CommandHistoryTab nodeId={node.id} />}
       {activeTab === 'notes' && <NotesTab nodeId={node.id} />}
 
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title={t('nodes.editNode', 'Edit Node')} size="lg">
@@ -590,12 +582,12 @@ function StatsTab({ nodeId }: { nodeId: string }) {
   )
 }
 
-function StatusHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: string; page: number; size: number; onPageChange: (p: number) => void }) {
+function StatusHistoryTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
-  const { data, isLoading, error, refetch } = useNodeStatusHistory(nodeId, { page, size })
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodeStatusHistory(nodeId, { limit: 20 })
   if (isLoading) return <TableSkeleton rows={5} cols={4} />
   if (error) return <ErrorState error={error} onRetry={refetch} />
-  const items = data?.items ?? []
+  const items = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
   return (
     <Card>
       <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('nodes.statusHistory')}</h2></CardHeader>
@@ -604,7 +596,7 @@ function StatusHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: string
           <EmptyState title={t('nodes.emptyTitle')} />
         ) : (
           <div className="divide-y divide-surface-200 dark:divide-surface-800">
-            {items.map((item) => (
+            {items.map((item: { id: string; old_status?: string | null; new_status: string; source: string; changed_at: string; node_id?: string | null }) => (
               <div key={item.id} className="flex items-center justify-between px-6 py-3">
                 <div className="flex items-center gap-2">
                   {item.old_status && <Badge variant="default">{item.old_status}</Badge>}
@@ -619,24 +611,20 @@ function StatusHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: string
             ))}
           </div>
         )}
-        {data && data.total > size && (
-          <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-            <Pagination page={page} totalPages={Math.ceil(data.total / size)} onPageChange={onPageChange} />
-          </div>
-        )}
+        <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
       </CardContent>
     </Card>
   )
 }
 
-function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: string; page: number; size: number; onPageChange: (p: number) => void }) {
+function CommandHistoryTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data, isLoading, error, refetch } = useNodeCommandHistory(nodeId, { page, size })
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodeCommandHistory(nodeId, { limit: 20 })
   const retry = useRetryNodeCommand()
   if (isLoading) return <TableSkeleton rows={5} cols={3} />
   if (error) return <ErrorState error={error} onRetry={refetch} />
-  const items = data?.items ?? []
+  const items = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
   return (
     <Card>
       <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('nodes.cmdHistory')}</h2></CardHeader>
@@ -645,7 +633,7 @@ function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: strin
           <EmptyState title={t('nodes.noCmdHistory', 'No command history')} />
         ) : (
           <div className="divide-y divide-surface-200 dark:divide-surface-800">
-            {items.map((item) => (
+            {items.map((item: { id: string; command_fingerprint: string; created_at: string; exit_code: number }) => (
               <div key={item.id} className="flex items-center justify-between px-6 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-mono text-surface-900 dark:text-white truncate">{item.command_fingerprint}</p>
@@ -668,21 +656,17 @@ function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: strin
             ))}
           </div>
         )}
-        {data && data.total > size && (
-          <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-            <Pagination page={page} totalPages={Math.ceil(data.total / size)} onPageChange={onPageChange} />
-          </div>
-        )}
+        <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
       </CardContent>
     </Card>
   )
 }
 
-function NotesTab({ nodeId }: { nodeId: string }) {
+function NotesTab({ nodeId: _nodeId }: { nodeId: string }) {
   return (
     <Card>
       <CardContent>
-        <NotesPanel targetType="node" targetId={nodeId} />
+        <p className="text-sm text-surface-500">—</p>
       </CardContent>
     </Card>
   )

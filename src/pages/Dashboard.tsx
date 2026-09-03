@@ -113,17 +113,19 @@ export function Dashboard() {
         <p className="text-surface-500 dark:text-surface-400 mt-1">{t('dashboard.description')}</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" aria-busy={dashboardLoading} aria-live="polite">
+      {/* Stats — now with real v2 counts for commands/scripts/packs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" aria-busy={dashboardLoading} aria-live="polite">
         {dashboardLoading
-          ? Array.from({ length: 5 }).map((_, i) => (<StatCardSkeleton key={i} />))
+          ? Array.from({ length: 7 }).map((_, i) => (<StatCardSkeleton key={i} />))
           : (
             <>
               <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.totalNodes')} value={dashboard?.nodes.total ?? 0} icon={<IconNodes className="w-5 h-5" />} /></CardContent></Card>
               <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.online')} value={dashboard?.nodes.active ?? 0} icon={<IconCheckCircle className="w-5 h-5" />} tone="success" /></CardContent></Card>
               <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.offline')} value={dashboard?.nodes.unreachable ?? 0} icon={<IconXCircle className="w-5 h-5" />} tone="danger" /></CardContent></Card>
               <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.totalCommands')} value={dashboard?.commands.total ?? 0} icon={<IconZap className="w-5 h-5" />} /></CardContent></Card>
+              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.scripts', 'Scripts')} value={(dashboard as unknown as { scripts?: { total: number } })?.scripts?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} /></CardContent></Card>
               <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.dockerContainers')} value={dashboard?.docker.total ?? 0} icon={<IconDocker className="w-5 h-5" />} sub={`${dashboard?.docker.running ?? 0} / ${dashboard?.docker.stopped ?? 0}`} /></CardContent></Card>
+              <Card hover className="stagger-item"><CardContent><StatCard label={t('dashboard.templates', 'Templates')} value={(dashboard as unknown as { packs?: { total: number } })?.packs?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} sub={`${(dashboard as unknown as { packs?: { installed: number } })?.packs?.installed ?? 0} ${t('dashboard.installed', 'installed')}`} /></CardContent></Card>
             </>
             )}
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
@@ -10,7 +10,7 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { TableSkeleton } from '../components/ui/Skeleton'
-import { Pagination } from '../components/ui/Pagination'
+import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
@@ -19,7 +19,7 @@ import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMe
 import { IconCommands, IconZap } from '../components/ui/Icons'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import {
-  useCommands,
+  useInfiniteCommands,
   useCommandTags,
   useCreateCommand,
   useUpdateCommand,
@@ -52,17 +52,11 @@ export function Commands() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
   const [tagFilter, setTagFilter] = useState<string[]>([])
-  const [page, setPage] = useState(1)
   const { sort, toggle: toggleSort } = useSort<SortKey>()
-  const pageSize = 20
+  const limit = 20
 
-  useEffect(() => { setPage(1) }, [debouncedSearch, tagFilter])
-
-  const { data: commandsData, isLoading } = useCommands({
-    page,
-    size: pageSize,
-    search: debouncedSearch || undefined,
-  })
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteCommands({ limit, search: debouncedSearch || undefined })
+  const commandsData = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: CommandResponse[] } : undefined
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()
   const updateCommand = useUpdateCommand()
@@ -84,7 +78,7 @@ export function Commands() {
   })
 
   const commands = (commandsData?.items || []).filter(
-    (cmd) => tagFilter.length === 0 || tagFilter.some((t) => cmd.tags.includes(t))
+    (cmd: CommandResponse) => tagFilter.length === 0 || tagFilter.some((t) => cmd.tags.includes(t))
   )
 
   const sortedCommands = sort
@@ -127,7 +121,7 @@ export function Commands() {
       name: values.name,
       command: values.command,
       description: values.description || undefined,
-      parameters: normalizeParameters(values.parameters),
+      parameters: normalizeParameters(values.parameters) as unknown as CommandCreate['parameters'],
       tags: values.tags,
     }
     createCommand.mutate(data, {
@@ -142,7 +136,7 @@ export function Commands() {
       name: values.name,
       command: values.command,
       description: values.description || undefined,
-      parameters: normalizeParameters(values.parameters),
+      parameters: normalizeParameters(values.parameters) as unknown as CommandUpdate['parameters'],
       tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
     }
     updateCommand.mutate(
@@ -299,11 +293,7 @@ export function Commands() {
               onRowClick={(cmd) => navigate(`/commands/${cmd.id}`)}
             />
           )}
-          {commandsData && commandsData.total > pageSize && (
-            <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-              <Pagination page={page} totalPages={Math.max(1, Math.ceil(commandsData.total / pageSize))} onPageChange={setPage} />
-            </div>
-          )}
+          <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
         </CardContent>
       </Card>
 

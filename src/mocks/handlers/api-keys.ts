@@ -4,7 +4,7 @@ import { mockApiKeys } from '../data/api-keys'
 const API_URL = '*'
 
 export const apiKeyHandlers = [
-  http.get(`${API_URL}/api/v1/api-keys/`, ({ request }) => {
+  http.get(`${API_URL}/api/v2/api-keys/`, ({ request }) => {
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')
@@ -13,7 +13,7 @@ export const apiKeyHandlers = [
     return HttpResponse.json({ items, total: mockApiKeys.length, page, size })
   }),
 
-  http.post(`${API_URL}/api/v1/api-keys/`, async ({ request }) => {
+  http.post(`${API_URL}/api/v2/api-keys/`, async ({ request }) => {
     const body = (await request.json()) as { name: string; scope?: string }
     const newKey = {
       id: String(mockApiKeys.length + 1),
@@ -35,14 +35,14 @@ export const apiKeyHandlers = [
     return HttpResponse.json(newKey, { status: 201 })
   }),
 
-  http.delete(`${API_URL}/api/v1/api-keys/:id`, ({ params }) => {
+  http.delete(`${API_URL}/api/v2/api-keys/:id`, ({ params }) => {
     const idx = mockApiKeys.findIndex((k) => k.id === params.id)
     if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     mockApiKeys.splice(idx, 1)
     return new HttpResponse(null, { status: 204 })
   }),
 
-  http.patch(`${API_URL}/api/v1/api-keys/:id`, async ({ params, request }) => {
+  http.patch(`${API_URL}/api/v2/api-keys/:id`, async ({ params, request }) => {
     const idx = mockApiKeys.findIndex((k) => k.id === params.id)
     if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const body = (await request.json()) as Record<string, unknown>

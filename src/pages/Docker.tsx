@@ -18,9 +18,10 @@ import { ImagesTab } from '../components/docker/ImagesTab'
 import { NetworksTab } from '../components/docker/NetworksTab'
 import { VolumesTab } from '../components/docker/VolumesTab'
 import { SystemTab } from '../components/docker/SystemTab'
+import { ComposeTab } from '../components/docker/ComposeTab'
 import type { DockerPullResult } from '../api/types'
 
-type Tab = 'containers' | 'images' | 'networks' | 'volumes' | 'system'
+type Tab = 'containers' | 'images' | 'networks' | 'volumes' | 'system' | 'compose'
 
 export function Docker() {
   const { t } = useTranslation()
@@ -63,6 +64,7 @@ export function Docker() {
     { key: 'networks', label: t('docker.networks') },
     { key: 'volumes', label: t('docker.volumes') },
     { key: 'system', label: t('docker.system', 'System') },
+    { key: 'compose', label: t('docker.compose', 'Compose') },
   ]
 
   return (
@@ -107,6 +109,7 @@ export function Docker() {
               {activeTab === 'networks' && <NetworksTab nodeId={selectedNodeId} />}
               {activeTab === 'volumes' && <VolumesTab nodeId={selectedNodeId} />}
               {activeTab === 'system' && <SystemTab nodeId={selectedNodeId} />}
+              {activeTab === 'compose' && <ComposeTab nodeId={selectedNodeId} />}
             </>
           )}
         </CardContent>

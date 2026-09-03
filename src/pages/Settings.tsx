@@ -118,7 +118,7 @@ export function Settings() {
 
   const handleConfirmImport = () => {
     if (!importPreview) return
-    configImport.mutate(importPreview.data, {
+    configImport.mutate(importPreview.data as unknown as Parameters<typeof configImport.mutate>[0], {
       onSuccess: (result) => {
         if ('nodes_created' in result) {
           const summary = [result.nodes_created, result.commands_created, result.scripts_created].filter(Boolean).join(', ')

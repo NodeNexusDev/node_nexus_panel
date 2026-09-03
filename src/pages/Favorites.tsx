@@ -7,10 +7,10 @@ import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
-import { Pagination } from '../components/ui/Pagination'
 import { PageHeader } from '../components/ui/PageHeader'
 import { IconStar } from '../components/ui/Icons'
-import { useFavorites, useRemoveFavorite } from '../hooks/useFavorites'
+import { InfiniteScroll } from '../components/ui/InfiniteScroll'
+import { useInfiniteFavorites, useRemoveFavorite } from '../hooks/useFavorites'
 import { useToast } from '../components/ui/useToast'
 import type { FavoriteResponse } from '../api/types'
 
@@ -25,14 +25,13 @@ export function Favorites() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const navigate = useNavigate()
-  const [page, setPage] = useState(1)
   const [targetType, setTargetType] = useState('')
-  const pageSize = 20
+  const limit = 20
 
-  const { data, isLoading } = useFavorites({ page, size: pageSize, target_type: targetType || undefined })
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteFavorites({ limit, target_type: targetType || undefined })
   const removeFavorite = useRemoveFavorite()
 
-  const favorites = data?.items ?? []
+  const favorites = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
 
   const handleNavigate = (fav: FavoriteResponse) => {
     if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`)
@@ -60,7 +59,7 @@ export function Favorites() {
             <div className="w-48">
               <Select
                 value={targetType}
-                onChange={(val) => { setTargetType(val); setPage(1) }}
+                onChange={setTargetType}
                 placeholder={t('favorites.allTypes', 'All types')}
                 options={[
                   { value: 'node', label: t('favorites.node') },
@@ -85,7 +84,7 @@ export function Favorites() {
             />
           ) : (
             <div className="divide-y divide-surface-200 dark:divide-surface-800">
-              {favorites.map((fav) => {
+              {favorites.map((fav: FavoriteResponse) => {
                 const name = fav.name || fav.target_id
                 return (
                   <div key={fav.id} className="flex items-center justify-between px-6 py-4">
@@ -106,14 +105,9 @@ export function Favorites() {
               })}
             </div>
           )}
+          <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
         </CardContent>
       </Card>
-
-      {data && data.total > pageSize && (
-        <div className="flex justify-center">
-          <Pagination page={page} totalPages={Math.ceil(data.total / pageSize)} onPageChange={setPage} />
-        </div>
-      )}
     </div>
   )
 }

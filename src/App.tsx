@@ -30,6 +30,7 @@ const Docker = lazy(() => import('./pages/Docker').then((m) => ({ default: m.Doc
 const Audit = lazy(() => import('./pages/Audit').then((m) => ({ default: m.Audit })))
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })))
 const Favorites = lazy(() => import('./pages/Favorites').then((m) => ({ default: m.Favorites })))
+const Templates = lazy(() => import('./pages/Templates').then((m) => ({ default: m.Templates })))
 
 function Loading() {
   return (
@@ -63,6 +64,7 @@ function App() {
               <Route path="/audit" element={<Suspense fallback={<AuditSkeleton />}><Audit /></Suspense>} />
               <Route path="/settings" element={<Suspense fallback={<SettingsSkeleton />}><Settings /></Suspense>} />
               <Route path="/favorites" element={<Suspense fallback={<FavoritesSkeleton />}><Favorites /></Suspense>} />
+              <Route path="/templates" element={<Suspense fallback={<SettingsSkeleton />}><Templates /></Suspense>} />
             </Route>
           </Route>
           <Route path="*" element={<Suspense fallback={<Loading />}><NotFound /></Suspense>} />

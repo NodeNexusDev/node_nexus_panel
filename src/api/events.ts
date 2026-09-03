@@ -68,7 +68,7 @@ export class EventsClient {
       headers['Last-Event-ID'] = this._lastEventId
     }
 
-    fetchEventSource(`${BASE_URL}/api/v1/events/stream`, {
+    fetchEventSource(`${BASE_URL}/api/v2/events/stream`, {
       headers,
       signal: this.controller.signal,
       openWhenHidden: false,

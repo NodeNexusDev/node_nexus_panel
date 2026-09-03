@@ -23,6 +23,7 @@ const navItems = [
   { to: '/commands', key: 'nav.commands', Icon: IconCommands },
   { to: '/scripts', key: 'nav.scripts', Icon: IconScripts },
   { to: '/docker', key: 'nav.docker', Icon: IconDocker },
+  { to: '/templates', key: 'nav.templates', Icon: IconScripts },
   { to: '/favorites', key: 'nav.favorites', Icon: IconStar },
   { to: '/audit', key: 'nav.audit', Icon: IconAudit },
   { to: '/settings', key: 'nav.settings', Icon: IconSettings },
@@ -56,6 +57,7 @@ export function MainLayout() {
     '/audit': 'audit.title',
     '/settings': 'settings.title',
     '/favorites': 'favorites.title',
+    '/templates': 'templates.title',
   }
 
   const titleKey = staticTitles[location.pathname]

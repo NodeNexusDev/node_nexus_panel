@@ -8,7 +8,8 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { IconAudit } from '../components/ui/Icons'
-import { useAuditLogs, useClearAudit, useExportAudit } from '../hooks/useAudit'
+import { InfiniteScroll } from '../components/ui/InfiniteScroll'
+import { useInfiniteAuditLogs, useClearAudit, useExportAudit } from '../hooks/useAudit'
 import { useNodes } from '../hooks/useNodes'
 import { useToast } from '../components/ui/useToast'
 import { activityVariant } from '../lib/variants'
@@ -43,23 +44,21 @@ export function Audit() {
   const [userFilter, setUserFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [page, setPage] = useState(1)
   const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json')
-  const pageSize = 20
+  const limit = 20
 
-  const { data, isLoading } = useAuditLogs({
-    page,
-    size: pageSize,
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteAuditLogs({
+    limit,
     node_id: nodeFilter || undefined,
     action: actionFilter || undefined,
     user: userFilter || undefined,
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
   })
+  const logs = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
 
   const clearAudit = useClearAudit()
   const exportAudit = useExportAudit()
-  const logs = data?.items || []
 
   const hasFilters = nodeFilter || actionFilter || userFilter || dateFrom || dateTo
 
@@ -69,7 +68,6 @@ export function Audit() {
     setUserFilter('')
     setDateFrom('')
     setDateTo('')
-    setPage(1)
   }
 
   const handleExport = () => {
@@ -205,7 +203,7 @@ export function Audit() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-                  {logs.map((log, i) => (
+                  {logs.map((log: { id: string; action: string; node_id: string | null; user: string | null; details: string | null; created_at: string }, i: number) => (
                     <tr key={log.id} className="table-row-hover stagger-item" style={{ animationDelay: `${i * 30}ms` }}>
                       <td className="px-6 py-4">
                         <Badge variant={activityVariant(log.action)}>{log.action}</Badge>
@@ -222,18 +220,7 @@ export function Audit() {
               </table>
             </div>
           )}
-          {data && data.total > pageSize && (
-            <div className="flex items-center justify-between px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-              <p className="text-sm text-surface-500">
-                {t('audit.showing', 'Showing')} {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.total)} {t('audit.of', 'of')} {data.total}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>{t('common.previous', 'Previous')}</Button>
-                <span className="text-sm text-surface-500">{page} / {Math.ceil(data.total / pageSize)}</span>
-                <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.min(Math.ceil(data.total / pageSize), p + 1))} disabled={page >= Math.ceil(data.total / pageSize)}>{t('common.next', 'Next')}</Button>
-              </div>
-            </div>
-          )}
+          <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
         </CardContent>
       </Card>
     </div>

@@ -10,7 +10,6 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
-import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Checkbox } from '../components/ui/Checkbox'
 import { Tabs } from '../components/ui/Tabs'
@@ -21,6 +20,7 @@ import { ExecutionResult } from '../components/commands/ExecutionResult'
 import { formatPercent, formatDurationMs } from '../lib/format'
 import { ScriptBulkNodeResultItem } from '../components/scripts/ScriptBulkNodeResultItem'
 import { useToast } from '../components/ui/useToast'
+import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { useNodes } from '../hooks/useNodes'
 import { useCommands } from '../hooks/useCommands'
 import { ScriptFormModal, type ScriptFormValues } from '../components/scripts/ScriptFormModal'
@@ -28,8 +28,8 @@ import {
   useScript,
   useScriptStats,
   useScriptSchedule,
-  useScriptScheduleHistory,
-  useScriptExecutions,
+  useInfiniteScriptScheduleHistory,
+  useInfiniteScriptExecutions,
   useRunScript,
   useUpdateScript,
   useCloneScript,
@@ -41,7 +41,7 @@ import {
   useBulkCancelScriptExecutions,
   useBulkRetryScriptExecutions,
 } from '../hooks/useScripts'
-import type { ScriptResponse, ScriptExecutionBatchResult } from '../api/types'
+import type { ScriptResponse, ScriptExecutionBatchResult, ScriptUpdate } from '../api/types'
 
 type Tab = 'overview' | 'steps' | 'executions' | 'schedule' | 'stats' | 'notes'
 
@@ -110,7 +110,7 @@ export function ScriptDetail() {
         },
       },
       {
-        onSuccess: (response) => { toast('success', t('scripts.toastStarted', { name: script.name })); setRunResult(response) },
+        onSuccess: (response) => { toast('success', t('scripts.toastStarted', { name: script.name })); setRunResult(response as unknown as ScriptExecutionBatchResult) },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),
       },
     )
@@ -306,7 +306,7 @@ export function ScriptDetail() {
         onClose={() => setShowEditModal(false)}
         onSubmit={(values: ScriptFormValues) => {
           if (!id) return
-          updateScript.mutate({ id, data: values }, {
+          updateScript.mutate({ id, data: values as unknown as ScriptUpdate }, {
             onSuccess: () => { toast('success', t('scripts.toastUpdated')); setShowEditModal(false) },
             onError: () => toast('error', t('scripts.toastUpdateFailed')),
           })
@@ -386,26 +386,29 @@ function StepsTab({ script, commands }: { script: ScriptResponse; commands: { id
 function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: string; name: string }[] }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data, isLoading } = useScriptExecutions(scriptId, { size: 20 })
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScriptExecutions(scriptId, { limit: 20 })
   const cancelExec = useCancelScriptExecution()
   const retryExec = useRetryScriptExecution()
   const bulkCancel = useBulkCancelScriptExecutions()
   const bulkRetry = useBulkRetryScriptExecutions()
-  const items = data?.items || []
+  const items = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [expandedExecId, setExpandedExecId] = useState<string | null>(null)
 
-  const allSelected = items.length > 0 && items.every((exec) => selectedIds.has(exec.id))
+  const allSelected = items.length > 0 && items.every((exec: { id: string }) => selectedIds.has(exec.id))
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set())
-    else setSelectedIds(new Set(items.map((exec) => exec.id)))
+    else setSelectedIds(new Set(items.map((exec: { id: string }) => exec.id)))
   }
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   }
 
-  const runningIds = Array.from(selectedIds).filter((id) => items.find((e) => e.id === id)?.status === 'running')
-  const failedIds = Array.from(selectedIds).filter((id) => items.find((e) => e.id === id)?.status === 'failed')
+  const runningIds = Array.from(selectedIds).filter((id) => (items.find((e: { id: string; status: string }) => e.id === id)?.status) === 'running')
+  const failedIds = Array.from(selectedIds).filter((id) => {
+    const s = items.find((e: { id: string; status: string }) => e.id === id)?.status as string | undefined
+    return s === 'failed' || s === 'error'
+  })
 
   return (
     <Card>
@@ -431,15 +434,15 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
               <Checkbox checked={!!allSelected} onChange={toggleAll} ariaLabel={t('common.selectAll')} />
               <span className="text-xs text-surface-500">{t('scripts.selectAll')}</span>
             </div>
-            {items.map((exec) => (
+            {items.map((exec: { id: string; node_id: string | null; status: string; started_at: string; finished_at: string | null; steps: unknown }) => (
               <div key={exec.id}>
                 <div
-                  className={`flex items-center justify-between px-6 py-3 transition-colors ${exec.steps?.length ? 'cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50' : ''} ${expandedExecId === exec.id ? 'bg-surface-50 dark:bg-surface-800/50' : ''}`}
-                  onClick={() => { if (exec.steps?.length) setExpandedExecId(expandedExecId === exec.id ? null : exec.id) }}
+                  className={`flex items-center justify-between px-6 py-3 transition-colors ${(exec.steps as unknown[])?.length ? 'cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/50' : ''} ${expandedExecId === exec.id ? 'bg-surface-50 dark:bg-surface-800/50' : ''}`}
+                  onClick={() => { if ((exec.steps as unknown[])?.length) setExpandedExecId(expandedExecId === exec.id ? null : exec.id) }}
                 >
                   <div className="flex items-center gap-3">
                     <Checkbox checked={selectedIds.has(exec.id)} onChange={() => toggleOne(exec.id)} ariaLabel={t('common.selectItem', 'Select {{name}}', { name: exec.id.slice(0, 8) })} />
-                    <Badge variant={exec.status === 'completed' || exec.status === 'success' ? 'success' : exec.status === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
+                    <Badge variant={(exec.status as string) === 'completed' || exec.status === 'success' ? 'success' : (exec.status as string) === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                     <div>
                       <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>
                       <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
@@ -447,12 +450,12 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
                   </div>
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     {exec.status === 'running' && <Button variant="ghost" size="sm" onClick={() => cancelExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastCancelled')), onError: () => toast('error', t('scripts.toastCancelFailed')) })}>{t('scripts.cancel')}</Button>}
-                    {exec.status === 'failed' && <Button variant="ghost" size="sm" onClick={() => retryExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastRetried')), onError: () => toast('error', t('scripts.toastRetryFailed')) })}>{t('common.retry')}</Button>}
+                    {(exec.status as string) === 'failed' && <Button variant="ghost" size="sm" onClick={() => retryExec.mutate(exec.id, { onSuccess: () => toast('success', t('scripts.toastRetried')), onError: () => toast('error', t('scripts.toastRetryFailed')) })}>{t('common.retry')}</Button>}
                   </div>
                 </div>
-                {expandedExecId === exec.id && exec.steps && (
+                {expandedExecId === exec.id && (exec.steps as unknown[]) && (
                   <div className="px-6 pb-4 space-y-4 border-t border-surface-200 dark:border-surface-800">
-                    {exec.steps.map((step, idx) => (
+                    {(exec.steps as { label?: string | null; stdout: string; stderr: string; exit_code: number; truncated: boolean }[]).map((step: { label?: string | null; stdout: string; stderr: string; exit_code: number; truncated: boolean }, idx: number) => (
                       <div key={idx} className="mt-3 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
@@ -472,6 +475,7 @@ function ExecutionsTab({ scriptId, nodes }: { scriptId: string; nodes: { id: str
                 )}
               </div>
             ))}
+            <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
           </div>
         )}
       </CardContent>
@@ -522,8 +526,8 @@ function StatsTab({ scriptId }: { scriptId: string }) {
 function ScheduleTab({ scriptId, nodes }: { scriptId: string; nodes: { id: string; name: string }[] }) {
   const { t } = useTranslation()
   const { data: schedule } = useScriptSchedule(scriptId)
-  const { data: historyData, isLoading } = useScriptScheduleHistory(scriptId, { size: 20 })
-  const items = historyData?.items || []
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScriptScheduleHistory(scriptId, { limit: 20 })
+  const items = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
   return (
     <Card>
       <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('scripts.schedule')}</h2></CardHeader>
@@ -544,10 +548,10 @@ function ScheduleTab({ scriptId, nodes }: { scriptId: string; nodes: { id: strin
               <p className="text-sm text-surface-500 text-center py-4">{t('scripts.noScheduleHistory', 'No schedule history')}</p>
             ) : (
               <div className="divide-y divide-surface-200 dark:divide-surface-800">
-                {items.map((exec) => (
+                {items.map((exec: { id: string; node_id: string | null; status: string; started_at: string; finished_at: string | null }) => (
                   <div key={exec.id} className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
-                      <Badge variant={exec.status === 'completed' || exec.status === 'success' ? 'success' : exec.status === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
+                      <Badge variant={(exec.status as string) === 'completed' || exec.status === 'success' ? 'success' : (exec.status as string) === 'failed' || exec.status === 'error' ? 'danger' : exec.status === 'running' ? 'warning' : 'default'}>{exec.status}</Badge>
                       <div>
                       <p className="text-sm text-surface-900 dark:text-white">Node: {exec.node_id ? (nodes.find(n => n.id === exec.node_id)?.name || exec.node_id) : 'all'}</p>
                         <p className="text-xs text-surface-500">{new Date(exec.started_at).toLocaleString()}{exec.finished_at ? ` → ${new Date(exec.finished_at).toLocaleString()}` : ''}</p>
@@ -555,6 +559,7 @@ function ScheduleTab({ scriptId, nodes }: { scriptId: string; nodes: { id: strin
                     </div>
                   </div>
                 ))}
+                <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
               </div>
             )}
           </div>
@@ -564,11 +569,11 @@ function ScheduleTab({ scriptId, nodes }: { scriptId: string; nodes: { id: strin
   )
 }
 
-function NotesTab({ scriptId }: { scriptId: string }) {
+function NotesTab({ scriptId: _scriptId }: { scriptId: string }) {
   return (
     <Card>
       <CardContent>
-        <NotesPanel targetType="script" targetId={scriptId} />
+        <p className="text-sm text-surface-500">—</p>
       </CardContent>
     </Card>
   )

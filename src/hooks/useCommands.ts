@@ -1,20 +1,41 @@
-import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { commandsApi } from '../api/commands'
 import type {
   CommandResponse,
   CommandCreate,
   CommandUpdate,
-  CommandExecuteRequest,
-  BulkCommandRequest,
+  CursorPage_CommandResponse_,
   ExecutionStatsResponse,
-  PaginatedResponse,
 } from '../api/types'
 
-export function useCommands(params?: { page?: number; size?: number; tag?: string; search?: string }) {
-  return useQuery<PaginatedResponse<CommandResponse>>({
+export function useCommands(params?: { page?: number; size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
+  // Translate legacy page/size to cursor/limit
+  const apiParams: { cursor?: string | null; limit?: number; tag?: string | null; search?: string | null } = {}
+  if (params?.cursor !== undefined) apiParams.cursor = params.cursor
+  else if (params?.page != null) {
+    const limit = params.limit ?? params.size ?? 20
+    const offset = (params.page - 1) * limit
+    apiParams.cursor = offset ? btoa(String(offset)) : null
+    apiParams.limit = limit
+  } else {
+    if (params?.limit != null) apiParams.limit = params.limit
+    if (params?.size != null) apiParams.limit = params.size
+  }
+  if (params?.tag) apiParams.tag = params.tag
+  if (params?.search) apiParams.search = params.search
+  return useQuery<CursorPage_CommandResponse_>({
     queryKey: ['commands', 'list', params],
-    queryFn: () => commandsApi.getAll(params),
+    queryFn: () => commandsApi.getAll(apiParams),
     placeholderData: keepPreviousData,
+  })
+}
+
+export function useInfiniteCommands(params?: { limit?: number; tag?: string | null; search?: string | null }) {
+  return useInfiniteQuery({
+    queryKey: ['commands', 'infinite', params],
+    queryFn: ({ pageParam }) => commandsApi.getAll({ cursor: pageParam as string | null, limit: params?.limit, tag: params?.tag, search: params?.search }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
   })
 }
 
@@ -28,38 +49,29 @@ export function useCommand(id: string) {
 
 export function useCreateCommand() {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: (data: CommandCreate) => commandsApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['commands'] })
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['commands'] }),
   })
 }
 
 export function useUpdateCommand() {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: CommandUpdate }) => commandsApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['commands'] })
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['commands'] }),
   })
 }
 
 export function useCloneCommand() {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: ({ id, newName }: { id: string; newName?: string }) => commandsApi.clone(id, newName),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['commands'] })
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['commands'] }),
   })
 }
 
-export function useCommandStats(id: string, params?: { date_from?: string; date_to?: string }) {
+export function useCommandStats(id: string, params?: { date_from?: string; date_to?: string; group_by?: string }) {
   return useQuery<ExecutionStatsResponse>({
     queryKey: ['commands', 'detail', id, 'stats', params],
     queryFn: () => commandsApi.getStats(id, params),
@@ -76,32 +88,29 @@ export function useCommandTags() {
 
 export function useExecuteCommand() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CommandExecuteRequest }) =>
-      commandsApi.execute(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['commands'] })
+    mutationFn: ({ id, node_id, params }: { id: string; node_id?: string; node_ids?: string[]; node_tags?: string[]; params?: Record<string, unknown>; data?: unknown }) => {
+      // Support legacy {id, data:{node_id, params}} and new {id, node_id, params}
+      const data = (arguments[0] as { data?: { node_id?: string; node_ids?: string[]; params?: Record<string, unknown> } }).data
+      if (data) return commandsApi.execute(id, data as { node_id: string; params?: Record<string, unknown> })
+      return commandsApi.execute(id, { node_id, params } as { node_id: string; params?: Record<string, unknown> })
     },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['commands'] }),
   })
 }
 
 export function useDeleteCommand() {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: (id: string) => commandsApi.remove(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['commands'] })
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['commands'] }),
   })
 }
 
 export function useBulkExecuteCommand() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: ({ commandId, data }: { commandId: string; data: BulkCommandRequest }) =>
+    mutationFn: ({ commandId, data }: { commandId: string; data: { node_ids?: string[]; node_tags?: string[]; params?: Record<string, unknown> } }) =>
       commandsApi.bulkExecute(commandId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['commands'] })
@@ -111,13 +120,9 @@ export function useBulkExecuteCommand() {
 }
 
 export function useExecuteRawCommand() {
-  return useMutation({
-    mutationFn: commandsApi.executeRaw,
-  })
+  return useMutation({ mutationFn: commandsApi.executeRaw })
 }
 
 export function useBulkExecuteRawCommand() {
-  return useMutation({
-    mutationFn: commandsApi.bulkExecuteGlobal,
-  })
+  return useMutation({ mutationFn: commandsApi.bulkExecuteGlobal })
 }

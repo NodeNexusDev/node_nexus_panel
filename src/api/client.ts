@@ -9,7 +9,7 @@ class ApiClient {
   private refreshPromise: Promise<string | null> | null = null
 
   constructor(baseUrl: string) {
-    this.baseUrl = `${baseUrl}/api/v1`
+    this.baseUrl = `${baseUrl}/api/v2`
   }
 
   setToken(token: string | null) {

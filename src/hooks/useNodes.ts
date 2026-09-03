@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { nodesApi } from '../api/nodes'
 import { commandsApi } from '../api/commands'
 import type {
@@ -7,18 +7,56 @@ import type {
   NodeUpdate,
   NodeMetrics,
   ExecutionStatsResponse,
-  NodeStatusHistoryItem,
-  CommandHistoryResponse,
   NodeListResponse,
-  PaginatedResponse,
+  CursorPage_NodeStatusHistoryItem_,
+  CursorPage_CommandHistoryResponse_,
+  BulkResult_BulkNodeUpdateResult_,
+  BulkResult_BulkNodeMetricsResult_,
+  BulkResult_BulkValidateCredentialsResult_,
+  CredentialValidationsRequest,
+  NodeBulkUpdatesRequest,
   ConnectionType,
 } from '../api/types'
 
-export function useNodes(params?: { page?: number; size?: number; tags?: string; search?: string; cursor?: string; limit?: number }) {
+export function useNodes(params?: { page?: number; size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
+  const apiParams: { cursor?: string | null; limit?: number; tag?: string | null; search?: string | null } = {}
+  if (params?.cursor !== undefined) apiParams.cursor = params.cursor
+  else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+  if (params?.tag) apiParams.tag = params.tag
+  if (params?.search) apiParams.search = params.search
   return useQuery<NodeListResponse>({
     queryKey: ['nodes', 'list', params],
-    queryFn: () => nodesApi.getAll(params),
+    queryFn: () => nodesApi.getAll(apiParams),
     placeholderData: keepPreviousData,
+  })
+}
+
+export function useInfiniteNodes(params?: { limit?: number; tag?: string | null; search?: string | null }) {
+  return useInfiniteQuery({
+    queryKey: ['nodes', 'infinite', params],
+    queryFn: ({ pageParam }) => nodesApi.getAll({ cursor: pageParam as string | null, limit: params?.limit, tag: params?.tag, search: params?.search }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => (lastPage as unknown as { has_more: boolean; next_cursor: string | null }).has_more ? (lastPage as unknown as { next_cursor: string | null }).next_cursor : undefined,
+  })
+}
+
+export function useInfiniteNodeStatusHistory(id: string, params?: { limit?: number }) {
+  return useInfiniteQuery({
+    queryKey: ['nodes', 'detail', id, 'status-history', 'infinite', params],
+    queryFn: ({ pageParam }) => nodesApi.getStatusHistory(id, { cursor: pageParam as string | null, limit: params?.limit }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    enabled: !!id,
+  })
+}
+
+export function useInfiniteNodeCommandHistory(id: string, params?: { limit?: number }) {
+  return useInfiniteQuery({
+    queryKey: ['nodes', 'detail', id, 'commands-history', 'infinite', params],
+    queryFn: ({ pageParam }) => commandsApi.getHistory({ node_id: id, cursor: pageParam as string | null, limit: params?.limit }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    enabled: !!id,
   })
 }
 
@@ -39,10 +77,15 @@ export function useNodeStats(id: string, params?: { date_from?: string; date_to?
   })
 }
 
-export function useNodeStatusHistory(id: string, params?: { page?: number; size?: number }) {
-  return useQuery<PaginatedResponse<NodeStatusHistoryItem>>({
+export function useNodeStatusHistory(id: string, params?: { page?: number; size?: number; cursor?: string | null; limit?: number }) {
+  return useQuery<CursorPage_NodeStatusHistoryItem_>({
     queryKey: ['nodes', 'detail', id, 'status-history', params],
-    queryFn: () => nodesApi.getStatusHistory(id, params),
+    queryFn: () => {
+      const apiParams: { cursor?: string | null; limit?: number } = {}
+      if (params?.cursor !== undefined) apiParams.cursor = params.cursor
+      else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+      return nodesApi.getStatusHistory(id, apiParams)
+    },
     enabled: !!id,
     placeholderData: keepPreviousData,
   })
@@ -115,7 +158,7 @@ export function useRefreshHostKey() {
 export function useBulkCheck() {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<BulkResult_BulkNodeUpdateResult_, Error, string[]>({
     mutationFn: (nodeIds: string[]) => nodesApi.bulkCheck(nodeIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
@@ -146,10 +189,15 @@ export function useNodeMetrics(id: string) {
   })
 }
 
-export function useNodeCommandHistory(id: string, params?: { page?: number; size?: number }) {
-  return useQuery<PaginatedResponse<CommandHistoryResponse>>({
+export function useNodeCommandHistory(id: string, params?: { page?: number; size?: number; cursor?: string | null; limit?: number }) {
+  return useQuery<CursorPage_CommandHistoryResponse_>({
     queryKey: ['nodes', 'detail', id, 'commands-history', params],
-    queryFn: () => commandsApi.getHistory({ node_id: id, ...params }),
+    queryFn: () => {
+      const apiParams: { cursor?: string | null; limit?: number } = {}
+      if (params?.cursor !== undefined) apiParams.cursor = params.cursor
+      else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+      return commandsApi.getHistory({ node_id: id, ...apiParams })
+    },
     enabled: !!id,
     placeholderData: keepPreviousData,
   })
@@ -165,7 +213,7 @@ export function useNodeTags() {
 export function useBulkDeleteNodes() {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<BulkResult_BulkNodeUpdateResult_, Error, string[]>({
     mutationFn: (nodeIds: string[]) => nodesApi.bulkDelete(nodeIds),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
@@ -176,7 +224,7 @@ export function useBulkDeleteNodes() {
 export function useBulkMetrics() {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<BulkResult_BulkNodeMetricsResult_, Error, string[]>({
     mutationFn: (nodeIds: string[]) => nodesApi.bulkMetrics(nodeIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
@@ -187,8 +235,8 @@ export function useBulkMetrics() {
 export function useBulkValidateCredentials() {
   const queryClient = useQueryClient()
 
-  return useMutation({
-    mutationFn: (data: { node_ids: string[]; tags?: string[] }) => nodesApi.bulkValidateCredentials(data),
+  return useMutation<BulkResult_BulkValidateCredentialsResult_, Error, CredentialValidationsRequest>({
+    mutationFn: (data: CredentialValidationsRequest) => nodesApi.bulkValidateCredentials(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },
@@ -198,8 +246,19 @@ export function useBulkValidateCredentials() {
 export function useBulkUpdateNodes() {
   const queryClient = useQueryClient()
 
+  return useMutation<BulkResult_BulkNodeUpdateResult_, Error, NodeBulkUpdatesRequest>({
+    mutationFn: (data: NodeBulkUpdatesRequest) => nodesApi.bulkUpdate(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nodes'] })
+    },
+  })
+}
+
+// Legacy wrapper for old call shape {node_ids, changes}
+export function useBulkUpdateNodesLegacy() {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: { node_ids: string[]; changes: NodeUpdate }) => nodesApi.bulkUpdate(data),
+    mutationFn: (data: { node_ids: string[]; changes: NodeUpdate }) => nodesApi.bulkUpdateLegacy(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },

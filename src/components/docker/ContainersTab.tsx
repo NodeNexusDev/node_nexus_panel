@@ -50,6 +50,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const { toast } = useToast()
   useDockerContainerSse(nodeId)
   const { data: containers, isLoading, error, refetch } = useDockerContainers(nodeId, true)
+  const containerItems = useMemo(() => (containers as unknown as { items?: DockerContainer[] })?.items ?? [], [containers])
   const startContainer = useStartContainer()
   const stopContainer = useStopContainer()
   const restartContainer = useRestartContainer()
@@ -95,38 +96,38 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const [showPruneConfirm, setShowPruneConfirm] = useState(false)
   const [showBulkRemoveConfirm, setShowBulkRemoveConfirm] = useState(false)
   const filtered = useMemo(() => {
-    if (!containers) return []
+    if (!containerItems.length) return [] as DockerContainer[]
     const q = search.toLowerCase()
-    return containers
-      .filter((c) => {
-        const name = c.Names?.split('/').pop()?.toLowerCase() || ''
-        const image = c.Image?.toLowerCase() || ''
+    return [...containerItems]
+      .filter((c: DockerContainer) => {
+        const name = (c as unknown as { Names?: string }).Names?.split('/').pop()?.toLowerCase() || ''
+        const image = (c as unknown as { Image?: string }).Image?.toLowerCase() || ''
         if (q && !name.includes(q) && !image.includes(q)) return false
-        if (statusFilter === 'running' && c.State?.toLowerCase() !== 'running') return false
-        if (statusFilter === 'stopped' && c.State?.toLowerCase() === 'running') return false
+        if (statusFilter === 'running' && (c as unknown as { State?: string }).State?.toLowerCase() !== 'running') return false
+        if (statusFilter === 'stopped' && (c as unknown as { State?: string }).State?.toLowerCase() === 'running') return false
         return true
       })
-      .sort((a, b) => {
+      .sort((a: DockerContainer, b: DockerContainer) => {
         if (!sort) return 0
         const dir = sort.dir === 'asc' ? 1 : -1
         switch (sort.key) {
           case 'name': {
-            const aName = a.Names?.split('/').pop() || ''
-            const bName = b.Names?.split('/').pop() || ''
+            const aName = (a as unknown as { Names?: string }).Names?.split('/').pop() || ''
+            const bName = (b as unknown as { Names?: string }).Names?.split('/').pop() || ''
             return aName.localeCompare(bName) * dir
           }
-          case 'image': return (a.Image || '').localeCompare(b.Image || '') * dir
-          case 'status': return (a.State || '').localeCompare(b.State || '') * dir
-          case 'created': return (a.CreatedAt || '').localeCompare(b.CreatedAt || '') * dir
+          case 'image': return ((a as unknown as { Image?: string }).Image || '').localeCompare((b as unknown as { Image?: string }).Image || '') * dir
+          case 'status': return ((a as unknown as { State?: string }).State || '').localeCompare((b as unknown as { State?: string }).State || '') * dir
+          case 'created': return ((a as unknown as { CreatedAt?: string }).CreatedAt || '').localeCompare((b as unknown as { CreatedAt?: string }).CreatedAt || '') * dir
           default: return 0
         }
       })
-  }, [containers, search, statusFilter, sort])
+  }, [containerItems, search, statusFilter, sort])
 
   const allSelected = filtered.length > 0 && selectedIds.size === filtered.length
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set())
-    else setSelectedIds(new Set(filtered.map((c) => c.ID)))
+    else setSelectedIds(new Set(filtered.map((c: DockerContainer) => (c as unknown as { ID: string }).ID)))
   }
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
@@ -140,8 +141,9 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
     bulkExec.mutate(
       { container_id: bulkContainerId, command: bulkExecCommand, node_ids: [nodeId] },
       {
-        onSuccess: (data) => {
-          const results = data.results.map((r) => `[${r.node_name}] ${r.status}: ${r.output || r.error}`).join('\n')
+        onSuccess: (data: unknown) => {
+          const d = data as { results?: Array<{ node_name?: string; status?: string; output?: string; error?: string }> }
+          const results = (d.results ?? []).map((r) => `[${r.node_name}] ${r.status}: ${r.output || r.error}`).join('\n')
           setBulkExecResult(results || 'No output')
         },
         onError: () => toast('error', t('docker.toastBulkExecFailed')),
@@ -151,7 +153,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
 
   if (isLoading) return <TableSkeleton rows={5} cols={7} />
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadContainers')} />
-  if (!containers?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noContainers')} description={t('docker.noContainersDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createContainer')}</Button>} />
+  if (!containerItems.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noContainers')} description={t('docker.noContainersDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createContainer')}</Button>} />
 
   const loading = startContainer.isPending || stopContainer.isPending || restartContainer.isPending || pauseContainer.isPending || unpauseContainer.isPending || renameContainer.isPending
 
@@ -165,9 +167,9 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ container_id: bulkContainerId!, node_ids: [nodeId] })} disabled={bulkDisabled || bulkStop.isPending}>{t('docker.stopAll')}</Button>
           <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) setShowBulkRemoveConfirm(true) }} disabled={bulkDisabled || bulkRemove.isPending} className="text-red-500">{bulkRemove.isPending ? t('common.loading') : t('docker.bulkRemove')}</Button>
           <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }} disabled={bulkDisabled}>{t('docker.bulkExec')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkInspectModal(true); setBulkInspectResult(null); bulkInspect.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkInspectResult(data), onError: () => toast('error', t('docker.toastBulkInspectFailed')) }) } }} disabled={bulkDisabled || bulkInspect.isPending}>{t('docker.bulkInspect')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkLogsModal(true); setBulkLogsResult(null); bulkLogs.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkLogsResult(data), onError: () => toast('error', t('docker.toastBulkLogsFailed')) }) } }} disabled={bulkDisabled || bulkLogs.isPending}>{t('docker.bulkLogs')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkStatsModal(true); setBulkStatsResult(null); bulkStats.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkStatsResult(data), onError: () => toast('error', t('docker.toastBulkStatsFailed')) }) } }} disabled={bulkDisabled || bulkStats.isPending}>{t('docker.bulkStats')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkInspectModal(true); setBulkInspectResult(null); bulkInspect.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkInspectResult(data as unknown as BulkDockerResponse), onError: () => toast('error', t('docker.toastBulkInspectFailed')) }) } }} disabled={bulkDisabled || bulkInspect.isPending}>{t('docker.bulkInspect')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkLogsModal(true); setBulkLogsResult(null); bulkLogs.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkLogsResult(data as unknown as BulkDockerResponse), onError: () => toast('error', t('docker.toastBulkLogsFailed')) }) } }} disabled={bulkDisabled || bulkLogs.isPending}>{t('docker.bulkLogs')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => { if (bulkContainerId) { setShowBulkStatsModal(true); setBulkStatsResult(null); bulkStats.mutate({ container_id: bulkContainerId, node_ids: [nodeId] }, { onSuccess: (data) => setBulkStatsResult(data as unknown as BulkDockerResponse), onError: () => toast('error', t('docker.toastBulkStatsFailed')) }) } }} disabled={bulkDisabled || bulkStats.isPending}>{t('docker.bulkStats')}</Button>
         </div>
       )}
       {bulkDisabled && selectedIds.size > 0 && (
@@ -200,7 +202,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-            {filtered.map((c) => (
+            {filtered.map((c: DockerContainer) => (
               <Fragment key={c.ID}>
                 <ContainerRow container={c}
                   onStart={() => startContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.start')), onError: () => toast('error', t('docker.toastStartFailed')) })}
@@ -226,7 +228,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           </tbody>
         </table>
       </div>
-      {containers.length > 0 && filtered.length === 0 && (
+      {containerItems.length > 0 && filtered.length === 0 && (
         <div className="text-center py-8 text-sm text-surface-500">{t('docker.noMatch', 'No containers match the current filters')}</div>
       )}
 
