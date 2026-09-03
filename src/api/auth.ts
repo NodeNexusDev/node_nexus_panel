@@ -10,4 +10,7 @@ export const authApi = {
 
   me: () =>
     api.get<UserResponse>('/auth/me'),
+
+  refresh: () =>
+    api.post<TokenResponse>('/auth/refresh'),
 }

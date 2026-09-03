@@ -9,3 +9,7 @@ export function useHealth() {
     staleTime: Infinity,
   })
 }
+
+export function useReady() {
+  return useQuery({ queryKey:['ready'], queryFn: ()=> healthApi.getReady(), staleTime: 30_000 })
+}

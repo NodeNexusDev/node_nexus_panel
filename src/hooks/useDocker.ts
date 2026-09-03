@@ -482,3 +482,53 @@ export function useDockerContainerTop(nodeId: string, containerId: string) {
     enabled: !!nodeId && !!containerId,
   })
 }
+
+export function useDockerContainerArchive(nodeId: string, containerId: string) {
+  return useQuery<{ data: string }>({
+    queryKey: ['docker', nodeId, 'containers', containerId, 'archive'],
+    queryFn: () => dockerApi.getContainerArchive(nodeId, containerId),
+    enabled: !!nodeId && !!containerId,
+  })
+}
+
+export function useKillContainer() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ nodeId, containerId, signal }: { nodeId: string; containerId: string; signal?: string }) => dockerApi.killContainer(nodeId, containerId, signal), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
+}
+
+export function useUpdateContainer() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ nodeId, containerId, data }: { nodeId: string; containerId: string; data: unknown }) => dockerApi.updateContainer(nodeId, containerId, data), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
+}
+
+export function useWaitContainer() {
+  return useMutation({ mutationFn: ({ nodeId, containerId }: { nodeId: string; containerId: string }) => dockerApi.waitContainer(nodeId, containerId) })
+}
+
+export function usePushImage() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ nodeId, data }: { nodeId: string; data: { image: string } }) => dockerApi.pushImage(nodeId, data), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
+}
+
+export function useImageHistory(nodeId: string, imageId: string) {
+  return useQuery<unknown[]>({ queryKey:['docker',nodeId,'images',imageId,'history'], queryFn:()=> dockerApi.getImageHistory(nodeId, imageId), enabled: !!nodeId && !!imageId })
+}
+
+export function usePushImageById() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ nodeId, imageId }: { nodeId: string; imageId: string }) => dockerApi.pushImageById(nodeId, imageId), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
+}
+
+export function usePruneNetworks() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (nodeId: string) => dockerApi.pruneNetworks(nodeId), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
+}
+
+export function usePruneSystem() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (nodeId: string) => dockerApi.pruneSystem(nodeId), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
+}
+
+export function useDockerSystemVersion(nodeId: string) {
+  return useQuery<{ version: string; api_version: string }>({ queryKey:['docker',nodeId,'system','version'], queryFn:()=> dockerApi.getSystemVersion(nodeId), enabled: !!nodeId })
+}

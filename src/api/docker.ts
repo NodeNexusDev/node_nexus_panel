@@ -199,6 +199,37 @@ export const dockerApi = {
 
   getSystemDf: (nodeId: string) => api.get<DockerSystemDfItem[]>(`${nodesBase(nodeId)}/system/df`),
 
+  getSystemVersion: (nodeId: string) => api.get<{ version: string; api_version: string }>(`${nodesBase(nodeId)}/system/version`),
+
+  pruneSystem: (nodeId: string) => api.post<{ space_reclaimed: string }>(`${nodesBase(nodeId)}/system/prune`),
+
+  pruneNetworks: (nodeId: string) => api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/networks/prune`),
+
+  // ── Singular container/image ops (v2) ───────────────────────
+  getContainerArchive: (nodeId: string, containerId: string) => api.get<{ data: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive`),
+
+  putContainerArchive: (nodeId: string, containerId: string, data: unknown) => api.put<{ status: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive`, data),
+
+  killContainer: (nodeId: string, containerId: string, signal?: string) => {
+    const qs = signal ? `?signal=${encodeURIComponent(signal)}` : ''
+    return api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/kill${qs}`)
+  },
+
+  getContainerPort: (nodeId: string, containerId: string, port?: string) => {
+    const qs = port ? `?port=${encodeURIComponent(port)}` : ''
+    return api.get<{ host: string; port: string }>(`${nodesBase(nodeId)}/containers/${containerId}/port${qs}`)
+  },
+
+  updateContainer: (nodeId: string, containerId: string, data: unknown) => api.post<{ status: string }>(`${nodesBase(nodeId)}/containers/${containerId}/update`, data),
+
+  waitContainer: (nodeId: string, containerId: string) => api.post<{ statusCode: number }>(`${nodesBase(nodeId)}/containers/${containerId}/wait`),
+
+  pushImage: (nodeId: string, data: { image: string }) => api.post<{ status: string }>(`${nodesBase(nodeId)}/images/push`, data),
+
+  getImageHistory: (nodeId: string, imageId: string) => api.get<unknown[]>(`${nodesBase(nodeId)}/images/${imageId}/history`),
+
+  pushImageById: (nodeId: string, imageId: string) => api.post<{ status: string }>(`${nodesBase(nodeId)}/images/${imageId}/push`),
+
   // ── Per-node bulk (v2) ──────────────────────────────────────
   bulkExec: (nodeId: string, data: ContainerExecutionsRequest) =>
     api.post<BulkResult_ContainerExecBulkResult_>(`${nodesBase(nodeId)}/containers/executions`, data),

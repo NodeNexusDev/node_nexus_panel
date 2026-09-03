@@ -126,3 +126,21 @@ export function useExecuteRawCommand() {
 export function useBulkExecuteRawCommand() {
   return useMutation({ mutationFn: commandsApi.bulkExecuteGlobal })
 }
+
+export function useBulkCancelCommands() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (ids: string[]) => commandsApi.bulkCancel({ execution_ids: ids } as never), onSuccess: ()=> qc.invalidateQueries({queryKey:['commands']}) })
+}
+
+export function useBulkRetryCommands() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (ids: string[]) => commandsApi.bulkRetry({ execution_ids: ids } as never), onSuccess: ()=> qc.invalidateQueries({queryKey:['commands']}) })
+}
+
+export function useCommandExecutionsHistory(batchId: string, params?: { cursor?: string | null; limit?: number }) {
+  return useQuery({ queryKey:['commands','executions','history', batchId, params], queryFn: ()=> (commandsApi as unknown as { getExecutionsHistory: (a:string,b:unknown)=>Promise<unknown> }).getExecutionsHistory(batchId, params as never), enabled: !!batchId })
+}
+
+export function useCommandHistory(params?: { node_id?: string; cursor?: string | null; limit?: number }) {
+  return useQuery({ queryKey:['commands','history', params], queryFn: ()=> commandsApi.getHistory(params as never) })
+}

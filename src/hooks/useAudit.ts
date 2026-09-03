@@ -40,3 +40,11 @@ export function useExportAudit() {
     mutationFn: (params?: { from_date?: string; to_date?: string; action?: string; node_id?: string; fmt?: string }) => auditApi.export(params),
   })
 }
+
+export function useAuditLog(id: string) {
+  return useQuery({ queryKey:['audit','detail',id], queryFn: ()=> auditApi.getById(id), enabled: !!id })
+}
+
+export function useAuditStats(params?: { group_by?: string | null }) {
+  return useQuery({ queryKey:['audit','stats',params], queryFn: ()=> auditApi.getStats(params as never) })
+}
