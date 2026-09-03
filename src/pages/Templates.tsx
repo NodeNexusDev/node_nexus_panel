@@ -239,6 +239,7 @@ function RegistriesTab() {
   const [owner, setOwner] = useState('')
   const [name, setName] = useState('')
   const [branch, setBranch] = useState('main')
+  const [githubToken, setGithubToken] = useState('')
   const [search, setSearch] = useState('')
   const [regDetailId, setRegDetailId] = useState<string | null>(null)
   const { data: regDetail } = useRegistry(regDetailId ?? '')
@@ -294,9 +295,11 @@ function RegistriesTab() {
           <Input label={t('templates.owner', 'Owner')} placeholder="NodeNexusDev" value={owner} onChange={(e) => setOwner(e.target.value)} />
           <Input label={t('templates.name')} placeholder="official" value={name} onChange={(e) => setName(e.target.value)} />
           <Input label={t('templates.defaultBranch', 'Branch')} placeholder="main" value={branch} onChange={(e) => setBranch(e.target.value)} />
+          <Input label={t('templates.githubToken', 'GitHub Token')} placeholder={t('templates.githubTokenPlaceholder', 'ghp_...')} type="password" value={githubToken} onChange={(e) => setGithubToken(e.target.value)} />
+          <p className="text-xs text-surface-500">{t('templates.githubTokenHint', 'For private repos, leave blank for public')}</p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (owner.trim() && name.trim()) create.mutate({ owner: owner.trim(), name: name.trim(), default_branch: branch.trim()||'main' } as never, { onSuccess: () => { toast('success', t('templates.created', 'Created')); setShowCreate(false); setOwner(''); setName(''); setBranch('main') }, onError: () => toast('error', t('templates.createFailed')) }) }} disabled={!owner.trim() || !name.trim() || create.isPending}>{create.isPending ? t('common.loading') : t('common.create')}</Button>
+            <Button onClick={() => { if (owner.trim() && name.trim()) create.mutate({ owner: owner.trim(), name: name.trim(), default_branch: branch.trim()||'main', github_token: githubToken.trim()||null } as never, { onSuccess: () => { toast('success', t('templates.created', 'Created')); setShowCreate(false); setOwner(''); setName(''); setBranch('main'); setGithubToken('') }, onError: () => toast('error', t('templates.createFailed')) }) }} disabled={!owner.trim() || !name.trim() || create.isPending}>{create.isPending ? t('common.loading') : t('common.create')}</Button>
           </div>
         </div>
       </Modal>
