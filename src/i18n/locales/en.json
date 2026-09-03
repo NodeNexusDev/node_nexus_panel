@@ -74,6 +74,11 @@
   "nodes": {
     "title": "Nodes",
     "description": "Manage and monitor your connected nodes",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Main production node",
+    "credentialsSection": "Credentials",
+    "dockerSection": "Docker",
+    "credentialsHint": "Provide password or SSH key, leave others blank",
     "addNode": "Add Node",
     "editNode": "Edit Node",
     "node": "Node",
@@ -688,7 +693,8 @@
     "clearAll": "Clear all",
     "selectPlaceholder": "Select...",
     "loadMore": "Load more",
-    "primaryNavigation": "Primary navigation"
+    "primaryNavigation": "Primary navigation",
+    "requiredMark": "*"
   },
   "errorBoundary": {
     "title": "Something went wrong",

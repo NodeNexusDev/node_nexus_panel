@@ -312,48 +312,59 @@ export function NodeDetail() {
             )}
           />
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.description', 'Description')}</label>
-            <textarea {...register('description')} placeholder="Main production node" maxLength={1000} rows={3} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.descriptionLabel', 'Description')}</label>
+            <textarea {...register('description')} placeholder={t('nodes.descriptionPlaceholder', 'Main production node')} maxLength={1000} rows={3} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
             {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description.message}</p>}
             <p className="text-xs text-surface-400 text-right">{(control._formValues.description?.length ?? 0)}/1000</p>
           </div>
-          <Input label={t('nodes.username', 'Username')} placeholder="root" {...register('username')} error={errors.username?.message} />
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.password', 'Password')}</label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('password')} className="h-6 px-2 text-xs">
-                {clearFields.password ? t('common.cancel') : t('common.clear', 'Clear')}
-              </Button>
+          <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
+            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.credentialsSection', 'Credentials')} {t('common.requiredMark', '*')}</p>
+            <div className="space-y-3 p-3 bg-surface-50 dark:bg-surface-800/30 rounded-lg border border-surface-200 dark:border-surface-800">
+              <Input label={t('nodes.username', 'Username')} placeholder="root" {...register('username')} error={errors.username?.message} />
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.password', 'Password')}</label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('password')} className="h-6 px-2 text-xs">
+                    {clearFields.password ? t('common.cancel') : t('common.clear', 'Clear')}
+                  </Button>
+                </div>
+                <Input type="password" placeholder={clearFields.password ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.password} {...register('password')} error={errors.password?.message} />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('ssh_key')} className="h-6 px-2 text-xs">
+                    {clearFields.ssh_key ? t('common.cancel') : t('common.clear', 'Clear')}
+                  </Button>
+                </div>
+                <textarea {...register('ssh_key')} placeholder={clearFields.ssh_key ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.ssh_key} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+                {errors.ssh_key && <p className="text-xs text-red-500 mt-1">{errors.ssh_key.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.passphrase', 'Passphrase')}</label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('passphrase')} className="h-6 px-2 text-xs">
+                    {clearFields.passphrase ? t('common.cancel') : t('common.clear', 'Clear')}
+                  </Button>
+                </div>
+                <Input type="password" placeholder={clearFields.passphrase ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.passphrase} {...register('passphrase')} error={errors.passphrase?.message} />
+              </div>
+              <p className="text-xs text-surface-500">{t('nodes.credentialsHint', 'Provide password or SSH key, leave others blank')}</p>
             </div>
-            <Input type="password" placeholder={clearFields.password ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.password} {...register('password')} error={errors.password?.message} />
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('ssh_key')} className="h-6 px-2 text-xs">
-                {clearFields.ssh_key ? t('common.cancel') : t('common.clear', 'Clear')}
-              </Button>
+          <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
+            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.dockerSection', 'Docker')}</p>
+            <div className="space-y-3 p-3 bg-surface-50 dark:bg-surface-800/30 rounded-lg border border-surface-200 dark:border-surface-800">
+              <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...register('docker_host')} error={errors.docker_host?.message} />
+              <Controller
+                name="has_docker"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox checked={field.value ?? false} onChange={field.onChange} label={t('nodes.hasDocker', 'Has Docker')} />
+                )}
+              />
             </div>
-            <textarea {...register('ssh_key')} placeholder={clearFields.ssh_key ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.ssh_key} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
-            {errors.ssh_key && <p className="text-xs text-red-500 mt-1">{errors.ssh_key.message}</p>}
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.passphrase', 'Passphrase')}</label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('passphrase')} className="h-6 px-2 text-xs">
-                {clearFields.passphrase ? t('common.cancel') : t('common.clear', 'Clear')}
-              </Button>
-            </div>
-            <Input type="password" placeholder={clearFields.passphrase ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.passphrase} {...register('passphrase')} error={errors.passphrase?.message} />
-          </div>
-          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...register('docker_host')} error={errors.docker_host?.message} />
-          <Controller
-            name="has_docker"
-            control={control}
-            render={({ field }) => (
-              <Checkbox checked={field.value ?? false} onChange={field.onChange} label={t('nodes.hasDocker', 'Has Docker')} />
-            )}
-          />
           <Controller
             name="tags"
             control={control}
@@ -401,7 +412,7 @@ function OverviewTab({ node }: { node: Node }) {
         </button>
       </span>
     )],
-    [t('nodes.description', 'Description'), (node as unknown as { description?: string | null }).description ? <span key="desc">{(node as unknown as { description: string }).description}</span> : '—'],
+    [t('nodes.descriptionLabel', 'Description'), (node as unknown as { description?: string | null }).description ? <span key="desc">{(node as unknown as { description: string }).description}</span> : '—'],
     [t('nodes.connectionType'), connTypeBadge],
     [t('nodes.status'), statusBadge],
     [t('nodes.username', 'Username'), node.username ? (

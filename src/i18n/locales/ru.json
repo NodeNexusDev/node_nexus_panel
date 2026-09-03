@@ -74,6 +74,11 @@
   "nodes": {
     "title": "Ноды",
     "description": "Управление и мониторинг подключённых нод",
+    "descriptionLabel": "Описание",
+    "descriptionPlaceholder": "Главный прод-нод",
+    "credentialsSection": "Учётные данные",
+    "dockerSection": "Docker",
+    "credentialsHint": "Укажите пароль или SSH ключ, остальное оставьте пустым",
     "addNode": "Добавить ноду",
     "editNode": "Редактировать ноду",
     "node": "Нода",
@@ -688,7 +693,8 @@
     "clearAll": "Очистить все",
     "selectPlaceholder": "Выберите...",
     "loadMore": "Загрузить ещё",
-    "primaryNavigation": "Основная навигация"
+    "primaryNavigation": "Основная навигация",
+    "requiredMark": "*"
   },
   "errorBoundary": {
     "title": "Что-то пошло не так",
