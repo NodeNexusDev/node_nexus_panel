@@ -89,11 +89,9 @@ export function useCommandTags() {
 export function useExecuteCommand() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, node_id, params }: { id: string; node_id?: string; node_ids?: string[]; node_tags?: string[]; params?: Record<string, unknown>; data?: unknown }) => {
-      // Support legacy {id, data:{node_id, params}} and new {id, node_id, params}
-      const data = (arguments[0] as { data?: { node_id?: string; node_ids?: string[]; params?: Record<string, unknown> } }).data
-      if (data) return commandsApi.execute(id, data as { node_id: string; params?: Record<string, unknown> })
-      return commandsApi.execute(id, { node_id, params } as { node_id: string; params?: Record<string, unknown> })
+    mutationFn: ({ id, node_id, node_ids, node_tags, params, data }: { id: string; node_id?: string; node_ids?: string[]; node_tags?: string[]; params?: Record<string, unknown>; data?: { node_id?: string; node_ids?: string[]; node_tags?: string[]; params?: Record<string, unknown> } }) => {
+      const payload = data ?? ({ node_id, node_ids, node_tags, params } as { node_id?: string; node_ids?: string[]; node_tags?: string[]; params?: Record<string, unknown> })
+      return commandsApi.execute(id, payload as never)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['commands'] }),
   })
