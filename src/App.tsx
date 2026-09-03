@@ -64,7 +64,7 @@ function App() {
               <Route path="/audit" element={<Suspense fallback={<AuditSkeleton />}><Audit /></Suspense>} />
               <Route path="/settings" element={<Suspense fallback={<SettingsSkeleton />}><Settings /></Suspense>} />
               <Route path="/favorites" element={<Suspense fallback={<FavoritesSkeleton />}><Favorites /></Suspense>} />
-              <Route path="/templates" element={<Suspense fallback={<SettingsSkeleton />}><Templates /></Suspense>} />
+              <Route path="/templates" element={<Suspense fallback={<Loading />}><Templates /></Suspense>} />
             </Route>
           </Route>
           <Route path="*" element={<Suspense fallback={<Loading />}><NotFound /></Suspense>} />

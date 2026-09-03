@@ -72,7 +72,7 @@ function PacksTab() {
   const allTags = useMemo(() => [...new Set(packs.flatMap((p)=> p.tags ?? []))], [infiniteData])
 
   if (isLoading) return <TableSkeleton rows={5} cols={4} />
-  if (error) return <div className="text-sm text-red-500">{String(error)}</div>
+  if (error) return <div className="p-6"><div className="text-sm text-red-500 p-4 bg-red-50 dark:bg-red-500/10 rounded-lg">{String((error as Error).message ?? error)} <Button variant="ghost" size="sm" onClick={()=> refetch()} className="ml-2">{t('common.retry')}</Button></div></div>
 
   const columns: Column<{ id: string; name: string; description?: string | null; tags?: string[]; installed?: boolean }>[] = [
     { key: 'name', header: t('common.name'), render: (p) => <span className="font-medium text-surface-900 dark:text-white">{p.name}</span> },
@@ -142,7 +142,15 @@ function PacksTab() {
                 <div className="p-4 space-y-2">
                   <p className="font-semibold">{p.name}</p>
                   {p.description && <p className="text-xs text-surface-500">{p.description}</p>}
-                  <div className="flex gap-1 flex-wrap">{(p.tags ?? []).map((tag)=> <Badge key={tag} variant="default">{tag}</Badge>)}</div>
+                  <div className="flex gap-1 flex-wrap">{(p.tags ?? []).map((tag)=> <Badge key={tag} variant="default">{tag}</Badge>)} {p.installed && <Badge variant="success">{t('templates.installed')}</Badge>}</div>
+                  <div className="flex gap-2 pt-2">
+                    {p.installed ? (
+                      <Button variant="ghost" size="sm" onClick={()=> uninstall.mutate(p.id,{onSuccess:()=>toast('success',t('templates.uninstallStarted'))})} disabled={uninstall.isPending}>{t('templates.uninstall')}</Button>
+                    ) : (
+                      <Button variant="ghost" size="sm" onClick={()=> install.mutate({packId:p.id, on_conflict:onConflict},{onSuccess:(res)=>{ setLastBulk(res as never); toast('success', t('templates.installStarted')) }})} disabled={install.isPending}>{t('templates.install')}</Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={()=> setDetailId(p.id)}>{t('common.view')}</Button>
+                  </div>
                 </div>
               )} onRowClick={(p)=> setDetailId(p.id)} />
               <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
