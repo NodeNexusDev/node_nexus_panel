@@ -4,6 +4,8 @@ services:
     container_name: node-nexus-panel
     ports:
       - "8080:8080"
+    networks:
+      - app_net
     env_file:
       - .env
     depends_on:
@@ -17,9 +19,28 @@ services:
     ports:
       - "${HOST_PORT:-8000}:${PORT:-8000}"
     env_file: .env
+    volumes:
+      - known_hosts:/app/.ssh
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+    networks:
+      - app_net
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request, os; req = urllib.request.Request('http://localhost:8000/health', headers={'X-API-Key': os.environ['MASTER_API_KEY']}); urllib.request.urlopen(req, timeout=5)\""]
       interval: 10s
@@ -31,7 +52,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: unless-stopped
+    tmpfs:
+      - /tmp
 
   db:
     image: postgres:16
@@ -39,6 +61,18 @@ services:
     env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    networks:
+      - app_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
@@ -49,7 +83,11 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: unless-stopped
+
+networks:
+  app_net:
+    driver: bridge
 
 volumes:
+  known_hosts:
   postgres_data:
