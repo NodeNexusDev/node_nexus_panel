@@ -683,9 +683,18 @@ function DrawerScript({ node }: { node: Node }) {
     bulkRun.mutate({ script_ids: ids, node_ids: [node.id] }, {
       onSuccess: (response) => {
         toast('success', t('scripts.toastStarted', { name: `${ids.length} scripts` }))
-        const batch = response as unknown as { results?: ScriptNodeResult[] }
+        const batch = response as unknown as { results?: Array<{ script_id?: string; steps?: unknown[]; stdout?: string; stderr?: string; error?: string } & ScriptNodeResult> }
         if (batch.results && Array.isArray(batch.results)) {
-          const mapped = ids.map((id, i) => ({ id, name: scripts.find((s) => s.id === id)?.name ?? id, result: (batch.results as ScriptNodeResult[])[i] ?? batch.results?.[0] as ScriptNodeResult }))
+          const byId = new Map<string, unknown>()
+          ;(batch.results as Array<{ script_id?: string }>).forEach((r) => { if (r.script_id) byId.set(r.script_id, r) })
+          const mapped = ids.map((id) => {
+            const raw = (byId.get(id) ?? batch.results?.[0]) as ScriptNodeResult & { steps?: unknown[] }
+            // ensure steps exists, fallback to raw stdout/stderr if steps missing
+            const ensured = raw && !raw.steps && (raw as unknown as { stdout?: string }).stdout !== undefined
+              ? { ...raw, steps: [{ label: raw.steps?.[0] ? (raw.steps[0] as { label?: string }).label : 'Step 1', stdout: (raw as unknown as { stdout?: string }).stdout ?? '', stderr: (raw as unknown as { stderr?: string }).stderr ?? '', exit_code: (raw as unknown as { exit_code?: number }).exit_code ?? 0, truncated: false, step_index: 0, command_fingerprint: '' }] } as unknown as ScriptNodeResult
+              : raw
+            return { id, name: scripts.find((s) => s.id === id)?.name ?? id, result: ensured as ScriptNodeResult }
+          })
           setBulkResults(mapped.filter((m) => m.result))
         } else {
           setBulkResults(null)
