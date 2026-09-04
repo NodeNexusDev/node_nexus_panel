@@ -23,6 +23,8 @@ import { SortableHeader } from '../components/ui/SortableHeader'
 import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Checkbox } from '../components/ui/Checkbox'
+import { Drawer } from '../components/ui/Drawer'
+import { NodeDrawer } from '../components/nodes/NodeDrawer'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
@@ -138,6 +140,7 @@ export function Nodes() {
   const [bulkMetricsResult, setBulkMetricsResult] = useState<unknown | null>(null)
   const [showBulkUpdate, setShowBulkUpdate] = useState(false)
   const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', description: '', username: '', docker_host: '', has_docker: undefined as boolean | undefined, tags: '' })
+  const [drawerNode, setDrawerNode] = useState<Node | null>(null)
 
   const nodes = (data?.items || []).filter(
     (node) => tagFilter.length <= 1 || tagFilter.some((t) => node.tags.includes(t))
@@ -510,7 +513,7 @@ export function Nodes() {
               renderMobileItem={renderMobileNode}
               keyExtractor={(n) => n.id}
               emptyMessage={t('nodes.emptyTitle')}
-              onRowClick={(node) => navigate(`/nodes/${node.id}`)}
+              onRowClick={(node) => setDrawerNode(node)}
             />
           )}
           <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
@@ -750,6 +753,25 @@ export function Nodes() {
       <NodeCommandModal node={execTarget} onClose={() => setExecTarget(null)} />
 
       <NodeScriptModal node={scriptTarget} onClose={() => setScriptTarget(null)} />
+
+      <Drawer
+        isOpen={!!drawerNode}
+        onClose={() => setDrawerNode(null)}
+        title={drawerNode?.name ?? ''}
+        description={drawerNode ? `${drawerNode.host}:${drawerNode.port}` : undefined}
+        size="lg"
+      >
+        {drawerNode && (
+          <NodeDrawer
+            node={drawerNode}
+            onClose={() => setDrawerNode(null)}
+            onEdit={(n) => { setDrawerNode(null); openEdit(n) }}
+            onDelete={(n) => { setDrawerNode(null); setDeleteTarget({ id: n.id, name: n.name }) }}
+            onExec={(n) => setExecTarget(n)}
+            onRunScript={(n) => setScriptTarget(n)}
+          />
+        )}
+      </Drawer>
     </div>
   )
 }
