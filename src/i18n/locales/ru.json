@@ -149,7 +149,7 @@
     "cmdHistory": "История команд",
     "bulkDelete": "Удалить",
     "bulkDeleteMsg": "Удалить выбранные ноды? Это нельзя отменить.",
-    "bulkScript": "Запустить скрипты",
+    "bulkScript": "Скрипты",
     "allTags": "Все теги",
     "selected": "Выбрано: {{count}}",
     "clearSelection": "Сбросить",

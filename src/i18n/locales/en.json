@@ -149,7 +149,7 @@
     "cmdHistory": "Command History",
     "bulkDelete": "Delete",
     "bulkDeleteMsg": "Delete selected nodes? This cannot be undone.",
-    "bulkScript": "Run Scripts",
+    "bulkScript": "Scripts",
     "allTags": "All tags",
     "selected": "{{count}} selected",
     "clearSelection": "Clear",
