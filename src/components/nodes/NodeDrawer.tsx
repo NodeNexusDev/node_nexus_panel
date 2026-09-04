@@ -738,7 +738,7 @@ function DrawerScript({ node }: { node: Node }) {
             <Checkbox checked={allFilteredSelected} onChange={toggleAllFiltered} ariaLabel={t('common.selectAll')} />
             <span className="text-surface-600 dark:text-surface-400">{allFilteredSelected ? t('common.deselectAll') : t('common.selectAll')} ({filtered.length})</span>
           </label>
-          {selectedIds.size > 0 && <span className="text-xs text-accent-600 dark:text-accent-400">{selectedIds.size} selected</span>}
+          {selectedIds.size > 0 && <span className="text-xs text-accent-600 dark:text-accent-400">{t('common.selected', { count: selectedIds.size })}</span>}
         </div>
       )}
       <div className="w-full flex-1 min-h-[200px] overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
