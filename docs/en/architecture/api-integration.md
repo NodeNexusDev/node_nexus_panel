@@ -23,9 +23,9 @@ src/api/
 ├── settings.ts     # User profile, API keys, notifications
 ├── dashboard.ts    # Dashboard statistics and activity
 ├── docker.ts       # Docker containers, images, networks, volumes
+├── compose.ts      # Compose stack management (per-node)
+├── templates.ts    # Packs/registries/templates
 ├── audit.ts        # Audit log entries
-├── notes.ts        # Entity notes (CRUD)
-├── tags.ts         # Tag rename, delete
 ├── favorites.ts    # Favorites management
 ├── search.ts       # Global search
 ├── config.ts       # Runtime config
@@ -45,11 +45,11 @@ The `ApiClient` class in `client.ts` provides:
 ```typescript
 import { api } from './api'
 
-// GET request
-const nodes = await api.get<PaginatedResponse<Node>>('/nodes')
+// GET request (cursor pagination)
+const nodes = await api.get<CursorPage<NodeResponse>>('/nodes?limit=20')
 
 // POST request
-const result = await api.post<Node>('/nodes/', {
+const result = await api.post<NodeResponse>('/nodes/', {
   name: 'server-01',
   host: '192.168.1.10',
   connection_type: 'ssh',
@@ -66,9 +66,9 @@ All API types are defined in `src/api/types.ts`:
 - `ScheduledJob`, `ScheduleRequest`, `ScheduleResponse` — scheduling
 - `User`, `AuthResponse`, `LoginRequest` — auth entities
 - `ApiKey`, `ApiKeyCreate`, `NotificationSettings` — settings entities
-- `DockerContainer`, `DockerImage`, `DockerNetwork`, `DockerVolume` — Docker entities
-- `AuditEntry`, `Note`, `Tag` — misc entities
-- `PaginatedResponse<T>`, `ApiRequestError` — API wrappers
+ - `DockerContainer`, `DockerImage`, `DockerNetwork`, `DockerVolume` — Docker entities
+ - `AuditEntry`, `Tag` — misc entities
+ - `CursorPage<T>`, `ApiRequestError` — API wrappers
 
 ## Service Modules
 
@@ -153,10 +153,10 @@ All API types are defined in `src/api/types.ts`:
 
 | Module | Description |
 |--------|-------------|
-| `auditApi` | Audit log entries |
-| `notesApi` | Per-entity notes CRUD |
-| `tagsApi` | Global tag rename/delete |
-| `favoritesApi` | Favorites management |
+| `auditApi` | Audit log entries (cursor pagination) |
+| `composeApi` | Compose per-node stacks |
+| `templatesApi` | Packs/registries |
+| `favoritesApi` | Favorites management (cursor pagination) |
 | `searchApi` | Global search across entities |
 | `configApi` | Runtime configuration |
 | `eventsApi` | SSE event stream |

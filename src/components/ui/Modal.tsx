@@ -15,6 +15,8 @@ const sizeClasses = {
   lg: 'max-w-2xl',
 }
 
+let openModalCount = 0
+
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   const { t } = useTranslation()
   const contentRef = useRef<HTMLDivElement>(null)
@@ -43,21 +45,35 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       }
 
       if (e.key === 'Tab' && contentRef.current) {
-        const focusable = contentRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )
-        if (focusable.length === 0) return
+        const focusable = Array.from(
+          contentRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((el) => el.offsetParent !== null || el.getAttribute('aria-hidden') !== 'true')
+
+        if (focusable.length === 0) {
+          e.preventDefault()
+          return
+        }
 
         const first = focusable[0]
         const last = focusable[focusable.length - 1]
+        const active = document.activeElement as HTMLElement | null
+        const isInside = active ? contentRef.current.contains(active) : false
+
+        if (!isInside) {
+          e.preventDefault()
+          ;(e.shiftKey ? last : first).focus()
+          return
+        }
 
         if (e.shiftKey) {
-          if (document.activeElement === first) {
+          if (active === first) {
             e.preventDefault()
             last.focus()
           }
         } else {
-          if (document.activeElement === last) {
+          if (active === last) {
             e.preventDefault()
             first.focus()
           }
@@ -66,21 +82,41 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     }
 
     document.addEventListener('keydown', handleKeyDown)
-    document.body.style.overflow = 'hidden'
+    if (openModalCount === 0) {
+      document.body.style.overflow = 'hidden'
+    }
+    openModalCount++
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = ''
-      previousFocusRef.current?.focus()
+      openModalCount = Math.max(0, openModalCount - 1)
+      if (openModalCount === 0) {
+        document.body.style.overflow = ''
+      }
+      // restore focus only if still in document and no other modal is open
+      if (openModalCount === 0) {
+        const prev = previousFocusRef.current
+        if (prev && document.contains(prev)) {
+          prev.focus()
+        }
+      }
     }
   }, [isOpen])
 
   useEffect(() => {
     if (!isOpen || initialFocusRef.current) return
     initialFocusRef.current = true
+    // use rAF to wait for portal/content to be in DOM, then focus close button or first focusable
     requestAnimationFrame(() => {
       const closeBtn = contentRef.current?.querySelector<HTMLElement>('[data-modal-close]')
-      closeBtn?.focus()
+      if (closeBtn) {
+        closeBtn.focus()
+        return
+      }
+      const firstFocusable = contentRef.current?.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      firstFocusable?.focus()
     })
   }, [isOpen])
 

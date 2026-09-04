@@ -32,9 +32,9 @@ src/
 │   │   ├── Modal.tsx
 │   │   ├── ModalFooter.tsx
 │   │   ├── NodeSelect.tsx
-│   │   ├── NotesPanel.tsx
 │   │   ├── PageHeader.tsx
-│   │   ├── Pagination.tsx
+│   │   ├── Pagination.tsx          # legacy (users/api-keys page/size)
+│   │   ├── InfiniteScroll.tsx      # курсорная пагинация
 │   │   ├── ResponsiveTable.tsx
 │   │   ├── SearchInput.tsx
 │   │   ├── Skeleton.tsx
@@ -288,12 +288,12 @@ React Error Boundary с fallback UI.
 <FavoriteButton entityId="node-1" entityType="node" isFavorite={true} onToggle={handleToggle} />
 ```
 
-### NotesPanel
+### InfiniteScroll
 
-Заметки сущности с markdown-превью и CRUD.
+Курсорная бесконечная прокрутка с IntersectionObserver и кнопкой Load more.
 
 ```tsx
-<NotesPanel entityType="node" entityId="node-1" />
+<InfiniteScroll hasMore={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
 ```
 
 ### NodeSelect

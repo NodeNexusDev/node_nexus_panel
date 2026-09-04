@@ -4,7 +4,7 @@ import { mockUsers } from '../data/users'
 const API_URL = '*'
 
 export const userHandlers = [
-  http.get(`${API_URL}/api/v1/users/`, ({ request }) => {
+  http.get(`${API_URL}/api/v2/users/`, ({ request }) => {
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') || '1')
     const size = Number(url.searchParams.get('size') || '20')
@@ -13,7 +13,7 @@ export const userHandlers = [
     return HttpResponse.json({ items, total: mockUsers.length })
   }),
 
-  http.post(`${API_URL}/api/v1/users/`, async ({ request }) => {
+  http.post(`${API_URL}/api/v2/users/`, async ({ request }) => {
     const body = (await request.json()) as { email: string; password: string; is_superuser?: boolean }
     const newUser = {
       id: String(mockUsers.length + 1),
@@ -26,7 +26,7 @@ export const userHandlers = [
     return HttpResponse.json(newUser, { status: 201 })
   }),
 
-  http.delete(`${API_URL}/api/v1/users/:userId`, ({ params }) => {
+  http.delete(`${API_URL}/api/v2/users/:userId`, ({ params }) => {
     const idx = mockUsers.findIndex((u) => u.id === params.userId)
     if (idx === -1) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     mockUsers.splice(idx, 1)

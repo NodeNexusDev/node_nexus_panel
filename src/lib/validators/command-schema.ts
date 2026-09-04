@@ -7,7 +7,7 @@ export const commandParameterSchema = z.object({
   description: z.string().max(500).nullable().optional(),
   type: z.enum(PARAMETER_TYPES).default('string'),
   required: z.boolean().default(true),
-  default: z.string().or(z.number()).or(z.boolean()).or(z.null()).default(''),
+  default: z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.any()), z.array(z.any())]).or(z.null()).optional(),
 })
 
 export const commandCreateSchema = z.object({
@@ -15,7 +15,7 @@ export const commandCreateSchema = z.object({
   command: z.string().min(1).max(4096),
   description: z.string().max(1000).nullable().optional(),
   parameters: z.array(commandParameterSchema).optional(),
-  tags: z.array(z.string().min(1).max(100)).optional(),
+  tags: z.array(z.string()).optional(),
 })
 
 export const commandUpdateSchema = z.object({
@@ -23,7 +23,7 @@ export const commandUpdateSchema = z.object({
   command: z.string().min(1).max(4096).nullable().optional(),
   description: z.string().max(1000).nullable().optional(),
   parameters: z.array(commandParameterSchema).nullable().optional(),
-  tags: z.array(z.string().min(1).max(100)).nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
 })
 
 export type CommandParameterFormValues = z.infer<typeof commandParameterSchema>

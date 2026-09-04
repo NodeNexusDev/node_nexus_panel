@@ -18,7 +18,7 @@ Reusable components in `src/components/ui/`:
 ### Layout & Navigation
 - **PageHeader** — page title with breadcrumbs and action buttons
 - **Tabs** — tab navigation with active state
-- **Pagination** — paginated navigation
+- **InfiniteScroll** — cursor-based infinite scroll with IntersectionObserver
 - **Breadcrumb** — breadcrumb navigation
 
 ### Data Display
@@ -57,7 +57,6 @@ Reusable components in `src/components/ui/`:
 ### Utility
 - **ErrorBoundary** — React error boundary
 - **FavoriteButton** — star toggle for favorites
-- **NotesPanel** — entity notes with markdown preview
 - **Typewriter** — animated text reveal
 - **Icons** — monochrome SVG icon system
 

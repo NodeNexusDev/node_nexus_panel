@@ -10,16 +10,15 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
-import { Pagination } from '../components/ui/Pagination'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton, StatCardSkeleton, TableSkeleton } from '../components/ui/Skeleton'
-import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
 import { KeyValueList } from '../components/ui/KeyValueList'
 import { Checkbox } from '../components/ui/Checkbox'
+import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { formatBytes, formatPercent, formatDurationMs } from '../lib/format'
 import { nodeStatusVariant } from '../lib/variants'
 import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
@@ -41,20 +40,19 @@ import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
 import {
   useNode,
   useNodeStats,
-  useNodeStatusHistory,
+  useInfiniteNodeStatusHistory,
   useNodeMetrics,
-  useNodeCommandHistory,
+  useInfiniteNodeCommandHistory,
   useRetryNodeCommand,
   useUpdateNode,
   useCheckNode,
-  useRefreshHostKey,
   useDeleteNode,
 } from '../hooks/useNodes'
 import type { NodeUpdate, Node } from '../api/types'
 import { nodeUpdateSchema, type NodeUpdateFormValues } from '../lib/validators/node-schema'
 import { NodeDetailSkeleton } from './NodeDetailSkeleton'
 
-type Tab = 'overview' | 'metrics' | 'stats' | 'status-history' | 'command-history' | 'notes'
+type Tab = 'overview' | 'metrics' | 'stats' | 'status-history' | 'command-history'
 
 export function NodeDetail() {
   const { t } = useTranslation()
@@ -64,7 +62,7 @@ export function NodeDetail() {
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabFromUrl = searchParams.get('tab') as Tab | null
-  const activeTab: Tab = (['overview', 'metrics', 'stats', 'status-history', 'command-history', 'notes'] as Tab[]).includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview'
+  const activeTab: Tab = (['overview', 'metrics', 'stats', 'status-history', 'command-history'] as Tab[]).includes(tabFromUrl as Tab) ? (tabFromUrl as Tab) : 'overview'
 
   const changeTab = (key: Tab) => {
     setSearchParams(key === 'overview' ? {} : { tab: key }, { replace: false })
@@ -74,9 +72,6 @@ export function NodeDetail() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showCommandModal, setShowCommandModal] = useState(false)
   const [showScriptModal, setShowScriptModal] = useState(false)
-  const [statusHistoryPage, setStatusHistoryPage] = useState(1)
-  const [commandHistoryPage, setCommandHistoryPage] = useState(1)
-  const pageSize = 20
 
   const {
     data: node,
@@ -102,6 +97,7 @@ export function NodeDetail() {
       host: node?.host,
       port: node?.port,
       connection_type: node?.connection_type,
+      description: (node as unknown as { description?: string | null })?.description ?? null,
       username: node?.username ?? null,
       passphrase: null,
       docker_host: node?.docker_host ?? null,
@@ -117,6 +113,7 @@ export function NodeDetail() {
       host: node.host,
       port: node.port,
       connection_type: node.connection_type,
+      description: (node as unknown as { description?: string | null })?.description ?? null,
       username: node.username ?? null,
       docker_host: node.docker_host ?? null,
       has_docker: node.has_docker ?? false,
@@ -134,6 +131,7 @@ export function NodeDetail() {
       host: node?.host,
       port: node?.port,
       connection_type: node?.connection_type,
+      description: (node as unknown as { description?: string | null })?.description ?? null,
       username: node?.username ?? null,
       docker_host: node?.docker_host ?? null,
       has_docker: node?.has_docker ?? false,
@@ -150,6 +148,7 @@ export function NodeDetail() {
       host: values.host,
       port: values.port,
       connection_type: values.connection_type,
+      description: values.description,
       username: values.username,
       docker_host: values.docker_host,
       has_docker: values.has_docker,
@@ -195,15 +194,6 @@ export function NodeDetail() {
     })
   }
 
-  const refreshHostKey = useRefreshHostKey()
-  const handleRefreshHostKey = () => {
-    if (!id) return
-    refreshHostKey.mutate(id, {
-      onSuccess: () => toast('success', t('nodes.toastHostKeyRefreshed', 'Host key refreshed')),
-      onError: () => toast('error', t('nodes.toastHostKeyRefreshFailed', 'Failed to refresh host key')),
-    })
-  }
-
   const handleCopyAddress = () => {
     const address = `${node?.host ?? ''}:${node?.port ?? ''}`
     copy(address)
@@ -227,7 +217,6 @@ export function NodeDetail() {
     { key: 'stats', label: t('nodes.stats', 'Stats') },
     { key: 'status-history', label: t('nodes.statusHistory', 'Status History') },
     { key: 'command-history', label: t('nodes.cmdHistory', 'Command History') },
-    { key: 'notes', label: t('nodes.notes', 'Notes') },
   ]
 
   return (
@@ -267,9 +256,6 @@ export function NodeDetail() {
             <IconCheckCircle className="w-4 h-4 mr-1" />
             {t('nodes.checkNode')}
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleRefreshHostKey} disabled={refreshHostKey.isPending}>
-            {t('nodes.refreshHostKey', 'Refresh Host Key')}
-          </Button>
           <Button variant="secondary" size="sm" onClick={() => setShowCommandModal(true)}>
             <IconCommands className="w-4 h-4 mr-1" />
             {t('nodes.execCommand')}
@@ -299,13 +285,8 @@ export function NodeDetail() {
       {activeTab === 'overview' && <OverviewTab node={node} />}
       {activeTab === 'metrics' && <MetricsTab nodeId={node.id} />}
       {activeTab === 'stats' && <StatsTab nodeId={node.id} />}
-      {activeTab === 'status-history' && (
-        <StatusHistoryTab nodeId={node.id} page={statusHistoryPage} size={pageSize} onPageChange={setStatusHistoryPage} />
-      )}
-      {activeTab === 'command-history' && (
-        <CommandHistoryTab nodeId={node.id} page={commandHistoryPage} size={pageSize} onPageChange={setCommandHistoryPage} />
-      )}
-      {activeTab === 'notes' && <NotesTab nodeId={node.id} />}
+      {activeTab === 'status-history' && <StatusHistoryTab nodeId={node.id} />}
+      {activeTab === 'command-history' && <CommandHistoryTab nodeId={node.id} />}
 
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title={t('nodes.editNode', 'Edit Node')} size="lg">
         <form onSubmit={handleSubmit(onSubmitEdit)} className="space-y-4">
@@ -330,43 +311,60 @@ export function NodeDetail() {
               />
             )}
           />
-          <Input label={t('nodes.username', 'Username')} placeholder="root" {...register('username')} error={errors.username?.message} />
           <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.password', 'Password')}</label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('password')} className="h-6 px-2 text-xs">
-                {clearFields.password ? t('common.cancel') : t('common.clear', 'Clear')}
-              </Button>
-            </div>
-            <Input type="password" placeholder={clearFields.password ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.password} {...register('password')} error={errors.password?.message} />
+            <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.descriptionLabel', 'Description')}</label>
+            <textarea {...register('description')} placeholder={t('nodes.descriptionPlaceholder', 'Main production node')} maxLength={1000} rows={3} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description.message}</p>}
+            <p className="text-xs text-surface-400 text-right">{(control._formValues.description?.length ?? 0)}/1000</p>
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('ssh_key')} className="h-6 px-2 text-xs">
-                {clearFields.ssh_key ? t('common.cancel') : t('common.clear', 'Clear')}
-              </Button>
+          <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
+            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.credentialsSection', 'Credentials')} {t('common.requiredMark', '*')}</p>
+            <div className="space-y-3 p-3 bg-surface-50 dark:bg-surface-800/30 rounded-lg border border-surface-200 dark:border-surface-800">
+              <Input label={t('nodes.username', 'Username')} placeholder="root" {...register('username')} error={errors.username?.message} />
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.password', 'Password')}</label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('password')} className="h-6 px-2 text-xs">
+                    {clearFields.password ? t('common.cancel') : t('common.clear', 'Clear')}
+                  </Button>
+                </div>
+                <Input type="password" placeholder={clearFields.password ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.password} {...register('password')} error={errors.password?.message} />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('ssh_key')} className="h-6 px-2 text-xs">
+                    {clearFields.ssh_key ? t('common.cancel') : t('common.clear', 'Clear')}
+                  </Button>
+                </div>
+                <textarea {...register('ssh_key')} placeholder={clearFields.ssh_key ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.ssh_key} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+                {errors.ssh_key && <p className="text-xs text-red-500 mt-1">{errors.ssh_key.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.passphrase', 'Passphrase')}</label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('passphrase')} className="h-6 px-2 text-xs">
+                    {clearFields.passphrase ? t('common.cancel') : t('common.clear', 'Clear')}
+                  </Button>
+                </div>
+                <Input type="password" placeholder={clearFields.passphrase ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.passphrase} {...register('passphrase')} error={errors.passphrase?.message} />
+              </div>
+              <p className="text-xs text-surface-500">{t('nodes.credentialsHint', 'Provide password or SSH key, leave others blank')}</p>
             </div>
-            <textarea {...register('ssh_key')} placeholder={clearFields.ssh_key ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.ssh_key} rows={4} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
-            {errors.ssh_key && <p className="text-xs text-red-500 mt-1">{errors.ssh_key.message}</p>}
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.passphrase', 'Passphrase')}</label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => toggleClear('passphrase')} className="h-6 px-2 text-xs">
-                {clearFields.passphrase ? t('common.cancel') : t('common.clear', 'Clear')}
-              </Button>
+          <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
+            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.dockerSection', 'Docker')}</p>
+            <div className="space-y-3 p-3 bg-surface-50 dark:bg-surface-800/30 rounded-lg border border-surface-200 dark:border-surface-800">
+              <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...register('docker_host')} error={errors.docker_host?.message} />
+              <Controller
+                name="has_docker"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox checked={field.value ?? false} onChange={field.onChange} label={t('nodes.hasDocker', 'Has Docker')} />
+                )}
+              />
             </div>
-            <Input type="password" placeholder={clearFields.passphrase ? t('common.willBeCleared') : t('common.leaveBlank')} disabled={clearFields.passphrase} {...register('passphrase')} error={errors.passphrase?.message} />
           </div>
-          <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" {...register('docker_host')} error={errors.docker_host?.message} />
-          <Controller
-            name="has_docker"
-            control={control}
-            render={({ field }) => (
-              <Checkbox checked={field.value ?? false} onChange={field.onChange} label={t('nodes.hasDocker', 'Has Docker')} />
-            )}
-          />
           <Controller
             name="tags"
             control={control}
@@ -414,6 +412,7 @@ function OverviewTab({ node }: { node: Node }) {
         </button>
       </span>
     )],
+    [t('nodes.descriptionLabel', 'Description'), (node as unknown as { description?: string | null }).description ? <span key="desc">{(node as unknown as { description: string }).description}</span> : '—'],
     [t('nodes.connectionType'), connTypeBadge],
     [t('nodes.status'), statusBadge],
     [t('nodes.username', 'Username'), node.username ? (
@@ -590,12 +589,12 @@ function StatsTab({ nodeId }: { nodeId: string }) {
   )
 }
 
-function StatusHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: string; page: number; size: number; onPageChange: (p: number) => void }) {
+function StatusHistoryTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
-  const { data, isLoading, error, refetch } = useNodeStatusHistory(nodeId, { page, size })
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodeStatusHistory(nodeId, { limit: 20 })
   if (isLoading) return <TableSkeleton rows={5} cols={4} />
   if (error) return <ErrorState error={error} onRetry={refetch} />
-  const items = data?.items ?? []
+  const items = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
   return (
     <Card>
       <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('nodes.statusHistory')}</h2></CardHeader>
@@ -604,7 +603,7 @@ function StatusHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: string
           <EmptyState title={t('nodes.emptyTitle')} />
         ) : (
           <div className="divide-y divide-surface-200 dark:divide-surface-800">
-            {items.map((item) => (
+            {items.map((item: { id: string; old_status?: string | null; new_status: string; source: string; changed_at: string; node_id?: string | null }) => (
               <div key={item.id} className="flex items-center justify-between px-6 py-3">
                 <div className="flex items-center gap-2">
                   {item.old_status && <Badge variant="default">{item.old_status}</Badge>}
@@ -619,24 +618,20 @@ function StatusHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: string
             ))}
           </div>
         )}
-        {data && data.total > size && (
-          <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-            <Pagination page={page} totalPages={Math.ceil(data.total / size)} onPageChange={onPageChange} />
-          </div>
-        )}
+        <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
       </CardContent>
     </Card>
   )
 }
 
-function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: string; page: number; size: number; onPageChange: (p: number) => void }) {
+function CommandHistoryTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data, isLoading, error, refetch } = useNodeCommandHistory(nodeId, { page, size })
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodeCommandHistory(nodeId, { limit: 20 })
   const retry = useRetryNodeCommand()
   if (isLoading) return <TableSkeleton rows={5} cols={3} />
   if (error) return <ErrorState error={error} onRetry={refetch} />
-  const items = data?.items ?? []
+  const items = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
   return (
     <Card>
       <CardHeader><h2 className="text-lg font-semibold text-surface-900 dark:text-white">{t('nodes.cmdHistory')}</h2></CardHeader>
@@ -645,7 +640,7 @@ function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: strin
           <EmptyState title={t('nodes.noCmdHistory', 'No command history')} />
         ) : (
           <div className="divide-y divide-surface-200 dark:divide-surface-800">
-            {items.map((item) => (
+            {items.map((item: { id: string; command_fingerprint: string; created_at: string; exit_code: number }) => (
               <div key={item.id} className="flex items-center justify-between px-6 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-mono text-surface-900 dark:text-white truncate">{item.command_fingerprint}</p>
@@ -668,22 +663,10 @@ function CommandHistoryTab({ nodeId, page, size, onPageChange }: { nodeId: strin
             ))}
           </div>
         )}
-        {data && data.total > size && (
-          <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
-            <Pagination page={page} totalPages={Math.ceil(data.total / size)} onPageChange={onPageChange} />
-          </div>
-        )}
+        <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
       </CardContent>
     </Card>
   )
 }
 
-function NotesTab({ nodeId }: { nodeId: string }) {
-  return (
-    <Card>
-      <CardContent>
-        <NotesPanel targetType="node" targetId={nodeId} />
-      </CardContent>
-    </Card>
-  )
-}
+

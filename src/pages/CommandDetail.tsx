@@ -12,7 +12,6 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton, StatCardSkeleton } from '../components/ui/Skeleton'
-import { NotesPanel } from '../components/ui/NotesPanel'
 import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Tabs } from '../components/ui/Tabs'
 import { StatCard, StatsGrid } from '../components/ui/StatCard'
@@ -32,7 +31,7 @@ import { normalizeParameters } from '../components/commands/command-form-utils'
 import { commandUpdateSchema, type CommandUpdateFormValues } from '../lib/validators/command-schema'
 import type { CommandResponse, CommandUpdate } from '../api/types'
 
-type Tab = 'overview' | 'parameters' | 'stats' | 'notes'
+type Tab = 'overview' | 'parameters' | 'stats'
 
 export function CommandDetail() {
   const { t } = useTranslation()
@@ -78,7 +77,7 @@ export function CommandDetail() {
       name: values.name,
       command: values.command,
       description: values.description || undefined,
-      parameters: normalizeParameters(values.parameters),
+      parameters: normalizeParameters(values.parameters) as unknown as CommandUpdate['parameters'],
       tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
     }
     updateCommand.mutate(
@@ -129,7 +128,6 @@ export function CommandDetail() {
     { key: 'overview', label: t('commands.overview', 'Overview') },
     { key: 'parameters', label: t('commands.parameters', 'Parameters') },
     { key: 'stats', label: t('commands.stats', 'Stats') },
-    { key: 'notes', label: t('notes.title') },
   ]
 
   return (
@@ -171,7 +169,6 @@ export function CommandDetail() {
       {activeTab === 'overview' && <OverviewTab command={command} />}
       {activeTab === 'parameters' && <ParametersTab command={command} />}
       {activeTab === 'stats' && <StatsTab commandId={command.id} />}
-      {activeTab === 'notes' && <NotesTab commandId={command.id} />}
 
       <CommandExecuteModal command={showExecModal ? command : null} onClose={() => setShowExecModal(false)} />
 
@@ -321,12 +318,4 @@ function StatsTab({ commandId }: { commandId: string }) {
   )
 }
 
-function NotesTab({ commandId }: { commandId: string }) {
-  return (
-    <Card>
-      <CardContent>
-        <NotesPanel targetType="command" targetId={commandId} />
-      </CardContent>
-    </Card>
-  )
-}
+

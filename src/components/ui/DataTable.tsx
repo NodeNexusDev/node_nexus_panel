@@ -6,6 +6,7 @@ import { EmptyState } from './EmptyState'
 import { Pagination } from './Pagination'
 import type { Column } from './table-types'
 
+/** @deprecated legacy — uses offset Pagination. Use `ResponsiveTable` + `InfiniteScroll` instead. */
 interface DataTableProps<T> {
   data: T[]
   columns: Column<T>[]

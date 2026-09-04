@@ -78,18 +78,30 @@ export function CommandExecuteModal({ command, onClose }: CommandExecuteModalPro
           onSuccess: (res) => {
             const target = nodes.find((n) => n.id === nodeId)?.name ?? nodeId
             toast('success', t('commands.toastExecuted', { target }))
-            setResult(res)
+            const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null }> }
+            const first = batch.results?.[0]
+            if (first) setResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult)
+            else setResult(res as unknown as CommandResult)
           },
           onError: () => toast('error', t('commands.toastFailed')),
         },
       )
     } else {
       bulkExecuteCommand.mutate(
-        { commandId: command.id, data: { command: command.command, node_ids: Array.from(selectedNodes), params } },
+        { commandId: command.id, data: { node_ids: Array.from(selectedNodes), params } },
         {
           onSuccess: (res) => {
             toast('success', t('commands.toastBulkExecuted', { count: selectedNodes.size }))
-            setBulkResult(res)
+            const batch = res as unknown as BulkCommandResult & { results: BulkNodeResult[] }
+            // Normalize v2 BulkExecutionBatchResponse -> BulkCommandResult
+            if ((batch as unknown as { results?: unknown[] }).results && !Array.isArray((batch as unknown as { results: BulkNodeResult[] }).results)) {
+              setBulkResult(batch)
+            } else if ((res as unknown as { results?: BulkNodeResult[] }).results) {
+              const r = res as unknown as { batch_id?: string; results: BulkNodeResult[]; total?: number; succeeded?: number; failed?: number }
+              setBulkResult({ command: command.command, results: r.results as BulkNodeResult[], total: r.total ?? r.results.length, succeeded: r.succeeded ?? r.results.filter((x) => (x as unknown as { exit_code?: number }).exit_code === 0).length, failed: r.failed ?? r.results.filter((x) => (x as unknown as { exit_code?: number }).exit_code !== 0).length } as BulkCommandResult)
+            } else {
+              setBulkResult(res as unknown as BulkCommandResult)
+            }
           },
           onError: () => toast('error', t('commands.toastFailed')),
         },

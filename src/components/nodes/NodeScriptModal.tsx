@@ -42,7 +42,13 @@ export function NodeScriptModal({ node, onClose }: NodeScriptModalProps) {
     runScript.mutate(
       { id: selected.id, data: { node_ids: [node.id] } },
       {
-        onSuccess: (response) => { toast('success', t('scripts.toastStarted', { name: selected.name })); setResult(response.results[0]) },
+        onSuccess: (response) => {
+          toast('success', t('scripts.toastStarted', { name: selected.name }))
+          const batch = response as unknown as { results?: ScriptNodeResult[] }
+          const fallback = response as unknown as { results?: Array<{ node_id: string; status: string; steps?: unknown[] }> }
+          const first = batch.results?.[0] as ScriptNodeResult | undefined ?? (fallback.results?.[0] as unknown as ScriptNodeResult)
+          if (first) setResult(first)
+        },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: selected.name })),
       },
     )

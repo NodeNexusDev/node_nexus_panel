@@ -7,7 +7,7 @@ function encodeSse(event: string, data: unknown) {
 }
 
 export const eventsHandlers = [
-  http.get(`${API_URL}/api/v1/events/stream`, () => {
+  http.get(`${API_URL}/api/v2/events/stream`, () => {
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null
     let realEventInterval: ReturnType<typeof setInterval> | null = null
 

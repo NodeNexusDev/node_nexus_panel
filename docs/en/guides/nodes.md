@@ -37,7 +37,7 @@ View all registered nodes with their status, tags, and system info. Features:
 
 ## Node Detail Tabs
 
-Each node has 7 tabs:
+Each node has 6 tabs:
 
 ### Overview
 
@@ -77,10 +77,6 @@ Manage node tags individually:
 - Add tags via input field
 - Remove tags with one click
 - Tags are used for filtering and bulk operations
-
-### Notes
-
-Add and manage notes for the node. Notes support markdown preview.
 
 ## Node Actions
 

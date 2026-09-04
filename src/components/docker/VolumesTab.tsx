@@ -15,6 +15,7 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { data: volumes, isLoading, error, refetch } = useDockerVolumes(nodeId)
+  const volumeList = (volumes as unknown as { items?: Array<{ Name: string; Driver: string }> })?.items ?? []
   const createVolume = useCreateVolume()
   const deleteVolume = useDeleteVolume()
   const pruneVolumes = usePruneVolumes()
@@ -28,7 +29,7 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
 
   if (isLoading) return <TableSkeleton rows={3} cols={4} />
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadVolumes')} />
-  if (!volumes?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noVolumes')} description={t('docker.noVolumesDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createVolume')}</Button>} />
+  if (!volumeList.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noVolumes')} description={t('docker.noVolumesDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createVolume')}</Button>} />
 
   return (
     <>
@@ -46,7 +47,7 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-            {volumes.map((v) => (
+            {volumeList.map((v) => (
               <tr key={v.Name} className="table-row-hover">
                 <td className="px-6 py-4 text-sm font-semibold text-surface-900 dark:text-white">{v.Name}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{v.Driver}</td>
@@ -68,7 +69,7 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
           <Input label={t('docker.driver')} placeholder="local" value={createDriver} onChange={(e) => setCreateDriver(e.target.value)} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { const trimmed = createName.trim(); if (trimmed) { createVolume.mutate({ nodeId, data: { name: trimmed, driver: createDriver.trim() || undefined } }, { onSuccess: () => { toast('success', t('docker.createVolume')); setShowCreateModal(false); setCreateName(''); setCreateDriver('') }, onError: () => toast('error', t('docker.toastCreateVolumeFailed')) }) } }} disabled={!createName.trim() || createVolume.isPending}>{createVolume.isPending ? t('common.loading') : t('common.create')}</Button>
+            <Button onClick={() => { const trimmed = createName.trim(); if (trimmed) { createVolume.mutate({ nodeId, data: { name: trimmed, driver: createDriver.trim() || 'local' } }, { onSuccess: () => { toast('success', t('docker.createVolume')); setShowCreateModal(false); setCreateName(''); setCreateDriver('') }, onError: () => toast('error', t('docker.toastCreateVolumeFailed')) }) } }} disabled={!createName.trim() || createVolume.isPending}>{createVolume.isPending ? t('common.loading') : t('common.create')}</Button>
           </div>
         </div>
       </Modal>

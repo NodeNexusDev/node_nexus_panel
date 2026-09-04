@@ -81,7 +81,10 @@ export function NodeCommandModal({ node, onClose }: NodeCommandModalProps) {
       {
         onSuccess: (res) => {
           toast('success', t('commands.toastExecuted', { target: node.name }))
-          setCommandResult(res)
+          const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null }> }
+          const first = batch.results?.[0]
+          if (first) setCommandResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult)
+          else setCommandResult(res as unknown as CommandResult)
         },
         onError: () => toast('error', t('commands.toastFailed')),
       },
@@ -94,8 +97,11 @@ export function NodeCommandModal({ node, onClose }: NodeCommandModalProps) {
       { id: node.id, command: customCommand, timeout: customTimeout ? Number(customTimeout) : undefined },
       {
         onSuccess: (res) => {
-          toast('success', t('nodes.execResult', { code: res.exit_code, output: res.stdout.slice(0, 100) }))
-          setCustomOutputs((prev) => [...prev, { command: customCommand, result: res }])
+          const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null }> }
+          const first = batch.results?.[0] ?? (res as unknown as { stdout: string; stderr: string; exit_code?: number | null })
+          const result = { stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult
+          toast('success', t('nodes.execResult', { code: result.exit_code, output: result.stdout.slice(0, 100) }))
+          setCustomOutputs((prev) => [...prev, { command: customCommand, result }])
         },
         onError: () => toast('error', t('nodes.toastExecFailed')),
       },

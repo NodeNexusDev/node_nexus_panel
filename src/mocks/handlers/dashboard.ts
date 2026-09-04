@@ -4,11 +4,11 @@ import { mockDashboard } from '../data/dashboard'
 const API_URL = '*'
 
 export const dashboardHandlers = [
-  http.get(`${API_URL}/api/v1/dashboard/`, () => {
+  http.get(`${API_URL}/api/v2/dashboard/`, () => {
     return HttpResponse.json(mockDashboard)
   }),
 
-  http.get(`${API_URL}/api/v1/dashboard/metrics`, ({ request }) => {
+  http.get(`${API_URL}/api/v2/dashboard/metrics`, ({ request }) => {
     const url = new URL(request.url)
     const groupBy = url.searchParams.get('group_by') || 'day'
 

@@ -62,7 +62,7 @@ export function Login() {
               <Input
                 ref={loginRef}
                 label={t('login.login')}
-                placeholder="admin"
+                placeholder={t('login.placeholder', 'admin')}
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError('') }}
                 disabled={submitting}

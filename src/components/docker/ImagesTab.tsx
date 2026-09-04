@@ -11,11 +11,13 @@ import { useToast } from '../ui/useToast'
 import { useDockerImages, useDeleteImage, useTagImage, useBuildImage, usePruneImages, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
 import { Checkbox } from '../ui/Checkbox'
 import { ImageInspectContent } from './ImageInspectContent'
+import type { DockerImage } from '../../api/types'
 
 export function ImagesTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { data: images, isLoading, error, refetch } = useDockerImages(nodeId)
+  const imageList = (images as unknown as { items?: DockerImage[] })?.items ?? []
   const deleteImage = useDeleteImage()
   const tagImage = useTagImage()
   const buildImage = useBuildImage()
@@ -38,10 +40,10 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
   const [showPruneConfirm, setShowPruneConfirm] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
-  const allSelected = images && images.length > 0 && images.every((img) => selectedIds.has(img.ID))
+  const allSelected = imageList.length > 0 && imageList.every((img) => selectedIds.has((img as unknown as { ID: string }).ID))
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set())
-    else setSelectedIds(new Set(images?.map((img) => img.ID) || []))
+    else setSelectedIds(new Set(imageList.map((img) => (img as unknown as { ID: string }).ID)))
   }
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
@@ -49,7 +51,7 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
 
   if (isLoading) return <TableSkeleton rows={5} cols={5} />
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadImages')} />
-  if (!images?.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noImages')} description={t('docker.noImagesDesc')} action={<Button onClick={() => setShowBuildModal(true)}>{t('docker.buildImage')}</Button>} />
+  if (!imageList.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noImages')} description={t('docker.noImagesDesc')} action={<Button onClick={() => setShowBuildModal(true)}>{t('docker.buildImage')}</Button>} />
 
   return (
     <>
@@ -81,22 +83,25 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-            {images.map((img) => (
-              <tr key={img.ID} className="table-row-hover">
-                <td className="px-6 py-4"><div className="flex items-center"><Checkbox checked={selectedIds.has(img.ID)} onChange={() => toggleOne(img.ID)} ariaLabel={t('common.selectItem', { name: img.Repository || img.ID?.slice(0, 12) || '' })} /></div></td>
-                <td className="px-6 py-4 text-sm font-mono text-surface-900 dark:text-white">{img.Repository}</td>
-                <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{img.Tag}</td>
-                <td className="px-6 py-4 text-xs text-surface-500 font-mono">{img.ID?.slice(0, 12) || '—'}</td>
-                <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{img.Size}</td>
+            {imageList.map((img: DockerImage) => {
+              const im = img as unknown as { ID: string; Repository?: string; Tag?: string; Size?: string }
+              return (
+              <tr key={im.ID} className="table-row-hover">
+                <td className="px-6 py-4"><div className="flex items-center"><Checkbox checked={selectedIds.has(im.ID)} onChange={() => toggleOne(im.ID)} ariaLabel={t('common.selectItem', { name: im.Repository || im.ID?.slice(0, 12) || '' })} /></div></td>
+                <td className="px-6 py-4 text-sm font-mono text-surface-900 dark:text-white">{im.Repository}</td>
+                <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{im.Tag}</td>
+                <td className="px-6 py-4 text-xs text-surface-500 font-mono">{im.ID?.slice(0, 12) || '—'}</td>
+                <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{im.Size}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setInspectTarget({ id: img.ID, name: img.Repository || img.ID?.slice(0, 12) || '' })}>{t('docker.inspect')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: img.ID, tag: img.Tag })}>{t('docker.tag')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: img.ID, name: img.Repository || img.ID?.slice(0, 12) || '' })} className="text-red-500">{t('common.delete')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setInspectTarget({ id: im.ID, name: im.Repository || im.ID?.slice(0, 12) || '' })}>{t('docker.inspect')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: im.ID, tag: im.Tag || '' })}>{t('docker.tag')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: im.ID, name: im.Repository || im.ID?.slice(0, 12) || '' })} className="text-red-500">{t('common.delete')}</Button>
                   </div>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>

@@ -6,7 +6,7 @@ import { mockScripts } from '../data/scripts'
 const API = '*'
 
 export const configHandlers = [
-  http.get(`${API}/api/v1/config/export`, () => {
+  http.get(`${API}/api/v2/config/export`, () => {
     return HttpResponse.json({
       exported_at: new Date().toISOString(),
       format_version: '1.0',
@@ -18,7 +18,7 @@ export const configHandlers = [
     })
   }),
 
-  http.post(`${API}/api/v1/config/import`, async ({ request }) => {
+  http.post(`${API}/api/v2/config/import`, async ({ request }) => {
     const body = await request.json() as { nodes?: Record<string, unknown>[]; commands?: Record<string, unknown>[]; scripts?: Record<string, unknown>[]; dry_run?: boolean }
     if (body.dry_run) {
       return HttpResponse.json({

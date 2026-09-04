@@ -4,7 +4,7 @@ import { getSearchResults } from '../data/favorites'
 const API = '*'
 
 export const searchHandlers = [
-  http.get(`${API}/api/v1/search`, ({ request }) => {
+  http.get(`${API}/api/v2/search`, ({ request }) => {
     const url = new URL(request.url)
     const q = url.searchParams.get('q') || ''
     const results = getSearchResults(q)
