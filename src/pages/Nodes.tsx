@@ -32,7 +32,6 @@ import {
   useCreateNode,
   useUpdateNode,
   useDeleteNode,
-  useCheckNode,
   useBulkCheck,
   useNodeTags,
   useBulkDeleteNodes,
@@ -80,7 +79,6 @@ export function Nodes() {
   const createNode = useCreateNode()
   const updateNode = useUpdateNode()
   const deleteNode = useDeleteNode()
-  const checkNode = useCheckNode()
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
   const bulkMetrics = useBulkMetrics()
@@ -118,8 +116,6 @@ export function Nodes() {
 
   const [execTarget, setExecTarget] = useState<Node | null>(null)
   const [scriptTarget, setScriptTarget] = useState<Node | null>(null)
-  const [validateTarget, setValidateTarget] = useState<Node | null>(null)
-  const [validateResult, setValidateResult] = useState<{ status: string; message: string } | null>(null)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
 
@@ -175,26 +171,6 @@ export function Nodes() {
     })
     setClearFields({})
   }, [])
-
-  const handleValidate = useCallback((node: Node) => {
-    setValidateTarget(node)
-    setValidateResult(null)
-    checkNode.mutate(node.id, {
-      onSuccess: (checkedRes: unknown) => {
-        const r = checkedRes as { results?: Array<{ status: string }> }
-        const status = r?.results?.[0]?.status || 'active'
-        setValidateResult({
-          status,
-          message: status === 'success' || status === 'active'
-            ? t('nodes.validateSuccess', 'Connection successful')
-            : t('nodes.validateFailed', 'Connection failed'),
-        })
-      },
-      onError: () => toast('error', t('nodes.toastValidateFailed')),
-    })
-  }, [checkNode, t, toast])
-
-
 
   const columns: Column<Node>[] = useMemo(() => [
     {
@@ -603,20 +579,6 @@ export function Nodes() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!validateTarget} onClose={() => { setValidateTarget(null); setValidateResult(null) }} title={t('nodes.validate')}>
-        <div className="space-y-4">
-          {validateResult ? (
-            <div className={`p-4 rounded-lg ${validateResult.status === 'active' ? 'bg-green-50 dark:bg-green-500/10' : 'bg-red-50 dark:bg-red-500/10'}`}>
-              <Badge variant={validateResult.status === 'active' ? 'success' : 'danger'}>{validateResult.status}</Badge>
-              <p className="text-sm mt-2 text-surface-700 dark:text-surface-300">{validateResult.message}</p>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-surface-500"><Spinner size="sm" /> {t('nodes.toastValidating')}</div>
-          )}
-          <div className="flex justify-end"><Button variant="ghost" onClick={() => { setValidateTarget(null); setValidateResult(null) }}>{t('common.cancel')}</Button></div>
-        </div>
-      </Modal>
-
       <BulkCommandModal nodeIds={showBulkExec ? selectedIds : []} onClose={() => setShowBulkExec(false)} />
 
       <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed: number; succeeded: number }; if (d.failed && d.failed > 0) { toast('warning', t('nodes.toastBulkDeletePartial', { failed: d.failed, succeeded: d.succeeded })) } else { toast('success', t('nodes.toastBulkDeleteDone')) } setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
@@ -712,7 +674,6 @@ export function Nodes() {
             onDelete={(n) => { setDrawerNode(null); setDeleteTarget({ id: n.id, name: n.name }) }}
             onExec={(n) => setExecTarget(n)}
             onRunScript={(n) => setScriptTarget(n)}
-            onValidate={(n) => handleValidate(n)}
           />
         )}
       </Drawer>
