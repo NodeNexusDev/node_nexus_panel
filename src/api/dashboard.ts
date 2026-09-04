@@ -6,27 +6,47 @@ export const dashboardApi = {
   getStats: async (): Promise<DashboardResponse> => {
     try {
       const [nodesRes, auditRes, commandsRes, scriptsRes, packsRes] = await Promise.all([
-        api.get<{ items: Array<{ status: string }>; has_more: boolean; next_cursor: string | null }>(`/nodes/?limit=100`).catch(() => ({ items: [], has_more: false, next_cursor: null })),
+        api.get<{ items: Array<{ id: string; status: string; has_docker?: boolean }>; has_more: boolean; next_cursor: string | null; total?: number }>(`/nodes/?limit=100`).catch(() => ({ items: [], has_more: false, next_cursor: null })),
         api.get<{ items: Array<{ id: string; action: string; node_id: string | null; user: string | null; details: string | null; created_at: string }> }>(`/audit/?limit=8`).catch(() => ({ items: [] })),
         api.get<{ total?: number; items?: unknown[] }>(`/commands/?limit=1`).catch(() => ({ total: 0 })),
         api.get<{ total?: number; items?: unknown[] }>(`/scripts/?limit=1`).catch(() => ({ total: 0 })),
         api.get<{ total: number; installed: number; not_installed: number }>(`/templates/packs/stats`).catch(() => ({ total: 0, installed: 0, not_installed: 0 })),
       ])
-      const nodes = (nodesRes as unknown as { items: Array<{ status: string }> }).items || []
-      const total = nodes.length
+      const nodes = (nodesRes as unknown as { items: Array<{ id: string; status: string; has_docker?: boolean }> }).items || []
+      const total = (nodesRes as { total?: number })?.total ?? nodes.length
       const active = nodes.filter((n) => n.status === 'active').length
       const unreachable = nodes.filter((n) => n.status === 'unreachable').length
       const recent_activity = ((auditRes as unknown as { items: unknown[] }).items || []).slice(0, 8) as DashboardResponse['recent_activity']
       const commandsTotal = (commandsRes as { total?: number })?.total ?? (commandsRes as { items?: unknown[] })?.items?.length ?? 0
       const scriptsTotal = (scriptsRes as { total?: number })?.total ?? (scriptsRes as { items?: unknown[] })?.items?.length ?? 0
       const packs = packsRes as { total: number; installed: number; not_installed: number }
+      // Docker stats: aggregate where available — per-node system/info for has_docker nodes
+      let docker = { total: 0, running: 0, stopped: 0 }
+      const dockerNodeIds = nodes.filter((n) => n.has_docker).map((n) => n.id).slice(0, 20)
+      if (dockerNodeIds.length > 0) {
+        const results = await Promise.all(
+          dockerNodeIds.map((id) =>
+            api
+              .get<{ containers_running: number; containers_stopped: number }>(`/nodes/${id}/docker/system/info`)
+              .catch(() => null),
+          ),
+        )
+        let running = 0
+        let stopped = 0
+        for (const r of results) {
+          if (r) {
+            running += r.containers_running ?? 0
+            stopped += r.containers_stopped ?? 0
+          }
+        }
+        docker = { total: running + stopped, running, stopped }
+      }
       return {
         nodes: { total, active, unreachable },
-        docker: { total: 0, running: 0, stopped: 0 },
+        docker,
         scripts: { total: scriptsTotal },
         commands: { total: commandsTotal },
         recent_activity,
-        // expose packs stats via extension (cast)
         ...(packs ? { packs } as unknown as Pick<DashboardResponse, never> : {}),
       } as DashboardResponse & { packs?: { total: number; installed: number; not_installed: number } }
     } catch {
