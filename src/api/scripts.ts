@@ -47,13 +47,13 @@ export const scriptsApi = {
   executions: (data: ScriptExecutionsRequest) =>
     api.post<BulkScriptExecutionBatchResponse>('/scripts/executions', data),
 
-  // Legacy single execute -> maps to bulk
+  // Legacy single execute -> maps to bulk, params keyed by script_id per spec
   execute: (id: string, data: { node_ids?: string[] | null; node_tags?: string[] | null; params?: Record<string, unknown> }) =>
     api.post<BulkScriptExecutionBatchResponse>('/scripts/executions', {
       script_ids: [id],
       node_ids: data.node_ids || undefined,
       node_tags: data.node_tags || undefined,
-      params: data.params,
+      params: data.params ? { [id]: data.params } : undefined,
     } as ScriptExecutionsRequest),
 
   clone: (id: string, newName?: string) => {

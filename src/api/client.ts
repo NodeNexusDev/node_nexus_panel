@@ -87,14 +87,14 @@ class ApiClient {
             credentials: 'include',
           })
           clearTimeout(retryTimeout)
-          if (!retryResponse.ok) {
-            const error = await this.parseError(retryResponse)
-            throw new ApiRequestError(retryResponse.status, error)
-          }
           if (retryResponse.status === 204) {
             return undefined as T
           }
-          return retryResponse.json() as Promise<T>
+          if (retryResponse.ok || retryResponse.status === 207) {
+            return retryResponse.json() as Promise<T>
+          }
+          const error = await this.parseError(retryResponse)
+          throw new ApiRequestError(retryResponse.status, error)
         } catch (err) {
           clearTimeout(retryTimeout)
           if ((err as Error).name === 'AbortError') {
@@ -105,16 +105,16 @@ class ApiClient {
       }
     }
 
-    if (!response.ok) {
-      const error = await this.parseError(response)
-      throw new ApiRequestError(response.status, error)
-    }
-
+    // Bulk endpoints may return 207 Multi-Status on partial success (200-207 are success)
     if (response.status === 204) {
       return undefined as T
     }
+    if (response.ok || response.status === 207) {
+      return response.json() as Promise<T>
+    }
 
-    return response.json() as Promise<T>
+    const error = await this.parseError(response)
+    throw new ApiRequestError(response.status, error)
   }
 
   private async tryRefresh(): Promise<string | null> {
@@ -150,11 +150,11 @@ class ApiClient {
     const headers: Record<string, string> = {}
     if (this.accessToken) headers['Authorization'] = `Bearer ${this.accessToken}`
     const response = await fetch(`${this.baseUrl}${endpoint}`, { method: 'GET', headers, credentials: 'include' })
-    if (!response.ok) {
-      const error = await this.parseError(response)
-      throw new ApiRequestError(response.status, error)
+    if (response.ok || response.status === 207) {
+      return response.blob()
     }
-    return response.blob()
+    const error = await this.parseError(response)
+    throw new ApiRequestError(response.status, error)
   }
 
   async post<T>(endpoint: string, body?: unknown): Promise<T> {
