@@ -57,6 +57,8 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
   const handleRun = () => {
     const nodeIds = [...selectedNodeIds]
     if (scriptIds.length === 0 || nodeIds.length === 0) return
+    setSingleResult(null)
+    setBulkResults(null)
     bulkRun.mutate({ script_ids: scriptIds, node_ids: nodeIds }, {
       onSuccess: (response) => {
         toast('success', t('scripts.toastStarted', { name: `${scriptIds.length} scripts` }))

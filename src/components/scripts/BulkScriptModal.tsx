@@ -72,6 +72,8 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
   const handleRun = () => {
     const ids = [...selectedIds]
     if (ids.length === 0 || nodeIds.length === 0) return
+    setSingleResult(null)
+    setBulkResults(null)
     bulkRun.mutate({ script_ids: ids, node_ids: nodeIds }, {
       onSuccess: (response) => {
         const countLabel = ids.length === 1 ? scripts.find((s) => s.id === ids[0])?.name ?? ids[0] : `${ids.length} scripts`

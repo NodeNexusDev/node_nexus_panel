@@ -494,6 +494,8 @@ function DrawerExec({ node }: { node: Node }) {
 
   const handleRunCommand = () => {
     if (selectedIds.size === 0) return
+    setCommandResult(null)
+    setBulkResults(null)
     if (selectedIds.size === 1 && singleSelected) {
       const values: Record<string, unknown> = {}
       for (const p of singleSelected.parameters || []) {
@@ -530,8 +532,10 @@ function DrawerExec({ node }: { node: Node }) {
         toast('success', t('commands.toastExecuted', { target: node.name }) + ` (${ids.length})`)
         const batch = res as unknown as { results?: Array<{ command_id?: string; stdout: string; stderr: string; exit_code?: number | null }> }
         if (batch.results && Array.isArray(batch.results)) {
+          const byId = new Map<string, { stdout?: string; stderr?: string; exit_code?: number | null; command_id?: string }>()
+          ;(batch.results as Array<{ command_id?: string; stdout?: string; stderr?: string; exit_code?: number | null }>).forEach((r) => { if (r.command_id) byId.set(r.command_id, r) })
           const mapped = ids.map((id, i) => {
-            const r = (batch.results as Array<{ stdout?: string; stderr?: string; exit_code?: number | null; command_id?: string }>)[i] || batch.results?.[0]
+            const r = byId.get(id) ?? (batch.results as Array<{ stdout?: string; stderr?: string; exit_code?: number | null; command_id?: string }>)[i] as { stdout?: string; stderr?: string; exit_code?: number | null } | undefined ?? batch.results?.[0] as { stdout?: string; stderr?: string; exit_code?: number | null } | undefined
             return { id, name: commands.find((c) => c.id === id)?.name ?? id, result: { stdout: r?.stdout ?? '', stderr: r?.stderr ?? '', exit_code: r?.exit_code ?? 0 } as CommandResult }
           })
           setBulkResults(mapped)
@@ -665,6 +669,8 @@ function DrawerScript({ node }: { node: Node }) {
   const handleRun = () => {
     const ids = [...selectedIds]
     if (ids.length === 0) return
+    setResult(null)
+    setBulkResults(null)
     if (ids.length === 1) {
       const selectedId = ids[0]
       const selectedName = scripts.find((s) => s.id === selectedId)?.name ?? selectedId

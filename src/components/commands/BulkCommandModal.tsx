@@ -92,6 +92,8 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
 
   const handleRunCommand = () => {
     if (selectedIds.size === 0 || nodeIds.length === 0) return
+    setBulkResult(null)
+    setBulkMultiResults(null)
     const ids = [...selectedIds]
     if (ids.length === 1 && singleSelected) {
       const values: Record<string, unknown> = {}
@@ -146,6 +148,8 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
 
   const handleRunCustom = () => {
     if (!customCommand || nodeIds.length === 0) return
+    setBulkResult(null)
+    setBulkMultiResults(null)
     bulkRaw.mutate({ commands: [customCommand], node_ids: nodeIds }, {
       onSuccess: (res) => {
         toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))

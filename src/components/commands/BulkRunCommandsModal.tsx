@@ -55,6 +55,7 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
   const handleRun = () => {
     const nodeIds = [...selectedNodeIds]
     if (commandIds.length === 0 || nodeIds.length === 0) return
+    setResults(null)
     bulkExec.mutate({ command_ids: commandIds, node_ids: nodeIds }, {
       onSuccess: (res) => {
         toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
