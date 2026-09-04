@@ -701,7 +701,8 @@
     "yes": "Да",
     "no": "Нет",
     "created": "Создан",
-    "description": "Описание"
+    "description": "Описание",
+    "history": "История"
   },
   "errorBoundary": {
     "title": "Что-то пошло не так",

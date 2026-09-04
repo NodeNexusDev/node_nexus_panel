@@ -88,7 +88,7 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
     { key: 'overview', label: t('nodes.overview', 'Overview') },
     { key: 'metrics', label: t('nodes.metrics', 'Metrics') },
     { key: 'stats', label: t('nodes.stats', 'Stats') },
-    { key: 'history', label: t('nodes.statusHistory', 'History') },
+    { key: 'history', label: t('common.history', 'History') },
     { key: 'edit', label: t('common.edit', 'Edit') },
     { key: 'exec', label: t('nodes.execCommand', 'Exec') },
     { key: 'script', label: t('nodes.runScript', 'Script') },

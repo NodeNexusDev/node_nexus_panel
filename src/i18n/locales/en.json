@@ -701,7 +701,8 @@
     "yes": "Yes",
     "no": "No",
     "created": "Created",
-    "description": "Description"
+    "description": "Description",
+    "history": "History"
   },
   "errorBoundary": {
     "title": "Something went wrong",
