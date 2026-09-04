@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,19 +7,24 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
+import { Checkbox } from '../components/ui/Checkbox'
 import { IconCommands } from '../components/ui/Icons'
 import { Drawer } from '../components/ui/Drawer'
 import { CommandDrawer } from '../components/commands/CommandDrawer'
+import { BulkRunCommandsModal } from '../components/commands/BulkRunCommandsModal'
 import {
   useInfiniteCommands,
   useCommandTags,
   useCreateCommand,
+  useBulkDeleteCommands,
+  useBulkCloneCommands,
 } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
 import { TagBadge } from '../components/ui/TagBadge'
@@ -51,6 +56,11 @@ export function Commands() {
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [drawerCommand, setDrawerCommand] = useState<CommandResponse | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [showBulkDelete, setShowBulkDelete] = useState(false)
+  const [showBulkRun, setShowBulkRun] = useState(false)
+  const bulkDelete = useBulkDeleteCommands()
+  const bulkClone = useBulkCloneCommands()
 
   const createForm = useForm<CommandCreateFormValues>({
     resolver: zodResolver(commandCreateSchema) as Resolver<CommandCreateFormValues>,
@@ -73,6 +83,14 @@ export function Commands() {
       })
     : commands
 
+  const allSelected = commands.length > 0 && commands.every((c) => selectedIds.includes(c.id))
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }, [])
+  const toggleAll = useCallback(() => {
+    setSelectedIds(allSelected ? [] : commands.map((c) => c.id))
+  }, [allSelected, commands])
+
   const openCreate = () => {
     createForm.reset({ name: '', command: '', description: '', tags: [], parameters: [] })
     setShowCreateModal(true)
@@ -93,6 +111,24 @@ export function Commands() {
   }
 
   const columns: Column<CommandResponse>[] = [
+    {
+      key: 'select',
+      header: (
+        <Checkbox
+          checked={allSelected}
+          onChange={toggleAll}
+          ariaLabel={t('common.selectAll')}
+        />
+      ),
+      className: 'w-10',
+      render: (cmd) => (
+        <Checkbox
+          checked={selectedIds.includes(cmd.id)}
+          onChange={() => toggleSelect(cmd.id)}
+          ariaLabel={t('common.selectItem', 'Select {{name}}', { name: cmd.name })}
+        />
+      ),
+    },
     {
       key: 'name',
       header: <SortableHeader label={t('common.name')} sortKey="name" sort={sort} onSort={toggleSort} />,
@@ -174,6 +210,15 @@ export function Commands() {
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
+          {selectedIds.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
+              <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('common.selected', { count: selectedIds.length })}</span>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkRun(true)}>{t('commands.execute')} ({selectedIds.length})</Button>
+              <Button variant="ghost" size="sm" disabled={bulkClone.isPending} onClick={() => bulkClone.mutate(selectedIds, { onSuccess: () => { toast('success', t('commands.toastCloned')); setSelectedIds([]) }, onError: () => toast('error', t('commands.toastCloneFailed')) })}>{bulkClone.isPending ? t('common.loading') : t('commands.clone')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('common.delete')}</Button>
+              <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('common.clear')}</button>
+            </div>
+          )}
           {isLoading ? (
             <TableSkeleton rows={5} cols={4} />
           ) : commands.length === 0 ? (
@@ -231,6 +276,9 @@ export function Commands() {
       <Drawer isOpen={!!drawerCommand} onClose={() => setDrawerCommand(null)} size="lg">
         {drawerCommand && <CommandDrawer command={drawerCommand} onClose={() => setDrawerCommand(null)} />}
       </Drawer>
+
+      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => bulkDelete.mutate(selectedIds, { onSuccess: () => { toast('success', t('commands.toastDeleted')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('commands.toastDeleteFailed')) })} title={t('commands.deleteTitle', 'Delete Command')} message={t('commands.deleteMsg', { name: `${selectedIds.length} commands` })} confirmLabel={t('common.delete')} loading={bulkDelete.isPending} />
+      <BulkRunCommandsModal commandIds={showBulkRun ? selectedIds : []} onClose={() => setShowBulkRun(false)} />
     </div>
   )
 }

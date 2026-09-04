@@ -199,6 +199,49 @@ export function useBulkRetryScriptExecutions() {
   })
 }
 
+export function useBulkDeleteScripts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const settled = await Promise.allSettled(ids.map((id) => scriptsApi.remove(id)))
+      let succeeded = 0, failed = 0
+      const results: Array<{ id: string; status: 'success' | 'failed'; error?: string }> = []
+      settled.forEach((r, i) => {
+        if (r.status === 'fulfilled') { succeeded++; results.push({ id: ids[i], status: 'success' }) }
+        else { failed++; results.push({ id: ids[i], status: 'failed', error: String((r.reason as Error)?.message ?? r.reason) }) }
+      })
+      return { total: ids.length, succeeded, failed, results }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scripts'] }),
+  })
+}
+
+export function useBulkCloneScripts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const settled = await Promise.allSettled(ids.map((id) => scriptsApi.clone(id, undefined)))
+      let succeeded = 0, failed = 0
+      settled.forEach((r) => { if (r.status === 'fulfilled') succeeded++; else failed++ })
+      return { total: ids.length, succeeded, failed, results: settled.map((r, i) => ({ id: ids[i], status: r.status === 'fulfilled' ? 'success' as const : 'failed' as const })) }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scripts'] }),
+  })
+}
+
+export function useBulkUpdateScripts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<ScriptUpdate> }) => {
+      const settled = await Promise.allSettled(ids.map((id) => scriptsApi.update(id, data as ScriptUpdate)))
+      let succeeded = 0, failed = 0
+      settled.forEach((r) => { if (r.status === 'fulfilled') succeeded++; else failed++ })
+      return { total: ids.length, succeeded, failed, results: settled.map((r, i) => ({ id: ids[i], status: r.status === 'fulfilled' ? 'success' as const : 'failed' as const })) }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scripts'] }),
+  })
+}
+
 export function useScriptStats(scriptId: string | null, params?: { date_from?: string; date_to?: string; group_by?: string }) {
   return useQuery<ExecutionStatsResponse>({
     queryKey: ['scripts', 'detail', scriptId, 'stats', params],

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCallback } from 'react'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -10,9 +11,11 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
+import { Checkbox } from '../components/ui/Checkbox'
 import { IconScripts } from '../components/ui/Icons'
 import { Drawer } from '../components/ui/Drawer'
 import { ScriptDrawer } from '../components/scripts/ScriptDrawer'
+import { BulkRunScriptsOnNodesModal } from '../components/scripts/BulkRunScriptsOnNodesModal'
 import { ScriptFormModal, type ScriptFormValues } from '../components/scripts/ScriptFormModal'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import {
@@ -20,6 +23,8 @@ import {
   useScriptTags,
   useCreateScript,
   useDeleteScript,
+  useBulkDeleteScripts,
+  useBulkCloneScripts,
 } from '../hooks/useScripts'
 import { useToast } from '../components/ui/useToast'
 import { TagBadge } from '../components/ui/TagBadge'
@@ -53,6 +58,11 @@ export function Scripts() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const [drawerScript, setDrawerScript] = useState<ScriptResponse | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [showBulkDelete, setShowBulkDelete] = useState(false)
+  const [showBulkRun, setShowBulkRun] = useState(false)
+  const bulkDelete = useBulkDeleteScripts()
+  const bulkClone = useBulkCloneScripts()
 
   const scripts = (data?.items || []).filter(
     (script) => tagFilter.length <= 1 || tagFilter.some((t) => script.tags.includes(t))
@@ -72,12 +82,38 @@ export function Scripts() {
       })
     : scripts
 
+  const allSelected = scripts.length > 0 && scripts.every((s) => selectedIds.includes(s.id))
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }, [])
+  const toggleAll = useCallback(() => {
+    setSelectedIds(allSelected ? [] : scripts.map((s) => s.id))
+  }, [allSelected, scripts])
+
   const handleDelete = () => {
     if (!deleteTarget) return
     deleteScript.mutate(deleteTarget.id, { onSuccess: () => { toast('success', t('scripts.toastDeleted', { name: deleteTarget.name })); setDeleteTarget(null) }, onError: () => toast('error', t('scripts.toastDeleteFailed')) })
   }
 
   const columns: Column<ScriptResponse>[] = [
+    {
+      key: 'select',
+      header: (
+        <Checkbox
+          checked={allSelected}
+          onChange={toggleAll}
+          ariaLabel={t('common.selectAll')}
+        />
+      ),
+      className: 'w-10',
+      render: (script) => (
+        <Checkbox
+          checked={selectedIds.includes(script.id)}
+          onChange={() => toggleSelect(script.id)}
+          ariaLabel={t('common.selectItem', 'Select {{name}}', { name: script.name })}
+        />
+      ),
+    },
     {
       key: 'name',
       header: <SortableHeader label={t('common.name')} sortKey="name" sort={sort} onSort={toggleSort} />,
@@ -164,6 +200,15 @@ export function Scripts() {
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
+          {selectedIds.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
+              <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('common.selected', { count: selectedIds.length })}</span>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkRun(true)}>{t('scripts.run')} ({selectedIds.length})</Button>
+              <Button variant="ghost" size="sm" disabled={bulkClone.isPending} onClick={() => bulkClone.mutate(selectedIds, { onSuccess: () => { toast('success', t('scripts.toastCloned')); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastCloneFailed')) })}>{bulkClone.isPending ? t('common.loading') : t('scripts.clone')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('common.delete')}</Button>
+              <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('common.clear')}</button>
+            </div>
+          )}
           {isLoading ? (
             <TableSkeleton rows={5} cols={4} />
           ) : scripts.length === 0 ? (
@@ -196,6 +241,8 @@ export function Scripts() {
       />
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteScript.isPending} />
+      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => bulkDelete.mutate(selectedIds, { onSuccess: () => { toast('success', t('scripts.toastDeleted')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastDeleteFailed')) })} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: `${selectedIds.length} scripts` })} confirmLabel={t('common.delete')} loading={bulkDelete.isPending} />
+      <BulkRunScriptsOnNodesModal scriptIds={showBulkRun ? selectedIds : []} onClose={() => setShowBulkRun(false)} />
 
       <Drawer isOpen={!!drawerScript} onClose={() => setDrawerScript(null)} size="lg">
         {drawerScript && <ScriptDrawer script={drawerScript} onClose={() => setDrawerScript(null)} />}
