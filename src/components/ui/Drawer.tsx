@@ -12,9 +12,9 @@ interface DrawerProps {
 }
 
 const sizeClasses = {
-  sm: 'max-w-sm w-[min(360px,85vw)]',
-  md: 'max-w-md w-[min(480px,85vw)]',
-  lg: 'max-w-xl w-[min(560px,90vw)]',
+  sm: 'max-w-sm w-[min(400px,85vw)]',
+  md: 'max-w-md w-[min(560px,90vw)]',
+  lg: 'max-w-3xl w-[min(740px,92vw)]',
 }
 
 let openDrawerCount = 0
