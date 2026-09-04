@@ -153,7 +153,7 @@ export function Drawer({ isOpen, onClose, title, description, children, size = '
             </button>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 overscroll-contain">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 overscroll-contain flex flex-col min-h-0">
           {children}
         </div>
         {footer && (

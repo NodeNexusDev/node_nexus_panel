@@ -155,7 +155,7 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col flex-1 min-h-0 space-y-4">
       <div className="flex items-center gap-3">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
           node.status === 'active' ? 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400'
@@ -492,18 +492,18 @@ function DrawerExec({ node }: { node: Node }) {
     })
   }
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col flex-1 min-h-0 space-y-4">
       <Tabs tabs={[{ key: 'command', label: t('nodes.commandTab', 'Command') }, { key: 'custom', label: t('nodes.customTab', 'Custom') }]} active={tab} onChange={setTab} />
       {tab === 'command' ? (
         commandResult ? (
-          <div className="space-y-3">
+          <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
             <ExecutionResult stdout={commandResult.stdout} stderr={commandResult.stderr} exitCode={commandResult.exit_code} />
             <div className="flex justify-end gap-2"><Button variant="ghost" size="sm" onClick={() => setCommandResult(null)}>{t('commands.executeAgain')}</Button></div>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col flex-1 min-h-0 space-y-3">
             <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectCommand', 'Search commands...')} />
-            <div className="w-full max-h-80 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
+            <div className="w-full flex-1 min-h-[200px] overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
               {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noCommands', 'No commands')}</p> : filtered.map((cmd) => (
                 <button key={cmd.id} type="button" onClick={() => selectCommand(cmd)} className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm cursor-pointer ${selectedCommand?.id === cmd.id ? 'bg-accent-50 dark:bg-accent-900/20' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}>
                   <IconCommands className="w-4 h-4 text-surface-400 shrink-0" />
@@ -521,12 +521,12 @@ function DrawerExec({ node }: { node: Node }) {
           </div>
         )
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col flex-1 min-h-0 space-y-3 overflow-y-auto">
           <Input label={t('nodes.command', 'Command')} placeholder="uptime" value={customCommand} onChange={(e) => setCustomCommand(e.target.value)} />
           <Input label={t('nodes.timeout', 'Timeout (seconds)')} placeholder="30" type="number" value={customTimeout} onChange={(e) => setCustomTimeout(e.target.value)} />
           <div className="flex justify-end"><Button size="sm" onClick={handleRunCustom} disabled={!customCommand || executeNode.isPending}>{executeNode.isPending ? <span className="flex items-center gap-2"><Spinner size="sm" /> {t('common.loading')}</span> : t('nodes.execCommand')}</Button></div>
           {customOutputs.length > 0 && (
-            <div className="space-y-3 pt-2 border-t border-surface-200 dark:border-surface-700">
+            <div className="space-y-3 pt-2 border-t border-surface-200 dark:border-surface-700 flex-1 overflow-y-auto min-h-0">
               {customOutputs.map((item, i) => (
                 <div key={i} className="space-y-2">
                   <p className="text-xs font-mono text-surface-500">$ {item.command}</p>
@@ -567,22 +567,24 @@ function DrawerScript({ node }: { node: Node }) {
   }
   if (result) {
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col flex-1 min-h-0 space-y-3 overflow-y-auto">
         <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.result', 'Result')}: {selected?.name}</p>
-        {result.steps.map((step, idx) => (
-          <div key={idx} className="space-y-1">
-            <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
-            <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
-          </div>
-        ))}
-        <div className="flex justify-end gap-2"><Button variant="ghost" size="sm" onClick={() => setResult(null)}>{t('common.close')}</Button><Button size="sm" onClick={() => setResult(null)}>{t('scripts.runAgain', 'Run Again')}</Button></div>
+        <div className="flex-1 min-h-0 space-y-3 overflow-y-auto">
+          {result.steps.map((step, idx) => (
+            <div key={idx} className="space-y-1">
+              <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
+              <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end gap-2 shrink-0"><Button variant="ghost" size="sm" onClick={() => setResult(null)}>{t('common.close')}</Button><Button size="sm" onClick={() => setResult(null)}>{t('scripts.runAgain', 'Run Again')}</Button></div>
       </div>
     )
   }
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col flex-1 min-h-0 space-y-3">
       <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectScript', 'Search scripts...')} />
-      <div className="w-full max-h-80 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
+      <div className="w-full flex-1 min-h-[200px] overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
         {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noScripts', 'No scripts')}</p> : filtered.map((script) => (
           <button key={script.id} type="button" onClick={() => setSelected(script)} className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm cursor-pointer ${selected?.id === script.id ? 'bg-accent-50 dark:bg-accent-900/20' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}>
             <IconScripts className="w-4 h-4 text-surface-400 shrink-0" />
