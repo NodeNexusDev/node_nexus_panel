@@ -17,6 +17,7 @@ import { InfiniteScroll } from '../ui/InfiniteScroll'
 import { KeyValueList } from '../ui/KeyValueList'
 import { StatCard, StatsGrid } from '../ui/StatCard'
 import { Spinner } from '../ui/Spinner'
+import { SearchInput } from '../ui/SearchInput'
 import { formatBytes, formatPercent, formatDurationMs } from '../../lib/format'
 import { nodeStatusVariant } from '../../lib/variants'
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard'
@@ -39,11 +40,17 @@ import {
   useCheckNode,
   useUpdateNode,
   useDeleteNode,
+  useExecuteNode,
 } from '../../hooks/useNodes'
+import { useCommands, useExecuteCommand } from '../../hooks/useCommands'
+import { useScripts, useRunScript } from '../../hooks/useScripts'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from './connection-types'
-import type { Node } from '../../api/types'
+import { getDefaultParams } from '../commands/command-form-utils'
+import { CommandParamInputs } from '../commands/CommandParamInputs'
+import { ExecutionResult } from '../commands/ExecutionResult'
+import type { CommandResponse, CommandResult, Node, ScriptNodeResult } from '../../api/types'
 
-type DrawerTab = 'overview' | 'metrics' | 'stats' | 'history' | 'edit'
+type DrawerTab = 'overview' | 'metrics' | 'stats' | 'history' | 'edit' | 'exec' | 'script'
 
 interface NodeDrawerProps {
   node: Node
@@ -55,7 +62,7 @@ interface NodeDrawerProps {
   onValidate?: (node: Node) => void
 }
 
-export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec, onRunScript, onValidate: _onValidate }: NodeDrawerProps) {
+export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _onExec, onRunScript: _onRunScript, onValidate: _onValidate }: NodeDrawerProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -85,6 +92,8 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec, o
     { key: 'stats', label: t('nodes.stats', 'Stats') },
     { key: 'history', label: t('nodes.statusHistory', 'History') },
     { key: 'edit', label: t('common.edit', 'Edit') },
+    { key: 'exec', label: t('nodes.execCommand', 'Exec') },
+    { key: 'script', label: t('nodes.runScript', 'Script') },
   ]
 
   const toggleClear = (field: string) => setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
@@ -190,10 +199,10 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec, o
         <Button variant="ghost" size="sm" disabled={checkNode.isPending} onClick={handleValidateInline}>
           {checkNode.isPending ? <><Spinner size="sm" /> <span className="ml-1">{t('common.loading')}</span></> : t('nodes.validate')}
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => onExec(node)}>
+        <Button variant={active === 'exec' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActive('exec')}>
           <IconCommands className="w-4 h-4 mr-1" />{t('nodes.execCommand')}
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => onRunScript(node)}>
+        <Button variant={active === 'script' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActive('script')}>
           <IconScripts className="w-4 h-4 mr-1" />{t('nodes.runScript')}
         </Button>
       </div>
@@ -274,6 +283,8 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec, o
           </div>
         </div>
       )}
+      {active === 'exec' && <DrawerExec node={node} />}
+      {active === 'script' && <DrawerScript node={node} />}
     </div>
   )
 }
@@ -427,6 +438,177 @@ function DrawerHistory({ nodeId }: { nodeId: string }) {
           <div className="px-4 py-2 border-t border-surface-200 dark:border-surface-800"><Button variant="ghost" size="sm" className="w-full" onClick={() => navigate(`/nodes/${nodeId}?tab=command-history`)}>{t('common.viewAll', 'View all')} →</Button></div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function DrawerExec({ node }: { node: Node }) {
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const { data: commandsData } = useCommands({ size: 100 })
+  const commands = commandsData?.items || []
+  const executeCommand = useExecuteCommand()
+  const executeNode = useExecuteNode()
+  const [tab, setTab] = useState<'command' | 'custom'>('command')
+  const [search, setSearch] = useState('')
+  const [selectedCommand, setSelectedCommand] = useState<CommandResponse | null>(null)
+  const [params, setParams] = useState<Record<string, unknown>>({})
+  const [customCommand, setCustomCommand] = useState('')
+  const [customTimeout, setCustomTimeout] = useState('')
+  const [commandResult, setCommandResult] = useState<CommandResult | null>(null)
+  const [customOutputs, setCustomOutputs] = useState<Array<{ command: string; result: CommandResult }>>([])
+
+  useEffect(() => {
+    setSearch('')
+    setSelectedCommand(null)
+    setParams({})
+    setCustomCommand('')
+    setCustomTimeout('')
+    setCommandResult(null)
+    setCustomOutputs([])
+    setTab('command')
+  }, [node.id])
+
+  const filtered = commands.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+  const selectCommand = (cmd: CommandResponse) => {
+    setSelectedCommand(cmd)
+    setParams(getDefaultParams(cmd.parameters))
+    setCommandResult(null)
+  }
+  const handleRunCommand = () => {
+    if (!selectedCommand) return
+    const values: Record<string, unknown> = {}
+    for (const p of selectedCommand.parameters || []) {
+      const raw = params[p.name]
+      if (raw === '' || raw === undefined || raw === null) continue
+      if (p.type === 'integer') values[p.name] = Number(raw)
+      else if (p.type === 'boolean') values[p.name] = !!raw
+      else values[p.name] = raw
+    }
+    executeCommand.mutate({ id: selectedCommand.id, data: { node_id: node.id, params: Object.keys(values).length > 0 ? values : undefined } }, {
+      onSuccess: (res) => {
+        toast('success', t('commands.toastExecuted', { target: node.name }))
+        const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null }> }
+        const first = batch.results?.[0]
+        if (first) setCommandResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult)
+        else setCommandResult(res as unknown as CommandResult)
+      },
+      onError: () => toast('error', t('commands.toastFailed')),
+    })
+  }
+  const handleRunCustom = () => {
+    if (!customCommand) return
+    executeNode.mutate({ id: node.id, command: customCommand, timeout: customTimeout ? Number(customTimeout) : undefined }, {
+      onSuccess: (res) => {
+        const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null }> }
+        const first = batch.results?.[0] ?? (res as unknown as { stdout: string; stderr: string; exit_code?: number | null })
+        const result = { stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult
+        toast('success', t('nodes.execResult', { code: result.exit_code, output: result.stdout.slice(0, 100) }))
+        setCustomOutputs((prev) => [...prev, { command: customCommand, result }])
+      },
+      onError: () => toast('error', t('nodes.toastExecFailed')),
+    })
+  }
+  return (
+    <div className="space-y-4">
+      <Tabs tabs={[{ key: 'command', label: t('nodes.commandTab', 'Command') }, { key: 'custom', label: t('nodes.customTab', 'Custom') }]} active={tab} onChange={setTab} />
+      {tab === 'command' ? (
+        commandResult ? (
+          <div className="space-y-3">
+            <ExecutionResult stdout={commandResult.stdout} stderr={commandResult.stderr} exitCode={commandResult.exit_code} />
+            <div className="flex justify-end gap-2"><Button variant="ghost" size="sm" onClick={() => setCommandResult(null)}>{t('commands.executeAgain')}</Button></div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectCommand', 'Search commands...')} />
+            <div className="max-h-48 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
+              {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noCommands', 'No commands')}</p> : filtered.map((cmd) => (
+                <button key={cmd.id} type="button" onClick={() => selectCommand(cmd)} className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm cursor-pointer ${selectedCommand?.id === cmd.id ? 'bg-accent-50 dark:bg-accent-900/20' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}>
+                  <IconCommands className="w-4 h-4 text-surface-400 shrink-0" />
+                  <div className="min-w-0"><p className="font-medium text-surface-900 dark:text-white truncate">{cmd.name}</p><p className="text-xs text-surface-500 font-mono truncate">{cmd.command}</p></div>
+                </button>
+              ))}
+            </div>
+            {selectedCommand && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-surface-600 dark:text-surface-400">{t('commands.parameters', 'Parameters')}</p>
+                {selectedCommand.parameters && selectedCommand.parameters.length > 0 ? <CommandParamInputs parameters={selectedCommand.parameters} values={params} onChange={(name, value) => setParams((prev) => ({ ...prev, [name]: value }))} /> : <p className="text-xs text-surface-400">{t('commands.noParameters', 'No parameters')}</p>}
+              </div>
+            )}
+            <div className="flex justify-end"><Button size="sm" onClick={handleRunCommand} disabled={!selectedCommand || executeCommand.isPending}>{executeCommand.isPending ? <span className="flex items-center gap-2"><Spinner size="sm" /> {t('common.loading')}</span> : t('commands.execute')}</Button></div>
+          </div>
+        )
+      ) : (
+        <div className="space-y-3">
+          <Input label={t('nodes.command', 'Command')} placeholder="uptime" value={customCommand} onChange={(e) => setCustomCommand(e.target.value)} />
+          <Input label={t('nodes.timeout', 'Timeout (seconds)')} placeholder="30" type="number" value={customTimeout} onChange={(e) => setCustomTimeout(e.target.value)} />
+          <div className="flex justify-end"><Button size="sm" onClick={handleRunCustom} disabled={!customCommand || executeNode.isPending}>{executeNode.isPending ? <span className="flex items-center gap-2"><Spinner size="sm" /> {t('common.loading')}</span> : t('nodes.execCommand')}</Button></div>
+          {customOutputs.length > 0 && (
+            <div className="space-y-3 pt-2 border-t border-surface-200 dark:border-surface-700">
+              {customOutputs.map((item, i) => (
+                <div key={i} className="space-y-2">
+                  <p className="text-xs font-mono text-surface-500">$ {item.command}</p>
+                  <ExecutionResult stdout={item.result.stdout} stderr={item.result.stderr} exitCode={item.result.exit_code} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DrawerScript({ node }: { node: Node }) {
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const { data: scriptsData } = useScripts({ size: 100 })
+  const scripts = scriptsData?.items || []
+  const runScript = useRunScript()
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<import('../../api/types').ScriptResponse | null>(null)
+  const [result, setResult] = useState<ScriptNodeResult | null>(null)
+  useEffect(() => { setSearch(''); setSelected(null); setResult(null) }, [node.id])
+  const filtered = scripts.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
+  const handleRun = () => {
+    if (!selected) return
+    runScript.mutate({ id: selected.id, data: { node_ids: [node.id] } }, {
+      onSuccess: (response) => {
+        toast('success', t('scripts.toastStarted', { name: selected.name }))
+        const batch = response as unknown as { results?: ScriptNodeResult[] }
+        const fallback = response as unknown as { results?: Array<{ node_id: string; status: string; steps?: unknown[] }> }
+        const first = batch.results?.[0] as ScriptNodeResult | undefined ?? (fallback.results?.[0] as unknown as ScriptNodeResult)
+        if (first) setResult(first)
+      },
+      onError: () => toast('error', t('scripts.toastRunFailed', { name: selected.name })),
+    })
+  }
+  if (result) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.result', 'Result')}: {selected?.name}</p>
+        {result.steps.map((step, idx) => (
+          <div key={idx} className="space-y-1">
+            <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
+            <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
+          </div>
+        ))}
+        <div className="flex justify-end gap-2"><Button variant="ghost" size="sm" onClick={() => setResult(null)}>{t('common.close')}</Button><Button size="sm" onClick={() => setResult(null)}>{t('scripts.runAgain', 'Run Again')}</Button></div>
+      </div>
+    )
+  }
+  return (
+    <div className="space-y-3">
+      <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectScript', 'Search scripts...')} />
+      <div className="max-h-56 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
+        {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noScripts', 'No scripts')}</p> : filtered.map((script) => (
+          <button key={script.id} type="button" onClick={() => setSelected(script)} className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm cursor-pointer ${selected?.id === script.id ? 'bg-accent-50 dark:bg-accent-900/20' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}>
+            <IconScripts className="w-4 h-4 text-surface-400 shrink-0" />
+            <div className="min-w-0"><p className="font-medium text-surface-900 dark:text-white truncate">{script.name}</p>{script.description && <p className="text-xs text-surface-500 truncate">{script.description}</p>}</div>
+          </button>
+        ))}
+      </div>
+      <div className="flex justify-end"><Button size="sm" onClick={handleRun} disabled={!selected || runScript.isPending}>{runScript.isPending ? <Spinner size="sm" /> : t('scripts.run')}</Button></div>
     </div>
   )
 }
