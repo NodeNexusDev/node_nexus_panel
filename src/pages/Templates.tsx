@@ -67,20 +67,21 @@ function PacksTab() {
   const [cpTags, setCpTags] = useState('')
   const [cpCommands, setCpCommands] = useState('[]')
   const [cpScripts, setCpScripts] = useState('[]')
-  const packs = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; name: string; description?: string | null; tags?: string[]; installed?: boolean }> }).items) : []
+  const packs = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; name: string; description?: string | null; tags?: string[] | null; installed_at?: string | null; installed_version?: string | null }> }).items) : []
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   const allTags = useMemo(() => [...new Set(packs.flatMap((p)=> p.tags ?? []))], [infiniteData])
 
   if (isLoading) return <TableSkeleton rows={5} cols={4} />
   if (error) return <div className="p-6"><div className="text-sm text-red-500 p-4 bg-red-50 dark:bg-red-500/10 rounded-lg">{String((error as Error).message ?? error)} <Button variant="ghost" size="sm" onClick={()=> refetch()} className="ml-2">{t('common.retry')}</Button></div></div>
 
-  const columns: Column<{ id: string; name: string; description?: string | null; tags?: string[]; installed?: boolean }>[] = [
+  type PackRow = { id: string; name: string; description?: string | null; tags?: string[] | null; installed_at?: string | null; installed_version?: string | null }
+  const columns: Column<PackRow>[] = [
     { key: 'name', header: t('common.name'), render: (p) => <span className="font-medium text-surface-900 dark:text-white">{p.name}</span> },
     { key: 'desc', header: t('common.description', 'Description'), render: (p) => <span className="text-xs text-surface-500 truncate max-w-[260px] inline-block">{p.description ?? '—'}</span> },
-    { key: 'tags', header: t('common.tagsFilter'), render: (p) => <span className="flex gap-1 flex-wrap">{(p.tags ?? []).map((tag)=> <Badge key={tag} variant="default">{tag}</Badge>)} {p.installed && <Badge variant="success">{t('templates.installed')}</Badge>}</span> },
+    { key: 'tags', header: t('common.tagsFilter'), render: (p) => <span className="flex gap-1 flex-wrap">{(p.tags ?? []).map((tag)=> <Badge key={tag} variant="default">{tag}</Badge>)} {p.installed_at && <Badge variant="success">{t('templates.installed')}</Badge>}</span> },
     { key: 'actions', header: t('common.actions'), render: (p) => (
       <div className="flex gap-1 flex-wrap">
-        {p.installed ? (
+        {p.installed_at ? (
           <>
             <Button variant="ghost" size="sm" onClick={()=> uninstall.mutate(p.id,{onSuccess:()=>toast('success',t('templates.uninstallStarted')), onError:()=>toast('error',t('templates.uninstallFailed'))})} disabled={uninstall.isPending}>{t('templates.uninstall')}</Button>
             <Button variant="ghost" size="sm" onClick={()=> updatePack.mutate({packId:p.id, on_conflict: onConflict},{onSuccess:(res)=>{ setLastBulk(res as never); toast('success',`${t('templates.updatePack')} ${res.succeeded}/${res.total}`)}, onError:()=>toast('error',t('templates.updateFailed','Update failed'))})} disabled={updatePack.isPending}>{t('templates.updatePack')}</Button>
@@ -142,9 +143,9 @@ function PacksTab() {
                 <div className="p-4 space-y-2">
                   <p className="font-semibold">{p.name}</p>
                   {p.description && <p className="text-xs text-surface-500">{p.description}</p>}
-                  <div className="flex gap-1 flex-wrap">{(p.tags ?? []).map((tag)=> <Badge key={tag} variant="default">{tag}</Badge>)} {p.installed && <Badge variant="success">{t('templates.installed')}</Badge>}</div>
+                  <div className="flex gap-1 flex-wrap">{(p.tags ?? []).map((tag)=> <Badge key={tag} variant="default">{tag}</Badge>)} {p.installed_at && <Badge variant="success">{t('templates.installed')}</Badge>}</div>
                   <div className="flex gap-2 pt-2">
-                    {p.installed ? (
+                    {p.installed_at ? (
                       <Button variant="ghost" size="sm" onClick={()=> uninstall.mutate(p.id,{onSuccess:()=>toast('success',t('templates.uninstallStarted'))})} disabled={uninstall.isPending}>{t('templates.uninstall')}</Button>
                     ) : (
                       <Button variant="ghost" size="sm" onClick={()=> install.mutate({packId:p.id, on_conflict:onConflict},{onSuccess:(res)=>{ setLastBulk(res as never); toast('success', t('templates.installStarted')) }})} disabled={install.isPending}>{t('templates.install')}</Button>

@@ -58,7 +58,7 @@ export function Scripts() {
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScripts({ limit, search: search || undefined, tag: tagFilter[0] || undefined })
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScripts({ limit, search: search || undefined, tag: tagFilter.length === 1 ? tagFilter[0] : undefined })
   const data = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: ScriptResponse[] } : undefined
   const { data: tags } = useScriptTags()
   const { data: nodesData } = useNodes({ size: 100 })
@@ -88,7 +88,7 @@ export function Scripts() {
   const [confirmRemoveSchedule, setConfirmRemoveSchedule] = useState(false)
 
   const scripts = (data?.items || []).filter(
-    (script) => tagFilter.length === 0 || tagFilter.some((t) => script.tags.includes(t))
+    (script) => tagFilter.length <= 1 || tagFilter.some((t) => script.tags.includes(t))
   )
 
   const sortedScripts = sort

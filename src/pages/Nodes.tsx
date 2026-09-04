@@ -81,7 +81,7 @@ export function Nodes() {
 
   const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodes({
     limit,
-    tag: tagFilter[0] || undefined,
+    tag: tagFilter.length === 1 ? tagFilter[0] : undefined,
     search: search || undefined,
   })
   const data = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as unknown as { items: Node[] } : undefined
@@ -140,7 +140,7 @@ export function Nodes() {
   const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', description: '', username: '', docker_host: '', has_docker: undefined as boolean | undefined, tags: '' })
 
   const nodes = (data?.items || []).filter(
-    (node) => tagFilter.length === 0 || tagFilter.some((t) => node.tags.includes(t))
+    (node) => tagFilter.length <= 1 || tagFilter.some((t) => node.tags.includes(t))
   )
   const allSelected = nodes.length > 0 && nodes.every((n) => selectedIds.includes(n.id))
 

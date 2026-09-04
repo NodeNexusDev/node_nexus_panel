@@ -69,7 +69,8 @@
     "viewLogsDesc": "Browse audit trail",
     "scripts": "Scripts",
     "templates": "Templates",
-    "installed": "installed"
+    "installed": "installed",
+    "emptyMetrics": "No metrics in selected period"
   },
   "nodes": {
     "title": "Nodes",
@@ -341,6 +342,7 @@
     "selectNode": "Select Node",
     "pullImage": "Pull Image",
     "pull": "Pull",
+    "push": "Push",
     "containers": "Containers",
     "images": "Images",
     "networks": "Networks",
@@ -694,7 +696,12 @@
     "selectPlaceholder": "Select...",
     "loadMore": "Load more",
     "primaryNavigation": "Primary navigation",
-    "requiredMark": "*"
+    "requiredMark": "*",
+    "keep": "Keep",
+    "yes": "Yes",
+    "no": "No",
+    "created": "Created",
+    "description": "Description"
   },
   "errorBoundary": {
     "title": "Something went wrong",

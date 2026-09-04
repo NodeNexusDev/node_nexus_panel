@@ -53,7 +53,7 @@ export function Commands() {
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteCommands({ limit, search: search || undefined, tag: tagFilter[0] || undefined })
+  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteCommands({ limit, search: search || undefined, tag: tagFilter.length === 1 ? tagFilter[0] : undefined })
   const commandsData = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: CommandResponse[] } : undefined
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()
@@ -76,7 +76,7 @@ export function Commands() {
   })
 
   const commands = (commandsData?.items || []).filter(
-    (cmd: CommandResponse) => tagFilter.length === 0 || tagFilter.some((t) => cmd.tags.includes(t))
+    (cmd: CommandResponse) => tagFilter.length <= 1 || tagFilter.some((t) => cmd.tags.includes(t))
   )
 
   const sortedCommands = sort

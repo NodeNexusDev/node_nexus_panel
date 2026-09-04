@@ -69,7 +69,8 @@
     "viewLogsDesc": "Открыть журнал аудита",
     "scripts": "Скрипты",
     "templates": "Шаблоны",
-    "installed": "установлено"
+    "installed": "установлено",
+    "emptyMetrics": "Нет метрик за период"
   },
   "nodes": {
     "title": "Ноды",
@@ -341,6 +342,7 @@
     "selectNode": "Выберите ноду",
     "pullImage": "Скачать образ",
     "pull": "Скачать",
+    "push": "Отправить",
     "containers": "Контейнеры",
     "images": "Образы",
     "networks": "Сети",
@@ -694,7 +696,12 @@
     "selectPlaceholder": "Выберите...",
     "loadMore": "Загрузить ещё",
     "primaryNavigation": "Основная навигация",
-    "requiredMark": "*"
+    "requiredMark": "*",
+    "keep": "Оставить",
+    "yes": "Да",
+    "no": "Нет",
+    "created": "Создан",
+    "description": "Описание"
   },
   "errorBoundary": {
     "title": "Что-то пошло не так",
