@@ -55,7 +55,7 @@ export function Checkbox({ checked, onChange, label, ariaLabel, disabled, varian
       onKeyDown={handleKeyDown}
       className={`
         ${sizeClasses[size]} rounded-lg border-2 flex items-center justify-center
-        transition-all duration-200 cursor-pointer select-none shrink-0 relative
+        transition-all duration-150 cursor-pointer select-none shrink-0 relative
         focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:ring-offset-0
         before:absolute before:inset-[-8px] before:content-['']
         ${checked ? checkedClasses[variant] : uncheckedClasses[variant]}
@@ -66,7 +66,7 @@ export function Checkbox({ checked, onChange, label, ariaLabel, disabled, varian
       <svg
         viewBox="0 0 16 16"
         fill="none"
-        className={`${checkSizes[size]} transition-colors duration-200 ${checked ? (variant === 'ghost' ? 'text-surface-900 dark:text-surface-900' : 'text-white') : 'text-transparent'}`}
+        className={`${checkSizes[size]} transition-colors duration-150 ${checked ? (variant === 'ghost' ? 'text-surface-900 dark:text-surface-900' : 'text-white') : 'text-transparent'}`}
       >
         <path
           d="M3 8.5l3.5 3.5 6.5-7"

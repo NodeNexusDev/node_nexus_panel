@@ -34,7 +34,7 @@ export function Tabs<T extends string>({ tabs, active, onChange, className = '' 
 
   return (
     <div className={`border-b border-surface-200 dark:border-surface-800 ${className}`}>
-      <nav className="flex gap-1 overflow-x-auto" role="tablist" onKeyDown={handleKeyDown}>
+      <nav className="flex gap-1 overflow-x-auto overscroll-x-contain scrollbar-none snap-x scroll-smooth touch-pan-x" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' } as React.CSSProperties} role="tablist" onKeyDown={handleKeyDown}>
         {tabs.map((tab) => {
           const panelId = `${baseId}-panel-${tab.key}`
           const buttonId = `${baseId}-tab-${tab.key}`
@@ -48,7 +48,7 @@ export function Tabs<T extends string>({ tabs, active, onChange, className = '' 
               aria-controls={panelId}
               tabIndex={isActive ? 0 : -1}
               onClick={() => onChange(tab.key)}
-              className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 motion-reduce:transition-none ${
+              className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 snap-start transition-colors duration-100 ease-out will-change-[color,border-color] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 motion-reduce:transition-none ${
                 isActive
                   ? 'border-accent-500 dark:border-accent-400 text-accent-600 dark:text-accent-400'
                   : 'border-transparent text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200'

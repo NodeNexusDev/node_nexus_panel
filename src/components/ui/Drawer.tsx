@@ -133,7 +133,7 @@ export function Drawer({ isOpen, onClose, title, description, children, size = '
       <div
         ref={panelRef}
         className={`relative h-full ${sizeClasses[size]} bg-white dark:bg-surface-900 shadow-[var(--shadow-2xl)] border-l border-surface-200 dark:border-surface-800 flex flex-col animate-slide-in-right overflow-hidden`}
-        style={{ animation: 'slide-in-right 0.28s cubic-bezier(0.16,1,0.3,1)' }}
+        style={{ animation: 'slide-in-right 0.2s cubic-bezier(0.16,1,0.3,1)' }}
       >
         {title && (
           <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-surface-200/70 dark:border-surface-800/70 shrink-0">
