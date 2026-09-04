@@ -375,7 +375,6 @@ function DrawerStats({ nodeId }: { nodeId: string }) {
 function DrawerHistory({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const navigate = useNavigate()
   const { data: statusInfinite, isLoading: sLoading, error: sError, refetch: sRefetch, fetchNextPage: sFetch, hasNextPage: sHas, isFetchingNextPage: sFetching } = useInfiniteNodeStatusHistory(nodeId, { limit: 5 })
   const { data: cmdInfinite, isLoading: cLoading, error: cError, refetch: cRefetch, fetchNextPage: cFetch, hasNextPage: cHas, isFetchingNextPage: cFetching } = useInfiniteNodeCommandHistory(nodeId, { limit: 5 })
   const retry = useRetryNodeCommand()
@@ -401,7 +400,6 @@ function DrawerHistory({ nodeId }: { nodeId: string }) {
             </div>
           )}
           <InfiniteScroll hasMore={!!sHas} isFetchingNextPage={sFetching} onLoadMore={() => sFetch()} />
-          <div className="px-4 py-2 border-t border-surface-200 dark:border-surface-800"><Button variant="ghost" size="sm" className="w-full" onClick={() => navigate(`/nodes/${nodeId}?tab=status-history`)}>{t('common.viewAll', 'View all')} →</Button></div>
         </CardContent>
       </Card>
       <Card>
@@ -420,7 +418,6 @@ function DrawerHistory({ nodeId }: { nodeId: string }) {
             </div>
           )}
           <InfiniteScroll hasMore={!!cHas} isFetchingNextPage={cFetching} onLoadMore={() => cFetch()} />
-          <div className="px-4 py-2 border-t border-surface-200 dark:border-surface-800"><Button variant="ghost" size="sm" className="w-full" onClick={() => navigate(`/nodes/${nodeId}?tab=command-history`)}>{t('common.viewAll', 'View all')} →</Button></div>
         </CardContent>
       </Card>
     </div>
