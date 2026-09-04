@@ -26,7 +26,7 @@ import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
-import { IconNodes } from '../components/ui/Icons'
+import { IconNodes, IconDocker } from '../components/ui/Icons'
 import {
   useInfiniteNodes,
   useCreateNode,
@@ -48,7 +48,7 @@ import type { NodeCreateFormValues } from '../lib/validators/node-schema'
 import { nodeCreateSchema } from '../lib/validators/node-schema'
 import type { Column } from '../components/ui/table-types'
 
-type SortKey = 'name' | 'host' | 'status' | 'connection_type' | 'tags' | 'created_at' | 'updated_at'
+type SortKey = 'name' | 'host' | 'status' | 'connection_type' | 'tags' | 'has_docker' | 'created_at' | 'updated_at'
 
 function statusDot(status: NodeStatus): string {
   switch (status) {
@@ -139,6 +139,11 @@ export function Nodes() {
           const bv = b.tags[0] ?? ''
           return av.localeCompare(bv) * dir
         }
+        if (sort.key === 'has_docker') {
+          const av = a.has_docker ? 1 : 0
+          const bv = b.has_docker ? 1 : 0
+          return (av - bv) * dir
+        }
         const av = String(a[sort.key] ?? '')
         const bv = String(b[sort.key] ?? '')
         return av.localeCompare(bv) * dir
@@ -228,6 +233,16 @@ export function Nodes() {
       render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</span>,
     },
     {
+      key: 'has_docker',
+      header: <SortableHeader label={t('nodes.hasDocker', 'Docker')} sortKey="has_docker" sort={sort} onSort={toggleSort} />,
+      className: 'w-20 text-center',
+      render: (node) => (
+        <span className={`inline-flex items-center justify-center gap-1 text-xs font-medium ${node.has_docker ? 'text-green-600 dark:text-green-400' : 'text-surface-400'}`}>
+          {node.has_docker ? <><IconDocker className="w-4 h-4" /> Yes</> : '—'}
+        </span>
+      ),
+    },
+    {
       key: 'tags',
       header: <SortableHeader label={t('nodes.tags')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (node) => (
@@ -264,7 +279,10 @@ export function Nodes() {
             <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}{node.username ? ` (${node.username})` : ''}</p>
           </div>
         </div>
-        <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+          {node.has_docker && <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400"><IconDocker className="w-3.5 h-3.5" /> Docker</span>}
+        </div>
       </div>
       <div className="flex flex-wrap gap-1">
         {node.tags.length > 0 ? node.tags.map((tag) => (
