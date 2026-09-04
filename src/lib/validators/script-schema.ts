@@ -8,6 +8,7 @@ export const scriptStepSchema = z.object({
   type: z.enum(SCRIPT_STEP_TYPES),
   command: z.string().max(4096).nullable().optional(),
   command_id: z.string().uuid().nullable().optional(),
+  command_name: z.string().max(255).nullable().optional(),
   params: z.record(z.string(), z.any()).optional(),
   on_failure: z.enum(ON_FAILURE_VALUES).default('stop'),
 })
