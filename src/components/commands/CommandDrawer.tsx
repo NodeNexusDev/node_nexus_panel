@@ -1,7 +1,6 @@
 // oxlint-disable react-hooks/exhaustive-deps
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -42,7 +41,6 @@ interface CommandDrawerProps {
 
 export function CommandDrawer({ command, onClose }: CommandDrawerProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { toast } = useToast()
   const { copy } = useCopyToClipboard({ onCopied: () => toast('success', t('common.copied')) })
   const [active, setActive] = useState<DrawerTab>('overview')
@@ -94,10 +92,9 @@ export function CommandDrawer({ command, onClose }: CommandDrawerProps) {
       </div>
       <div className="flex flex-wrap gap-2 items-center">
         <Button variant="ghost" size="sm" onClick={handleClone} disabled={cloneCommand.isPending}>{t('commands.clone')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 hover:text-red-600">
+        <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 hover:text-red-600 ml-auto">
           <IconXCircle className="w-4 h-4 mr-1" />{t('common.delete')}
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => navigate(`/commands/${command.id}`)} className="ml-auto">{t('common.view', 'View full page')} →</Button>
       </div>
       {showDeleteConfirm && (
         <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-center justify-between gap-3">

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -36,7 +35,6 @@ interface ScriptDrawerProps {
 
 export function ScriptDrawer({ script, onClose }: ScriptDrawerProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { toast } = useToast()
   const [active, setActive] = useState<DrawerTab>('overview')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -90,10 +88,9 @@ export function ScriptDrawer({ script, onClose }: ScriptDrawerProps) {
       </div>
       <div className="flex flex-wrap gap-2 items-center">
         <Button variant="ghost" size="sm" onClick={handleClone} disabled={cloneScript.isPending}>{t('scripts.clone')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 hover:text-red-600">
+        <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 hover:text-red-600 ml-auto">
           <IconXCircle className="w-4 h-4 mr-1" />{t('common.delete')}
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => navigate(`/scripts/${script.id}`)} className="ml-auto">{t('common.view', 'View full page')} →</Button>
       </div>
       {showDeleteConfirm && (
         <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-center justify-between gap-3">
@@ -274,7 +271,6 @@ function ScriptEditTab({ script, onDone, updateScript }: { script: ScriptRespons
           return <div key={idx} className="text-xs font-mono text-surface-600 dark:text-surface-400 p-2 bg-white dark:bg-surface-900 rounded border mb-2">{idx + 1}. {s.label || s.type} — {s.command?.slice(0, 60) || s.type}</div>
         })}
         <p className="text-xs text-surface-500">Edit steps in full page for full editor</p>
-        <Button variant="ghost" size="sm" onClick={() => window.open(`/scripts/${script.id}`, '_blank')}>{t('common.view', 'View full page')} →</Button>
       </div>
       <div className="flex justify-end gap-2"><Button variant="ghost" onClick={onDone}>{t('common.cancel')}</Button><Button onClick={handleSave} disabled={updateScript.isPending}>{updateScript.isPending ? t('common.loading') : t('common.save')}</Button></div>
     </div>
