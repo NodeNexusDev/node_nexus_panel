@@ -1,0 +1,176 @@
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Modal } from '../ui/Modal'
+import { Button } from '../ui/Button'
+import { SearchInput } from '../ui/SearchInput'
+import { Checkbox } from '../ui/Checkbox'
+import { Spinner } from '../ui/Spinner'
+import { IconScripts } from '../ui/Icons'
+import { Badge } from '../ui/Badge'
+import { useScripts } from '../../hooks/useScripts'
+import { useMutation } from '@tanstack/react-query'
+import { scriptsApi } from '../../api/scripts'
+import { useToast } from '../ui/useToast'
+import { ExecutionResult } from '../commands/ExecutionResult'
+import type { ScriptNodeResult } from '../../api/types'
+
+interface BulkScriptModalProps {
+  nodeIds: string[]
+  onClose: () => void
+}
+
+export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const { data: scriptsData } = useScripts({ size: 100 })
+  const scripts = scriptsData?.items || []
+  const bulkRun = useMutation({ mutationFn: (data: { script_ids: string[]; node_ids: string[] }) => scriptsApi.executions({ script_ids: data.script_ids, node_ids: data.node_ids }) })
+  const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkResults, setBulkResults] = useState<Array<{ id: string; name: string; result: ScriptNodeResult }> | null>(null)
+  const [singleResult, setSingleResult] = useState<ScriptNodeResult | null>(null)
+
+  useEffect(() => {
+    if (nodeIds.length > 0) {
+      setSearch('')
+      setSelectedIds(new Set())
+      setBulkResults(null)
+      setSingleResult(null)
+    }
+  }, [nodeIds])
+
+  const filtered = scripts.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
+  const allFilteredSelected = filtered.length > 0 && filtered.every((s) => selectedIds.has(s.id))
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+    setBulkResults(null)
+    setSingleResult(null)
+  }
+  const toggleAllFiltered = () => {
+    if (allFilteredSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        filtered.forEach((s) => next.delete(s.id))
+        return next
+      })
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        filtered.forEach((s) => next.add(s.id))
+        return next
+      })
+    }
+    setBulkResults(null)
+    setSingleResult(null)
+  }
+
+  const handleRun = () => {
+    const ids = [...selectedIds]
+    if (ids.length === 0 || nodeIds.length === 0) return
+    if (ids.length === 1) {
+      const id = ids[0]
+      const name = scripts.find((s) => s.id === id)?.name ?? id
+      bulkRun.mutate({ script_ids: ids, node_ids: nodeIds }, {
+        onSuccess: (response) => {
+          toast('success', t('scripts.toastStarted', { name }))
+          const batch = response as unknown as { results?: ScriptNodeResult[] }
+          const first = batch.results?.[0]
+          if (first) setSingleResult(first)
+        },
+        onError: () => toast('error', t('scripts.toastRunFailed', { name: ids.length === 1 ? scripts.find((s) => s.id === ids[0])?.name ?? ids[0] : `${ids.length} scripts` })),
+      })
+      return
+    }
+    bulkRun.mutate({ script_ids: ids, node_ids: nodeIds }, {
+      onSuccess: (response) => {
+        toast('success', t('scripts.toastStarted', { name: `${ids.length} scripts` }))
+        const batch = response as unknown as { results?: ScriptNodeResult[] }
+        if (batch.results && Array.isArray(batch.results)) {
+          const mapped = ids.map((id, i) => ({ id, name: scripts.find((s) => s.id === id)?.name ?? id, result: (batch.results as ScriptNodeResult[])[i] ?? batch.results?.[0] as ScriptNodeResult }))
+          setBulkResults(mapped.filter((m) => m.result))
+        }
+      },
+      onError: () => toast('error', t('scripts.toastRunFailed', { name: `${ids.length} scripts` })),
+    })
+  }
+
+  const isPending = bulkRun.isPending
+
+  if (singleResult) {
+    return (
+      <Modal isOpen={nodeIds.length > 0} onClose={onClose} title={t('nodes.bulkScript', 'Run Scripts')} size="lg">
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.result', 'Result')}</p>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {singleResult.steps.map((step, idx) => (
+              <div key={idx} className="space-y-1">
+                <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
+                <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2"><Button variant="ghost" onClick={onClose}>{t('common.close')}</Button><Button onClick={() => { setSingleResult(null); setBulkResults(null) }}>{t('scripts.runAgain', 'Run Again')}</Button></div>
+        </div>
+      </Modal>
+    )
+  }
+
+  if (bulkResults) {
+    return (
+      <Modal isOpen={nodeIds.length > 0} onClose={onClose} title={t('nodes.bulkScript', 'Run Scripts')} size="lg">
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          {bulkResults.map((item) => (
+            <div key={item.id} className="space-y-2">
+              <p className="text-xs font-medium text-surface-700 dark:text-surface-300">{item.name}</p>
+              {item.result.steps.map((step, idx) => (
+                <div key={idx} className="space-y-1">
+                  <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
+                  <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
+                </div>
+              ))}
+            </div>
+          ))}
+          <div className="flex justify-end gap-2 pt-2"><Button variant="ghost" onClick={onClose}>{t('common.close')}</Button><Button onClick={() => { setBulkResults(null); setSingleResult(null) }}>{t('scripts.runAgain', 'Run Again')}</Button></div>
+        </div>
+      </Modal>
+    )
+  }
+
+  return (
+    <Modal isOpen={nodeIds.length > 0} onClose={onClose} title={t('nodes.bulkScript', 'Run Scripts')} size="lg">
+      <div className="space-y-3">
+        <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectScript', 'Search scripts...')} />
+        {filtered.length > 0 && (
+          <div className="flex items-center justify-between px-1">
+            <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <Checkbox checked={allFilteredSelected} onChange={toggleAllFiltered} ariaLabel={t('common.selectAll')} />
+              <span className="text-surface-600 dark:text-surface-400">{allFilteredSelected ? t('common.deselectAll') : t('common.selectAll')} ({filtered.length})</span>
+            </label>
+            {selectedIds.size > 0 && <span className="text-xs text-accent-600 dark:text-accent-400">{t('common.selected', { count: selectedIds.size })}</span>}
+          </div>
+        )}
+        <div className="max-h-64 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
+          {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noScripts', 'No scripts')}</p> : filtered.map((script) => {
+            const checked = selectedIds.has(script.id)
+            return (
+              <label key={script.id} className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm cursor-pointer ${checked ? 'bg-accent-50 dark:bg-accent-900/20' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}>
+                <Checkbox checked={checked} onChange={() => toggleSelect(script.id)} ariaLabel={script.name} />
+                <IconScripts className="w-4 h-4 text-surface-400 shrink-0" />
+                <div className="min-w-0 flex-1"><p className="font-medium text-surface-900 dark:text-white truncate">{script.name}</p>{script.description && <p className="text-xs text-surface-500 truncate">{script.description}</p>}</div>
+              </label>
+            )
+          })}
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={handleRun} disabled={selectedIds.size === 0 || isPending}>{isPending ? <Spinner size="sm" /> : `${t('scripts.run')} ${selectedIds.size > 0 ? `(${selectedIds.size})` : ''}`}</Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}

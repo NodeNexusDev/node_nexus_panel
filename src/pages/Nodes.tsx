@@ -26,6 +26,7 @@ import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
+import { BulkScriptModal } from '../components/scripts/BulkScriptModal'
 import { IconNodes, IconDocker } from '../components/ui/Icons'
 import {
   useInfiniteNodes,
@@ -118,6 +119,7 @@ export function Nodes() {
   const [scriptTarget, setScriptTarget] = useState<Node | null>(null)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
+  const [showBulkScript, setShowBulkScript] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBulkMetrics, setShowBulkMetrics] = useState(false)
@@ -388,7 +390,8 @@ export function Nodes() {
           {selectedIds.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
               <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('nodes.selected', { count: selectedIds.length })}</span>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulkExec(true)}>{t('nodes.bulkExec', 'Bulk Exec')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkExec(true)}>{t('nodes.bulkExec', 'Run Commands')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkScript(true)}>{t('nodes.bulkScript', 'Run Scripts')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
                 bulkCheck.mutate(selectedIds, {
                   onSuccess: () => { toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
@@ -598,6 +601,7 @@ export function Nodes() {
       </Modal>
 
       <BulkCommandModal nodeIds={showBulkExec ? selectedIds : []} onClose={() => setShowBulkExec(false)} />
+      <BulkScriptModal nodeIds={showBulkScript ? selectedIds : []} onClose={() => setShowBulkScript(false)} />
 
       <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed: number; succeeded: number }; if (d.failed && d.failed > 0) { toast('warning', t('nodes.toastBulkDeletePartial', { failed: d.failed, succeeded: d.succeeded })) } else { toast('success', t('nodes.toastBulkDeleteDone')) } setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
 
