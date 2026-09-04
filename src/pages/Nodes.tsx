@@ -662,8 +662,6 @@ export function Nodes() {
       <Drawer
         isOpen={!!drawerNode}
         onClose={() => setDrawerNode(null)}
-        title={drawerNode?.name ?? ''}
-        description={drawerNode ? `${drawerNode.host}:${drawerNode.port}` : undefined}
         size="lg"
       >
         {drawerNode && (

@@ -9,7 +9,6 @@ import { Checkbox } from '../ui/Checkbox'
 import { Card, CardContent, CardHeader } from '../ui/Card'
 import { Tabs } from '../ui/Tabs'
 import { FavoriteButton } from '../ui/FavoriteButton'
-import { Tooltip } from '../ui/Tooltip'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorState } from '../ui/ErrorState'
 import { Skeleton, TableSkeleton, StatCardSkeleton } from '../ui/Skeleton'
@@ -66,7 +65,6 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const { copy } = useCopyToClipboard({ onCopied: () => toast('success', t('nodes.addressCopied')) })
   const checkNode = useCheckNode()
   const [active, setActive] = useState<DrawerTab>('overview')
   const [validateResult, setValidateResult] = useState<{ status: string; message: string } | null>(null)
@@ -171,6 +169,13 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
           <p className="text-xs font-mono text-surface-500 truncate">{node.host}:{node.port}{node.username ? ` (${node.username})` : ''}</p>
         </div>
         <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
+        <button
+          onClick={onClose}
+          aria-label={t('common.close')}
+          className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-colors shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -182,28 +187,18 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Tooltip content={t('nodes.copyAddress')}>
-          <Button variant="ghost" size="sm" className="px-2" onClick={() => copy(`${node.host}:${node.port}`)} aria-label={t('nodes.copyAddress')}>
-            <IconCopy className="w-4 h-4" />
-          </Button>
-        </Tooltip>
-        <Tooltip content={t('nodes.openDocker')}>
-          <Button variant="ghost" size="sm" className="px-2" onClick={() => navigate(`/docker?node=${node.id}`)} aria-label={t('nodes.openDocker')}>
-            <IconDocker className="w-4 h-4" />
-          </Button>
-        </Tooltip>
-        <Button variant="secondary" size="sm" disabled={checkNode.isPending} onClick={() => checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) })}>
+      <div className="flex flex-wrap gap-2 items-center">
+        <Button variant="secondary" size="sm" onClick={() => navigate(`/docker?node=${node.id}`)} className="px-3">
+          <IconDocker className="w-4 h-4 mr-1.5" />{t('nodes.openDocker', 'Docker')}
+        </Button>
+        <Button variant="ghost" size="sm" disabled={checkNode.isPending} onClick={() => checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) })}>
           <IconCheckCircle className="w-4 h-4 mr-1" />{t('nodes.checkNode')}
         </Button>
         <Button variant="ghost" size="sm" disabled={checkNode.isPending} onClick={handleValidateInline}>
           {checkNode.isPending ? <><Spinner size="sm" /> <span className="ml-1">{t('common.loading')}</span></> : t('nodes.validate')}
         </Button>
-        <Button variant={active === 'exec' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActive('exec')}>
-          <IconCommands className="w-4 h-4 mr-1" />{t('nodes.execCommand')}
-        </Button>
-        <Button variant={active === 'script' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActive('script')}>
-          <IconScripts className="w-4 h-4 mr-1" />{t('nodes.runScript')}
+        <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 hover:text-red-600 ml-auto">
+          <IconXCircle className="w-4 h-4 mr-1" />{t('common.delete')}
         </Button>
       </div>
       {validateResult && (
@@ -212,16 +207,6 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
           <button onClick={() => setValidateResult(null)} className="text-xs text-surface-500 hover:text-surface-700 cursor-pointer">{t('common.close')}</button>
         </div>
       )}
-
-      <div className="flex flex-wrap gap-2">
-        <Button variant={active === 'edit' ? 'secondary' : 'ghost'} size="sm" onClick={() => setActive('edit')}>{t('common.edit')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 hover:text-red-600">
-          <IconXCircle className="w-4 h-4 mr-1" />{t('common.delete')}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => navigate(`/nodes/${node.id}`)} className="ml-auto">
-          {t('common.view', 'View full page')} →
-        </Button>
-      </div>
       {showDeleteConfirm && (
         <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-center justify-between gap-3">
           <p className="text-xs text-red-700 dark:text-red-300">{t('nodes.deleteMsg', { name: node.name })}</p>
