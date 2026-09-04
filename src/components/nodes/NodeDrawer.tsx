@@ -90,8 +90,8 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
     { key: 'stats', label: t('nodes.stats', 'Stats') },
     { key: 'history', label: t('common.history', 'History') },
     { key: 'edit', label: t('common.edit', 'Edit') },
-    { key: 'exec', label: t('nodes.execCommand', 'Exec') },
-    { key: 'script', label: t('nodes.runScript', 'Script') },
+    { key: 'exec', label: t('commands.title', 'Commands') },
+    { key: 'script', label: t('scripts.title', 'Scripts') },
   ]
 
   const toggleClear = (field: string) => setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
@@ -503,7 +503,7 @@ function DrawerExec({ node }: { node: Node }) {
         ) : (
           <div className="space-y-3">
             <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectCommand', 'Search commands...')} />
-            <div className="max-h-48 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
+            <div className="w-full max-h-80 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
               {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noCommands', 'No commands')}</p> : filtered.map((cmd) => (
                 <button key={cmd.id} type="button" onClick={() => selectCommand(cmd)} className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm cursor-pointer ${selectedCommand?.id === cmd.id ? 'bg-accent-50 dark:bg-accent-900/20' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}>
                   <IconCommands className="w-4 h-4 text-surface-400 shrink-0" />
@@ -582,7 +582,7 @@ function DrawerScript({ node }: { node: Node }) {
   return (
     <div className="space-y-3">
       <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectScript', 'Search scripts...')} />
-      <div className="max-h-56 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
+      <div className="w-full max-h-80 overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
         {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noScripts', 'No scripts')}</p> : filtered.map((script) => (
           <button key={script.id} type="button" onClick={() => setSelected(script)} className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm cursor-pointer ${selected?.id === script.id ? 'bg-accent-50 dark:bg-accent-900/20' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}>
             <IconScripts className="w-4 h-4 text-surface-400 shrink-0" />
