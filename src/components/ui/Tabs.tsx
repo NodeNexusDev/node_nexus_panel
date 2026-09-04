@@ -34,7 +34,7 @@ export function Tabs<T extends string>({ tabs, active, onChange, className = '' 
 
   return (
     <div className={`border-b border-surface-200 dark:border-surface-800 ${className}`}>
-      <nav className="flex gap-1 overflow-x-auto overscroll-x-contain scrollbar-none snap-x scroll-smooth touch-pan-x" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' } as React.CSSProperties} role="tablist" onKeyDown={handleKeyDown}>
+      <nav className="flex gap-1 overflow-x-auto scroll-smooth touch-pan-x snap-x overscroll-x-contain" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties} role="tablist" onKeyDown={handleKeyDown}>
         {tabs.map((tab) => {
           const panelId = `${baseId}-panel-${tab.key}`
           const buttonId = `${baseId}-tab-${tab.key}`
