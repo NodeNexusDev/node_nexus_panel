@@ -45,9 +45,10 @@ interface NodeDrawerProps {
   onDelete: (node: Node) => void
   onExec: (node: Node) => void
   onRunScript: (node: Node) => void
+  onValidate: (node: Node) => void
 }
 
-export function NodeDrawer({ node, onClose: _onClose, onEdit, onDelete, onExec, onRunScript }: NodeDrawerProps) {
+export function NodeDrawer({ node, onClose: _onClose, onEdit, onDelete, onExec, onRunScript, onValidate }: NodeDrawerProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -102,6 +103,7 @@ export function NodeDrawer({ node, onClose: _onClose, onEdit, onDelete, onExec, 
         <Button variant="secondary" size="sm" disabled={checkNode.isPending} onClick={() => checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) })}>
           <IconCheckCircle className="w-4 h-4 mr-1" />{t('nodes.checkNode')}
         </Button>
+        <Button variant="ghost" size="sm" onClick={() => onValidate(node)}>{t('nodes.validate')}</Button>
         <Button variant="secondary" size="sm" onClick={() => onExec(node)}>
           <IconCommands className="w-4 h-4 mr-1" />{t('nodes.execCommand')}
         </Button>

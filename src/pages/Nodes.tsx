@@ -12,7 +12,6 @@ import { Input } from '../components/ui/Input'
 import { TagFilter } from '../components/ui/TagFilter'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
-import { Tooltip } from '../components/ui/Tooltip'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { Spinner } from '../components/ui/Spinner'
@@ -20,8 +19,6 @@ import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
-import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
-import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Checkbox } from '../components/ui/Checkbox'
 import { Drawer } from '../components/ui/Drawer'
 import { NodeDrawer } from '../components/nodes/NodeDrawer'
@@ -29,16 +26,7 @@ import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
 import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
-import {
-  IconNodes,
-  IconCommands,
-  IconScripts,
-  IconCheckCircle,
-  IconXCircle,
-  IconChart,
-  IconClock,
-  IconActivity,
-} from '../components/ui/Icons'
+import { IconNodes } from '../components/ui/Icons'
 import {
   useInfiniteNodes,
   useCreateNode,
@@ -206,17 +194,7 @@ export function Nodes() {
     })
   }, [checkNode, t, toast])
 
-  const nodeMenu = useCallback((node: Node): DropdownMenuItem[] => [
-    { key: 'edit', label: t('common.edit'), onClick: () => openEdit(node) },
-    { key: 'validate', label: t('nodes.validate'), onClick: () => handleValidate(node) },
-    { key: 'sep-1', label: '', onClick: () => {}, separator: true },
-    { key: 'metrics', label: t('nodes.metrics', 'Metrics'), icon: <IconActivity className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=metrics`) },
-    { key: 'stats', label: t('nodes.stats', 'Stats'), icon: <IconChart className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=stats`) },
-    { key: 'status-history', label: t('nodes.statusHistory', 'Status History'), icon: <IconClock className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=status-history`) },
-    { key: 'command-history', label: t('nodes.cmdHistory', 'Command History'), icon: <IconCommands className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=command-history`) },
-    { key: 'sep-2', label: '', onClick: () => {}, separator: true },
-    { key: 'delete', label: t('common.delete'), icon: <IconXCircle className="w-4 h-4" />, danger: true, onClick: () => setDeleteTarget({ id: node.id, name: node.name }) },
-  ], [t, openEdit, handleValidate, navigate])
+
 
   const columns: Column<Node>[] = useMemo(() => [
     {
@@ -294,32 +272,7 @@ export function Nodes() {
       header: <SortableHeader label={t('nodes.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
       render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.updated_at).toLocaleDateString()}</span>,
     },
-    {
-      key: 'actions',
-      header: t('nodes.actions'),
-      render: (node) => (
-        <div className="flex items-center gap-1">
-          <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
-          <Tooltip content={t('nodes.checkNode')}>
-            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.checkNode')} onClick={(e) => { e.stopPropagation(); checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) }) }}>
-              <IconCheckCircle className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('nodes.execCommand')}>
-            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.execCommand')} onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
-              <IconCommands className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('nodes.runScript')}>
-            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.runScript')} onClick={(e) => { e.stopPropagation(); setScriptTarget(node) }}>
-              <IconScripts className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <DropdownMenu items={nodeMenu(node)} ariaLabel={t('common.actionsFor', { name: node.name })} />
-        </div>
-      ),
-    },
-  ], [allSelected, selectedIds, sort, toggleSort, toggleAll, toggleSelect, nodeMenu, t, toast, checkNode])
+  ], [allSelected, selectedIds, sort, toggleSort, toggleAll, toggleSelect, t])
 
   const renderMobileNode = useCallback((node: Node) => (
     <div className="space-y-3">
@@ -346,18 +299,8 @@ export function Nodes() {
         <span>{t('nodes.created')}: {new Date(node.created_at).toLocaleDateString()}</span>
         <span>{t('nodes.updated')}: {new Date(node.updated_at).toLocaleDateString()}</span>
       </div>
-      <div className="flex items-center gap-1">
-        <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
-        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
-          <IconCommands className="w-4 h-4 mr-1" /> {t('nodes.execCommand')}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setScriptTarget(node) }}>
-          <IconScripts className="w-4 h-4 mr-1" /> {t('nodes.runScript')}
-        </Button>
-        <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
-      </div>
     </div>
-  ), [nodeMenu, t])
+  ), [t])
 
   const handleAdd = (values: NodeCreateFormValues) => {
     createNode.mutate(
@@ -769,6 +712,7 @@ export function Nodes() {
             onDelete={(n) => { setDrawerNode(null); setDeleteTarget({ id: n.id, name: n.name }) }}
             onExec={(n) => setExecTarget(n)}
             onRunScript={(n) => setScriptTarget(n)}
+            onValidate={(n) => handleValidate(n)}
           />
         )}
       </Drawer>
