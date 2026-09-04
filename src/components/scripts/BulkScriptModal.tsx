@@ -72,30 +72,33 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
   const handleRun = () => {
     const ids = [...selectedIds]
     if (ids.length === 0 || nodeIds.length === 0) return
-    if (ids.length === 1) {
-      const id = ids[0]
-      const name = scripts.find((s) => s.id === id)?.name ?? id
-      bulkRun.mutate({ script_ids: ids, node_ids: nodeIds }, {
-        onSuccess: (response) => {
-          toast('success', t('scripts.toastStarted', { name }))
-          const batch = response as unknown as { results?: ScriptNodeResult[] }
-          const first = batch.results?.[0]
-          if (first) setSingleResult(first)
-        },
-        onError: () => toast('error', t('scripts.toastRunFailed', { name: ids.length === 1 ? scripts.find((s) => s.id === ids[0])?.name ?? ids[0] : `${ids.length} scripts` })),
-      })
-      return
-    }
     bulkRun.mutate({ script_ids: ids, node_ids: nodeIds }, {
       onSuccess: (response) => {
-        toast('success', t('scripts.toastStarted', { name: `${ids.length} scripts` }))
-        const batch = response as unknown as { results?: ScriptNodeResult[] }
-        if (batch.results && Array.isArray(batch.results)) {
-          const mapped = ids.map((id, i) => ({ id, name: scripts.find((s) => s.id === id)?.name ?? id, result: (batch.results as ScriptNodeResult[])[i] ?? batch.results?.[0] as ScriptNodeResult }))
-          setBulkResults(mapped.filter((m) => m.result))
+        const countLabel = ids.length === 1 ? scripts.find((s) => s.id === ids[0])?.name ?? ids[0] : `${ids.length} scripts`
+        toast('success', t('scripts.toastStarted', { name: countLabel }))
+        const batch = response as unknown as { results?: Array<ScriptNodeResult & { script_id?: string; node_id?: string; node_name?: string; error?: string }>, batch_id?: string }
+        const results = batch.results ?? []
+        if (results.length === 0) {
+          setBulkResults(null)
+          setSingleResult(null)
+          return
+        }
+        if (results.length === 1) {
+          setSingleResult(results[0] as ScriptNodeResult)
+          setBulkResults(null)
+        } else {
+          // M×N: show every execution with script + node
+          const mapped = results.map((r, idx) => {
+            const scriptName = (r as { script_id?: string }).script_id ? scripts.find((s) => s.id === (r as { script_id?: string }).script_id)?.name ?? (r as { script_id?: string }).script_id! : scripts.find((s) => s.id === ids[idx % ids.length])?.name ?? `exec-${idx}`
+            const nodeLabel = (r as { node_name?: string; node_id?: string }).node_name ?? (r as { node_id?: string }).node_id ?? ''
+            const name = scriptName && nodeLabel ? `${scriptName} — ${nodeLabel}` : scriptName || nodeLabel || `Result ${idx + 1}`
+            return { id: `${(r as { execution_id?: string }).execution_id ?? idx}`, name, result: r as unknown as ScriptNodeResult }
+          })
+          setBulkResults(mapped)
+          setSingleResult(null)
         }
       },
-      onError: () => toast('error', t('scripts.toastRunFailed', { name: `${ids.length} scripts` })),
+      onError: () => toast('error', t('scripts.toastRunFailed', { name: ids.length === 1 ? scripts.find((s) => s.id === ids[0])?.name ?? ids[0] : `${ids.length} scripts` })),
     })
   }
 
