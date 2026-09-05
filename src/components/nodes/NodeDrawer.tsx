@@ -1,3 +1,4 @@
+// oxlint-disable react-hooks/exhaustive-deps
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -78,12 +79,13 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
   const [editNode, setEditNode] = useState({ name: node.name, host: node.host, port: String(node.port), connection_type: node.connection_type as ConnectionType, description: (node as unknown as { description?: string }).description || '', username: node.username || '', password: '', ssh_key: '', passphrase: '', docker_host: node.docker_host || '', has_docker: node.has_docker ?? false, tags: node.tags.join(', ') })
   const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
 
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setEditNode({ name: node.name, host: node.host, port: String(node.port), connection_type: node.connection_type as ConnectionType, description: (node as unknown as { description?: string }).description || '', username: node.username || '', password: '', ssh_key: '', passphrase: '', docker_host: node.docker_host || '', has_docker: node.has_docker ?? false, tags: node.tags.join(', ') })
     setClearFields({})
     setValidateResult(null)
     setShowDeleteConfirm(false)
-  }, [node])
+  }, [node.id])
 
   useEffect(() => { setValidateResult(null); setShowDeleteConfirm(false) }, [active])
 
@@ -149,7 +151,7 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
         passphrase: editNode.passphrase ? editNode.passphrase : clearFields.passphrase ? null : undefined,
         docker_host: toNull(editNode.docker_host),
         has_docker: editNode.has_docker,
-        tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+        tags: [...new Set(editNode.tags.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean))],
       },
     }, {
       onSuccess: () => { toast('success', t('nodes.toastUpdated', { name: editNode.name })); setActive('overview') },
@@ -280,7 +282,6 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
 function DrawerOverview({ node }: { node: Node }) {
   const { t } = useTranslation()
   const { copy } = useCopyToClipboard()
-  const navigate = useNavigate()
   const rows: [string, React.ReactNode][] = [
     [t('nodes.host'), (
       <span key="host" className="inline-flex items-center gap-2 font-mono text-xs">
@@ -296,7 +297,7 @@ function DrawerOverview({ node }: { node: Node }) {
     [t('nodes.hasDocker', 'Has Docker'), node.has_docker ? <Badge key="hd" variant="success">Yes</Badge> : <Badge key="hd2" variant="default">No</Badge>],
     [t('nodes.tags', 'Tags'), node.tags.length ? (
       <span key="tags" className="flex flex-wrap gap-1">
-        {node.tags.map((tag) => <button key={tag} onClick={() => navigate(`/nodes?tag=${encodeURIComponent(tag)}`)} className="cursor-pointer"><Badge variant="default">{tag}</Badge></button>)}
+        {node.tags.map((tag) => <Badge key={tag} variant="default">{tag}</Badge>)}
       </span>
     ) : '—'],
     [t('nodes.created', 'Created'), new Date(node.created_at).toLocaleString()],
@@ -330,17 +331,17 @@ function DrawerMetrics({ nodeId }: { nodeId: string }) {
   if (isLoading) return <div className="space-y-3"><Skeleton variant="rectangular" className="w-full h-20" /><Skeleton variant="rectangular" className="w-full h-20" /><Skeleton variant="rectangular" className="w-full h-12" /></div>
   if (error) return <ErrorState error={error} onRetry={refetch} />
   if (!metrics) return <EmptyState title={t('nodes.noMetrics', 'No metrics available')} />
-  const cpuPct = metrics.cpu.usage_percent ?? 0
-  const memPct = metrics.memory.percent ?? 0
-  const diskPct = metrics.disk.percent ?? 0
+  const cpuPct = metrics.cpu?.usage_percent ?? 0
+  const memPct = metrics.memory?.percent ?? 0
+  const diskPct = metrics.disk?.percent ?? 0
   return (
     <Card>
       <CardContent className="pt-4 space-y-4">
-        <DrawerMetricBar label={t('nodes.cpu', 'CPU')} value={`${cpuPct.toFixed(1)}% (${metrics.cpu.cores} cores)`} percent={cpuPct} />
-        <DrawerMetricBar label={t('nodes.memory', 'Memory')} value={`${formatBytes(metrics.memory.used_bytes)} / ${formatBytes(metrics.memory.total_bytes)} (${memPct.toFixed(1)}%)`} percent={memPct} />
-        <DrawerMetricBar label={t('nodes.disk', 'Disk')} value={`${formatBytes(metrics.disk.used_bytes)} / ${formatBytes(metrics.disk.total_bytes)} (${diskPct.toFixed(1)}%)`} percent={diskPct} />
+        <DrawerMetricBar label={t('nodes.cpu', 'CPU')} value={`${cpuPct.toFixed(1)}% (${metrics.cpu?.cores ?? 0} cores)`} percent={cpuPct} />
+        <DrawerMetricBar label={t('nodes.memory', 'Memory')} value={`${formatBytes(metrics.memory?.used_bytes)} / ${formatBytes(metrics.memory?.total_bytes)} (${memPct.toFixed(1)}%)`} percent={memPct} />
+        <DrawerMetricBar label={t('nodes.disk', 'Disk')} value={`${formatBytes(metrics.disk?.used_bytes)} / ${formatBytes(metrics.disk?.total_bytes)} (${diskPct.toFixed(1)}%)`} percent={diskPct} />
         <KeyValueList rows={[{ label: t('nodes.uptimeSince', 'Uptime Since'), value: metrics.uptime_since ? new Date(metrics.uptime_since).toLocaleString() : '—' }]} />
-        <div className="pt-1"><p className="text-xs font-medium text-surface-600 dark:text-surface-400 mb-2">{t('nodes.loadAverage', 'Load Average')}</p><KeyValueList rows={[{ label: '1m', value: metrics.load_average.one_min.toFixed(2) },{ label: '5m', value: metrics.load_average.five_min.toFixed(2) },{ label: '15m', value: metrics.load_average.fifteen_min.toFixed(2) }]} /></div>
+        <div className="pt-1"><p className="text-xs font-medium text-surface-600 dark:text-surface-400 mb-2">{t('nodes.loadAverage', 'Load Average')}</p><KeyValueList rows={[{ label: '1m', value: (metrics.load_average?.one_min ?? 0).toFixed(2) },{ label: '5m', value: (metrics.load_average?.five_min ?? 0).toFixed(2) },{ label: '15m', value: (metrics.load_average?.fifteen_min ?? 0).toFixed(2) }]} /></div>
       </CardContent>
     </Card>
   )
@@ -507,9 +508,13 @@ function DrawerExec({ node }: { node: Node }) {
       }
       executeCommand.mutate({ id: singleSelected.id, data: { node_id: node.id, params: Object.keys(values).length > 0 ? values : undefined } }, {
         onSuccess: (res) => {
-          toast('success', t('commands.toastExecuted', { target: node.name }))
-          const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null }> }
-          const first = batch.results?.[0]
+          const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null; status?: string }>; total?: number; succeeded?: number; failed?: number }
+          const first = batch.results?.[0] as unknown as CommandResult | undefined
+          const exitCode = (first as unknown as { exit_code?: number | null })?.exit_code ?? (res as unknown as { exit_code?: number })?.exit_code ?? 0
+          const status = (first as unknown as { status?: string })?.status
+          const isFail = exitCode !== 0 || status === 'error' || (batch as { failed?: number }).failed! > 0
+          if (isFail) toast('warning', t('commands.toastExecuted', { target: node.name }) + ' — failed')
+          else toast('success', t('commands.toastExecuted', { target: node.name }))
           if (first) setCommandResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult)
           else setCommandResult(res as unknown as CommandResult)
         },
@@ -529,14 +534,17 @@ function DrawerExec({ node }: { node: Node }) {
     })
     bulkExec.mutate({ command_ids: ids, node_ids: [node.id], params: Object.keys(paramsMap).length > 0 ? paramsMap : undefined }, {
       onSuccess: (res) => {
-        toast('success', t('commands.toastExecuted', { target: node.name }) + ` (${ids.length})`)
-        const batch = res as unknown as { results?: Array<{ command_id?: string; stdout: string; stderr: string; exit_code?: number | null }> }
+        const batch = res as unknown as { results?: Array<{ command_id?: string; stdout: string; stderr: string; exit_code?: number | null; status?: string }>; total?: number; succeeded?: number; failed?: number }
+        const failed = (batch as { failed?: number }).failed ?? batch.results?.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length ?? 0
+        if (failed > 0) toast('warning', t('commands.toastExecuted', { target: node.name }) + ` (${ids.length}) — ${failed} failed`)
+        else toast('success', t('commands.toastExecuted', { target: node.name }) + ` (${ids.length})`)
         if (batch.results && Array.isArray(batch.results)) {
-          const byId = new Map<string, { stdout?: string; stderr?: string; exit_code?: number | null; command_id?: string }>()
-          ;(batch.results as Array<{ command_id?: string; stdout?: string; stderr?: string; exit_code?: number | null }>).forEach((r) => { if (r.command_id) byId.set(r.command_id, r) })
+          const hasCommandId = batch.results.some((r) => !!(r as { command_id?: string }).command_id)
+          const byId = new Map<string, { stdout?: string; stderr?: string; exit_code?: number | null; command_id?: string; status?: string }>()
+          if (hasCommandId) (batch.results as Array<{ command_id?: string; stdout?: string; stderr?: string; exit_code?: number | null; status?: string }>).forEach((r) => { if (r.command_id) byId.set(r.command_id, r) })
           const mapped = ids.map((id, i) => {
-            const r = byId.get(id) ?? (batch.results as Array<{ stdout?: string; stderr?: string; exit_code?: number | null; command_id?: string }>)[i] as { stdout?: string; stderr?: string; exit_code?: number | null } | undefined ?? batch.results?.[0] as { stdout?: string; stderr?: string; exit_code?: number | null } | undefined
-            return { id, name: commands.find((c) => c.id === id)?.name ?? id, result: { stdout: r?.stdout ?? '', stderr: r?.stderr ?? '', exit_code: r?.exit_code ?? 0 } as CommandResult }
+            const r = hasCommandId ? byId.get(id) : (batch.results as Array<{ stdout?: string; stderr?: string; exit_code?: number | null; status?: string }>)[i]
+            return { id, name: commands.find((c) => c.id === id)?.name ?? id, result: { stdout: r?.stdout ?? '', stderr: r?.stderr ?? '', exit_code: r?.exit_code ?? (r?.status === 'success' ? 0 : r ? 1 : 0) } as CommandResult }
           })
           setBulkResults(mapped)
         } else {
@@ -620,6 +628,10 @@ function DrawerExec({ node }: { node: Node }) {
           <div className="flex justify-end"><Button size="sm" onClick={handleRunCustom} disabled={!customCommand || executeNode.isPending}>{executeNode.isPending ? <span className="flex items-center gap-2"><Spinner size="sm" /> {t('common.loading')}</span> : t('nodes.execCommand')}</Button></div>
           {customOutputs.length > 0 && (
             <div className="space-y-3 pt-2 border-t border-surface-200 dark:border-surface-700 flex-1 overflow-y-auto min-h-0">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-surface-500">{t('nodes.execHistory', 'History')} ({customOutputs.length})</p>
+                <Button variant="ghost" size="sm" onClick={() => setCustomOutputs([])} className="h-6 px-2 text-xs">{t('common.clear')}</Button>
+              </div>
               {customOutputs.map((item, i) => (
                 <div key={i} className="space-y-2">
                   <p className="text-xs font-mono text-surface-500">$ {item.command}</p>
@@ -676,11 +688,14 @@ function DrawerScript({ node }: { node: Node }) {
       const selectedName = scripts.find((s) => s.id === selectedId)?.name ?? selectedId
       runScript.mutate({ id: selectedId, data: { node_ids: [node.id] } }, {
         onSuccess: (response) => {
-          toast('success', t('scripts.toastStarted', { name: selectedName }))
-          const batch = response as unknown as { results?: ScriptNodeResult[] }
+          const batch = response as unknown as { results?: Array<ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }>; total?: number; succeeded?: number; failed?: number }
+          const first = (batch.results?.[0] ?? response) as ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }
+          const failed = (batch as { failed?: number }).failed ?? (first?.steps?.some((s) => (s.exit_code ?? 0) !== 0) || (first as { status?: string })?.status === 'error' ? 1 : 0)
+          if (failed > 0) toast('warning', t('scripts.toastStarted', { name: selectedName }) + ' — failed')
+          else toast('success', t('scripts.toastStarted', { name: selectedName }))
           const fallback = response as unknown as { results?: Array<{ node_id: string; status: string; steps?: unknown[] }> }
-          const first = batch.results?.[0] as ScriptNodeResult | undefined ?? (fallback.results?.[0] as unknown as ScriptNodeResult)
-          if (first) setResult(first)
+          const resolved = batch.results?.[0] as ScriptNodeResult | undefined ?? (fallback.results?.[0] as unknown as ScriptNodeResult)
+          if (resolved) setResult(resolved)
         },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: selectedName })),
       })
@@ -688,20 +703,28 @@ function DrawerScript({ node }: { node: Node }) {
     }
     bulkRun.mutate({ script_ids: ids, node_ids: [node.id] }, {
       onSuccess: (response) => {
-        toast('success', t('scripts.toastStarted', { name: `${ids.length} scripts` }))
-        const batch = response as unknown as { results?: Array<{ script_id?: string; steps?: unknown[]; stdout?: string; stderr?: string; error?: string } & ScriptNodeResult> }
+        const batch = response as unknown as { results?: Array<{ script_id?: string; steps?: unknown[]; stdout?: string; stderr?: string; error?: string; status?: string } & ScriptNodeResult>; total?: number; succeeded?: number; failed?: number }
+        const failed = (batch as { failed?: number }).failed ?? batch.results?.filter((r) => {
+          const steps = (r as { steps?: Array<{ exit_code?: number }> }).steps
+          if (steps && steps.length > 0) return steps.some((s) => (s.exit_code ?? 0) !== 0)
+          return (r as { status?: string }).status === 'error' || !!(r as { error?: string }).error
+        }).length ?? 0
+        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: `${ids.length} scripts` }) + ` — ${failed} failed`)
+        else toast('success', t('scripts.toastStarted', { name: `${ids.length} scripts` }))
         if (batch.results && Array.isArray(batch.results)) {
+          const hasScriptId = batch.results.some((r) => !!(r as { script_id?: string }).script_id)
           const byId = new Map<string, unknown>()
-          ;(batch.results as Array<{ script_id?: string }>).forEach((r) => { if (r.script_id) byId.set(r.script_id, r) })
-          const mapped = ids.map((id) => {
-            const raw = (byId.get(id) ?? batch.results?.[0]) as ScriptNodeResult & { steps?: unknown[] }
+          if (hasScriptId) (batch.results as Array<{ script_id?: string }>).forEach((r) => { if (r.script_id) byId.set(r.script_id, r) })
+          const mapped = ids.map((id, idx) => {
+            const raw = hasScriptId ? (byId.get(id) as ScriptNodeResult & { steps?: unknown[] } | undefined) : (batch.results as unknown as Array<ScriptNodeResult & { steps?: unknown[] }>)[idx] as ScriptNodeResult & { steps?: unknown[] } | undefined
+            if (!raw) return null
             // ensure steps exists, fallback to raw stdout/stderr if steps missing
             const ensured = raw && !raw.steps && (raw as unknown as { stdout?: string }).stdout !== undefined
               ? { ...raw, steps: [{ label: raw.steps?.[0] ? (raw.steps[0] as { label?: string }).label : 'Step 1', stdout: (raw as unknown as { stdout?: string }).stdout ?? '', stderr: (raw as unknown as { stderr?: string }).stderr ?? '', exit_code: (raw as unknown as { exit_code?: number }).exit_code ?? 0, truncated: false, step_index: 0, command_fingerprint: '' }] } as unknown as ScriptNodeResult
               : raw
             return { id, name: scripts.find((s) => s.id === id)?.name ?? id, result: ensured as ScriptNodeResult }
-          })
-          setBulkResults(mapped.filter((m) => m.result))
+          }).filter((m): m is { id: string; name: string; result: ScriptNodeResult } => !!m?.result)
+          setBulkResults(mapped.length > 0 ? mapped : null)
         } else {
           setBulkResults(null)
         }

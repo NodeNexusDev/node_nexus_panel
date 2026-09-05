@@ -204,7 +204,7 @@ export function Scripts() {
             <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
               <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('common.selected', { count: selectedIds.length })}</span>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkRun(true)}>{t('scripts.run')} ({selectedIds.length})</Button>
-              <Button variant="ghost" size="sm" disabled={bulkClone.isPending} onClick={() => bulkClone.mutate(selectedIds, { onSuccess: () => { toast('success', t('scripts.toastCloned')); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastCloneFailed')) })}>{bulkClone.isPending ? t('common.loading') : t('scripts.clone')}</Button>
+              <Button variant="ghost" size="sm" disabled={bulkClone.isPending} onClick={() => bulkClone.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('scripts.toastCloned') + ` — ${d.failed} failed`); else toast('success', t('scripts.toastCloned')); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastCloneFailed')) })}>{bulkClone.isPending ? t('common.loading') : t('scripts.clone')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('common.delete')}</Button>
               <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('common.clear')}</button>
             </div>
@@ -223,7 +223,10 @@ export function Scripts() {
               onRowClick={(script) => setDrawerScript(script)}
             />
           )}
-          <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+          <InfiniteScroll hasMore={tagFilter.length > 1 ? false : !!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+          {tagFilter.length > 1 && hasNextPage && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center py-2">{t('nodes.multiTagLimited', 'Multi-tag filter shows only loaded pages. Clear filter to load more.')}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -241,7 +244,7 @@ export function Scripts() {
       />
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteScript.isPending} />
-      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => bulkDelete.mutate(selectedIds, { onSuccess: () => { toast('success', t('scripts.toastDeleted')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastDeleteFailed')) })} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: `${selectedIds.length} scripts` })} confirmLabel={t('common.delete')} loading={bulkDelete.isPending} />
+      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => bulkDelete.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('scripts.toastDeleted') + ` — ${d.failed} failed`); else toast('success', t('scripts.toastDeleted')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastDeleteFailed')) })} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: `${selectedIds.length} scripts` })} confirmLabel={t('common.delete')} loading={bulkDelete.isPending} />
       <BulkRunScriptsOnNodesModal scriptIds={showBulkRun ? selectedIds : []} onClose={() => setShowBulkRun(false)} />
 
       <Drawer isOpen={!!drawerScript} onClose={() => setDrawerScript(null)} size="lg">

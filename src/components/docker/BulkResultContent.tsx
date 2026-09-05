@@ -30,28 +30,32 @@ export function BulkResultContent({ result, isLoading, title }: BulkResultConten
       </div>
 
       <div className="max-h-64 overflow-y-auto space-y-2">
-        {result.results.map((r) => (
-          <div
-            key={r.node_id}
-            className={`p-3 rounded-lg border text-xs font-mono ${
-              r.status === 'success'
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold">{r.node_name}</span>
-              <span className={r.status === 'success' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}>
-                {r.status}
-              </span>
+        {result.results.map((r: unknown, idx: number) => {
+          const item = r as { node_id?: string; node_name?: string; container_id?: string; image?: string; network_id?: string; volume_name?: string; status?: string; output?: string; error?: string }
+          const label = item.node_name ?? item.container_id ?? item.image ?? item.network_id ?? item.volume_name ?? item.node_id ?? `result-${idx}`
+          return (
+            <div
+              key={`${label}:${idx}`}
+              className={`p-3 rounded-lg border text-xs font-mono ${
+                item.status === 'success'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-semibold">{label}</span>
+                <span className={item.status === 'success' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}>
+                  {item.status}
+                </span>
+              </div>
+              {(item.output ?? item.error) && (
+                <pre className="whitespace-pre-wrap break-all text-surface-700 dark:text-surface-300">
+                  {item.output ?? item.error}
+                </pre>
+              )}
             </div>
-            {(r.output || r.error) && (
-              <pre className="whitespace-pre-wrap break-all text-surface-700 dark:text-surface-300">
-                {r.output || r.error}
-              </pre>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

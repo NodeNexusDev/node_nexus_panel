@@ -19,6 +19,21 @@ function encodeCursor(offset: number): string {
   return btoa(String(offset))
 }
 
+
+function simulatePartialResults(ids: string[], successStatus = 'success') {
+  // simulate 207 when >2 items: last fails
+  const shouldFail = ids.length > 2
+  const results = ids.map((id, idx) => {
+    if (shouldFail && idx === ids.length - 1) {
+      return { node_id: id, status: 'error', error: 'Simulated partial failure (207)' }
+    }
+    return { node_id: id, status: successStatus, error: '' }
+  })
+  const failed = shouldFail ? 1 : 0
+  const succeeded = ids.length - failed
+  return { results, failed, succeeded, total: ids.length, shouldFail }
+}
+
 export const nodeHandlers = [
   // ── List (v2 cursor) with legacy page/size fallback ─────────
   http.get(`${API_URL}/api/v2/nodes/`, ({ request }) => {
@@ -68,6 +83,17 @@ export const nodeHandlers = [
     const body = (await request.json()) as { items?: Array<Record<string, unknown>>; name?: string; host?: string }
     // Support both bulk {items:[...]} and legacy single {name,host,...}
     const items = body.items || (body.name ? [body] : [])
+    // 422 validation: name required, host required, tag regex
+    for (const it of items) {
+      if (!it.name || typeof it.name !== 'string' || (it.name as string).trim() === '') {
+        return HttpResponse.json({ detail: [{ loc: ['body','name'], msg: 'Field required', type: 'missing' }] }, { status: 422 })
+      }
+      const tags = it.tags as string[] | undefined
+      if (tags) {
+        const bad = tags.find((tg: string) => !/^[a-z0-9_-]{1,30}$/.test(tg))
+        if (bad) return HttpResponse.json({ detail: [{ loc: ['body','tags'], msg: `Invalid tag '${bad}' must match ^[a-z0-9_-]+$`, type: 'value_error' }] }, { status: 422 })
+      }
+    }
     const results = items.map((item: any) => {
       const newNode = {
         id: String(mockNodes.length + 1 + Math.floor(Math.random() * 1000)),
@@ -147,12 +173,13 @@ export const nodeHandlers = [
       const idx = mockNodes.findIndex((n) => n.id === id)
       if (idx !== -1) mockNodes.splice(idx, 1)
     }
+    const partial = simulatePartialResults(ids)
     return HttpResponse.json({
-      total: ids.length,
-      succeeded: ids.length,
-      failed: 0,
-      results: ids.map((id) => ({ node_id: id, status: 'success', error: '' })),
-    })
+      total: partial.total,
+      succeeded: partial.succeeded,
+      failed: partial.failed,
+      results: partial.results,
+    }, { status: partial.shouldFail ? 207 : 200 })
   }),
 
   // Legacy bulk/delete
@@ -175,12 +202,13 @@ export const nodeHandlers = [
         node.updated_at = new Date().toISOString()
       }
     }
+    const partial = simulatePartialResults(ids)
     return HttpResponse.json({
-      total: ids.length,
-      succeeded: ids.length,
-      failed: 0,
-      results: ids.map((id) => ({ node_id: id, status: 'success', error: '' })),
-    })
+      total: partial.total,
+      succeeded: partial.succeeded,
+      failed: partial.failed,
+      results: partial.results,
+    }, { status: partial.shouldFail ? 207 : 200 })
   }),
 
   http.post(`${API_URL}/api/v2/nodes/bulk/check`, async ({ request }) => {
@@ -242,12 +270,13 @@ export const nodeHandlers = [
       const node = mockNodes.find((n) => n.id === u.id)
       if (node) Object.assign(node, u.changes, { updated_at: new Date().toISOString() })
     }
+    const upPartial = (() => { const shouldFail = updates.length > 2; const results = updates.map((u, idx) => shouldFail && idx===updates.length-1 ? { node_id: u.id, status: 'error', error: 'Simulated failure' } : { node_id: u.id, status: 'success', error: '' }); return { results, failed: shouldFail?1:0, succeeded: updates.length-(shouldFail?1:0), total: updates.length, shouldFail } })()
     return HttpResponse.json({
-      total: updates.length,
-      succeeded: updates.length,
-      failed: 0,
-      results: updates.map((u) => ({ node_id: u.id, status: 'success', error: '' })),
-    })
+      total: upPartial.total,
+      succeeded: upPartial.succeeded,
+      failed: upPartial.failed,
+      results: upPartial.results,
+    }, { status: upPartial.shouldFail ? 207 : 200 })
   }),
 
   http.patch(`${API_URL}/api/v2/nodes/bulk/update`, async ({ request }) => {

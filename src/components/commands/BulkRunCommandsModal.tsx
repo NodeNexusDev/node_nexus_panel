@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
@@ -6,6 +6,7 @@ import { Checkbox } from '../ui/Checkbox'
 import { SearchInput } from '../ui/SearchInput'
 import { Spinner } from '../ui/Spinner'
 import { useNodes } from '../../hooks/useNodes'
+import { useCommands } from '../../hooks/useCommands'
 import { useMutation } from '@tanstack/react-query'
 import { commandsApi } from '../../api/commands'
 import { useToast } from '../ui/useToast'
@@ -22,10 +23,19 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
   const { toast } = useToast()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
+  const { data: commandsData } = useCommands({ size: 100 })
+  const commands = commandsData?.items || []
   const [search, setSearch] = useState('')
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set())
-  const [results, setResults] = useState<{ command: string; results: BulkNodeResult[] } | null>(null)
+  const [results, setResults] = useState<{ command: string; results: Array<BulkNodeResult & { command_id?: string }> } | null>(null)
   const bulkExec = useMutation({ mutationFn: (data: { command_ids: string[]; node_ids: string[] }) => commandsApi.executions({ command_ids: data.command_ids, node_ids: data.node_ids } as never) })
+
+  const commandIdsKey = commandIds.join(',')
+  useEffect(() => {
+    setSelectedNodeIds(new Set())
+    setSearch('')
+    setResults(null)
+  }, [commandIdsKey])
 
   const filtered = nodes.filter((n) => n.name.toLowerCase().includes(search.toLowerCase()))
   const allSelected = filtered.length > 0 && filtered.every((n) => selectedNodeIds.has(n.id))
@@ -58,9 +68,11 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
     setResults(null)
     bulkExec.mutate({ command_ids: commandIds, node_ids: nodeIds }, {
       onSuccess: (res) => {
-        toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
-        const batch = res as unknown as { results: BulkNodeResult[] }
-        setResults({ command: `${commandIds.length} commands`, results: batch.results })
+        const batch = res as unknown as { results: Array<BulkNodeResult & { command_id?: string; command?: string }>; total?: number; succeeded?: number; failed?: number }
+        const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? 1) !== 0).length
+        if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + ` — ${failed} failed`)
+        else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
+        setResults({ command: commandIds.map((id) => commands.find((c) => c.id === id)?.name ?? id).join(', '), results: batch.results })
       },
       onError: () => toast('error', t('commands.toastFailed')),
     })
@@ -78,12 +90,16 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
             <span className="text-red-600 dark:text-red-400">{t('commands.failed', 'Failed')}: {results.results.filter((r) => r.exit_code !== 0).length}</span>
           </div>
           <div className="max-h-96 overflow-y-auto space-y-3">
-            {results.results.map((r) => (
-              <div key={r.node_id} className="border border-surface-200 dark:border-surface-700 rounded-lg p-3">
-                <p className="text-sm font-medium text-surface-900 dark:text-white">{r.node_name}</p>
-                <ExecutionResult stdout={r.stdout} stderr={r.stderr} exitCode={r.exit_code} />
-              </div>
-            ))}
+            {results.results.map((r, idx) => {
+              const cmdName = (r as { command_id?: string }).command_id ? commands.find((c) => c.id === (r as { command_id?: string }).command_id)?.name ?? (r as { command_id?: string }).command_id : undefined
+              const label = cmdName ? `${cmdName} — ${r.node_name ?? r.node_id}` : (r.node_name ?? r.node_id)
+              return (
+                <div key={`${(r as { command_id?: string }).command_id ?? 'cmd'}:${r.node_id}:${idx}`} className="border border-surface-200 dark:border-surface-700 rounded-lg p-3">
+                  <p className="text-sm font-medium text-surface-900 dark:text-white">{label}</p>
+                  <ExecutionResult stdout={r.stdout} stderr={r.stderr} exitCode={r.exit_code} />
+                </div>
+              )
+            })}
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={onClose}>{t('common.close')}</Button>

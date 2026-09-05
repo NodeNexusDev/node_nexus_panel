@@ -107,8 +107,10 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
       const paramsMap = Object.keys(values).length > 0 ? { [singleSelected.id]: values } : undefined
       bulkExec.mutate({ command_ids: ids, node_ids: nodeIds, params: paramsMap as never }, {
         onSuccess: (res) => {
-          toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
           const batch = res as unknown as { results: Array<{ node_id?: string|null; node_name?: string|null; stdout: string; stderr: string; exit_code?: number|null; status: string }>; total: number; succeeded: number; failed: number }
+          const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
+          if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + ` — ${failed} failed`)
+          else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
           setBulkResult({ command: singleSelected.command, results: batch.results.map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) })
         },
         onError: () => toast('error', t('commands.toastFailed')),
@@ -125,19 +127,35 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
     })
     bulkExec.mutate({ command_ids: ids, node_ids: nodeIds, params: Object.keys(paramsMap).length > 0 ? paramsMap as never : undefined }, {
       onSuccess: (res) => {
-        toast('success', t('commands.toastExecuted', { target: `${ids.length} commands` }))
-        const batch = res as unknown as { results: Array<{ stdout: string; stderr: string; exit_code?: number|null; status: string; command_id?: string; node_id?: string; node_name?: string }> }
-        // group by command for display
-        const grouped = ids.map((id) => {
-          const cmd = commands.find((c) => c.id === id)
-          const related = (batch.results || []).filter((r: unknown) => (r as { command_id?: string }).command_id === id) as Array<{ node_name?: string; node_id?: string; stdout: string; stderr: string; exit_code?: number|null; status: string }>
-          const results = (related.length > 0 ? related : batch.results as unknown as Array<{ node_name?: string; node_id?: string; stdout: string; stderr: string; exit_code?: number|null; status: string }>).map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) }))
-          return { name: cmd?.name ?? id, results: results.slice(0, nodeIds.length) }
-        })
-        // if grouping failed (no command_id in results), fallback to single list per command
-        if (grouped[0]?.results.length === 0) {
+        const batch = res as unknown as { results: Array<{ stdout: string; stderr: string; exit_code?: number|null; status: string; command_id?: string; node_id?: string; node_name?: string }>; total: number; succeeded: number; failed: number }
+        const failed = (batch as { failed?: number }).failed ?? 0
+        const succeeded = (batch as { succeeded?: number }).succeeded ?? batch.results.filter((r) => (r.exit_code ?? (r.status==='success'?0:1))===0).length
+        if (failed > 0) toast('warning', t('commands.toastExecuted', { target: `${ids.length} commands` }) + ` — ${succeeded}/${(batch as { total?: number }).total ?? batch.results.length} ok`)
+        else toast('success', t('commands.toastExecuted', { target: `${ids.length} commands` }))
+        const results = batch.results || []
+        // group by command_id+node correctly for M×N (M commands × N nodes)
+        const hasCommandId = results.some((r) => !!(r as { command_id?: string }).command_id)
+        let grouped: Array<{ name: string; results: BulkNodeResult[] }>
+        if (hasCommandId) {
+          grouped = ids.map((id) => {
+            const cmd = commands.find((c) => c.id === id)
+            const related = results.filter((r) => (r as { command_id?: string }).command_id === id)
+            return { name: cmd?.name ?? id, results: related.map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) }
+          })
+        } else {
+          // fallback: chunk by nodeIds order (server preserves ids order)
+          const chunkSize = nodeIds.length
+          grouped = ids.map((id, idx) => {
+            const cmd = commands.find((c) => c.id === id)
+            const start = idx * chunkSize
+            const chunk = results.slice(start, start + chunkSize)
+            return { name: cmd?.name ?? id, results: chunk.map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) }
+          })
+        }
+        const allEmpty = grouped.every((g) => g.results.length === 0)
+        if (allEmpty) {
           setBulkMultiResults(null)
-          setBulkResult({ command: ids.map((id) => commands.find((c) => c.id === id)?.name ?? id).join(', '), results: (batch.results as unknown as Array<{ node_id?: string; node_name?: string; stdout: string; stderr: string; exit_code?: number|null; status: string }>).map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) })
+          setBulkResult({ command: ids.map((id) => commands.find((c) => c.id === id)?.name ?? id).join(', '), results: results.map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) })
         } else {
           setBulkMultiResults(grouped)
         }
@@ -152,8 +170,10 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
     setBulkMultiResults(null)
     bulkRaw.mutate({ commands: [customCommand], node_ids: nodeIds }, {
       onSuccess: (res) => {
-        toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
-        const batch = res as unknown as { results: Array<{ node_id?: string|null; node_name?: string|null; stdout: string; stderr: string; exit_code?: number|null; status: string }> }
+        const batch = res as unknown as { results: Array<{ node_id?: string|null; node_name?: string|null; stdout: string; stderr: string; exit_code?: number|null; status: string }>; total: number; succeeded: number; failed: number }
+        const failed = (batch as { failed?: number }).failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
+        if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + ` — ${failed} failed`)
+        else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
         setBulkResult({ command: customCommand, results: batch.results.map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) })
       },
       onError: () => toast('error', t('commands.toastFailed')),

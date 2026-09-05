@@ -289,6 +289,13 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
   const [result, setResult] = useState<ScriptNodeResult | null>(null)
   const [bulkResults, setBulkResults] = useState<Array<{ node_id: string; node_name: string; result: ScriptNodeResult }> | null>(null)
 
+  useEffect(() => {
+    setResult(null)
+    setBulkResults(null)
+    setSelectedNodeIds(new Set())
+    setSearchNode('')
+  }, [script.id])
+
   const filteredNodes = nodes.filter((n) => n.name.toLowerCase().includes(searchNode.toLowerCase()))
   const allFilteredSelected = filteredNodes.length > 0 && filteredNodes.every((n) => selectedNodeIds.has(n.id))
   const toggleNode = (id: string) => {
@@ -317,22 +324,28 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
   const handleRun = () => {
     const nodeIds = [...selectedNodeIds]
     if (nodeIds.length === 0) { toast('error', t('scripts.selectNodes', 'Select nodes')); return }
+    setResult(null)
+    setBulkResults(null)
     if (nodeIds.length === 1) {
       runScript.mutate({ id: script.id, data: { node_ids: nodeIds } }, {
         onSuccess: (response) => {
-          toast('success', t('scripts.toastStarted', { name: script.name }))
-          const batch = response as unknown as { results?: ScriptNodeResult[] }
-          const first = batch.results?.[0]
-          if (first) setResult(first)
+          const batch = response as unknown as { results?: Array<ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }>; failed?: number }
+          const first = batch.results?.[0] as ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string } | undefined
+          const failed = (batch as { failed?: number }).failed ?? (first?.steps?.some((s) => (s.exit_code ?? 0) !== 0) || first?.status === 'error' ? 1 : 0)
+          if (failed > 0) toast('warning', t('scripts.toastStarted', { name: script.name }) + ' — failed')
+          else toast('success', t('scripts.toastStarted', { name: script.name }))
+          if (first) setResult(first as ScriptNodeResult)
         },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),
       })
     } else {
       bulkRun.mutate({ script_ids: [script.id], node_ids: nodeIds }, {
         onSuccess: (response) => {
-          toast('success', t('scripts.toastStarted', { name: script.name }) + ` (${nodeIds.length})`)
-          const batch = response as unknown as { results: ScriptNodeResult[] }
-          const mapped = (batch.results || []).map((r) => ({ node_id: (r as unknown as { node_id: string }).node_id ?? '', node_name: (r as unknown as { node_name: string }).node_name ?? (r as unknown as { node_id: string }).node_id ?? '', result: r }))
+          const batch = response as unknown as { results?: Array<ScriptNodeResult & { node_id?: string; node_name?: string; steps?: Array<{ exit_code?: number }>; status?: string }>; failed?: number }
+          const failed = (batch as { failed?: number }).failed ?? batch.results?.filter((r) => r.steps?.some((s) => (s.exit_code ?? 0) !== 0) || r.status === 'error').length ?? 0
+          if (failed > 0) toast('warning', t('scripts.toastStarted', { name: script.name }) + ` (${nodeIds.length}) — ${failed} failed`)
+          else toast('success', t('scripts.toastStarted', { name: script.name }) + ` (${nodeIds.length})`)
+          const mapped = (batch.results || []).map((r) => ({ node_id: (r as unknown as { node_id: string }).node_id ?? '', node_name: (r as unknown as { node_name: string }).node_name ?? (r as unknown as { node_id: string }).node_id ?? '', result: r as ScriptNodeResult }))
           setBulkResults(mapped)
         },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),

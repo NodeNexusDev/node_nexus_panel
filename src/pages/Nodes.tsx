@@ -394,7 +394,7 @@ export function Nodes() {
               <Button variant="ghost" size="sm" onClick={() => setShowBulkScript(true)}>{t('nodes.bulkScript', 'Run Scripts')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
                 bulkCheck.mutate(selectedIds, {
-                  onSuccess: () => { toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
+                  onSuccess: (data: unknown) => { const d = data as { failed?: number; succeeded?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkCheckDone') + ` — ${d.failed} failed`); else toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
                   onError: () => toast('error', t('nodes.toastBulkCheckFailed')),
                 })
               }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
@@ -402,7 +402,10 @@ export function Nodes() {
                 setShowBulkMetrics(true)
                 setBulkMetricsResult(null)
                 bulkMetrics.mutate(selectedIds, {
-                  onSuccess: (data) => setBulkMetricsResult(data),
+                  onSuccess: (data) => {
+                    setBulkMetricsResult(data)
+                    const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics') + ` — ${d.failed} failed`)
+                  },
                   onError: () => toast('error', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics')),
                 })
               }} disabled={bulkMetrics.isPending}>{bulkMetrics.isPending ? t('common.loading') : t('nodes.bulkMetrics', 'Bulk Metrics')}</Button>
@@ -412,7 +415,7 @@ export function Nodes() {
               }}>{t('nodes.bulkUpdate', 'Bulk Update')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkValidateCreds.isPending} onClick={() => {
                 bulkValidateCreds.mutate({ ids: selectedIds }, {
-                  onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; toast('success', t('nodes.toastBulkValidateDone', { succeeded: d.succeeded, failed: d.failed })); setSelectedIds([]) },
+                  onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; if (d.failed > 0) toast('warning', t('nodes.toastBulkValidateDone', { succeeded: d.succeeded, failed: d.failed })); else toast('success', t('nodes.toastBulkValidateDone', { succeeded: d.succeeded, failed: d.failed })); setSelectedIds([]) },
                   onError: () => toast('error', t('nodes.toastBulkValidateFailed', 'Failed to validate credentials')),
                 })
               }}>{bulkValidateCreds.isPending ? t('common.loading') : t('nodes.bulkValidate', 'Bulk Validate')}</Button>
@@ -456,7 +459,10 @@ export function Nodes() {
               onRowClick={(node) => setDrawerNode(node)}
             />
           )}
-          <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+          <InfiniteScroll hasMore={tagFilter.length > 1 ? false : !!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+          {tagFilter.length > 1 && hasNextPage && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center py-2">{t('nodes.multiTagLimited', 'Multi-tag filter shows only loaded pages. Clear filter to load more.')}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -667,7 +673,7 @@ export function Nodes() {
               if (bulkUpdateChanges.has_docker !== undefined) changes.has_docker = bulkUpdateChanges.has_docker
               if (bulkUpdateChanges.tags) changes.tags = bulkUpdateChanges.tags.split(',').map((s) => s.trim()).filter(Boolean)
               bulkUpdateNodes.mutate({ updates: selectedIds.map((id) => ({ id, changes })) }, {
-                onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; toast('success', t('nodes.toastBulkUpdateDone', { succeeded: d.succeeded, failed: d.failed })); setShowBulkUpdate(false); setSelectedIds([]) },
+                onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; if (d.failed > 0) toast('warning', t('nodes.toastBulkUpdateDone', { succeeded: d.succeeded, failed: d.failed })); else toast('success', t('nodes.toastBulkUpdateDone', { succeeded: d.succeeded, failed: d.failed })); setShowBulkUpdate(false); setSelectedIds([]) },
                 onError: () => toast('error', t('nodes.toastBulkUpdateFailed', 'Failed to update nodes')),
               })
             }} disabled={bulkUpdateNodes.isPending}>{bulkUpdateNodes.isPending ? t('common.loading') : t('common.save')}</Button>

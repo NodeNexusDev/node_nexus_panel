@@ -249,6 +249,8 @@ function CommandExecTab({ command }: { command: CommandResponse }) {
     setParams(getDefaultParams(command.parameters))
     setResult(null)
     setBulkResults(null)
+    setSelectedNodeIds(new Set())
+    setSearchNode('')
   }, [command.id])
 
   const filteredNodes = nodes.filter((n) => n.name.toLowerCase().includes(searchNode.toLowerCase()))
@@ -279,6 +281,8 @@ function CommandExecTab({ command }: { command: CommandResponse }) {
   const handleRun = () => {
     const nodeIds = [...selectedNodeIds]
     if (nodeIds.length === 0) { toast('error', t('commands.selectNodes', 'Select nodes')); return }
+    setResult(null)
+    setBulkResults(null)
     const values: Record<string, unknown> = {}
     for (const p of command.parameters || []) {
       const raw = params[p.name]
@@ -291,10 +295,12 @@ function CommandExecTab({ command }: { command: CommandResponse }) {
     if (nodeIds.length === 1) {
       executeCommand.mutate({ id: command.id, data: { node_ids: nodeIds, params: values } }, {
         onSuccess: (res) => {
-          toast('success', t('commands.toastExecuted', { target: nodes.find((n) => n.id === nodeIds[0])?.name ?? nodeIds[0] }))
-          const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null }> }
-          const first = batch.results?.[0]
-          if (first) setResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult)
+          const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null; status?: string }>; failed?: number }
+          const first = batch.results?.[0] as unknown as { exit_code?: number | null; status?: string; stdout?: string; stderr?: string } | undefined
+          const isFail = (first?.exit_code ?? (first?.status === 'success' ? 0 : first ? 1 : 0)) !== 0 || (batch as { failed?: number }).failed! > 0
+          if (isFail) toast('warning', t('commands.toastExecuted', { target: nodes.find((n) => n.id === nodeIds[0])?.name ?? nodeIds[0] }) + ' — failed')
+          else toast('success', t('commands.toastExecuted', { target: nodes.find((n) => n.id === nodeIds[0])?.name ?? nodeIds[0] }))
+          if (first) setResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? (first.status === 'success' ? 0 : 1) } as CommandResult)
           else setResult(res as unknown as CommandResult)
         },
         onError: () => toast('error', t('commands.toastFailed')),
@@ -302,8 +308,10 @@ function CommandExecTab({ command }: { command: CommandResponse }) {
     } else {
       bulkExec.mutate({ command_ids: [command.id], node_ids: nodeIds, params: paramsMap as never }, {
         onSuccess: (res) => {
-          toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
-          const batch = res as unknown as { results: Array<{ node_id?: string; node_name?: string; stdout: string; stderr: string; exit_code?: number | null; status: string }> }
+          const batch = res as unknown as { results: Array<{ node_id?: string; node_name?: string; stdout: string; stderr: string; exit_code?: number | null; status: string }>; failed?: number }
+          const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
+          if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + ` — ${failed} failed`)
+          else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
           const mapped = (batch.results || []).map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? r.node_id ?? '', result: { stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status === 'success' ? 0 : 1) } as CommandResult }))
           setBulkResults(mapped)
         },

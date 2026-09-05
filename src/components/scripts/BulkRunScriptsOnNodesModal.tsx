@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
@@ -6,6 +6,7 @@ import { Checkbox } from '../ui/Checkbox'
 import { SearchInput } from '../ui/SearchInput'
 import { Spinner } from '../ui/Spinner'
 import { useNodes } from '../../hooks/useNodes'
+import { useScripts } from '../../hooks/useScripts'
 import { useMutation } from '@tanstack/react-query'
 import { scriptsApi } from '../../api/scripts'
 import { useToast } from '../ui/useToast'
@@ -23,11 +24,21 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
   const { toast } = useToast()
   const { data: nodesData } = useNodes({ size: 100 })
   const nodes = nodesData?.items || []
+  const { data: scriptsData } = useScripts({ size: 100 })
+  const scripts = scriptsData?.items || []
   const [search, setSearch] = useState('')
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set())
   const [bulkResults, setBulkResults] = useState<Array<{ id: string; name: string; result: ScriptNodeResult }> | null>(null)
   const [singleResult, setSingleResult] = useState<ScriptNodeResult | null>(null)
   const bulkRun = useMutation({ mutationFn: (data: { script_ids: string[]; node_ids: string[] }) => scriptsApi.executions({ script_ids: data.script_ids, node_ids: data.node_ids }) })
+
+  const scriptIdsKey = scriptIds.join(',')
+  useEffect(() => {
+    setSelectedNodeIds(new Set())
+    setSearch('')
+    setSingleResult(null)
+    setBulkResults(null)
+  }, [scriptIdsKey])
 
   const filtered = nodes.filter((n) => n.name.toLowerCase().includes(search.toLowerCase()))
   const allSelected = filtered.length > 0 && filtered.every((n) => selectedNodeIds.has(n.id))
@@ -61,17 +72,34 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
     setBulkResults(null)
     bulkRun.mutate({ script_ids: scriptIds, node_ids: nodeIds }, {
       onSuccess: (response) => {
-        toast('success', t('scripts.toastStarted', { name: `${scriptIds.length} scripts` }))
-        const batch = response as unknown as { results?: ScriptNodeResult[] & Array<{ script_id?: string; node_id?: string; node_name?: string }> }
+        const batch = response as unknown as { results?: Array<ScriptNodeResult & { script_id?: string; node_id?: string; node_name?: string; status?: string; execution_id?: string; error?: string; steps?: Array<{ exit_code?: number }> }>; total?: number; succeeded?: number; failed?: number }
         const results = batch.results ?? []
+        const failed = batch.failed ?? results.filter((r) => {
+          const steps = (r as { steps?: Array<{ exit_code?: number }> }).steps
+          if (steps && steps.length > 0) return steps.some((s) => (s.exit_code ?? 0) !== 0)
+          return (r as { status?: string }).status === 'error' || !!(r as { error?: string }).error
+        }).length
+        const countLabel = `${scriptIds.length} scripts`
+        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: countLabel }) + ` — ${failed} failed`)
+        else toast('success', t('scripts.toastStarted', { name: countLabel }))
         if (results.length === 1) {
           setSingleResult(results[0] as unknown as ScriptNodeResult)
         } else if (results.length > 1) {
-          const mapped = (results as Array<ScriptNodeResult & { script_id?: string; node_id?: string; node_name?: string }>).map((r, idx) => ({
-            id: `${(r as { execution_id?: string }).execution_id ?? idx}`,
-            name: `${(r as { script_id?: string }).script_id ?? scriptIds[0]} — ${(r as { node_name?: string }).node_name ?? (r as { node_id?: string }).node_id ?? ''}`,
-            result: r as unknown as ScriptNodeResult,
-          }))
+          const hasScriptId = results.some((r) => !!(r as { script_id?: string }).script_id)
+          const mapped = (results as Array<ScriptNodeResult & { script_id?: string; node_id?: string; node_name?: string; execution_id?: string }>).map((r, idx) => {
+            let scriptName: string
+            if ((r as { script_id?: string }).script_id) scriptName = scripts.find((s) => s.id === (r as { script_id?: string }).script_id)?.name ?? (r as { script_id?: string }).script_id!
+            else if (hasScriptId) scriptName = `exec-${idx}`
+            else {
+              const chunkSize = nodeIds.length
+              const sIdx = Math.floor(idx / chunkSize)
+              scriptName = scripts.find((s) => s.id === scriptIds[sIdx])?.name ?? scriptIds[sIdx] ?? `exec-${idx}`
+            }
+            const nodeLabel = (r as { node_name?: string; node_id?: string }).node_name ?? (r as { node_id?: string }).node_id ?? (hasScriptId ? '' : nodeIds[idx % nodeIds.length] ?? '')
+            const name = scriptName && nodeLabel ? `${scriptName} — ${nodeLabel}` : scriptName || nodeLabel || `Result ${idx + 1}`
+            const execId = (r as { execution_id?: string }).execution_id ?? `${(r as { script_id?: string }).script_id ?? scriptIds[Math.floor(idx / nodeIds.length)] ?? idx}:${(r as { node_id?: string }).node_id ?? nodeIds[idx % nodeIds.length] ?? idx}:${idx}`
+            return { id: execId, name, result: r as unknown as ScriptNodeResult }
+          })
           setBulkResults(mapped)
         }
       },

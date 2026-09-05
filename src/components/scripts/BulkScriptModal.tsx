@@ -76,10 +76,16 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
     setBulkResults(null)
     bulkRun.mutate({ script_ids: ids, node_ids: nodeIds }, {
       onSuccess: (response) => {
-        const countLabel = ids.length === 1 ? scripts.find((s) => s.id === ids[0])?.name ?? ids[0] : `${ids.length} scripts`
-        toast('success', t('scripts.toastStarted', { name: countLabel }))
-        const batch = response as unknown as { results?: Array<ScriptNodeResult & { script_id?: string; node_id?: string; node_name?: string; error?: string }>, batch_id?: string }
+        const batch = response as unknown as { results?: Array<ScriptNodeResult & { script_id?: string; node_id?: string; node_name?: string; error?: string; status?: string }>; batch_id?: string; total?: number; succeeded?: number; failed?: number }
         const results = batch.results ?? []
+        const failed = batch.failed ?? results.filter((r) => {
+          const steps = (r as unknown as { steps?: Array<{ exit_code?: number }> }).steps
+          if (steps && steps.length > 0) return steps.some((s) => (s.exit_code ?? 0) !== 0)
+          return (r as { status?: string }).status === 'error'
+        }).length
+        const countLabel = ids.length === 1 ? scripts.find((s) => s.id === ids[0])?.name ?? ids[0] : `${ids.length} scripts`
+        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: countLabel }) + ` — ${failed} failed`)
+        else toast('success', t('scripts.toastStarted', { name: countLabel }))
         if (results.length === 0) {
           setBulkResults(null)
           setSingleResult(null)
@@ -89,12 +95,21 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
           setSingleResult(results[0] as ScriptNodeResult)
           setBulkResults(null)
         } else {
-          // M×N: show every execution with script + node
+          // M×N: map each result by script_id + node correctly (no modulo)
+          const hasScriptId = results.some((r) => !!(r as { script_id?: string }).script_id)
           const mapped = results.map((r, idx) => {
-            const scriptName = (r as { script_id?: string }).script_id ? scripts.find((s) => s.id === (r as { script_id?: string }).script_id)?.name ?? (r as { script_id?: string }).script_id! : scripts.find((s) => s.id === ids[idx % ids.length])?.name ?? `exec-${idx}`
-            const nodeLabel = (r as { node_name?: string; node_id?: string }).node_name ?? (r as { node_id?: string }).node_id ?? ''
+            let scriptName: string
+            if ((r as { script_id?: string }).script_id) scriptName = scripts.find((s) => s.id === (r as { script_id?: string }).script_id)?.name ?? (r as { script_id?: string }).script_id!
+            else if (hasScriptId) scriptName = `exec-${idx}`
+            else {
+              const chunkSize = nodeIds.length
+              const scriptIdx = Math.floor(idx / chunkSize)
+              scriptName = scripts.find((s) => s.id === ids[scriptIdx])?.name ?? ids[scriptIdx] ?? `exec-${idx}`
+            }
+            const nodeLabel = (r as { node_name?: string; node_id?: string }).node_name ?? (r as { node_id?: string }).node_id ?? (hasScriptId ? '' : nodeIds[idx % nodeIds.length] ?? '')
             const name = scriptName && nodeLabel ? `${scriptName} — ${nodeLabel}` : scriptName || nodeLabel || `Result ${idx + 1}`
-            return { id: `${(r as { execution_id?: string }).execution_id ?? idx}`, name, result: r as unknown as ScriptNodeResult }
+            const execId = (r as { execution_id?: string }).execution_id ?? `${(r as { script_id?: string }).script_id ?? ids[Math.floor(idx / nodeIds.length)] ?? idx}:${(r as { node_id?: string }).node_id ?? nodeIds[idx % nodeIds.length] ?? idx}:${idx}`
+            return { id: execId, name, result: r as unknown as ScriptNodeResult }
           })
           setBulkResults(mapped)
           setSingleResult(null)
