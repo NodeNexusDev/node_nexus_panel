@@ -19,7 +19,16 @@ import {
   useComposePort,
   useComposeUp,
   useComposeDown,
+  useComposeStart,
+  useComposeStop,
   useComposeRestart,
+  useComposePull,
+  useComposePush,
+  useComposePause,
+  useComposeUnpause,
+  useComposeKill,
+  useComposeRm,
+  useComposeBuild,
   useDeleteComposeProject,
   useUpdateComposeProject,
 } from '../../hooks/useCompose'
@@ -48,9 +57,19 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
   const [actionResult, setActionResult] = useState<BulkResult_ComposeServiceBulkResult_ | null>(null)
   const [downVolumes, setDownVolumes] = useState(false)
   const [downOrphans, setDownOrphans] = useState(false)
+  const [killSignal, setKillSignal] = useState('SIGTERM')
   const up = useComposeUp()
   const down = useComposeDown()
+  const start = useComposeStart()
+  const stop = useComposeStop()
   const restart = useComposeRestart()
+  const pullAction = useComposePull()
+  const push = useComposePush()
+  const pause = useComposePause()
+  const unpause = useComposeUnpause()
+  const kill = useComposeKill()
+  const rm = useComposeRm()
+  const buildAction = useComposeBuild()
   const remove = useDeleteComposeProject()
   const update = useUpdateComposeProject()
 
@@ -122,7 +141,9 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
   ) => {
     setActionResult(null); setUpResult(null)
     const services = parseServices()
-    const data = { services }
+    // for kills need signal
+    const isKill = name === 'kill'
+    const data = isKill ? { signal: killSignal || 'SIGTERM', services } : { services }
     fn.mutate({ nodeId, projectName, data }, {
       onSuccess: (res: unknown) => {
         const bulk = res as BulkResult_ComposeServiceBulkResult_
@@ -180,7 +201,16 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       <div className="flex flex-wrap gap-2 items-center">
         <Button variant="secondary" size="sm" disabled={up.isPending} onClick={handleUp}>{up.isPending ? t('common.loading') : t('docker.up')}</Button>
         <Button variant="ghost" size="sm" disabled={down.isPending} onClick={handleDown}>{t('docker.down')}</Button>
+        <Button variant="ghost" size="sm" disabled={start.isPending} onClick={() => handleGeneric(start, 'start')}>{t('docker.start')}</Button>
+        <Button variant="ghost" size="sm" disabled={stop.isPending} onClick={() => handleGeneric(stop, 'stop')}>{t('docker.stop')}</Button>
         <Button variant="ghost" size="sm" disabled={restart.isPending} onClick={() => handleGeneric(restart, 'restart')}>{t('docker.restartCompose')}</Button>
+        <Button variant="ghost" size="sm" disabled={pullAction.isPending} onClick={() => handleGeneric(pullAction, 'pull')}>{t('docker.pull')}</Button>
+        <Button variant="ghost" size="sm" disabled={push.isPending} onClick={() => handleGeneric(push, 'push')}>{t('docker.push', 'Push')}</Button>
+        <Button variant="ghost" size="sm" disabled={pause.isPending} onClick={() => handleGeneric(pause, 'pause')}>{t('docker.pause')}</Button>
+        <Button variant="ghost" size="sm" disabled={unpause.isPending} onClick={() => handleGeneric(unpause, 'unpause')}>{t('docker.unpause')}</Button>
+        <Button variant="ghost" size="sm" disabled={kill.isPending} onClick={() => handleGeneric(kill, 'kill')}>Kill</Button>
+        <Button variant="ghost" size="sm" disabled={rm.isPending} onClick={() => handleGeneric(rm, 'rm')}>RM</Button>
+        <Button variant="ghost" size="sm" disabled={buildAction.isPending} onClick={() => handleGeneric(buildAction, 'build')}>{t('docker.build')}</Button>
         <Button variant="ghost" size="sm" onClick={() => setShowEdit((v) => !v)}>{t('common.edit')}</Button>
         <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 ml-auto">{t('common.delete')}</Button>
       </div>
@@ -221,6 +251,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       <div className="flex flex-wrap gap-2 items-center text-xs">
         <Checkbox checked={downVolumes} onChange={setDownVolumes} label="volumes" />
         <Checkbox checked={downOrphans} onChange={setDownOrphans} label="orphans" />
+        <Input value={killSignal} onChange={(e) => setKillSignal(e.target.value)} placeholder="SIGTERM" className="w-24 ml-auto" />
       </div>
 
       {showEdit && (
