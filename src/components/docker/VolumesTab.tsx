@@ -1,31 +1,66 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorState } from '../ui/ErrorState'
 import { Modal } from '../ui/Modal'
+import { Drawer } from '../ui/Drawer'
 import { Input } from '../ui/Input'
+import { SearchInput } from '../ui/SearchInput'
+import { SortableHeader, type SortState } from '../ui/SortableHeader'
 import { TableSkeleton } from '../ui/Skeleton'
 import { IconDocker } from '../ui/Icons'
 import { useToast } from '../ui/useToast'
-import { useDockerVolumes, useCreateVolume, useDeleteVolume, usePruneVolumes } from '../../hooks/useDocker'
-import { VolumeInspectContent } from './VolumeInspectContent'
+import { useSort } from '../../hooks/useSort'
+import { InfiniteScroll } from '../ui/InfiniteScroll'
+import { Checkbox } from '../ui/Checkbox'
+import { useInfiniteDockerVolumes, useCreateVolume, useDeleteVolume, usePruneVolumes, useBulkVolumeRemovals } from '../../hooks/useDocker'
+import { VolumeDrawer } from './VolumeDrawer'
+import type { DockerVolume } from '../../api/types'
+
+type SortKey = 'name' | 'driver'
 
 export function VolumesTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: volumes, isLoading, error, refetch } = useDockerVolumes(nodeId)
-  const volumeList = (volumes as unknown as { items?: Array<{ Name: string; Driver: string }> })?.items ?? []
+  const [search, setSearch] = useState('')
+  const { sort, toggle } = useSort<SortKey>()
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerVolumes(nodeId, { limit: 20 })
+  const volumeList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: DockerVolume[] }).items) : [], [infiniteData])
   const createVolume = useCreateVolume()
   const deleteVolume = useDeleteVolume()
   const pruneVolumes = usePruneVolumes()
-  
+  const bulkRemove = useBulkVolumeRemovals()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createName, setCreateName] = useState('')
   const [createDriver, setCreateDriver] = useState('')
-  const [inspectTarget, setInspectTarget] = useState<string | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showPruneConfirm, setShowPruneConfirm] = useState(false)
+  const [showBulkRemove, setShowBulkRemove] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [drawerVolume, setDrawerVolume] = useState<DockerVolume | null>(null)
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase()
+    return [...volumeList]
+      .filter((v) => !q || v.Name.toLowerCase().includes(q) || v.Driver.toLowerCase().includes(q))
+      .sort((a, b) => {
+        if (!sort) return 0
+        const dir = sort.dir === 'asc' ? 1 : -1
+        switch (sort.key) {
+          case 'name': return a.Name.localeCompare(b.Name) * dir
+          case 'driver': return a.Driver.localeCompare(b.Driver) * dir
+          default: return 0
+        }
+      })
+  }, [volumeList, search, sort])
+
+  const allSelected = filtered.length > 0 && filtered.every((v) => selectedIds.has(v.Name))
+  const toggleAll = () => {
+    if (allSelected) setSelectedIds(new Set())
+    else setSelectedIds(new Set(filtered.map((v) => v.Name)))
+  }
+  const toggleOne = (id: string) => setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
 
   if (isLoading) return <TableSkeleton rows={3} cols={4} />
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadVolumes')} />
@@ -33,7 +68,15 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
 
   return (
     <>
-      <div className="flex justify-end mb-4 px-4 gap-2 flex-wrap">
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800 mb-4">
+          <span className="text-sm text-accent-700 dark:text-accent-300">{t('docker.selected', { count: selectedIds.size })}</span>
+          <Button variant="ghost" size="sm" onClick={() => setShowBulkRemove(true)} className="text-red-500">{t('common.delete')}</Button>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface-500 cursor-pointer">{t('docker.clearSelection')}</button>
+        </div>
+      )}
+      <div className="flex items-center gap-3 mb-4 px-4 flex-wrap">
+        <SearchInput value={search} onChange={setSearch} placeholder={t('docker.searchVolumes', 'Search volumes...')} className="flex-1 max-w-sm" />
         <Button variant="ghost" onClick={() => setShowPruneConfirm(true)} disabled={pruneVolumes.isPending}>{pruneVolumes.isPending ? t('common.loading') : t('docker.pruneVolumes')}</Button>
         <Button onClick={() => setShowCreateModal(true)}>{t('docker.createVolume')}</Button>
       </div>
@@ -41,19 +84,21 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
         <table className="w-full table-zebra">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.name')}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.driver')}</th>
+              <th className="px-6 py-3"><div className="flex items-center"><Checkbox checked={!!allSelected} onChange={toggleAll} ariaLabel={t('common.selectAll')} /></div></th>
+              <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.name')} sortKey="name" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
+              <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.driver')} sortKey="driver" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-            {volumeList.map((v) => (
-              <tr key={v.Name} className="table-row-hover">
+            {filtered.map((v) => (
+              <tr key={v.Name} className="table-row-hover cursor-pointer" onClick={() => setDrawerVolume(v)}>
+                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}><div className="flex items-center"><Checkbox checked={selectedIds.has(v.Name)} onChange={() => toggleOne(v.Name)} ariaLabel={t('common.selectItem', { name: v.Name })} /></div></td>
                 <td className="px-6 py-4 text-sm font-semibold text-surface-900 dark:text-white">{v.Name}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{v.Driver}</td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setInspectTarget(v.Name)}>{t('docker.inspect')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDrawerVolume(v)}>{t('docker.inspect')}</Button>
                     <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(v.Name)} className="text-red-500">{t('common.delete')}</Button>
                   </div>
                 </td>
@@ -62,6 +107,14 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
           </tbody>
         </table>
       </div>
+      <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+      {filtered.length === 0 && volumeList.length > 0 && (
+        <div className="text-center py-8 text-sm text-surface-500">{t('docker.noMatch', 'No volumes match')}</div>
+      )}
+
+      <Drawer isOpen={!!drawerVolume} onClose={() => setDrawerVolume(null)} size="lg">
+        {drawerVolume && <VolumeDrawer nodeId={nodeId} volume={drawerVolume} onClose={() => setDrawerVolume(null)} />}
+      </Drawer>
 
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('docker.createVolume')}>
         <div className="space-y-4">
@@ -74,16 +127,33 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
         </div>
       </Modal>
 
-      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`${t('docker.inspect')}: ${inspectTarget || ''}`} size="lg">
-        {inspectTarget && <VolumeInspectContent nodeId={nodeId} volumeName={inspectTarget} />}
-      </Modal>
-
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('docker.deleteVolume')}>
         <div className="space-y-4">
           <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteVolumeMsg', { name: deleteTarget })}</p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
             <Button variant="danger" onClick={() => { if (deleteTarget) { deleteVolume.mutate({ nodeId, volumeName: deleteTarget }, { onSuccess: () => { toast('success', t('docker.deleteVolume')); setDeleteTarget(null) }, onError: () => toast('error', t('docker.toastDeleteVolumeFailed')) }) } }} disabled={deleteVolume.isPending}>{deleteVolume.isPending ? t('common.loading') : t('common.delete')}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showBulkRemove} onClose={() => setShowBulkRemove(false)} title={t('common.delete')}>
+        <div className="space-y-4">
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.bulkDeleteMsg', { count: selectedIds.size })}</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowBulkRemove(false)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={() => {
+              const ids = Array.from(selectedIds)
+              bulkRemove.mutate({ nodeId, volume_names: ids }, {
+                onSuccess: (data: unknown) => {
+                  const d = data as { failed?: number }
+                  if (d.failed && d.failed>0) toast('warning', t('docker.toastBulkRemoveDone') + ` — ${d.failed} failed`)
+                  else toast('success', t('docker.toastBulkRemoveDone'))
+                  setShowBulkRemove(false); setSelectedIds(new Set())
+                },
+                onError: () => toast('error', t('docker.toastBulkRemoveFailed')),
+              })
+            }} disabled={bulkRemove.isPending}>{bulkRemove.isPending ? t('common.loading') : t('common.delete')}</Button>
           </div>
         </div>
       </Modal>

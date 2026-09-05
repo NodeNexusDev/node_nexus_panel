@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
+import { Drawer } from '../ui/Drawer'
 import { TableSkeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorState } from '../ui/ErrorState'
@@ -24,19 +25,13 @@ import {
   useComposeRestart,
   useComposePull,
   useComposeBuild,
-  useComposePs,
-  useComposeLogs,
-  useComposeConfig,
   useComposePause,
   useComposeUnpause,
   useComposeKill,
   useComposePush,
   useComposeRm,
-  useComposeImages,
-  useComposeTop,
-  useComposePort,
-  useComposeVersion,
 } from '../../hooks/useCompose'
+import { ComposeDrawer } from './ComposeDrawer'
 
 export function ComposeTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
@@ -63,7 +58,7 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
   const [editTarget, setEditTarget] = useState<string | null>(null)
   const [projectName, setProjectName] = useState('')
   const [composeYaml, setComposeYaml] = useState('version: "3.8"\nservices:\n  web:\n    image: nginx:alpine\n    ports:\n      - "80:80"')
-  const [selected, setSelected] = useState<string | null>(null)
+  const [drawerProject, setDrawerProject] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const filtered = projects.filter((p)=> !search || p.project_name.toLowerCase().includes(search.toLowerCase()))
@@ -91,7 +86,7 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
     { key: 'created', header: t('docker.created'), render: (p)=> <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(p.created_at).toLocaleString()}</span> },
     { key: 'actions', header: t('docker.actions'), render: (p)=> (
       <div className="flex items-center gap-1 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => setSelected(p.project_name)}>{t('docker.details')}</Button>
+        <Button variant="ghost" size="sm" onClick={() => setDrawerProject(p.project_name)}>{t('docker.details')}</Button>
         <Button variant="ghost" size="sm" onClick={()=> { const f=projects.find((x)=> x.project_name===p.project_name); setComposeYaml((f as unknown as {compose?:string})?.compose ?? composeYaml); setEditTarget(p.project_name)}}>{t('common.edit')}</Button>
         <Button variant="ghost" size="sm" onClick={() => up.mutate({ nodeId, projectName: p.project_name }, { onSuccess: () => toast('success', t('docker.composeUp')), onError: () => toast('error', t('docker.composeUpFailed')) })} disabled={up.isPending}>{t('docker.up')}</Button>
         <Button variant="ghost" size="sm" onClick={() => down.mutate({ nodeId, projectName: p.project_name }, { onSuccess: () => toast('success', t('docker.composeDown')), onError: () => toast('error', t('docker.composeDownFailed')) })} disabled={down.isPending}>{t('docker.down')}</Button>
@@ -126,7 +121,7 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
               <div className="flex gap-2"><span className="font-semibold">{p.project_name}</span><Badge variant="default">{p.id.slice(0,8)}</Badge></div>
               <p className="text-xs text-surface-500">{new Date(p.created_at).toLocaleString()}</p>
             </div>
-          )} onRowClick={(p)=> setSelected(p.project_name)} />
+          )} onRowClick={(p)=> setDrawerProject(p.project_name)} />
           <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
         </>
       )}
@@ -169,40 +164,9 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
         </div>
       </Modal>
 
-      {selected && <ComposeDetailModal nodeId={nodeId} projectName={selected} onClose={() => setSelected(null)} />}
+      <Drawer isOpen={!!drawerProject} onClose={() => setDrawerProject(null)} size="lg">
+        {drawerProject && <ComposeDrawer nodeId={nodeId} projectName={drawerProject} composeYaml={(projects.find((p) => p.project_name === drawerProject) as unknown as { compose?: string })?.compose} onClose={() => setDrawerProject(null)} />}
+      </Drawer>
     </>
-  )
-}
-
-function ComposeDetailModal({ nodeId, projectName, onClose }: { nodeId: string; projectName: string; onClose: () => void }) {
-  const { t } = useTranslation()
-  const { data: ps } = useComposePs(nodeId, projectName, !!projectName)
-  const { data: logs } = useComposeLogs(nodeId, projectName, !!projectName)
-  const { data: cfg } = useComposeConfig(nodeId, projectName, !!projectName)
-  const { data: images } = useComposeImages(nodeId, projectName, !!projectName)
-  const { data: top } = useComposeTop(nodeId, projectName, !!projectName)
-  const { data: version } = useComposeVersion(nodeId, projectName, !!projectName)
-  const { data: port } = useComposePort(nodeId, projectName, 'web', '80', false)
-  const [tab, setTab] = useState<'ps' | 'logs' | 'config' | 'images' | 'top' | 'version' | 'port'>('ps')
-  return (
-    <Modal isOpen={!!projectName} onClose={onClose} title={`${projectName}`} size="lg">
-      <div className="space-y-4">
-        <div className="flex gap-2 border-b border-surface-200 dark:border-surface-800 overflow-x-auto">
-          {(['ps','logs','config','images','top','version','port'] as const).map((k)=> (
-            <button key={k} onClick={() => setTab(k)} className={`pb-2 text-sm font-medium border-b-2 whitespace-nowrap ${tab === k ? 'border-accent-500 text-accent-600' : 'border-transparent text-surface-500'}`}>{t(`docker.${k}`, k)}</button>
-          ))}
-        </div>
-        {tab === 'ps' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(ps ?? {}, null, 2)}</pre>}
-        {tab === 'logs' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{typeof logs === 'string' ? logs : JSON.stringify(logs ?? {}, null, 2)}</pre>}
-        {tab === 'config' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{typeof cfg === 'string' ? cfg : JSON.stringify(cfg ?? {}, null, 2)}</pre>}
-        {tab === 'images' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(images ?? {}, null, 2)}</pre>}
-        {tab === 'top' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(top ?? {}, null, 2)}</pre>}
-        {tab === 'version' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(version ?? {}, null, 2)}</pre>}
-        {tab === 'port' && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-96 overflow-y-auto whitespace-pre-wrap">{JSON.stringify(port ?? {}, null, 2)}</pre>}
-        <div className="flex justify-end">
-          <Button variant="ghost" onClick={onClose}>{t('common.close')}</Button>
-        </div>
-      </div>
-    </Modal>
   )
 }

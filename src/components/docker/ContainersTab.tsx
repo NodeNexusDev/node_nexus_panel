@@ -1,9 +1,10 @@
-import { useState, useMemo, Fragment } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorState } from '../ui/ErrorState'
 import { Modal } from '../ui/Modal'
+import { Drawer } from '../ui/Drawer'
 import { Input } from '../ui/Input'
 import { SearchInput } from '../ui/SearchInput'
 import { SortableHeader, type SortState } from '../ui/SortableHeader'
@@ -19,7 +20,6 @@ import {
   useDeleteContainer,
   usePauseContainer,
   useUnpauseContainer,
-  useRenameContainer,
   usePruneContainers,
   useBulkDockerExec,
   useBulkDockerRestart,
@@ -33,14 +33,9 @@ import {
 import { useDockerContainerSse } from '../../hooks/useDockerContainerSse'
 import { InfiniteScroll } from '../ui/InfiniteScroll'
 import { ContainerRow } from './ContainerRow'
-import { ContainerDetailPanel } from './ContainerDetailPanel'
 import { CreateContainerForm } from './CreateContainerForm'
-import { ContainerLogsContent } from './ContainerLogsContent'
-import { ContainerStatsContent } from './ContainerStatsContent'
-import { ExecContainerContent } from './ExecContainerContent'
-import { ContainerInspectContent } from './ContainerInspectContent'
-import { TopContainerContent } from './TopContainerContent'
 import { BulkResultContent } from './BulkResultContent'
+import { ContainerDrawer } from './ContainerDrawer'
 import { Checkbox } from '../ui/Checkbox'
 import type { DockerContainer, BulkDockerResponse } from '../../api/types'
 
@@ -58,7 +53,6 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const deleteContainer = useDeleteContainer()
   const pauseContainer = usePauseContainer()
   const unpauseContainer = useUnpauseContainer()
-  const renameContainer = useRenameContainer()
   const pruneContainers = usePruneContainers()
   const bulkExec = useBulkDockerExec()
   const bulkRestart = useBulkDockerRestart()
@@ -76,10 +70,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const [deleteTarget, setDeleteTarget] = useState<DockerContainer | null>(null)
   const [forceDelete, setForceDelete] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [logsTarget, setLogsTarget] = useState<DockerContainer | null>(null)
-  const [statsTarget, setStatsTarget] = useState<DockerContainer | null>(null)
-  const [execTarget, setExecTarget] = useState<DockerContainer | null>(null)
-  const [inspectTarget, setInspectTarget] = useState<DockerContainer | null>(null)
+  const [drawerContainer, setDrawerContainer] = useState<DockerContainer | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showBulkExecModal, setShowBulkExecModal] = useState(false)
   const [bulkExecCommand, setBulkExecCommand] = useState('')
@@ -90,10 +81,6 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const [bulkLogsResult, setBulkLogsResult] = useState<BulkDockerResponse | null>(null)
   const [showBulkStatsModal, setShowBulkStatsModal] = useState(false)
   const [bulkStatsResult, setBulkStatsResult] = useState<BulkDockerResponse | null>(null)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [renameTarget, setRenameTarget] = useState<DockerContainer | null>(null)
-  const [renameName, setRenameName] = useState('')
-  const [topTarget, setTopTarget] = useState<DockerContainer | null>(null)
   const [showPruneConfirm, setShowPruneConfirm] = useState(false)
   const [showBulkRemoveConfirm, setShowBulkRemoveConfirm] = useState(false)
   const filtered = useMemo(() => {
@@ -156,7 +143,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadContainers')} />
   if (!containerItems.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noContainers')} description={t('docker.noContainersDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createContainer')}</Button>} />
 
-  const loading = startContainer.isPending || stopContainer.isPending || restartContainer.isPending || pauseContainer.isPending || unpauseContainer.isPending || renameContainer.isPending
+  const loading = startContainer.isPending || stopContainer.isPending || restartContainer.isPending || pauseContainer.isPending || unpauseContainer.isPending
 
   return (
     <>
@@ -199,27 +186,18 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {filtered.map((c: DockerContainer) => (
-              <Fragment key={c.ID}>
-                <ContainerRow container={c}
-                  onStart={() => startContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.start')), onError: () => toast('error', t('docker.toastStartFailed')) })}
-                  onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.stop')), onError: () => toast('error', t('docker.toastStopFailed')) })}
-                  onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.restart')), onError: () => toast('error', t('docker.toastRestartFailed')) })}
-                  onDelete={() => setDeleteTarget(c)}
-                  onPause={() => pauseContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('docker.pause')), onError: () => toast('error', t('docker.toastPauseFailed')) })}
-                  onUnpause={() => unpauseContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('docker.unpause')), onError: () => toast('error', t('docker.toastUnpauseFailed')) })}
-                  onRename={() => { setRenameTarget(c); setRenameName(c.Names?.split('/').pop() || '') }}
-                  onTop={() => setTopTarget(c)}
-                  loading={loading} selected={selectedIds.has(c.ID)} onSelect={() => toggleOne(c.ID)}
-                  expanded={expandedId === c.ID} onToggleExpand={() => setExpandedId(expandedId === c.ID ? null : c.ID)}
-                />
-                {expandedId === c.ID && (
-                  <tr>
-                    <td colSpan={7} className="p-0">
-                      <ContainerDetailPanel container={c} onLogs={() => setLogsTarget(c)} onStats={() => setStatsTarget(c)} onExec={() => setExecTarget(c)} onInspect={() => setInspectTarget(c)} />
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
+              <ContainerRow key={c.ID} container={c}
+                onStart={() => startContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.start')), onError: () => toast('error', t('docker.toastStartFailed')) })}
+                onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.stop')), onError: () => toast('error', t('docker.toastStopFailed')) })}
+                onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.restart')), onError: () => toast('error', t('docker.toastRestartFailed')) })}
+                onDelete={() => setDeleteTarget(c)}
+                onPause={() => pauseContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('docker.pause')), onError: () => toast('error', t('docker.toastPauseFailed')) })}
+                onUnpause={() => unpauseContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('docker.unpause')), onError: () => toast('error', t('docker.toastUnpauseFailed')) })}
+                onRename={() => setDrawerContainer(c)}
+                onTop={() => setDrawerContainer(c)}
+                loading={loading} selected={selectedIds.has(c.ID)} onSelect={() => toggleOne(c.ID)}
+                expanded={false} onToggleExpand={() => setDrawerContainer(c)}
+              />
             ))}
           </tbody>
         </table>
@@ -229,24 +207,12 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
         <div className="text-center py-8 text-sm text-surface-500">{t('docker.noMatch', 'No containers match the current filters')}</div>
       )}
 
+      <Drawer isOpen={!!drawerContainer} onClose={() => setDrawerContainer(null)} size="lg">
+        {drawerContainer && <ContainerDrawer nodeId={nodeId} container={drawerContainer} onClose={() => setDrawerContainer(null)} />}
+      </Drawer>
+
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('docker.createContainer')} size="lg">
         <CreateContainerForm nodeId={nodeId} onClose={() => setShowCreateModal(false)} />
-      </Modal>
-
-      <Modal isOpen={!!logsTarget} onClose={() => setLogsTarget(null)} title={`${t('docker.logs')}: ${logsTarget?.Names?.split('/').pop() || ''}`} size="lg">
-        {logsTarget && <ContainerLogsContent nodeId={nodeId} containerId={logsTarget.ID} />}
-      </Modal>
-
-      <Modal isOpen={!!statsTarget} onClose={() => setStatsTarget(null)} title={`${t('docker.stats')}: ${statsTarget?.Names?.split('/').pop() || ''}`} size="md">
-        {statsTarget && <ContainerStatsContent nodeId={nodeId} containerId={statsTarget.ID} />}
-      </Modal>
-
-      <Modal isOpen={!!execTarget} onClose={() => setExecTarget(null)} title={`${t('docker.exec')}: ${execTarget?.Names?.split('/').pop() || ''}`} size="lg">
-        {execTarget && <ExecContainerContent nodeId={nodeId} containerId={execTarget.ID} onClose={() => setExecTarget(null)} />}
-      </Modal>
-
-      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`${t('docker.inspect')}: ${inspectTarget?.Names?.split('/').pop() || ''}`} size="lg">
-        {inspectTarget && <ContainerInspectContent nodeId={nodeId} containerId={inspectTarget.ID} />}
       </Modal>
 
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('docker.deleteContainer')}>
@@ -284,20 +250,6 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
 
       <Modal isOpen={showBulkStatsModal} onClose={() => setShowBulkStatsModal(false)} title={t('docker.bulkStats', 'Bulk Stats')} size="lg">
         <BulkResultContent result={bulkStatsResult} isLoading={bulkStats.isPending} />
-      </Modal>
-
-      <Modal isOpen={!!renameTarget} onClose={() => setRenameTarget(null)} title={t('docker.renameContainer')}>
-        <div className="space-y-4">
-          <Input label={t('docker.newName')} placeholder="my-container" value={renameName} onChange={(e) => setRenameName(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setRenameTarget(null)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { const trimmed = renameName.trim(); if (renameTarget && trimmed) { renameContainer.mutate({ nodeId, containerId: renameTarget.ID, data: { new_name: trimmed } }, { onSuccess: () => { toast('success', t('docker.renameContainer')); setRenameTarget(null); setRenameName('') }, onError: () => toast('error', t('docker.toastRenameFailed')) }) } }} disabled={!renameName.trim() || renameContainer.isPending}>{renameContainer.isPending ? t('common.loading') : t('docker.rename')}</Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal isOpen={!!topTarget} onClose={() => setTopTarget(null)} title={`${t('docker.top')}: ${topTarget?.Names?.split('/').pop() || ''}`} size="lg">
-        {topTarget && <TopContainerContent nodeId={nodeId} containerId={topTarget.ID} />}
       </Modal>
 
       <Modal isOpen={showPruneConfirm} onClose={() => setShowPruneConfirm(false)} title={t('docker.pruneContainers')}>

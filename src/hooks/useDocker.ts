@@ -445,6 +445,45 @@ export function useBulkDockerStats() {
   })
 }
 
+export function useBulkNetworkRemovals() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { network_ids: string[]; nodeId: string } | { nodeId: string; network_ids: string[] }) => {
+      const d = data as { network_ids?: string[]; nodeId?: string; node_id?: string }
+      const nodeId = d.nodeId ?? d.node_id ?? ''
+      const network_ids = d.network_ids ?? []
+      if (!nodeId) throw new Error('nodeId required')
+      return dockerApi.bulkNetworkRemovals(nodeId, { network_ids })
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['docker'] }),
+  })
+}
+
+export function useBulkVolumeRemovals() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { volume_names: string[]; nodeId: string } | { nodeId: string; volume_names: string[] }) => {
+      const d = data as { volume_names?: string[]; nodeId?: string; node_id?: string }
+      const nodeId = d.nodeId ?? d.node_id ?? ''
+      const volume_names = d.volume_names ?? []
+      if (!nodeId) throw new Error('nodeId required')
+      return dockerApi.bulkVolumeRemovals(nodeId, { volume_names })
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['docker'] }),
+  })
+}
+
+export function useBulkContainerKill() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { container_ids: string[]; nodeId: string; signal?: string }) => {
+      const { nodeId, container_ids, signal } = data as { nodeId: string; container_ids: string[]; signal?: string }
+      return dockerApi.bulkKill(nodeId, { container_ids, signal } as unknown as Parameters<typeof dockerApi.bulkKill>[1])
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['docker'] }),
+  })
+}
+
 export function usePauseContainer() {
   const queryClient = useQueryClient()
   return useMutation({
