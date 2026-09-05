@@ -228,10 +228,10 @@ export function MainLayout() {
             </Tooltip>
 
             {/* Connection status */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50" role="status" aria-live="polite" aria-label={wsConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50" role="status" aria-live="polite" aria-label={wsConnected ? t('common.connected') : t('common.disconnected')}>
               <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 status-online' : 'bg-red-500'}`} aria-hidden="true" />
               <span className="text-xs font-medium text-surface-500 dark:text-surface-400">
-                {wsConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}
+                {wsConnected ? t('common.connected') : t('common.disconnected')}
               </span>
             </div>
 
