@@ -16,10 +16,19 @@ import type {
   ComposeRunRequest,
   ComposeRunResponse,
   CursorPage_ComposeResponse_,
+  ComposeUpRequest,
+  ComposeDownRequest,
+  ComposeServicesRequest,
+  ComposeKillRequest,
+  BulkResult_ComposeServiceBulkResult_,
 } from './types'
 
 function composeBase(nodeId: string) {
   return `/nodes/${nodeId}/docker/compose/projects`
+}
+
+function enc(s: string) {
+  return encodeURIComponent(s)
 }
 
 export const composeApi = {
@@ -35,36 +44,36 @@ export const composeApi = {
     api.post<ComposeResponse>(composeBase(nodeId), data),
 
   get: (nodeId: string, projectName: string) =>
-    api.get<ComposeResponse>(`${composeBase(nodeId)}/${projectName}`),
+    api.get<ComposeResponse>(`${composeBase(nodeId)}/${enc(projectName)}`),
 
   update: (nodeId: string, projectName: string, data: ComposeUpdate) =>
-    api.patch<ComposeResponse>(`${composeBase(nodeId)}/${projectName}`, data),
+    api.patch<ComposeResponse>(`${composeBase(nodeId)}/${enc(projectName)}`, data),
 
-  remove: (nodeId: string, projectName: string) => api.delete<void>(`${composeBase(nodeId)}/${projectName}`),
+  remove: (nodeId: string, projectName: string) => api.delete<void>(`${composeBase(nodeId)}/${enc(projectName)}`),
 
   // ── Actions ─────────────────────────────────────────────────
-  builds: (nodeId: string, projectName: string, params?: { no_cache?: boolean }) => {
+  builds: (nodeId: string, projectName: string, data: ComposeServicesRequest, params?: { no_cache?: boolean }) => {
     const qs = params?.no_cache ? '?no_cache=true' : ''
-    return api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/builds${qs}`)
+    return api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/builds${qs}`, data)
   },
 
   config: (nodeId: string, projectName: string) =>
-    api.get<ComposeConfigResponse>(`${composeBase(nodeId)}/${projectName}/config`),
+    api.get<ComposeConfigResponse>(`${composeBase(nodeId)}/${enc(projectName)}/config`),
 
-  creates: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/creates`),
+  creates: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
+    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/creates`, data),
 
-  downs: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/downs`),
+  downs: (nodeId: string, projectName: string, data: ComposeDownRequest) =>
+    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${enc(projectName)}/downs`, data),
 
   executions: (nodeId: string, projectName: string, data: ComposeExecRequest) =>
-    api.post<ComposeExecResponse>(`${composeBase(nodeId)}/${projectName}/executions`, data),
+    api.post<ComposeExecResponse>(`${composeBase(nodeId)}/${enc(projectName)}/executions`, data),
 
   images: (nodeId: string, projectName: string) =>
-    api.get<ComposeImagesResponse>(`${composeBase(nodeId)}/${projectName}/images`),
+    api.get<ComposeImagesResponse>(`${composeBase(nodeId)}/${enc(projectName)}/images`),
 
-  kills: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/kills`),
+  kills: (nodeId: string, projectName: string, data: ComposeKillRequest) =>
+    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/kills`, data),
 
   logs: (nodeId: string, projectName: string, params?: { tail?: number; since?: string; services?: string }) => {
     const query = new URLSearchParams()
@@ -72,60 +81,60 @@ export const composeApi = {
     if (params?.since) query.set('since', params.since)
     if (params?.services) query.set('services', params.services)
     const qs = query.toString()
-    return api.get<ComposeLogsResponse>(`${composeBase(nodeId)}/${projectName}/logs${qs ? `?${qs}` : ''}`)
+    return api.get<ComposeLogsResponse>(`${composeBase(nodeId)}/${enc(projectName)}/logs${qs ? `?${qs}` : ''}`)
   },
 
-  pauses: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/pauses`),
+  pauses: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
+    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pauses`, data),
 
   port: (nodeId: string, projectName: string, params: { service: string; private_port: string }) => {
     const query = new URLSearchParams({ service: params.service, private_port: params.private_port })
-    return api.get<ComposePortResponse>(`${composeBase(nodeId)}/${projectName}/port?${query}`)
+    return api.get<ComposePortResponse>(`${composeBase(nodeId)}/${enc(projectName)}/port?${query}`)
   },
 
   ps: (nodeId: string, projectName: string, params?: { all?: boolean }) => {
     const qs = params?.all ? '?all=true' : ''
-    return api.get<ComposePsResponse>(`${composeBase(nodeId)}/${projectName}/ps${qs}`)
+    return api.get<ComposePsResponse>(`${composeBase(nodeId)}/${enc(projectName)}/ps${qs}`)
   },
 
-  pulls: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/pulls`),
+  pulls: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
+    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pulls`, data),
 
-  pushs: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/pushs`),
+  pushs: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
+    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pushs`, data),
 
-  restarts: (nodeId: string, projectName: string, params?: { timeout?: number }) => {
+  restarts: (nodeId: string, projectName: string, data: ComposeServicesRequest, params?: { timeout?: number }) => {
     const qs = params?.timeout ? `?timeout=${params.timeout}` : ''
-    return api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/restarts${qs}`)
+    return api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/restarts${qs}`, data)
   },
 
-  rms: (nodeId: string, projectName: string, params?: { volumes?: boolean }) => {
+  rms: (nodeId: string, projectName: string, data: ComposeServicesRequest, params?: { volumes?: boolean }) => {
     const qs = params?.volumes ? '?volumes=true' : ''
-    return api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/rms${qs}`)
+    return api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/rms${qs}`, data)
   },
 
   runs: (nodeId: string, projectName: string, data: ComposeRunRequest) =>
-    api.post<ComposeRunResponse>(`${composeBase(nodeId)}/${projectName}/runs`, data),
+    api.post<ComposeRunResponse>(`${composeBase(nodeId)}/${enc(projectName)}/runs`, data),
 
-  starts: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/starts`),
+  starts: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
+    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/starts`, data),
 
-  stops: (nodeId: string, projectName: string, params?: { timeout?: number }) => {
+  stops: (nodeId: string, projectName: string, data: ComposeServicesRequest, params?: { timeout?: number }) => {
     const qs = params?.timeout ? `?timeout=${params.timeout}` : ''
-    return api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/stops${qs}`)
+    return api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/stops${qs}`, data)
   },
 
   top: (nodeId: string, projectName: string, params?: { service?: string }) => {
     const qs = params?.service ? `?service=${params.service}` : ''
-    return api.get<ComposeTopResponse>(`${composeBase(nodeId)}/${projectName}/top${qs}`)
+    return api.get<ComposeTopResponse>(`${composeBase(nodeId)}/${enc(projectName)}/top${qs}`)
   },
 
-  unpauses: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/unpauses`),
+  unpauses: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
+    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/unpauses`, data),
 
-  ups: (nodeId: string, projectName: string) =>
-    api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${projectName}/ups`),
+  ups: (nodeId: string, projectName: string, data: ComposeUpRequest) =>
+    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/ups`, data),
 
   version: (nodeId: string, projectName: string) =>
-    api.get<ComposeVersionResponse>(`${composeBase(nodeId)}/${projectName}/version`),
+    api.get<ComposeVersionResponse>(`${composeBase(nodeId)}/${enc(projectName)}/version`),
 }

@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
+import { Checkbox } from '../ui/Checkbox'
 import { Tabs } from '../ui/Tabs'
 import { Card, CardContent } from '../ui/Card'
 import { useToast } from '../ui/useToast'
@@ -30,6 +32,7 @@ import {
   useDeleteComposeProject,
   useUpdateComposeProject,
 } from '../../hooks/useCompose'
+import type { BulkResult_ComposeServiceBulkResult_, ComposeServiceBulkResult } from '../../api/types'
 
 type DrawerTab = 'overview' | 'ps' | 'logs' | 'config' | 'images' | 'top' | 'version' | 'port'
 
@@ -47,18 +50,26 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [editYaml, setEditYaml] = useState(composeYaml || '')
+  const [servicesInput, setServicesInput] = useState('')
+  const [pull, setPull] = useState(false)
+  const [build, setBuild] = useState(false)
+  const [upResult, setUpResult] = useState<BulkResult_ComposeServiceBulkResult_ | null>(null)
+  const [actionResult, setActionResult] = useState<BulkResult_ComposeServiceBulkResult_ | null>(null)
+  const [downVolumes, setDownVolumes] = useState(false)
+  const [downOrphans, setDownOrphans] = useState(false)
+  const [killSignal, setKillSignal] = useState('SIGTERM')
   const up = useComposeUp()
   const down = useComposeDown()
   const start = useComposeStart()
   const stop = useComposeStop()
   const restart = useComposeRestart()
-  const pull = useComposePull()
+  const pullAction = useComposePull()
   const push = useComposePush()
   const pause = useComposePause()
   const unpause = useComposeUnpause()
   const kill = useComposeKill()
   const rm = useComposeRm()
-  const build = useComposeBuild()
+  const buildAction = useComposeBuild()
   const remove = useDeleteComposeProject()
   const update = useUpdateComposeProject()
 
@@ -75,6 +86,11 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
     setShowDeleteConfirm(false)
     setShowEdit(false)
     setEditYaml(composeYaml || '')
+    setServicesInput('')
+    setPull(false)
+    setBuild(false)
+    setUpResult(null)
+    setActionResult(null)
   }, [projectName])
 
   const tabs: { key: DrawerTab; label: string }[] = [
@@ -87,6 +103,57 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
     { key: 'version', label: 'version' },
     { key: 'port', label: 'port' },
   ]
+
+  const parseServices = (): string[] | null => {
+    const s = servicesInput.split(',').map((x) => x.trim()).filter(Boolean)
+    return s.length ? s : null
+  }
+
+  const handleUp = () => {
+    setUpResult(null)
+    setActionResult(null)
+    const data = { build, pull, services: parseServices() }
+    up.mutate({ nodeId, projectName, data }, {
+      onSuccess: (res) => {
+        const bulk = res as unknown as BulkResult_ComposeServiceBulkResult_
+        setUpResult(bulk)
+        if (bulk.failed > 0) toast('warning', t('docker.composeUp') + ` — ${bulk.failed} failed`)
+        else toast('success', t('docker.composeUp'))
+      },
+      onError: () => toast('error', t('docker.composeUpFailed')),
+    })
+  }
+  const handleDown = () => {
+    setActionResult(null); setUpResult(null)
+    down.mutate({ nodeId, projectName, data: { volumes: downVolumes, remove_orphans: downOrphans } as never }, {
+      onSuccess: (res) => {
+        const bulk = res as unknown as BulkResult_ComposeServiceBulkResult_ | { status: string }
+        // downs returns ComposeActionResponse, not BulkResult — handle both
+        if ((bulk as BulkResult_ComposeServiceBulkResult_).results) setActionResult(bulk as BulkResult_ComposeServiceBulkResult_)
+        toast('success', t('docker.composeDown'))
+      },
+      onError: () => toast('error', t('docker.composeDownFailed')),
+    })
+  }
+  const handleGeneric = (
+    fn: { mutate: (vars: any, opts: any) => void; isPending: boolean },
+    name: string,
+  ) => {
+    setActionResult(null); setUpResult(null)
+    const services = parseServices()
+    // for kills need signal
+    const isKill = name === 'kill'
+    const data = isKill ? { signal: killSignal || 'SIGTERM', services } : { services }
+    fn.mutate({ nodeId, projectName, data }, {
+      onSuccess: (res: unknown) => {
+        const bulk = res as BulkResult_ComposeServiceBulkResult_
+        if (bulk.results) setActionResult(bulk)
+        if (bulk.failed && bulk.failed > 0) toast('warning', name + ` — ${bulk.failed} failed`)
+        else toast('success', name)
+      },
+      onError: () => toast('error', 'Failed'),
+    })
+  }
 
   const handleDelete = () => {
     remove.mutate({ nodeId, projectName }, {
@@ -120,21 +187,71 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
         <Badge variant="default">{projectName}</Badge>
       </div>
 
+      <Card>
+        <CardContent className="pt-4 space-y-3">
+          <Input label={t('docker.servicesFilter', 'Services (comma, empty = all)')} placeholder="web, db" value={servicesInput} onChange={(e) => setServicesInput(e.target.value)} />
+          <div className="flex flex-wrap gap-3 items-center">
+            <Checkbox checked={pull} onChange={setPull} label={t('docker.pullBeforeUp', 'Pull')} />
+            <Checkbox checked={build} onChange={setBuild} label={t('docker.buildBeforeUp', 'Build')} />
+            <span className="text-xs text-surface-500 ml-auto">{servicesInput ? `services: ${parseServices()?.join(', ')}` : 'all services'}</span>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex flex-wrap gap-2 items-center">
-        <Button variant="secondary" size="sm" disabled={up.isPending} onClick={() => up.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', t('docker.composeUp')), onError: () => toast('error', t('docker.composeUpFailed')) })}>{t('docker.up')}</Button>
-        <Button variant="ghost" size="sm" disabled={down.isPending} onClick={() => down.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', t('docker.composeDown')), onError: () => toast('error', t('docker.composeDownFailed')) })}>{t('docker.down')}</Button>
-        <Button variant="ghost" size="sm" disabled={start.isPending} onClick={() => start.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Started'), onError: () => toast('error', 'Failed') })}>{t('docker.start')}</Button>
-        <Button variant="ghost" size="sm" disabled={stop.isPending} onClick={() => stop.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Stopped'), onError: () => toast('error', 'Failed') })}>{t('docker.stop')}</Button>
-        <Button variant="ghost" size="sm" disabled={restart.isPending} onClick={() => restart.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Restarted'), onError: () => toast('error', 'Failed') })}>{t('docker.restartCompose')}</Button>
-        <Button variant="ghost" size="sm" disabled={pull.isPending} onClick={() => pull.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Pulled'), onError: () => toast('error', 'Failed') })}>{t('docker.pull')}</Button>
-        <Button variant="ghost" size="sm" disabled={push.isPending} onClick={() => push.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Pushed'), onError: () => toast('error', 'Failed') })}>{t('docker.push', 'Push')}</Button>
-        <Button variant="ghost" size="sm" disabled={pause.isPending} onClick={() => pause.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Paused'), onError: () => toast('error', 'Failed') })}>{t('docker.pause')}</Button>
-        <Button variant="ghost" size="sm" disabled={unpause.isPending} onClick={() => unpause.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Unpaused'), onError: () => toast('error', 'Failed') })}>{t('docker.unpause')}</Button>
-        <Button variant="ghost" size="sm" disabled={kill.isPending} onClick={() => kill.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Killed'), onError: () => toast('error', 'Failed') })}>Kill</Button>
-        <Button variant="ghost" size="sm" disabled={rm.isPending} onClick={() => rm.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Removed'), onError: () => toast('error', 'Failed') })}>RM</Button>
-        <Button variant="ghost" size="sm" disabled={build.isPending} onClick={() => build.mutate({ nodeId, projectName }, { onSuccess: () => toast('success', 'Built'), onError: () => toast('error', 'Failed') })}>{t('docker.build')}</Button>
+        <Button variant="secondary" size="sm" disabled={up.isPending} onClick={handleUp}>{up.isPending ? t('common.loading') : t('docker.up')}</Button>
+        <Button variant="ghost" size="sm" disabled={down.isPending} onClick={handleDown}>{t('docker.down')}</Button>
+        <Button variant="ghost" size="sm" disabled={start.isPending} onClick={() => handleGeneric(start, 'start')}>{t('docker.start')}</Button>
+        <Button variant="ghost" size="sm" disabled={stop.isPending} onClick={() => handleGeneric(stop, 'stop')}>{t('docker.stop')}</Button>
+        <Button variant="ghost" size="sm" disabled={restart.isPending} onClick={() => handleGeneric(restart, 'restart')}>{t('docker.restartCompose')}</Button>
+        <Button variant="ghost" size="sm" disabled={pullAction.isPending} onClick={() => handleGeneric(pullAction, 'pull')}>{t('docker.pull')}</Button>
+        <Button variant="ghost" size="sm" disabled={push.isPending} onClick={() => handleGeneric(push, 'push')}>{t('docker.push', 'Push')}</Button>
+        <Button variant="ghost" size="sm" disabled={pause.isPending} onClick={() => handleGeneric(pause, 'pause')}>{t('docker.pause')}</Button>
+        <Button variant="ghost" size="sm" disabled={unpause.isPending} onClick={() => handleGeneric(unpause, 'unpause')}>{t('docker.unpause')}</Button>
+        <Button variant="ghost" size="sm" disabled={kill.isPending} onClick={() => handleGeneric(kill, 'kill')}>Kill</Button>
+        <Button variant="ghost" size="sm" disabled={rm.isPending} onClick={() => handleGeneric(rm, 'rm')}>RM</Button>
+        <Button variant="ghost" size="sm" disabled={buildAction.isPending} onClick={() => handleGeneric(buildAction, 'build')}>{t('docker.build')}</Button>
         <Button variant="ghost" size="sm" onClick={() => setShowEdit((v) => !v)}>{t('common.edit')}</Button>
         <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 ml-auto">{t('common.delete')}</Button>
+      </div>
+
+      {(upResult || actionResult) && (
+        <Card>
+          <CardContent className="pt-4 space-y-2">
+            {(() => {
+              const bulk = (upResult || actionResult) as BulkResult_ComposeServiceBulkResult_
+              if (!bulk || !bulk.results) return <p className="text-sm text-surface-500">Done</p>
+              return (
+                <div className="space-y-2">
+                  <div className="flex gap-4 text-sm">
+                    <span>{t('common.total')}: {bulk.total}</span>
+                    <span className="text-green-600">{t('common.succeeded')}: {bulk.succeeded}</span>
+                    <span className="text-red-600">{t('common.failed')}: {bulk.failed}</span>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {(bulk.results as ComposeServiceBulkResult[]).map((r) => (
+                      <div key={r.service} className={`p-3 rounded-lg border text-xs font-mono ${r.status === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-200' : 'bg-red-50 dark:bg-red-900/20 border-red-200'}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold">{r.service}</span>
+                          <Badge variant={r.status === 'success' ? 'success' : 'danger'}>{r.status}</Badge>
+                        </div>
+                        {r.output && <pre className="whitespace-pre-wrap break-all text-surface-700 dark:text-surface-300">{r.output}</pre>}
+                        {r.error && <pre className="whitespace-pre-wrap break-all text-red-600">{r.error}</pre>}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-end"><Button variant="ghost" size="sm" onClick={() => { setUpResult(null); setActionResult(null) }}>{t('common.close')}</Button></div>
+                </div>
+              )
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex flex-wrap gap-2 items-center text-xs">
+        <Checkbox checked={downVolumes} onChange={setDownVolumes} label="volumes" />
+        <Checkbox checked={downOrphans} onChange={setDownOrphans} label="orphans" />
+        <Input value={killSignal} onChange={(e) => setKillSignal(e.target.value)} placeholder="SIGTERM" className="w-24 ml-auto" />
       </div>
 
       {showEdit && (
