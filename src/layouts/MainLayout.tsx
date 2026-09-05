@@ -135,16 +135,9 @@ export function MainLayout() {
         `}
       >
         {/* Logo */}
-        <div className="px-6 py-5 border-b border-surface-200/50 dark:border-surface-800/50">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" width={40} height={40} loading="eager" decoding="async" />
-            <div>
-              <p className="text-xl font-bold gradient-text">NodeNexus</p>
-              <p className="text-xs text-surface-500 dark:text-surface-500">
-                Panel v{APP_VERSION}{health?.version && <span className="ml-1">API v{health.version}</span>}
-              </p>
-            </div>
-          </div>
+        <div className="px-6 h-[var(--header-height)] flex items-center gap-3 border-b border-surface-200/50 dark:border-surface-800/50 shrink-0">
+          <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" width={40} height={40} loading="eager" decoding="async" />
+          <p className="text-xl font-bold gradient-text">NodeNexus</p>
         </div>
 
         {/* Navigation */}
@@ -215,6 +208,12 @@ export function MainLayout() {
                 <IconRefresh className={`w-4 h-4 ${isFetching ? 'animate-spin text-accent-500' : ''}`} />
               </button>
             </Tooltip>
+
+            {/* Versions — logically before connection activity */}
+            <span className="hidden lg:inline-flex items-center gap-1.5 text-xs text-surface-500 dark:text-surface-400">
+              Panel v{APP_VERSION} <span className="opacity-50">·</span> API v{health?.version ?? '—'}
+            </span>
+            <div className="hidden lg:block w-px h-4 bg-surface-200 dark:bg-surface-700" />
 
             {/* Connection status */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50" role="status" aria-live="polite" aria-label={wsConnected ? t('common.connected') : t('common.disconnected')}>
