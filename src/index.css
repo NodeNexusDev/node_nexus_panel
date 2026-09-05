@@ -407,7 +407,7 @@ body {
 }
 
 .table-row-hover {
-  transition: all 0.12s ease;
+  transition: none;
 }
 
 .table-row-hover:hover {
