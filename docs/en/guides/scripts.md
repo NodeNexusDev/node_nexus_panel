@@ -2,21 +2,23 @@
 title: Scripts
 status: stable
 translation_key: guides.scripts
-source_revision: 2026-08-16
+source_revision: 2026-09-06
 ---
 
 # Scripts
 
 Create and manage reusable scripts.
 
-## Script Library
+## Script List
 
-Store scripts for repeated use across nodes.
+View all scripts with `Search` by name/description, `Filter` by `tags`, `Sort` by name/tags, `Infinite` 20. No per-row buttons — click row → `ScriptDrawer` Variant C `800px`. Bulk bar for selected: `Run (count)` → `BulkRunScriptsOnNodesModal` `script_ids+node_ids` `M×N`, `Clone`, `Delete` with `207`.
 
-## Script Execution
+## Creating Scripts
 
-Run scripts on single or multiple nodes with parameters.
+`Create Script` modal: `name`, `description`, `tags` (`^[a-z0-9_-]{1,30}$`), `steps` (label/type `inline` requires `command` / `command` requires `command_id` via `superRefine`, `on_failure` `stop/continue`). `POST /scripts/` `BulkResult`.
 
-## Scheduling
+## Script Drawer (Variant C)
 
-Schedule scripts to run at specific intervals.
+7 tabs: `overview` (description, created/updated), `steps` (list `label type on_failure` + `command`/`command_id`), `executions` (`useInfiniteScriptExecutions` 10 + `InfiniteScroll`), `schedule` (`useScriptSchedule` `cron`/`timezone` + `useInfiniteScriptScheduleHistory` 5), `stats` (`GET /scripts/{id}/stats` + `StatsGrid`), `run` (node searchable checklist `selected` + `POST /scripts/executions` `M×N` per-step `ExecutionResult`), `edit` (local `formValues` + steps preview, hint `Edit steps in full page`).
+
+Header: `Clone`, `Delete`. No `View` page.

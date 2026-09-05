@@ -2,7 +2,7 @@
 title: State Management
 status: stable
 translation_key: architecture.state_management
-source_revision: 2026-08-20
+source_revision: 2026-09-06
 ---
 
 # State Management
