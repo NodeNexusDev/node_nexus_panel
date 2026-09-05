@@ -174,7 +174,7 @@ export function Settings() {
                         <span className={`text-xs px-2 py-0.5 rounded ${key.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-surface-200 text-surface-600 dark:bg-surface-700 dark:text-surface-400'}`}>
                           {key.is_active ? t('settings.active') : t('settings.inactive')}
                         </span>
-                        <Badge variant={key.scope === 'read-write' ? 'warning' : 'info'}>{key.scope}</Badge>
+                        <Badge variant={key.scope === 'read-write' ? 'warning' : 'info'}>{key.scope === 'read-write' ? t('settings.readWrite') : t('settings.readOnly')}</Badge>
                       </div>
                       <p className="text-xs text-surface-500 dark:text-surface-500 mt-1">
                         {t('settings.created')} {new Date(key.created_at).toLocaleDateString()}

@@ -1,3 +1,4 @@
+import { getNextCursor } from '../lib/pagination'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { templatesApi } from '../api/templates'
 import type {
@@ -25,7 +26,7 @@ export function useInfinitePacks(params?: { limit?: number; search?: string | nu
     queryKey: ['templates', 'packs', 'infinite', params],
     queryFn: ({ pageParam }) => templatesApi.listPacks({ cursor: pageParam as string | null, limit: params?.limit, search: params?.search, tag: params?.tag, installed: params?.installed, registry_id: params?.registry_id }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
   })
 }
 
@@ -86,7 +87,7 @@ export function useInfiniteRegistries(params?: { limit?: number }) {
     queryKey: ['templates', 'registries', 'infinite', params],
     queryFn: ({ pageParam }) => templatesApi.listRegistries({ cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
   })
 }
 
@@ -103,7 +104,7 @@ export function useInfinitePackInstallations(packId: string, params?: { limit?: 
     queryKey: ['templates', 'packs', packId, 'installations', 'infinite', params],
     queryFn: ({ pageParam }) => templatesApi.listInstallations(packId, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!packId,
   })
 }

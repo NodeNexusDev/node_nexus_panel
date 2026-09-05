@@ -7,11 +7,8 @@ import { MainLayout } from './layouts/MainLayout'
 import { eventsClient } from './api/events'
 import { DashboardSkeleton } from './pages/DashboardSkeleton'
 import { NodesSkeleton } from './pages/NodesSkeleton'
-import { NodeDetailSkeleton } from './pages/NodeDetailSkeleton'
 import { CommandsSkeleton } from './pages/CommandsSkeleton'
-import { CommandDetailSkeleton } from './pages/CommandDetailSkeleton'
 import { ScriptsSkeleton } from './pages/ScriptsSkeleton'
-import { ScriptDetailSkeleton } from './pages/ScriptDetailSkeleton'
 import { DockerSkeleton } from './pages/DockerSkeleton'
 import { AuditSkeleton } from './pages/AuditSkeleton'
 import { SettingsSkeleton } from './pages/SettingsSkeleton'
@@ -21,11 +18,8 @@ const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })))
 const Nodes = lazy(() => import('./pages/Nodes').then((m) => ({ default: m.Nodes })))
-const NodeDetail = lazy(() => import('./pages/NodeDetail').then((m) => ({ default: m.NodeDetail })))
 const Commands = lazy(() => import('./pages/Commands').then((m) => ({ default: m.Commands })))
-const CommandDetail = lazy(() => import('./pages/CommandDetail').then((m) => ({ default: m.CommandDetail })))
 const Scripts = lazy(() => import('./pages/Scripts').then((m) => ({ default: m.Scripts })))
-const ScriptDetail = lazy(() => import('./pages/ScriptDetail').then((m) => ({ default: m.ScriptDetail })))
 const Docker = lazy(() => import('./pages/Docker').then((m) => ({ default: m.Docker })))
 const Audit = lazy(() => import('./pages/Audit').then((m) => ({ default: m.Audit })))
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })))
@@ -55,11 +49,8 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/" element={<Suspense fallback={<DashboardSkeleton />}><Dashboard /></Suspense>} />
               <Route path="/nodes" element={<Suspense fallback={<NodesSkeleton />}><Nodes /></Suspense>} />
-              <Route path="/nodes/:id" element={<Suspense fallback={<NodeDetailSkeleton />}><NodeDetail /></Suspense>} />
               <Route path="/commands" element={<Suspense fallback={<CommandsSkeleton />}><Commands /></Suspense>} />
-              <Route path="/commands/:id" element={<Suspense fallback={<CommandDetailSkeleton />}><CommandDetail /></Suspense>} />
               <Route path="/scripts" element={<Suspense fallback={<ScriptsSkeleton />}><Scripts /></Suspense>} />
-              <Route path="/scripts/:id" element={<Suspense fallback={<ScriptDetailSkeleton />}><ScriptDetail /></Suspense>} />
               <Route path="/docker" element={<Suspense fallback={<DockerSkeleton />}><Docker /></Suspense>} />
               <Route path="/audit" element={<Suspense fallback={<AuditSkeleton />}><Audit /></Suspense>} />
               <Route path="/settings" element={<Suspense fallback={<SettingsSkeleton />}><Settings /></Suspense>} />

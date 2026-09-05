@@ -54,21 +54,98 @@ export const composeHandlers = [
     if(body.compose) found.compose = body.compose; if(body.env) found.env = body.env; found.updated_at = new Date().toISOString()
     return HttpResponse.json(found)
   }),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/ups`, () => HttpResponse.json({ status: 'ok', message: 'Up started' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/downs`, () => HttpResponse.json({ status: 'ok', message: 'Down done' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/starts`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/stops`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/restarts`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/pulls`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/builds`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/creates`, () => HttpResponse.json({ status: 'ok', message: 'Create done' })),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/ups`, async ({ request }) => {
+    const body = await request.json() as { build?: boolean; pull?: boolean; services?: string[] | null }
+    if (body.build === undefined || body.pull === undefined) return HttpResponse.json({ detail: [{ loc: ["body","build"], msg: "Field required", type: "missing"}] }, {status:422})
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`Up ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/downs`, async ({ request }) => {
+    const body = await request.json() as { volumes?: boolean; remove_orphans?: boolean; services?: string[] | null }
+    if (body.volumes===undefined || body.remove_orphans===undefined) return HttpResponse.json({ detail: [{ loc: ["body","volumes"], msg: "Field required", type: "missing"}] }, {status:422})
+    return HttpResponse.json({ status: 'ok', output: 'Down done' })
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/starts`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`starts ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/stops`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`stops ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/restarts`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`restarts ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/pulls`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`pulls ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/builds`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`builds ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/creates`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`creates ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
   http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/runs`, async ({ request }) => { const body = await request.json() as { service?: string }; return HttpResponse.json({ status: 'ok', service: body.service ?? 'app' }) }),
   http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/executions`, async ({ request }) => { const body = await request.json() as { service?: string; command?: string }; return HttpResponse.json({ status: 'ok', output: `exec ${body.command ?? 'sh'} on ${body.service ?? 'app'}` }) }),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/kills`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/pauses`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/unpauses`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/pushs`, () => HttpResponse.json({ status: 'ok' })),
-  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/rms`, () => HttpResponse.json({ status: 'ok' })),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/kills`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`kills ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/pauses`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`pauses ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/unpauses`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`unpauses ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/pushs`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`pushs ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
+  http.post(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/rms`, async ({ request }) => {
+    const body = await request.json().catch(()=> ({})) as { services?: string[] | null, signal?: string }
+    const services = body.services && body.services.length ? body.services : ['web','db']
+    const results = services.map((svc, i) => i===services.length-1 && services.length>2 ? {service:svc,status:'error' as const,output:'',error:'Simulated 207'} : {service:svc,status:'success' as const,output:`rms ${svc} done`,error:''})
+    const failed = results.filter(r=>r.status==='error').length
+    return HttpResponse.json({total:results.length,succeeded:results.length-failed,failed,results},{status:failed?207:200})
+  }),
   http.get(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/images`, () => HttpResponse.json({ images: [] as unknown[] })),
   http.get(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/port`, ({ request }) => { const url=new URL(request.url); const svc=url.searchParams.get('service')||'web'; const port=url.searchParams.get('port')||'80'; return HttpResponse.json({ service: svc, port, url: `0.0.0.0:${port}` }) }),
   http.get(`${API_URL}/api/v2/nodes/:nodeId/docker/compose/projects/:projectName/top`, () => HttpResponse.json({ titles:['PID','USER','COMMAND'], processes:[['1','root','nginx']] })),

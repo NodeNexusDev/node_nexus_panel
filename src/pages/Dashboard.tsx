@@ -123,7 +123,7 @@ export function Dashboard() {
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes?status=active')}><CardContent><StatCard label={t('dashboard.online')} value={dashboard?.nodes.active ?? 0} icon={<IconCheckCircle className="w-5 h-5" />} tone="success" /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes?status=unreachable')}><CardContent><StatCard label={t('dashboard.offline')} value={dashboard?.nodes.unreachable ?? 0} icon={<IconXCircle className="w-5 h-5" />} tone="danger" /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/commands')}><CardContent><StatCard label={t('dashboard.totalCommands')} value={dashboard?.commands.total ?? 0} icon={<IconZap className="w-5 h-5" />} /></CardContent></Card>
-              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/scripts')}><CardContent><StatCard label={t('dashboard.scripts', 'Scripts')} value={(dashboard as unknown as { scripts?: { total: number } })?.scripts?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/scripts')}><CardContent><StatCard label={t('dashboard.scripts', 'Scripts')} value={dashboard?.scripts?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/docker')}><CardContent><StatCard label={t('dashboard.dockerContainers')} value={dashboard?.docker.total ?? 0} icon={<IconDocker className="w-5 h-5" />} sub={`${dashboard?.docker.running ?? 0} / ${dashboard?.docker.stopped ?? 0}`} /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/templates')}><CardContent><StatCard label={t('dashboard.templates', 'Templates')} value={(dashboard as unknown as { packs?: { total: number } })?.packs?.total ?? 0} icon={<IconScripts className="w-5 h-5" />} sub={`${(dashboard as unknown as { packs?: { installed: number } })?.packs?.installed ?? 0} ${t('dashboard.installed', 'installed')}`} /></CardContent></Card>
             </>
@@ -147,12 +147,12 @@ export function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {recentNodes.map((node) => (
-                  <div key={node.id} className="flex items-center justify-between p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => navigate(`/nodes/${node.id}`)}>
+                  <div key={node.id} className="flex items-center justify-between p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => navigate('/nodes')}>
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
                       <div><p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p><p className="text-xs text-surface-500 dark:text-surface-500">{node.host}</p></div>
                     </div>
-                    <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+                    <Badge variant={nodeStatusVariant(node.status)}>{t(`nodes.status${node.status.charAt(0).toUpperCase() + node.status.slice(1)}` as never, node.status)}</Badge>
                   </div>
                 ))}
               </div>
@@ -173,7 +173,7 @@ export function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {favList.slice(0, 6).map((fav) => (
-                  <div key={`${fav.target_type}-${fav.target_id}`} className="flex items-center gap-3 p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => { if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`); else if (fav.target_type === 'script') navigate(`/scripts/${fav.target_id}`); else if (fav.target_type === 'command') navigate(`/commands/${fav.target_id}`) }}>
+                  <div key={`${fav.target_type}-${fav.target_id}`} className="flex items-center gap-3 p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => { if (fav.target_type === 'node') navigate('/nodes'); else if (fav.target_type === 'script') navigate('/scripts'); else if (fav.target_type === 'command') navigate('/commands') }}>
                     {favIcon(fav.target_type)}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{fav.name || fav.note || fav.target_id}</p>

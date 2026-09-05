@@ -12,7 +12,6 @@ import { Input } from '../components/ui/Input'
 import { TagFilter } from '../components/ui/TagFilter'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
-import { Tooltip } from '../components/ui/Tooltip'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { Spinner } from '../components/ui/Spinner'
@@ -20,29 +19,18 @@ import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
-import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
-import { FavoriteButton } from '../components/ui/FavoriteButton'
 import { Checkbox } from '../components/ui/Checkbox'
-import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
-import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
+import { Drawer } from '../components/ui/Drawer'
+import { NodeDrawer } from '../components/nodes/NodeDrawer'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
-import {
-  IconNodes,
-  IconCommands,
-  IconScripts,
-  IconCheckCircle,
-  IconXCircle,
-  IconChart,
-  IconClock,
-  IconActivity,
-} from '../components/ui/Icons'
+import { BulkScriptModal } from '../components/scripts/BulkScriptModal'
+import { IconNodes, IconDocker } from '../components/ui/Icons'
 import {
   useInfiniteNodes,
   useCreateNode,
   useUpdateNode,
   useDeleteNode,
-  useCheckNode,
   useBulkCheck,
   useNodeTags,
   useBulkDeleteNodes,
@@ -59,7 +47,7 @@ import type { NodeCreateFormValues } from '../lib/validators/node-schema'
 import { nodeCreateSchema } from '../lib/validators/node-schema'
 import type { Column } from '../components/ui/table-types'
 
-type SortKey = 'name' | 'host' | 'status' | 'connection_type' | 'tags' | 'created_at' | 'updated_at'
+type SortKey = 'name' | 'host' | 'status' | 'connection_type' | 'tags' | 'has_docker' | 'created_at' | 'updated_at'
 
 function statusDot(status: NodeStatus): string {
   switch (status) {
@@ -90,7 +78,6 @@ export function Nodes() {
   const createNode = useCreateNode()
   const updateNode = useUpdateNode()
   const deleteNode = useDeleteNode()
-  const checkNode = useCheckNode()
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
   const bulkMetrics = useBulkMetrics()
@@ -126,18 +113,16 @@ export function Nodes() {
     setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
   }
 
-  const [execTarget, setExecTarget] = useState<Node | null>(null)
-  const [scriptTarget, setScriptTarget] = useState<Node | null>(null)
-  const [validateTarget, setValidateTarget] = useState<Node | null>(null)
-  const [validateResult, setValidateResult] = useState<{ status: string; message: string } | null>(null)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
+  const [showBulkScript, setShowBulkScript] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBulkMetrics, setShowBulkMetrics] = useState(false)
   const [bulkMetricsResult, setBulkMetricsResult] = useState<unknown | null>(null)
   const [showBulkUpdate, setShowBulkUpdate] = useState(false)
   const [bulkUpdateChanges, setBulkUpdateChanges] = useState({ name: '', host: '', port: '', description: '', username: '', docker_host: '', has_docker: undefined as boolean | undefined, tags: '' })
+  const [drawerNode, setDrawerNode] = useState<Node | null>(null)
 
   const nodes = (data?.items || []).filter(
     (node) => tagFilter.length <= 1 || tagFilter.some((t) => node.tags.includes(t))
@@ -151,6 +136,11 @@ export function Nodes() {
           const av = a.tags[0] ?? ''
           const bv = b.tags[0] ?? ''
           return av.localeCompare(bv) * dir
+        }
+        if (sort.key === 'has_docker') {
+          const av = a.has_docker ? 1 : 0
+          const bv = b.has_docker ? 1 : 0
+          return (av - bv) * dir
         }
         const av = String(a[sort.key] ?? '')
         const bv = String(b[sort.key] ?? '')
@@ -184,36 +174,7 @@ export function Nodes() {
     })
     setClearFields({})
   }, [])
-
-  const handleValidate = useCallback((node: Node) => {
-    setValidateTarget(node)
-    setValidateResult(null)
-    checkNode.mutate(node.id, {
-      onSuccess: (checkedRes: unknown) => {
-        const r = checkedRes as { results?: Array<{ status: string }> }
-        const status = r?.results?.[0]?.status || 'active'
-        setValidateResult({
-          status,
-          message: status === 'success' || status === 'active'
-            ? t('nodes.validateSuccess', 'Connection successful')
-            : t('nodes.validateFailed', 'Connection failed'),
-        })
-      },
-      onError: () => toast('error', t('nodes.toastValidateFailed')),
-    })
-  }, [checkNode, t, toast])
-
-  const nodeMenu = useCallback((node: Node): DropdownMenuItem[] => [
-    { key: 'edit', label: t('common.edit'), onClick: () => openEdit(node) },
-    { key: 'validate', label: t('nodes.validate'), onClick: () => handleValidate(node) },
-    { key: 'sep-1', label: '', onClick: () => {}, separator: true },
-    { key: 'metrics', label: t('nodes.metrics', 'Metrics'), icon: <IconActivity className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=metrics`) },
-    { key: 'stats', label: t('nodes.stats', 'Stats'), icon: <IconChart className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=stats`) },
-    { key: 'status-history', label: t('nodes.statusHistory', 'Status History'), icon: <IconClock className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=status-history`) },
-    { key: 'command-history', label: t('nodes.cmdHistory', 'Command History'), icon: <IconCommands className="w-4 h-4" />, onClick: () => navigate(`/nodes/${node.id}?tab=command-history`) },
-    { key: 'sep-2', label: '', onClick: () => {}, separator: true },
-    { key: 'delete', label: t('common.delete'), icon: <IconXCircle className="w-4 h-4" />, danger: true, onClick: () => setDeleteTarget({ id: node.id, name: node.name }) },
-  ], [t, openEdit, handleValidate, navigate])
+  void openEdit
 
   const columns: Column<Node>[] = useMemo(() => [
     {
@@ -271,6 +232,16 @@ export function Nodes() {
       render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{node.connection_type}</span>,
     },
     {
+      key: 'has_docker',
+      header: <SortableHeader label={t('nodes.hasDocker', 'Docker')} sortKey="has_docker" sort={sort} onSort={toggleSort} />,
+      className: 'w-20 text-center',
+      render: (node) => (
+        <span className={`inline-flex items-center justify-center gap-1 text-xs font-medium ${node.has_docker ? 'text-green-600 dark:text-green-400' : 'text-surface-400'}`}>
+          {node.has_docker ? <><IconDocker className="w-4 h-4" /> {t('common.yes')}</> : '—'}
+        </span>
+      ),
+    },
+    {
       key: 'tags',
       header: <SortableHeader label={t('nodes.tags')} sortKey="tags" sort={sort} onSort={toggleSort} />,
       render: (node) => (
@@ -291,32 +262,7 @@ export function Nodes() {
       header: <SortableHeader label={t('nodes.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
       render: (node) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(node.updated_at).toLocaleDateString()}</span>,
     },
-    {
-      key: 'actions',
-      header: t('nodes.actions'),
-      render: (node) => (
-        <div className="flex items-center gap-1">
-          <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
-          <Tooltip content={t('nodes.checkNode')}>
-            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.checkNode')} onClick={(e) => { e.stopPropagation(); checkNode.mutate(node.id, { onSuccess: () => toast('success', t('nodes.toastNodeChecked')), onError: () => toast('error', t('nodes.toastCheckFailed')) }) }}>
-              <IconCheckCircle className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('nodes.execCommand')}>
-            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.execCommand')} onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
-              <IconCommands className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('nodes.runScript')}>
-            <Button variant="ghost" size="sm" className="px-2" aria-label={t('nodes.runScript')} onClick={(e) => { e.stopPropagation(); setScriptTarget(node) }}>
-              <IconScripts className="w-4 h-4" />
-            </Button>
-          </Tooltip>
-          <DropdownMenu items={nodeMenu(node)} ariaLabel={t('common.actionsFor', { name: node.name })} />
-        </div>
-      ),
-    },
-  ], [allSelected, selectedIds, sort, toggleSort, toggleAll, toggleSelect, nodeMenu, t, toast, checkNode])
+  ], [allSelected, selectedIds, sort, toggleSort, toggleAll, toggleSelect, t])
 
   const renderMobileNode = useCallback((node: Node) => (
     <div className="space-y-3">
@@ -332,7 +278,10 @@ export function Nodes() {
             <p className="text-xs text-surface-500 dark:text-surface-500 font-mono">{node.host}:{node.port}{node.username ? ` (${node.username})` : ''}</p>
           </div>
         </div>
-        <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+          {node.has_docker && <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400"><IconDocker className="w-3.5 h-3.5" /> {t('nodes.hasDockerBadge')}</span>}
+        </div>
       </div>
       <div className="flex flex-wrap gap-1">
         {node.tags.length > 0 ? node.tags.map((tag) => (
@@ -343,18 +292,8 @@ export function Nodes() {
         <span>{t('nodes.created')}: {new Date(node.created_at).toLocaleDateString()}</span>
         <span>{t('nodes.updated')}: {new Date(node.updated_at).toLocaleDateString()}</span>
       </div>
-      <div className="flex items-center gap-1">
-        <FavoriteButton targetType="node" targetId={node.id} resourceName={node.name} size="sm" />
-        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setExecTarget(node) }}>
-          <IconCommands className="w-4 h-4 mr-1" /> {t('nodes.execCommand')}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setScriptTarget(node) }}>
-          <IconScripts className="w-4 h-4 mr-1" /> {t('nodes.runScript')}
-        </Button>
-        <DropdownMenu items={nodeMenu(node)} ariaLabel={`${node.name} actions`} />
-      </div>
     </div>
-  ), [nodeMenu, t])
+  ), [t])
 
   const handleAdd = (values: NodeCreateFormValues) => {
     createNode.mutate(
@@ -378,7 +317,7 @@ export function Nodes() {
           const nodeId = createdNode?.node_id
           toast('success', t('nodes.toastAdded', { name: values.name }), nodeId ? {
             label: t('common.view', 'View'),
-            onClick: () => navigate(`/nodes/${nodeId}`),
+            onClick: () => navigate('/nodes'),
           } : undefined)
           setShowAddModal(false)
           addForm.reset()
@@ -448,10 +387,11 @@ export function Nodes() {
           {selectedIds.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
               <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('nodes.selected', { count: selectedIds.length })}</span>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulkExec(true)}>{t('nodes.bulkExec', 'Bulk Exec')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkExec(true)}>{t('nodes.bulkExec', 'Run Commands')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkScript(true)}>{t('nodes.bulkScript', 'Run Scripts')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
                 bulkCheck.mutate(selectedIds, {
-                  onSuccess: () => { toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
+                  onSuccess: (data: unknown) => { const d = data as { failed?: number; succeeded?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkCheckDone') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
                   onError: () => toast('error', t('nodes.toastBulkCheckFailed')),
                 })
               }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
@@ -459,7 +399,10 @@ export function Nodes() {
                 setShowBulkMetrics(true)
                 setBulkMetricsResult(null)
                 bulkMetrics.mutate(selectedIds, {
-                  onSuccess: (data) => setBulkMetricsResult(data),
+                  onSuccess: (data) => {
+                    setBulkMetricsResult(data)
+                    const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics') + t('common.failedSuffix', { count: d.failed }))
+                  },
                   onError: () => toast('error', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics')),
                 })
               }} disabled={bulkMetrics.isPending}>{bulkMetrics.isPending ? t('common.loading') : t('nodes.bulkMetrics', 'Bulk Metrics')}</Button>
@@ -469,7 +412,7 @@ export function Nodes() {
               }}>{t('nodes.bulkUpdate', 'Bulk Update')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkValidateCreds.isPending} onClick={() => {
                 bulkValidateCreds.mutate({ ids: selectedIds }, {
-                  onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; toast('success', t('nodes.toastBulkValidateDone', { succeeded: d.succeeded, failed: d.failed })); setSelectedIds([]) },
+                  onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; if (d.failed > 0) toast('warning', t('nodes.toastBulkValidateDone', { succeeded: d.succeeded, failed: d.failed })); else toast('success', t('nodes.toastBulkValidateDone', { succeeded: d.succeeded, failed: d.failed })); setSelectedIds([]) },
                   onError: () => toast('error', t('nodes.toastBulkValidateFailed', 'Failed to validate credentials')),
                 })
               }}>{bulkValidateCreds.isPending ? t('common.loading') : t('nodes.bulkValidate', 'Bulk Validate')}</Button>
@@ -510,10 +453,13 @@ export function Nodes() {
               renderMobileItem={renderMobileNode}
               keyExtractor={(n) => n.id}
               emptyMessage={t('nodes.emptyTitle')}
-              onRowClick={(node) => navigate(`/nodes/${node.id}`)}
+              onRowClick={(node) => setDrawerNode(node)}
             />
           )}
-          <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+          <InfiniteScroll hasMore={tagFilter.length > 1 ? false : !!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+          {tagFilter.length > 1 && hasNextPage && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center py-2">{t('nodes.multiTagLimited', 'Multi-tag filter shows only loaded pages. Clear filter to load more.')}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -657,21 +603,8 @@ export function Nodes() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!validateTarget} onClose={() => { setValidateTarget(null); setValidateResult(null) }} title={t('nodes.validate')}>
-        <div className="space-y-4">
-          {validateResult ? (
-            <div className={`p-4 rounded-lg ${validateResult.status === 'active' ? 'bg-green-50 dark:bg-green-500/10' : 'bg-red-50 dark:bg-red-500/10'}`}>
-              <Badge variant={validateResult.status === 'active' ? 'success' : 'danger'}>{validateResult.status}</Badge>
-              <p className="text-sm mt-2 text-surface-700 dark:text-surface-300">{validateResult.message}</p>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-surface-500"><Spinner size="sm" /> {t('nodes.toastValidating')}</div>
-          )}
-          <div className="flex justify-end"><Button variant="ghost" onClick={() => { setValidateTarget(null); setValidateResult(null) }}>{t('common.cancel')}</Button></div>
-        </div>
-      </Modal>
-
       <BulkCommandModal nodeIds={showBulkExec ? selectedIds : []} onClose={() => setShowBulkExec(false)} />
+      <BulkScriptModal nodeIds={showBulkScript ? selectedIds : []} onClose={() => setShowBulkScript(false)} />
 
       <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed: number; succeeded: number }; if (d.failed && d.failed > 0) { toast('warning', t('nodes.toastBulkDeletePartial', { failed: d.failed, succeeded: d.succeeded })) } else { toast('success', t('nodes.toastBulkDeleteDone')) } setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
 
@@ -723,7 +656,7 @@ export function Nodes() {
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.hasDocker', 'Has Docker')}</label>
             <Select value={bulkUpdateChanges.has_docker === undefined ? 'keep' : bulkUpdateChanges.has_docker ? 'yes' : 'no'} onChange={(v)=> setBulkUpdateChanges({ ...bulkUpdateChanges, has_docker: v==='keep'? undefined : v==='yes' })} options={[{value:'keep',label:t('common.keep','Keep')},{value:'yes',label:t('common.yes','Yes')},{value:'no',label:t('common.no','No')}]} />
           </div>
-          <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="comma, separated" value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
+          <Input label={t('nodes.tagsLabel', 'Tags')} placeholder={t('common.commaSeparated')} value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowBulkUpdate(false)}>{t('common.cancel')}</Button>
             <Button onClick={() => {
@@ -737,7 +670,7 @@ export function Nodes() {
               if (bulkUpdateChanges.has_docker !== undefined) changes.has_docker = bulkUpdateChanges.has_docker
               if (bulkUpdateChanges.tags) changes.tags = bulkUpdateChanges.tags.split(',').map((s) => s.trim()).filter(Boolean)
               bulkUpdateNodes.mutate({ updates: selectedIds.map((id) => ({ id, changes })) }, {
-                onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; toast('success', t('nodes.toastBulkUpdateDone', { succeeded: d.succeeded, failed: d.failed })); setShowBulkUpdate(false); setSelectedIds([]) },
+                onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; if (d.failed > 0) toast('warning', t('nodes.toastBulkUpdateDone', { succeeded: d.succeeded, failed: d.failed })); else toast('success', t('nodes.toastBulkUpdateDone', { succeeded: d.succeeded, failed: d.failed })); setShowBulkUpdate(false); setSelectedIds([]) },
                 onError: () => toast('error', t('nodes.toastBulkUpdateFailed', 'Failed to update nodes')),
               })
             }} disabled={bulkUpdateNodes.isPending}>{bulkUpdateNodes.isPending ? t('common.loading') : t('common.save')}</Button>
@@ -747,9 +680,19 @@ export function Nodes() {
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('nodes.deleteTitle')} message={t('nodes.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteNode.isPending} />
 
-      <NodeCommandModal node={execTarget} onClose={() => setExecTarget(null)} />
-
-      <NodeScriptModal node={scriptTarget} onClose={() => setScriptTarget(null)} />
+      <Drawer
+        isOpen={!!drawerNode}
+        onClose={() => setDrawerNode(null)}
+        size="lg"
+      >
+        {drawerNode && (
+          <NodeDrawer
+            node={drawerNode}
+            onClose={() => setDrawerNode(null)}
+            onDelete={(n) => { setDrawerNode(null); setDeleteTarget({ id: n.id, name: n.name }) }}
+          />
+        )}
+      </Drawer>
     </div>
   )
 }

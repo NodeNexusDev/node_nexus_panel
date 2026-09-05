@@ -27,20 +27,40 @@ type Tab = 'containers' | 'images' | 'networks' | 'volumes' | 'system' | 'compos
 export function Docker() {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { data: nodesData } = useNodes({ size: 100 })
   const dockerNodes = useMemo(
     () => (nodesData?.items || []).filter((n) => n.has_docker),
     [nodesData]
   )
   const [selectedNodeId, setSelectedNodeId] = useState(() => searchParams.get('node') ?? '')
+  const initialTab = (searchParams.get('tab') as Tab | null) ?? 'containers'
+  const validTabs: Tab[] = ['containers', 'images', 'networks', 'volumes', 'system', 'compose']
 
   useEffect(() => {
     if (dockerNodes.length > 0 && !dockerNodes.some((n) => n.id === selectedNodeId)) {
-      setSelectedNodeId(dockerNodes[0].id)
+      const first = dockerNodes[0].id
+      setSelectedNodeId(first)
+      const next = new URLSearchParams(searchParams)
+      next.set('node', first)
+      setSearchParams(next, { replace: true })
     }
-  }, [dockerNodes, selectedNodeId])
-  const [activeTab, setActiveTab] = useState<Tab>('containers')
+  }, [dockerNodes, selectedNodeId, searchParams, setSearchParams])
+  const [activeTab, setActiveTab] = useState<Tab>(validTabs.includes(initialTab) ? initialTab : 'containers')
+
+  const handleNodeChange = (id: string) => {
+    setSelectedNodeId(id)
+    const next = new URLSearchParams(searchParams)
+    next.set('node', id)
+    setSearchParams(next, { replace: true })
+  }
+  const handleTabChange = (k: string) => {
+    const tab = k as Tab
+    setActiveTab(tab)
+    const next = new URLSearchParams(searchParams)
+    next.set('tab', tab)
+    setSearchParams(next, { replace: true })
+  }
   const [showPullModal, setShowPullModal] = useState(false)
   const [pullImage, setPullImage] = useState('')
   const [pullTimeout, setPullTimeout] = useState(300)
@@ -82,13 +102,13 @@ export function Docker() {
           <Select
             label={t('docker.selectNode')}
             value={selectedNodeId}
-            onChange={setSelectedNodeId}
+            onChange={handleNodeChange}
             options={dockerNodes.map((n) => ({ value: n.id, label: n.name }))}
           />
         </div>
       </div>
 
-      <Tabs tabs={tabsForComp} active={activeTab} onChange={(k)=> setActiveTab(k as Tab)} />
+      <Tabs tabs={tabsForComp} active={activeTab} onChange={handleTabChange} />
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">

@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { getNextCursor } from '../lib/pagination'
 import { commandsApi } from '../api/commands'
 import type {
   CommandResponse,
@@ -35,7 +36,7 @@ export function useInfiniteCommands(params?: { limit?: number; tag?: string | nu
     queryKey: ['commands', 'infinite', params],
     queryFn: ({ pageParam }) => commandsApi.getAll({ cursor: pageParam as string | null, limit: params?.limit, tag: params?.tag, search: params?.search }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
   })
 }
 
@@ -133,6 +134,49 @@ export function useBulkCancelCommands() {
 export function useBulkRetryCommands() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (ids: string[]) => commandsApi.bulkRetry({ execution_ids: ids } as never), onSuccess: ()=> qc.invalidateQueries({queryKey:['commands']}) })
+}
+
+export function useBulkDeleteCommands() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const settled = await Promise.allSettled(ids.map((id) => commandsApi.remove(id)))
+      let succeeded = 0, failed = 0
+      const results: Array<{ id: string; status: 'success' | 'failed'; error?: string }> = []
+      settled.forEach((r, i) => {
+        if (r.status === 'fulfilled') { succeeded++; results.push({ id: ids[i], status: 'success' }) }
+        else { failed++; results.push({ id: ids[i], status: 'failed', error: String((r.reason as Error)?.message ?? r.reason) }) }
+      })
+      return { total: ids.length, succeeded, failed, results }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commands'] }),
+  })
+}
+
+export function useBulkCloneCommands() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const settled = await Promise.allSettled(ids.map((id) => commandsApi.clone(id, undefined)))
+      let succeeded = 0, failed = 0
+      settled.forEach((r) => { if (r.status === 'fulfilled') succeeded++; else failed++ })
+      return { total: ids.length, succeeded, failed, results: settled.map((r, i) => ({ id: ids[i], status: r.status === 'fulfilled' ? 'success' as const : 'failed' as const })) }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commands'] }),
+  })
+}
+
+export function useBulkUpdateCommands() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<CommandUpdate> }) => {
+      const settled = await Promise.allSettled(ids.map((id) => commandsApi.update(id, data as CommandUpdate)))
+      let succeeded = 0, failed = 0
+      settled.forEach((r) => { if (r.status === 'fulfilled') succeeded++; else failed++ })
+      return { total: ids.length, succeeded, failed, results: settled.map((r, i) => ({ id: ids[i], status: r.status === 'fulfilled' ? 'success' as const : 'failed' as const })) }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commands'] }),
+  })
 }
 
 export function useCommandExecutionsHistory(batchId: string, params?: { cursor?: string | null; limit?: number }) {

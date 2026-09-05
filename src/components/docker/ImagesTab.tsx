@@ -1,49 +1,76 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorState } from '../ui/ErrorState'
 import { Modal } from '../ui/Modal'
+import { Drawer } from '../ui/Drawer'
 import { Input } from '../ui/Input'
+import { SearchInput } from '../ui/SearchInput'
+import { SortableHeader, type SortState } from '../ui/SortableHeader'
 import { TableSkeleton } from '../ui/Skeleton'
 import { IconDocker } from '../ui/Icons'
 import { useToast } from '../ui/useToast'
-import { useDockerImages, useDeleteImage, useTagImage, useBuildImage, usePruneImages, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
+import { useSort } from '../../hooks/useSort'
+import { InfiniteScroll } from '../ui/InfiniteScroll'
+import { useInfiniteDockerImages, useBuildImage, usePruneImages, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
 import { Checkbox } from '../ui/Checkbox'
-import { ImageInspectContent } from './ImageInspectContent'
+import { ImageDrawer } from './ImageDrawer'
 import type { DockerImage } from '../../api/types'
+
+type SortKey = 'repository' | 'tag' | 'size' | 'created'
 
 export function ImagesTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: images, isLoading, error, refetch } = useDockerImages(nodeId)
-  const imageList = (images as unknown as { items?: DockerImage[] })?.items ?? []
-  const deleteImage = useDeleteImage()
-  const tagImage = useTagImage()
+  const [search, setSearch] = useState('')
+  const { sort, toggle } = useSort<SortKey>()
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerImages(nodeId, { limit: 20 })
+  const imageList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: DockerImage[] }).items) : [], [infiniteData])
   const buildImage = useBuildImage()
   const bulkImageRemove = useBulkDockerImageRemove()
   const bulkImageBuild = useBulkDockerImageBuild()
   const bulkPull = useBulkDockerPull()
   const pruneImages = usePruneImages()
-  const [tagTarget, setTagTarget] = useState<{ id: string; tag: string } | null>(null)
-  const [tagRepo, setTagRepo] = useState('')
-  const [tagName, setTagName] = useState('')
   const [showBuildModal, setShowBuildModal] = useState(false)
   const [buildDockerfile, setBuildDockerfile] = useState('')
   const [buildTag, setBuildTag] = useState('')
-  const [inspectTarget, setInspectTarget] = useState<{ id: string; name: string } | null>(null)
+  const [drawerImage, setDrawerImage] = useState<DockerImage | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showBulkRemove, setShowBulkRemove] = useState(false)
   const [showBulkBuild, setShowBulkBuild] = useState(false)
   const [showBulkPull, setShowBulkPull] = useState(false)
   const [bulkPullImage, setBulkPullImage] = useState('')
   const [showPruneConfirm, setShowPruneConfirm] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
-  const allSelected = imageList.length > 0 && imageList.every((img) => selectedIds.has((img as unknown as { ID: string }).ID))
+  const filtered = useMemo(() => {
+    if (!imageList.length) return []
+    const q = search.toLowerCase()
+    return [...imageList]
+      .filter((img) => {
+        const im = img as unknown as { Repository?: string; Tag?: string; ID?: string }
+        if (q && !(im.Repository?.toLowerCase().includes(q) || im.Tag?.toLowerCase().includes(q) || im.ID?.toLowerCase().includes(q))) return false
+        return true
+      })
+      .sort((a, b) => {
+        if (!sort) return 0
+        const dir = sort.dir === 'asc' ? 1 : -1
+        const av = a as unknown as { Repository?: string; Tag?: string; Size?: string; CreatedAt?: string }
+        const bv = b as unknown as { Repository?: string; Tag?: string; Size?: string; CreatedAt?: string }
+        switch (sort.key) {
+          case 'repository': return (av.Repository || '').localeCompare(bv.Repository || '') * dir
+          case 'tag': return (av.Tag || '').localeCompare(bv.Tag || '') * dir
+          case 'size': return (av.Size || '').localeCompare(bv.Size || '') * dir
+          case 'created': return (av.CreatedAt || '').localeCompare(bv.CreatedAt || '') * dir
+          default: return 0
+        }
+      })
+  }, [imageList, search, sort])
+
+  const allSelected = filtered.length > 0 && filtered.every((img) => selectedIds.has((img as unknown as { ID: string }).ID))
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set())
-    else setSelectedIds(new Set(imageList.map((img) => (img as unknown as { ID: string }).ID)))
+    else setSelectedIds(new Set(filtered.map((img) => (img as unknown as { ID: string }).ID)))
   }
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
@@ -61,61 +88,51 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
           <Button variant="ghost" size="sm" onClick={() => setShowBulkRemove(true)} className="text-red-500">{t('docker.bulkRemoveImages')}</Button>
           <Button variant="ghost" size="sm" onClick={() => setShowBulkBuild(true)}>{t('docker.buildImage')}</Button>
           <Button variant="ghost" size="sm" onClick={() => setShowBulkPull(true)}>{t('docker.pullImage')}</Button>
-          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200">{t('docker.clearSelection')}</button>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('docker.clearSelection')}</button>
         </div>
       )}
 
-      <div className="flex justify-end mb-4 px-4 gap-2 flex-wrap">
+      <div className="flex items-center gap-3 mb-4 px-4 flex-wrap">
+        <SearchInput value={search} onChange={setSearch} placeholder={t('docker.searchImages', 'Search images...')} className="flex-1 max-w-sm" />
         <Button variant="ghost" onClick={() => setShowBulkPull(true)}>{t('docker.pullImage')}</Button>
         <Button variant="ghost" onClick={() => setShowPruneConfirm(true)} disabled={pruneImages.isPending}>{pruneImages.isPending ? t('common.loading') : t('docker.pruneImages')}</Button>
         <Button onClick={() => setShowBuildModal(true)}>{t('docker.buildImage')}</Button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full table-zebra">
+        <table className="w-full">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
               <th className="px-6 py-3"><div className="flex items-center"><Checkbox checked={!!allSelected} onChange={toggleAll} ariaLabel={t('common.selectAll')} /></div></th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.repository')}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.tag')}</th>
+              <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.repository')} sortKey="repository" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
+              <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.tag')} sortKey="tag" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.id')}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.size')}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.actions')}</th>
+              <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.size')} sortKey="size" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-            {imageList.map((img: DockerImage) => {
+            {filtered.map((img: DockerImage) => {
               const im = img as unknown as { ID: string; Repository?: string; Tag?: string; Size?: string }
               return (
-              <tr key={im.ID} className="table-row-hover">
-                <td className="px-6 py-4"><div className="flex items-center"><Checkbox checked={selectedIds.has(im.ID)} onChange={() => toggleOne(im.ID)} ariaLabel={t('common.selectItem', { name: im.Repository || im.ID?.slice(0, 12) || '' })} /></div></td>
+              <tr key={im.ID} className="table-row-hover cursor-pointer" onClick={() => setDrawerImage(img)}>
+                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}><div className="flex items-center"><Checkbox checked={selectedIds.has(im.ID)} onChange={() => toggleOne(im.ID)} ariaLabel={t('common.selectItem', { name: im.Repository || im.ID?.slice(0, 12) || '' })} /></div></td>
                 <td className="px-6 py-4 text-sm font-mono text-surface-900 dark:text-white">{im.Repository}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{im.Tag}</td>
                 <td className="px-6 py-4 text-xs text-surface-500 font-mono">{im.ID?.slice(0, 12) || '—'}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{im.Size}</td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setInspectTarget({ id: im.ID, name: im.Repository || im.ID?.slice(0, 12) || '' })}>{t('docker.inspect')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: im.ID, tag: im.Tag || '' })}>{t('docker.tag')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: im.ID, name: im.Repository || im.ID?.slice(0, 12) || '' })} className="text-red-500">{t('common.delete')}</Button>
-                  </div>
-                </td>
               </tr>
               )
             })}
           </tbody>
         </table>
       </div>
+      <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+      {filtered.length === 0 && imageList.length > 0 && (
+        <div className="text-center py-8 text-sm text-surface-500">{t('docker.noMatch', 'No images match the current filters')}</div>
+      )}
 
-      <Modal isOpen={!!tagTarget} onClose={() => setTagTarget(null)} title={`${t('docker.tag')}: ${tagTarget?.tag || ''}`}>
-        <div className="space-y-4">
-          <Input label={t('docker.repository')} placeholder="myregistry/myimage" value={tagRepo} onChange={(e) => setTagRepo(e.target.value)} />
-          <Input label={t('docker.tag')} placeholder="latest" value={tagName} onChange={(e) => setTagName(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setTagTarget(null)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (tagTarget && tagRepo && tagName) { tagImage.mutate({ nodeId, imageId: tagTarget.id, data: { repo: tagRepo, tag: tagName } }, { onSuccess: () => setTagTarget(null), onError: () => toast('error', t('docker.toastTagFailed')) }) } }} disabled={!tagRepo || !tagName || tagImage.isPending}>{tagImage.isPending ? t('common.loading') : t('docker.tag')}</Button>
-          </div>
-        </div>
-      </Modal>
+      <Drawer isOpen={!!drawerImage} onClose={() => setDrawerImage(null)} size="lg">
+        {drawerImage && <ImageDrawer nodeId={nodeId} image={drawerImage} onClose={() => setDrawerImage(null)} />}
+      </Drawer>
 
       <Modal isOpen={showBuildModal} onClose={() => setShowBuildModal(false)} title={t('docker.buildImage')} size="lg">
         <div className="space-y-4">
@@ -131,24 +148,22 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
         </div>
       </Modal>
 
-      <Modal isOpen={!!inspectTarget} onClose={() => setInspectTarget(null)} title={`${t('docker.inspect')}: ${inspectTarget?.name || ''}`} size="lg">
-        {inspectTarget && <ImageInspectContent nodeId={nodeId} imageId={inspectTarget.id} />}
-      </Modal>
-
       <Modal isOpen={showBulkRemove} onClose={() => setShowBulkRemove(false)} title={t('docker.bulkRemoveImages', 'Bulk Remove Images')}>
         <div className="space-y-4">
           <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.bulkRemoveImagesMsg', { count: selectedIds.size })}</p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowBulkRemove(false)}>{t('common.cancel')}</Button>
-            <Button variant="danger" onClick={async () => {
+            <Button variant="danger" onClick={() => {
               const ids = Array.from(selectedIds)
-              const results = await Promise.allSettled(ids.map((imageId) => bulkImageRemove.mutateAsync({ image_id: imageId, node_ids: [nodeId] })))
-              const succeeded = results.filter((r) => r.status === 'fulfilled').length
-              const failed = results.filter((r) => r.status === 'rejected').length
-              if (failed === 0) toast('success', t('docker.toastBulkRemoveDone', 'Images removed'))
-              else toast('warning', t('docker.toastBulkRemovePartial', { succeeded, failed }))
-              setShowBulkRemove(false)
-              setSelectedIds(new Set())
+              bulkImageRemove.mutate({ nodeId, image_ids: ids }, {
+                onSuccess: (data: unknown) => {
+                  const d = data as { failed?: number; succeeded?: number }
+                  if (d.failed && d.failed>0) toast('warning', t('docker.toastBulkRemovePartial', { succeeded: d.succeeded, failed: d.failed }))
+                  else toast('success', t('docker.toastBulkRemoveDone', 'Images removed'))
+                  setShowBulkRemove(false); setSelectedIds(new Set())
+                },
+                onError: () => toast('error', t('docker.toastBulkRemoveFailed')),
+              })
             }} disabled={bulkImageRemove.isPending}>{bulkImageRemove.isPending ? t('common.loading') : t('common.delete')}</Button>
           </div>
         </div>
@@ -181,20 +196,15 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
             <Button variant="ghost" onClick={() => { setShowBulkPull(false); setBulkPullImage('') }}>{t('common.cancel')}</Button>
             <Button onClick={() => {
               bulkPull.mutate({ image: bulkPullImage, node_ids: [nodeId] }, {
-                onSuccess: () => { toast('success', t('docker.toastPullDone')); setShowBulkPull(false); setBulkPullImage('') },
+                onSuccess: (data: unknown) => {
+                  const d = data as { failed?: number }
+                  if (d.failed && d.failed>0) toast('warning', t('docker.toastPullDone') + t('common.failedSuffix', { count: d.failed }))
+                  else toast('success', t('docker.toastPullDone'))
+                  setShowBulkPull(false); setBulkPullImage('')
+                },
                 onError: () => toast('error', t('docker.toastPullFailed')),
               })
             }} disabled={!bulkPullImage || bulkPull.isPending}>{bulkPull.isPending ? t('common.loading') : t('docker.pullImage')}</Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('common.delete')}>
-        <div className="space-y-4">
-          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteImageMsg', { name: deleteTarget?.name })}</p>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
-            <Button variant="danger" onClick={() => { if (deleteTarget) { deleteImage.mutate({ nodeId, imageId: deleteTarget.id }, { onSuccess: () => { toast('success', t('docker.toastBulkRemoveDone')); setDeleteTarget(null) }, onError: () => toast('error', t('docker.toastDeleteFailed')) }) } }} disabled={deleteImage.isPending}>{deleteImage.isPending ? t('common.loading') : t('common.delete')}</Button>
           </div>
         </div>
       </Modal>

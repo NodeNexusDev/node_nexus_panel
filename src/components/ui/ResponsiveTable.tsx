@@ -56,7 +56,7 @@ export function ResponsiveTable<T>({
                 onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(item) } } : undefined}
                 tabIndex={onRowClick ? 0 : undefined}
                 role={onRowClick ? 'button' : undefined}
-                className={`hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${onRowClick ? 'cursor-pointer' : ''}`}
+                className={`hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map((col) => (
                   <td key={col.key} className={`px-6 py-4 ${col.className || ''}`}>

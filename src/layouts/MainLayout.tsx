@@ -7,9 +7,6 @@ import { useUiStore } from '../stores/ui-store'
 import { useSse } from '../hooks/useSse'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useHealth } from '../hooks/useHealth'
-import { useNode } from '../hooks/useNodes'
-import { useCommand } from '../hooks/useCommands'
-import { useScript } from '../hooks/useScripts'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
 import { Tooltip } from '../components/ui/Tooltip'
@@ -41,12 +38,6 @@ export function MainLayout() {
   const { data: health } = useHealth()
 
   const location = useLocation()
-  const nodeId = location.pathname.match(/^\/nodes\/([^/]+)$/)?.[1]
-  const commandId = location.pathname.match(/^\/commands\/([^/]+)$/)?.[1]
-  const scriptId = location.pathname.match(/^\/scripts\/([^/]+)$/)?.[1]
-  const { data: node } = useNode(nodeId ?? '')
-  const { data: command } = useCommand(commandId ?? '')
-  const { data: script } = useScript(scriptId ?? '')
 
   const staticTitles: Record<string, string> = {
     '/': 'dashboard.title',
@@ -61,9 +52,7 @@ export function MainLayout() {
   }
 
   const titleKey = staticTitles[location.pathname]
-  const documentTitle = titleKey
-    ? t(titleKey)
-    : nodeId ? node?.name : commandId ? command?.name : scriptId ? script?.name : undefined
+  const documentTitle = titleKey ? t(titleKey) : undefined
 
   useDocumentTitle(documentTitle)
 
@@ -146,16 +135,9 @@ export function MainLayout() {
         `}
       >
         {/* Logo */}
-        <div className="px-6 py-5 border-b border-surface-200/50 dark:border-surface-800/50">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" width={40} height={40} loading="eager" decoding="async" />
-            <div>
-              <p className="text-xl font-bold gradient-text">NodeNexus</p>
-              <p className="text-xs text-surface-500 dark:text-surface-500">
-                Panel v{APP_VERSION}{health?.version && <span className="ml-1">API v{health.version}</span>}
-              </p>
-            </div>
-          </div>
+        <div className="px-6 h-[var(--header-height)] flex items-center gap-3 border-b border-surface-200/50 dark:border-surface-800/50 shrink-0">
+          <img src="/logo.png" alt="NodeNexus" className="w-10 h-10" width={40} height={40} loading="eager" decoding="async" />
+          <p className="text-xl font-bold gradient-text">NodeNexus</p>
         </div>
 
         {/* Navigation */}
@@ -167,7 +149,7 @@ export function MainLayout() {
               end={item.to === '/'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all duration-200 stagger-item ${
+                `flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-none stagger-item ${
                   isActive
                     ? 'bg-gradient-to-r from-accent-500/10 to-purple-500/10 text-accent-600 dark:from-accent-500/20 dark:to-purple-500/20 dark:text-accent-400 shadow-sm'
                     : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white'
@@ -192,7 +174,7 @@ export function MainLayout() {
               aria-label={sidebarOpen ? t('common.closeMenu') : t('common.openMenu')}
               aria-expanded={sidebarOpen}
               aria-controls="sidebar"
-              className="lg:hidden mr-4 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+              className="lg:hidden mr-4 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-none cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -204,9 +186,9 @@ export function MainLayout() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
-              aria-label={i18n.language === 'en' ? 'Switch to Russian' : 'Переключить на английский'}
+              aria-label={t('common.switchLanguage')}
               lang={i18n.language === 'en' ? 'ru' : 'en'}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-none cursor-pointer"
             >
               <IconGlobe className="w-4 h-4" aria-hidden="true" />
               {i18n.language === 'en' ? 'РУ' : 'EN'}
@@ -221,17 +203,23 @@ export function MainLayout() {
                 onClick={() => queryClient.invalidateQueries()}
                 disabled={isFetching}
                 aria-label={t('common.refresh')}
-                className={`p-2 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 ${isFetching ? '' : 'cursor-pointer'}`}
+                className={`p-2 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-none ${isFetching ? '' : 'cursor-pointer'}`}
               >
                 <IconRefresh className={`w-4 h-4 ${isFetching ? 'animate-spin text-accent-500' : ''}`} />
               </button>
             </Tooltip>
 
+            {/* Versions — logically before connection activity */}
+            <span className="hidden lg:inline-flex items-center gap-1.5 text-xs text-surface-500 dark:text-surface-400">
+              Panel v{APP_VERSION} <span className="opacity-50">·</span> API v{health?.version ?? '—'}
+            </span>
+            <div className="hidden lg:block w-px h-4 bg-surface-200 dark:bg-surface-700" />
+
             {/* Connection status */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50" role="status" aria-live="polite" aria-label={wsConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100/50 dark:bg-surface-800/50" role="status" aria-live="polite" aria-label={wsConnected ? t('common.connected') : t('common.disconnected')}>
               <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 status-online' : 'bg-red-500'}`} aria-hidden="true" />
               <span className="text-xs font-medium text-surface-500 dark:text-surface-400">
-                {wsConnected ? t('dashboard.liveUpdates') : t('dashboard.offline')}
+                {wsConnected ? t('common.connected') : t('common.disconnected')}
               </span>
             </div>
 
@@ -240,7 +228,7 @@ export function MainLayout() {
               <button
                 onClick={() => setCommandPaletteOpen(true)}
                 aria-label={t('common.search')}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-none cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -257,7 +245,7 @@ export function MainLayout() {
               <button
                 onClick={handleLogout}
                 aria-label={t('common.logout')}
-                className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
+                className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-none cursor-pointer"
               >
                 <IconLogout className="w-4 h-4" />
               </button>

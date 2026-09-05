@@ -251,7 +251,7 @@ export type ScriptStep = ScriptStep_Output
 // ── Helpers ─────────────────────────────────────────────────────
 export type NodeOffsetListResponse = { items: Node[]; total: number; page: number; size: number } // legacy
 export type NodeListResponse = NodeCursorListResponse | NodeOffsetListResponse
-export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursorListResponse { return 'next_cursor' in (resp as any) && 'has_more' in (resp as any) }
+export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursorListResponse { return 'next_cursor' in resp && 'has_more' in resp }
 
 export interface ApiError { code: string; message: string; detail?: unknown; request_id?: string | null; details?: Record<string, string[]> }
 

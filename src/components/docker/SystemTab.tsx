@@ -1,13 +1,25 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader } from '../ui/Card'
 import { ErrorState } from '../ui/ErrorState'
 import { TableSkeleton } from '../ui/Skeleton'
-import { useDockerSystemInfo, useDockerSystemDf } from '../../hooks/useDocker'
+import { Button } from '../ui/Button'
+import { Modal } from '../ui/Modal'
+import { useToast } from '../ui/useToast'
+import { useDockerSystemInfo, useDockerSystemDf, useDockerSystemVersion, usePruneSystem, usePruneNetworks, usePruneImages, usePruneVolumes, usePruneContainers } from '../../hooks/useDocker'
 
 export function SystemTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { data: systemInfo, isLoading: infoLoading, error: infoError, refetch: refetchInfo } = useDockerSystemInfo(nodeId)
   const { data: diskUsage, isLoading: dfLoading, error: dfError, refetch: refetchDf } = useDockerSystemDf(nodeId)
+  const { data: versionInfo } = useDockerSystemVersion(nodeId)
+  const pruneSystem = usePruneSystem()
+  const pruneNetworks = usePruneNetworks()
+  const pruneImages = usePruneImages()
+  const pruneVolumes = usePruneVolumes()
+  const pruneContainers = usePruneContainers()
+  const [showPruneConfirm, setShowPruneConfirm] = useState<null | 'system' | 'networks' | 'images' | 'volumes' | 'containers'>(null)
 
   if (infoLoading || dfLoading) {
     return (
@@ -33,10 +45,30 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
     { label: t('docker.images', 'Images'), value: systemInfo.images ?? 0 },
   ] : []
 
+  const handlePrune = (type: 'system' | 'networks' | 'images' | 'volumes' | 'containers') => {
+    const map = {
+      system: pruneSystem,
+      networks: pruneNetworks,
+      images: pruneImages,
+      volumes: pruneVolumes,
+      containers: pruneContainers,
+    } as const
+    const mut = map[type]
+    mut.mutate(nodeId, {
+      onSuccess: () => { toast('success', t('docker.toastPruneDone', 'Pruned')); setShowPruneConfirm(null) },
+      onError: () => toast('error', t('docker.toastPruneFailed', 'Prune failed')),
+    })
+  }
+
   return (
     <div className="space-y-6 p-4">
       <Card>
-        <CardHeader>{t('docker.systemInfo', 'System Info')}</CardHeader>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <span>{t('docker.systemInfo', 'System Info')}</span>
+            {versionInfo && <span className="text-xs text-surface-500">API {versionInfo.api_version} — {versionInfo.version}</span>}
+          </div>
+        </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
             {infoCards.map((item) => (
@@ -46,12 +78,28 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
               </div>
             ))}
           </div>
+          {versionInfo && (
+            <div className="mt-4 p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
+              <p className="text-xs text-surface-500">Docker version {versionInfo.version} (API {versionInfo.api_version})</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {diskUsage && diskUsage.length > 0 && (
         <Card>
-          <CardHeader>{t('docker.diskUsage', 'Disk Usage')}</CardHeader>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <span>{t('docker.diskUsage', 'Disk Usage')}</span>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setShowPruneConfirm('system')}>{t('docker.pruneSystem', 'Prune System')}</Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowPruneConfirm('images')}>{t('docker.pruneImages')}</Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowPruneConfirm('containers')}>{t('docker.pruneContainers')}</Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowPruneConfirm('networks')}>{t('docker.pruneNetworks', 'Prune Networks')}</Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowPruneConfirm('volumes')}>{t('docker.pruneVolumes')}</Button>
+              </div>
+            </div>
+          </CardHeader>
           <CardContent className="p-0">
             <table className="w-full">
               <thead>
@@ -78,6 +126,16 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
           </CardContent>
         </Card>
       )}
+
+      <Modal isOpen={!!showPruneConfirm} onClose={() => setShowPruneConfirm(null)} title={t('docker.prune', 'Prune')}>
+        <div className="space-y-4">
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.confirmPrune', 'Remove unused data? This cannot be undone.')}</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowPruneConfirm(null)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={() => showPruneConfirm && handlePrune(showPruneConfirm)}>{t('common.confirm', 'Confirm')}</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

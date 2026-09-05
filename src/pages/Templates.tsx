@@ -216,8 +216,8 @@ function PacksTab() {
             <Button onClick={()=> {
               if(!cpPackId.trim()||!cpName.trim()){ toast('error', t('templates.createFailed')); return }
               let cmds: unknown[] = []; let scrips: unknown[] = [];
-              try{ cmds = cpCommands.trim()? JSON.parse(cpCommands):[] } catch{ toast('error','Invalid commands JSON'); return }
-              try{ scrips = cpScripts.trim()? JSON.parse(cpScripts):[] } catch{ toast('error','Invalid scripts JSON'); return }
+              try{ cmds = cpCommands.trim()? JSON.parse(cpCommands):[] } catch{ toast('error', t('templates.invalidCommandsJson')); return }
+              try{ scrips = cpScripts.trim()? JSON.parse(cpScripts):[] } catch{ toast('error', t('templates.invalidScriptsJson')); return }
               const tags = cpTags.split(',').map((s)=>s.trim()).filter(Boolean)
               createPack.mutate({ manifest:{ pack_id: cpPackId.trim(), name: cpName.trim(), version: cpVersion.trim()||'1.0.0', description: cpDesc||undefined, tags }, commands: cmds as never, scripts: scrips as never } as never, { onSuccess:()=>{ toast('success', t('templates.created','Created')); setShowCreatePack(false); setCpPackId(''); setCpName(''); setCpVersion('1.0.0'); setCpDesc(''); setCpTags(''); setCpCommands('[]'); setCpScripts('[]') }, onError:()=> toast('error', t('templates.createFailed')) })
             }} disabled={!cpPackId.trim()||!cpName.trim()||createPack.isPending}>{createPack.isPending? t('common.loading'): t('common.create')}</Button>

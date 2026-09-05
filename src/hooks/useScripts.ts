@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { getNextCursor } from '../lib/pagination'
 import { scriptsApi } from '../api/scripts'
 import type {
   ScriptResponse,
@@ -37,7 +38,7 @@ export function useInfiniteScripts(params?: { limit?: number; tag?: string | nul
     queryKey: ['scripts', 'infinite', params],
     queryFn: ({ pageParam }) => scriptsApi.getAll({ cursor: pageParam as string | null, limit: params?.limit, tag: params?.tag, search: params?.search }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
   })
 }
 
@@ -67,7 +68,7 @@ export function useInfiniteScriptExecutions(id: string, params?: { limit?: numbe
     queryKey: ['scripts', 'detail', id, 'executions', 'infinite', params],
     queryFn: ({ pageParam }) => scriptsApi.getExecutions(id, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!id,
   })
 }
@@ -90,7 +91,7 @@ export function useInfiniteScriptScheduleHistory(id: string, params?: { limit?: 
     queryKey: ['scripts', 'detail', id, 'schedule-history', 'infinite', params],
     queryFn: ({ pageParam }) => scriptsApi.getScheduleHistory(id, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!id,
   })
 }
@@ -196,6 +197,49 @@ export function useBulkRetryScriptExecutions() {
   return useMutation({
     mutationFn: (executionIds: string[]) => scriptsApi.bulkRetry({ execution_ids: executionIds }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['scripts'] }),
+  })
+}
+
+export function useBulkDeleteScripts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const settled = await Promise.allSettled(ids.map((id) => scriptsApi.remove(id)))
+      let succeeded = 0, failed = 0
+      const results: Array<{ id: string; status: 'success' | 'failed'; error?: string }> = []
+      settled.forEach((r, i) => {
+        if (r.status === 'fulfilled') { succeeded++; results.push({ id: ids[i], status: 'success' }) }
+        else { failed++; results.push({ id: ids[i], status: 'failed', error: String((r.reason as Error)?.message ?? r.reason) }) }
+      })
+      return { total: ids.length, succeeded, failed, results }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scripts'] }),
+  })
+}
+
+export function useBulkCloneScripts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const settled = await Promise.allSettled(ids.map((id) => scriptsApi.clone(id, undefined)))
+      let succeeded = 0, failed = 0
+      settled.forEach((r) => { if (r.status === 'fulfilled') succeeded++; else failed++ })
+      return { total: ids.length, succeeded, failed, results: settled.map((r, i) => ({ id: ids[i], status: r.status === 'fulfilled' ? 'success' as const : 'failed' as const })) }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scripts'] }),
+  })
+}
+
+export function useBulkUpdateScripts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<ScriptUpdate> }) => {
+      const settled = await Promise.allSettled(ids.map((id) => scriptsApi.update(id, data as ScriptUpdate)))
+      let succeeded = 0, failed = 0
+      settled.forEach((r) => { if (r.status === 'fulfilled') succeeded++; else failed++ })
+      return { total: ids.length, succeeded, failed, results: settled.map((r, i) => ({ id: ids[i], status: r.status === 'fulfilled' ? 'success' as const : 'failed' as const })) }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scripts'] }),
   })
 }
 

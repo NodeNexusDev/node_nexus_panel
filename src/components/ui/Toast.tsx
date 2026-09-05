@@ -145,7 +145,7 @@ function ToastItem({ toast, onRemove, onPause, onResume }: { toast: Toast; onRem
       <span className="text-sm flex-1 font-medium">{toast.message}</span>
       {toast.action && (
         <button
-          onClick={() => { toast.action!.onClick(); onRemove() }}
+          onClick={() => { toast.action?.onClick(); onRemove() }}
           className="text-sm font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity shrink-0 cursor-pointer"
         >
           {toast.action.label}

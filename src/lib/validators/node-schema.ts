@@ -3,6 +3,10 @@ import { z } from 'zod'
 const CONNECTION_TYPES = ['ssh'] as const
 const NODE_STATUSES = ['active', 'unreachable', 'error'] as const
 
+const tagRegex = /^[a-z0-9_-]{1,30}$/
+const tagsCreate = z.array(z.string().min(1).max(30).regex(tagRegex, 'Tag must match ^[a-z0-9_-]+$ (lowercase, 1-30)')).max(20).optional()
+const tagsUpdate = z.array(z.string().min(1).max(30).regex(tagRegex, 'Tag must match ^[a-z0-9_-]+$')).max(20).nullable().optional()
+
 export const nodeCreateSchema = z.object({
   name: z.string().min(1).max(255),
   host: z.string().min(1).max(255),
@@ -15,7 +19,7 @@ export const nodeCreateSchema = z.object({
   passphrase: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   docker_host: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   has_docker: z.boolean().default(false),
-  tags: z.array(z.string()).optional(),
+  tags: tagsCreate,
 })
 
 export const nodeUpdateSchema = z.object({
@@ -31,7 +35,7 @@ export const nodeUpdateSchema = z.object({
   passphrase: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   docker_host: z.string().transform(v => v === '' ? null : v).nullable().optional(),
   has_docker: z.boolean().nullable().optional(),
-  tags: z.array(z.string()).nullable().optional(),
+  tags: tagsUpdate,
 })
 
 export const nodeValidateSchema = z.object({
