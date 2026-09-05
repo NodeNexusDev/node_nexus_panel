@@ -109,14 +109,14 @@ export function NetworkDrawer({ nodeId, network, onClose }: NetworkDrawerProps) 
             <div className="space-y-2">
               <p className="text-sm font-medium text-surface-900 dark:text-white">{t('docker.connectContainer', 'Connect container')}</p>
               <div className="flex gap-2">
-                <Input value={connectContainerId} onChange={(e) => setConnectContainerId(e.target.value)} placeholder="container id" className="flex-1" />
+                <Input value={connectContainerId} onChange={(e) => setConnectContainerId(e.target.value)} placeholder={t('docker.containerId')} className="flex-1" />
                 <Button size="sm" disabled={connectNetwork.isPending || !connectContainerId.trim()} onClick={handleConnect}>{connectNetwork.isPending ? t('common.loading') : t('docker.connect', 'Connect')}</Button>
               </div>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-surface-900 dark:text-white">{t('docker.disconnectContainer', 'Disconnect container')}</p>
               <div className="flex gap-2">
-                <Input value={disconnectContainerId} onChange={(e) => setDisconnectContainerId(e.target.value)} placeholder="container id" className="flex-1" />
+                <Input value={disconnectContainerId} onChange={(e) => setDisconnectContainerId(e.target.value)} placeholder={t('docker.containerId')} className="flex-1" />
                 <Button size="sm" disabled={disconnectNetwork.isPending || !disconnectContainerId.trim()} onClick={handleDisconnect}>{disconnectNetwork.isPending ? t('common.loading') : t('docker.disconnect', 'Disconnect')}</Button>
               </div>
             </div>

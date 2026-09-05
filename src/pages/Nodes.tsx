@@ -240,7 +240,7 @@ export function Nodes() {
       className: 'w-20 text-center',
       render: (node) => (
         <span className={`inline-flex items-center justify-center gap-1 text-xs font-medium ${node.has_docker ? 'text-green-600 dark:text-green-400' : 'text-surface-400'}`}>
-          {node.has_docker ? <><IconDocker className="w-4 h-4" /> Yes</> : '—'}
+          {node.has_docker ? <><IconDocker className="w-4 h-4" /> {t('common.yes')}</> : '—'}
         </span>
       ),
     },
@@ -283,7 +283,7 @@ export function Nodes() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
-          {node.has_docker && <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400"><IconDocker className="w-3.5 h-3.5" /> Docker</span>}
+          {node.has_docker && <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400"><IconDocker className="w-3.5 h-3.5" /> {t('nodes.hasDockerBadge')}</span>}
         </div>
       </div>
       <div className="flex flex-wrap gap-1">
@@ -659,7 +659,7 @@ export function Nodes() {
             <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.hasDocker', 'Has Docker')}</label>
             <Select value={bulkUpdateChanges.has_docker === undefined ? 'keep' : bulkUpdateChanges.has_docker ? 'yes' : 'no'} onChange={(v)=> setBulkUpdateChanges({ ...bulkUpdateChanges, has_docker: v==='keep'? undefined : v==='yes' })} options={[{value:'keep',label:t('common.keep','Keep')},{value:'yes',label:t('common.yes','Yes')},{value:'no',label:t('common.no','No')}]} />
           </div>
-          <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="comma, separated" value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
+          <Input label={t('nodes.tagsLabel', 'Tags')} placeholder={t('common.commaSeparated')} value={bulkUpdateChanges.tags} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, tags: e.target.value })} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowBulkUpdate(false)}>{t('common.cancel')}</Button>
             <Button onClick={() => {

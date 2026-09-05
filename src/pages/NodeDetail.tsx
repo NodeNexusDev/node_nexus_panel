@@ -273,7 +273,7 @@ export function NodeDetail() {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+        <Badge variant={nodeStatusVariant(node.status)}>{t(`nodes.status${node.status.charAt(0).toUpperCase() + node.status.slice(1)}` as never, node.status)}</Badge>
         <Badge variant="default">{node.connection_type}</Badge>
         {node.tags.map((tag) => (
           <Badge key={tag} variant="default">{tag}</Badge>
@@ -401,7 +401,7 @@ function OverviewTab({ node }: { node: Node }) {
   const { copy } = useCopyToClipboard()
   const navigate = useNavigate()
   const connTypeBadge = <Badge variant="info">{node.connection_type}</Badge>
-  const statusBadge = <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+  const statusBadge = <Badge variant={nodeStatusVariant(node.status)}>{t(`nodes.status${node.status.charAt(0).toUpperCase() + node.status.slice(1)}` as never, node.status)}</Badge>
   // oxlint-disable-next-line react(jsx-key)
   const rows: [string, React.ReactNode][] = [
     [t('nodes.host'), (
@@ -427,7 +427,7 @@ function OverviewTab({ node }: { node: Node }) {
         <button onClick={() => copy(node.docker_host!)} aria-label={t('common.copy')} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3 h-3 text-surface-400" /></button>
       </span>
     ) : '—'],
-    [t('nodes.hasDocker', 'Has Docker'), node.has_docker ? <Badge key="hasdocker" variant="success">Yes</Badge> : <Badge key="hasdocker" variant="default">No</Badge>],
+    [t('nodes.hasDocker', 'Has Docker'), node.has_docker ? <Badge key="hasdocker" variant="success">{t('common.yes')}</Badge> : <Badge key="hasdocker" variant="default">{t('common.no')}</Badge>],
     [t('nodes.tags', 'Tags'), node.tags.length ? (
       <span key="tags" className="flex flex-wrap gap-1">
         {node.tags.map((tag) => (

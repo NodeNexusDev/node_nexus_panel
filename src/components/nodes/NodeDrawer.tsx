@@ -186,7 +186,7 @@ export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _
       <div className="flex flex-wrap gap-1.5">
         <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
         <Badge variant="default">{node.connection_type}</Badge>
-        {node.has_docker && <Badge variant="info">docker</Badge>}
+        {node.has_docker && <Badge variant="info">{t('nodes.hasDockerBadge')}</Badge>}
         {node.tags.map((tag) => (
           <Badge key={tag} variant="default">{tag}</Badge>
         ))}
@@ -341,7 +341,7 @@ function DrawerMetrics({ nodeId }: { nodeId: string }) {
         <DrawerMetricBar label={t('nodes.memory', 'Memory')} value={`${formatBytes(metrics.memory?.used_bytes)} / ${formatBytes(metrics.memory?.total_bytes)} (${memPct.toFixed(1)}%)`} percent={memPct} />
         <DrawerMetricBar label={t('nodes.disk', 'Disk')} value={`${formatBytes(metrics.disk?.used_bytes)} / ${formatBytes(metrics.disk?.total_bytes)} (${diskPct.toFixed(1)}%)`} percent={diskPct} />
         <KeyValueList rows={[{ label: t('nodes.uptimeSince', 'Uptime Since'), value: metrics.uptime_since ? new Date(metrics.uptime_since).toLocaleString() : '—' }]} />
-        <div className="pt-1"><p className="text-xs font-medium text-surface-600 dark:text-surface-400 mb-2">{t('nodes.loadAverage', 'Load Average')}</p><KeyValueList rows={[{ label: '1m', value: (metrics.load_average?.one_min ?? 0).toFixed(2) },{ label: '5m', value: (metrics.load_average?.five_min ?? 0).toFixed(2) },{ label: '15m', value: (metrics.load_average?.fifteen_min ?? 0).toFixed(2) }]} /></div>
+        <div className="pt-1"><p className="text-xs font-medium text-surface-600 dark:text-surface-400 mb-2">{t('nodes.loadAverage', 'Load Average')}</p><KeyValueList rows={[{ label: t('nodes.load1m'), value: (metrics.load_average?.one_min ?? 0).toFixed(2) },{ label: t('nodes.load5m'), value: (metrics.load_average?.five_min ?? 0).toFixed(2) },{ label: t('nodes.load15m'), value: (metrics.load_average?.fifteen_min ?? 0).toFixed(2) }]} /></div>
       </CardContent>
     </Card>
   )

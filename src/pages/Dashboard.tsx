@@ -152,7 +152,7 @@ export function Dashboard() {
                       <div className={`w-3 h-3 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
                       <div><p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p><p className="text-xs text-surface-500 dark:text-surface-500">{node.host}</p></div>
                     </div>
-                    <Badge variant={nodeStatusVariant(node.status)}>{node.status}</Badge>
+                    <Badge variant={nodeStatusVariant(node.status)}>{t(`nodes.status${node.status.charAt(0).toUpperCase() + node.status.slice(1)}` as never, node.status)}</Badge>
                   </div>
                 ))}
               </div>
