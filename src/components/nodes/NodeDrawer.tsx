@@ -58,14 +58,10 @@ type DrawerTab = 'overview' | 'metrics' | 'stats' | 'history' | 'edit' | 'exec' 
 interface NodeDrawerProps {
   node: Node
   onClose: () => void
-  onEdit?: (node: Node) => void
   onDelete?: (node: Node) => void
-  onExec: (node: Node) => void
-  onRunScript: (node: Node) => void
-  onValidate?: (node: Node) => void
 }
 
-export function NodeDrawer({ node, onClose, onEdit: _onEdit, onDelete, onExec: _onExec, onRunScript: _onRunScript, onValidate: _onValidate }: NodeDrawerProps) {
+export function NodeDrawer({ node, onClose, onDelete }: NodeDrawerProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()

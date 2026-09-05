@@ -147,7 +147,7 @@ export function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {recentNodes.map((node) => (
-                  <div key={node.id} className="flex items-center justify-between p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => navigate(`/nodes/${node.id}`)}>
+                  <div key={node.id} className="flex items-center justify-between p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => navigate('/nodes')}>
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${node.status === 'active' ? 'bg-green-500 status-online' : 'bg-red-500'}`} />
                       <div><p className="text-sm font-semibold text-surface-900 dark:text-white">{node.name}</p><p className="text-xs text-surface-500 dark:text-surface-500">{node.host}</p></div>
@@ -173,7 +173,7 @@ export function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {favList.slice(0, 6).map((fav) => (
-                  <div key={`${fav.target_type}-${fav.target_id}`} className="flex items-center gap-3 p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => { if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`); else if (fav.target_type === 'script') navigate(`/scripts/${fav.target_id}`); else if (fav.target_type === 'command') navigate(`/commands/${fav.target_id}`) }}>
+                  <div key={`${fav.target_type}-${fav.target_id}`} className="flex items-center gap-3 p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-800/50 transition-all duration-200 stagger-item cursor-pointer" onClick={() => { if (fav.target_type === 'node') navigate('/nodes'); else if (fav.target_type === 'script') navigate('/scripts'); else if (fav.target_type === 'command') navigate('/commands') }}>
                     {favIcon(fav.target_type)}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-surface-900 dark:text-white truncate">{fav.name || fav.note || fav.target_id}</p>

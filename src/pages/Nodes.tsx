@@ -22,8 +22,6 @@ import { SortableHeader } from '../components/ui/SortableHeader'
 import { Checkbox } from '../components/ui/Checkbox'
 import { Drawer } from '../components/ui/Drawer'
 import { NodeDrawer } from '../components/nodes/NodeDrawer'
-import { NodeCommandModal } from '../components/nodes/NodeCommandModal'
-import { NodeScriptModal } from '../components/nodes/NodeScriptModal'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
 import { BulkScriptModal } from '../components/scripts/BulkScriptModal'
@@ -115,8 +113,6 @@ export function Nodes() {
     setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
   }
 
-  const [execTarget, setExecTarget] = useState<Node | null>(null)
-  const [scriptTarget, setScriptTarget] = useState<Node | null>(null)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
   const [showBulkScript, setShowBulkScript] = useState(false)
@@ -178,6 +174,7 @@ export function Nodes() {
     })
     setClearFields({})
   }, [])
+  void openEdit
 
   const columns: Column<Node>[] = useMemo(() => [
     {
@@ -320,7 +317,7 @@ export function Nodes() {
           const nodeId = createdNode?.node_id
           toast('success', t('nodes.toastAdded', { name: values.name }), nodeId ? {
             label: t('common.view', 'View'),
-            onClick: () => navigate(`/nodes/${nodeId}`),
+            onClick: () => navigate('/nodes'),
           } : undefined)
           setShowAddModal(false)
           addForm.reset()
@@ -683,10 +680,6 @@ export function Nodes() {
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('nodes.deleteTitle')} message={t('nodes.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteNode.isPending} />
 
-      <NodeCommandModal node={execTarget} onClose={() => setExecTarget(null)} />
-
-      <NodeScriptModal node={scriptTarget} onClose={() => setScriptTarget(null)} />
-
       <Drawer
         isOpen={!!drawerNode}
         onClose={() => setDrawerNode(null)}
@@ -696,10 +689,7 @@ export function Nodes() {
           <NodeDrawer
             node={drawerNode}
             onClose={() => setDrawerNode(null)}
-            onEdit={(n) => { setDrawerNode(null); openEdit(n) }}
             onDelete={(n) => { setDrawerNode(null); setDeleteTarget({ id: n.id, name: n.name }) }}
-            onExec={(n) => setExecTarget(n)}
-            onRunScript={(n) => setScriptTarget(n)}
           />
         )}
       </Drawer>

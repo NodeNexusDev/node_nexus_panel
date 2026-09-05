@@ -34,9 +34,9 @@ export function Favorites() {
   const favorites = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
 
   const handleNavigate = (fav: FavoriteResponse) => {
-    if (fav.target_type === 'node') navigate(`/nodes/${fav.target_id}`)
-    else if (fav.target_type === 'command') navigate(`/commands/${fav.target_id}`)
-    else navigate(`/scripts/${fav.target_id}`)
+    if (fav.target_type === 'node') navigate('/nodes')
+    else if (fav.target_type === 'command') navigate('/commands')
+    else navigate('/scripts')
   }
 
   const handleRemove = (fav: FavoriteResponse) => {

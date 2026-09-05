@@ -7,9 +7,6 @@ import { useUiStore } from '../stores/ui-store'
 import { useSse } from '../hooks/useSse'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useHealth } from '../hooks/useHealth'
-import { useNode } from '../hooks/useNodes'
-import { useCommand } from '../hooks/useCommands'
-import { useScript } from '../hooks/useScripts'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
 import { Tooltip } from '../components/ui/Tooltip'
@@ -41,12 +38,6 @@ export function MainLayout() {
   const { data: health } = useHealth()
 
   const location = useLocation()
-  const nodeId = location.pathname.match(/^\/nodes\/([^/]+)$/)?.[1]
-  const commandId = location.pathname.match(/^\/commands\/([^/]+)$/)?.[1]
-  const scriptId = location.pathname.match(/^\/scripts\/([^/]+)$/)?.[1]
-  const { data: node } = useNode(nodeId ?? '')
-  const { data: command } = useCommand(commandId ?? '')
-  const { data: script } = useScript(scriptId ?? '')
 
   const staticTitles: Record<string, string> = {
     '/': 'dashboard.title',
@@ -61,9 +52,7 @@ export function MainLayout() {
   }
 
   const titleKey = staticTitles[location.pathname]
-  const documentTitle = titleKey
-    ? t(titleKey)
-    : nodeId ? node?.name : commandId ? command?.name : scriptId ? script?.name : undefined
+  const documentTitle = titleKey ? t(titleKey) : undefined
 
   useDocumentTitle(documentTitle)
 
