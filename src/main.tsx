@@ -18,7 +18,9 @@ async function enableMocking() {
 }
 
 enableMocking().then(() => {
-  createRoot(document.getElementById('root')!).render(
+  const rootEl = document.getElementById('root')
+  if (!rootEl) throw new Error('Root element not found')
+  createRoot(rootEl).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>

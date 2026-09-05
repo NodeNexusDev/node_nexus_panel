@@ -11,9 +11,8 @@ function envSubst(envVars: Record<string, string>) {
   return {
     name: 'env-subst',
     transformIndexHtml(html: string) {
-      let result = html.replace(/__VITE_API_URL__/g, escapeForJsonString(envVars['VITE_API_URL'] ?? process.env['VITE_API_URL'] ?? ''))
-      result = result.replace(/\$\{(\w+)\}/g, (_, key) => escapeForJsonString(process.env[key] ?? envVars[key] ?? ''))
-      return result
+      // Only replace known placeholders, not any ${VAR} to avoid env injection
+      return html.replace(/__VITE_API_URL__/g, escapeForJsonString(envVars['VITE_API_URL'] ?? ''))
     },
   }
 }
@@ -28,20 +27,22 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: 'http://localhost:8000',
+          target: env.VITE_PROXY_TARGET || process.env.VITE_PROXY_TARGET || 'http://localhost:8000',
           changeOrigin: true,
         },
       },
     },
     build: {
-      chunkSizeWarningLimit: 500,
+      chunkSizeWarningLimit: 300,
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) return 'vendor'
+            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router') || id.includes('node_modules/scheduler')) return 'vendor'
             if (id.includes('@tanstack/react-query')) return 'query'
             if (id.includes('i18next')) return 'i18n'
             if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) return 'forms'
+            if (id.includes('msw') || id.includes('mockServiceWorker')) return 'mocks'
+            if (id.includes('zustand')) return 'store'
             return undefined
           },
         },

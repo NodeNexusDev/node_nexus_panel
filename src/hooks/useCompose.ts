@@ -1,3 +1,4 @@
+import { getNextCursor } from '../lib/pagination'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { composeApi } from '../api/compose'
 import type {
@@ -32,7 +33,7 @@ export function useInfiniteComposeProjects(nodeId: string, params?: { limit?: nu
     queryKey: ['compose', nodeId, 'projects', 'infinite', params],
     queryFn: ({ pageParam }) => composeApi.list(nodeId, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!nodeId,
   })
 }

@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { getNextCursor } from '../lib/pagination'
 import { scriptsApi } from '../api/scripts'
 import type {
   ScriptResponse,
@@ -37,7 +38,7 @@ export function useInfiniteScripts(params?: { limit?: number; tag?: string | nul
     queryKey: ['scripts', 'infinite', params],
     queryFn: ({ pageParam }) => scriptsApi.getAll({ cursor: pageParam as string | null, limit: params?.limit, tag: params?.tag, search: params?.search }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
   })
 }
 
@@ -67,7 +68,7 @@ export function useInfiniteScriptExecutions(id: string, params?: { limit?: numbe
     queryKey: ['scripts', 'detail', id, 'executions', 'infinite', params],
     queryFn: ({ pageParam }) => scriptsApi.getExecutions(id, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!id,
   })
 }
@@ -90,7 +91,7 @@ export function useInfiniteScriptScheduleHistory(id: string, params?: { limit?: 
     queryKey: ['scripts', 'detail', id, 'schedule-history', 'infinite', params],
     queryFn: ({ pageParam }) => scriptsApi.getScheduleHistory(id, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!id,
   })
 }

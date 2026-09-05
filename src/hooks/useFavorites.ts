@@ -1,3 +1,4 @@
+import { getNextCursor } from '../lib/pagination'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { favoritesApi } from '../api/favorites'
 import type { FavoriteCreate, CursorPage_FavoriteResponse_ } from '../api/types'
@@ -18,7 +19,7 @@ export function useInfiniteFavorites(params?: { limit?: number; target_type?: st
     queryKey: ['favorites', 'infinite', params],
     queryFn: ({ pageParam }) => favoritesApi.getAll({ cursor: pageParam as string | null, limit: params?.limit, target_type: params?.target_type }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
   })
 }
 

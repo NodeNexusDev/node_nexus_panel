@@ -117,6 +117,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       onError: () => toast('error', t('docker.composeDownFailed')),
     })
   }
+  // oxlint-disable-next-line no-explicit-any
   const handleGeneric = (
     fn: { mutate: (vars: any, opts: any) => void; isPending: boolean },
     name: string,

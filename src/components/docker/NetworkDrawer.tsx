@@ -32,6 +32,7 @@ export function NetworkDrawer({ nodeId, network, onClose }: NetworkDrawerProps) 
   const [connectContainerId, setConnectContainerId] = useState('')
   const [disconnectContainerId, setDisconnectContainerId] = useState('')
 
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setActive('overview')
     setShowDeleteConfirm(false)

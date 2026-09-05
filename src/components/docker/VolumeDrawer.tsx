@@ -27,6 +27,7 @@ export function VolumeDrawer({ nodeId, volume, onClose }: VolumeDrawerProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const deleteVolume = useDeleteVolume()
 
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setActive('overview')
     setShowDeleteConfirm(false)

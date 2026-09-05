@@ -7,7 +7,7 @@ export const commandParameterSchema = z.object({
   description: z.string().max(500).nullable().optional(),
   type: z.enum(PARAMETER_TYPES).default('string'),
   required: z.boolean().default(true),
-  default: z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.any()), z.array(z.any())]).or(z.null()).optional(),
+  default: z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())]).or(z.null()).optional(),
 })
 
 const tagRegex = /^[a-z0-9_-]{1,30}$/

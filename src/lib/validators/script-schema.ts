@@ -10,7 +10,7 @@ export const scriptStepSchema = z
     command: z.string().max(4096).nullable().optional(),
     command_id: z.string().uuid().nullable().optional(),
     command_name: z.string().max(255).nullable().optional(),
-    params: z.record(z.string(), z.any()).optional(),
+    params: z.record(z.string(), z.unknown()).optional(),
     on_failure: z.enum(ON_FAILURE_VALUES).default('stop'),
   })
   .superRefine((val, ctx) => {
@@ -43,7 +43,7 @@ export const scriptUpdateSchema = z.object({
 export const scheduleSchema = z.object({
   cron: z.string().min(5).max(60),
   node_ids: z.array(z.string().uuid()).min(1),
-  params: z.record(z.string(), z.any()).optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
   timezone: z.string().min(1).max(100).default('UTC'),
   misfire_grace_seconds: z.number().int().min(1).max(86400).default(60),
 })

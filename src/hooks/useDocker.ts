@@ -1,3 +1,4 @@
+import { getNextCursor } from '../lib/pagination'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { dockerApi } from '../api/docker'
 import type {
@@ -64,7 +65,7 @@ export function useInfiniteDockerContainers(nodeId: string, params?: { limit?: n
     queryKey: ['docker', nodeId, 'containers', 'infinite', params],
     queryFn: ({ pageParam }) => dockerApi.getContainers(nodeId, { cursor: pageParam as string | null, limit: params?.limit, all: params?.all }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => (lastPage as unknown as { has_more: boolean; next_cursor: string | null }).has_more ? (lastPage as unknown as { next_cursor: string | null }).next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!nodeId,
     refetchInterval: 60_000,
   })
@@ -75,7 +76,7 @@ export function useInfiniteDockerImages(nodeId: string, params?: { limit?: numbe
     queryKey: ['docker', nodeId, 'images', 'infinite', params],
     queryFn: ({ pageParam }) => dockerApi.getImages(nodeId, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => (lastPage as unknown as { has_more: boolean; next_cursor: string | null }).has_more ? (lastPage as unknown as { next_cursor: string | null }).next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!nodeId,
     refetchInterval: 60_000,
   })
@@ -86,7 +87,7 @@ export function useInfiniteDockerNetworks(nodeId: string, params?: { limit?: num
     queryKey: ['docker', nodeId, 'networks', 'infinite', params],
     queryFn: ({ pageParam }) => dockerApi.getNetworks(nodeId, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => (lastPage as unknown as { has_more: boolean; next_cursor: string | null }).has_more ? (lastPage as unknown as { next_cursor: string | null }).next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!nodeId,
     refetchInterval: 60_000,
   })
@@ -97,7 +98,7 @@ export function useInfiniteDockerVolumes(nodeId: string, params?: { limit?: numb
     queryKey: ['docker', nodeId, 'volumes', 'infinite', params],
     queryFn: ({ pageParam }) => dockerApi.getVolumes(nodeId, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => (lastPage as unknown as { has_more: boolean; next_cursor: string | null }).has_more ? (lastPage as unknown as { next_cursor: string | null }).next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!nodeId,
     refetchInterval: 60_000,
   })

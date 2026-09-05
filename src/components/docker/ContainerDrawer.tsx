@@ -72,6 +72,7 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
 
   const [waitResult, setWaitResult] = useState<string | null>(null)
 
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setActive('overview')
     setShowDeleteConfirm(false)

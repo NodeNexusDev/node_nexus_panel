@@ -34,6 +34,7 @@ export function ImageDrawer({ nodeId, image, onClose }: ImageDrawerProps) {
   const pushImage = usePushImage()
   const pushById = usePushImageById()
 
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setActive('overview')
     setShowDeleteConfirm(false)

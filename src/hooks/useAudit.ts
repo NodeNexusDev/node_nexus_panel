@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { getNextCursor } from '../lib/pagination'
 import { auditApi } from '../api/audit'
 import type { CursorPage_AuditLogResponse_ } from '../api/types'
 
@@ -23,7 +24,7 @@ export function useInfiniteAuditLogs(params?: { limit?: number; node_id?: string
     queryKey: ['audit', 'infinite', params],
     queryFn: ({ pageParam }) => auditApi.getAll({ cursor: pageParam as string | null, limit: params?.limit, node_id: params?.node_id, action: params?.action, user: params?.user, date_from: params?.date_from, date_to: params?.date_to }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
   })
 }
 
