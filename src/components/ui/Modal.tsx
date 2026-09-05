@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 interface ModalProps {
@@ -122,7 +123,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
 
   if (!isOpen) return null
 
-  return (
+  const content = (
     <div
       role="dialog"
       aria-modal="true"
@@ -162,4 +163,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') return content
+  return createPortal(content, document.body)
 }

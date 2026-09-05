@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 interface DrawerProps {
@@ -114,7 +115,7 @@ export function Drawer({ isOpen, onClose, title, description, children, size = '
 
   if (!isOpen) return null
 
-  return (
+  const content = (
     <div
       role="dialog"
       aria-modal="true"
@@ -165,4 +166,7 @@ export function Drawer({ isOpen, onClose, title, description, children, size = '
       <style>{`@keyframes slide-in-right { from { transform: translateX(100%); opacity: 0.98 } to { transform: translateX(0); opacity: 1 } }`}</style>
     </div>
   )
+
+  if (typeof document === 'undefined') return content
+  return createPortal(content, document.body)
 }
