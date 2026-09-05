@@ -13,7 +13,7 @@ import { IconDocker } from '../ui/Icons'
 import { useToast } from '../ui/useToast'
 import { useSort } from '../../hooks/useSort'
 import { InfiniteScroll } from '../ui/InfiniteScroll'
-import { useInfiniteDockerImages, useDeleteImage, useTagImage, useBuildImage, usePruneImages, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
+import { useInfiniteDockerImages, useBuildImage, usePruneImages, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
 import { Checkbox } from '../ui/Checkbox'
 import { ImageDrawer } from './ImageDrawer'
 import type { DockerImage } from '../../api/types'
@@ -27,16 +27,11 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
   const { sort, toggle } = useSort<SortKey>()
   const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerImages(nodeId, { limit: 20 })
   const imageList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: DockerImage[] }).items) : [], [infiniteData])
-  const deleteImage = useDeleteImage()
-  const tagImage = useTagImage()
   const buildImage = useBuildImage()
   const bulkImageRemove = useBulkDockerImageRemove()
   const bulkImageBuild = useBulkDockerImageBuild()
   const bulkPull = useBulkDockerPull()
   const pruneImages = usePruneImages()
-  const [tagTarget, setTagTarget] = useState<{ id: string; tag: string } | null>(null)
-  const [tagRepo, setTagRepo] = useState('')
-  const [tagName, setTagName] = useState('')
   const [showBuildModal, setShowBuildModal] = useState(false)
   const [buildDockerfile, setBuildDockerfile] = useState('')
   const [buildTag, setBuildTag] = useState('')
@@ -47,7 +42,6 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
   const [showBulkPull, setShowBulkPull] = useState(false)
   const [bulkPullImage, setBulkPullImage] = useState('')
   const [showPruneConfirm, setShowPruneConfirm] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const filtered = useMemo(() => {
     if (!imageList.length) return []
@@ -113,7 +107,6 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.tag')} sortKey="tag" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.id')}</th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.size')} sortKey="size" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
@@ -126,13 +119,6 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300 font-mono">{im.Tag}</td>
                 <td className="px-6 py-4 text-xs text-surface-500 font-mono">{im.ID?.slice(0, 12) || '—'}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{im.Size}</td>
-                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setDrawerImage(img)}>{t('docker.inspect')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setTagTarget({ id: im.ID, tag: im.Tag || '' })}>{t('docker.tag')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: im.ID, name: im.Repository || im.ID?.slice(0, 12) || '' })} className="text-red-500">{t('common.delete')}</Button>
-                  </div>
-                </td>
               </tr>
               )
             })}
@@ -147,17 +133,6 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
       <Drawer isOpen={!!drawerImage} onClose={() => setDrawerImage(null)} size="lg">
         {drawerImage && <ImageDrawer nodeId={nodeId} image={drawerImage} onClose={() => setDrawerImage(null)} />}
       </Drawer>
-
-      <Modal isOpen={!!tagTarget} onClose={() => setTagTarget(null)} title={`${t('docker.tag')}: ${tagTarget?.tag || ''}`}>
-        <div className="space-y-4">
-          <Input label={t('docker.repository')} placeholder="myregistry/myimage" value={tagRepo} onChange={(e) => setTagRepo(e.target.value)} />
-          <Input label={t('docker.tag')} placeholder="latest" value={tagName} onChange={(e) => setTagName(e.target.value)} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setTagTarget(null)}>{t('common.cancel')}</Button>
-            <Button onClick={() => { if (tagTarget && tagRepo && tagName) { tagImage.mutate({ nodeId, imageId: tagTarget.id, data: { repo: tagRepo, tag: tagName } }, { onSuccess: () => setTagTarget(null), onError: () => toast('error', t('docker.toastTagFailed')) }) } }} disabled={!tagRepo || !tagName || tagImage.isPending}>{tagImage.isPending ? t('common.loading') : t('docker.tag')}</Button>
-          </div>
-        </div>
-      </Modal>
 
       <Modal isOpen={showBuildModal} onClose={() => setShowBuildModal(false)} title={t('docker.buildImage')} size="lg">
         <div className="space-y-4">
@@ -230,16 +205,6 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
                 onError: () => toast('error', t('docker.toastPullFailed')),
               })
             }} disabled={!bulkPullImage || bulkPull.isPending}>{bulkPull.isPending ? t('common.loading') : t('docker.pullImage')}</Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('common.delete')}>
-        <div className="space-y-4">
-          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteImageMsg', { name: deleteTarget?.name })}</p>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
-            <Button variant="danger" onClick={() => { if (deleteTarget) { deleteImage.mutate({ nodeId, imageId: deleteTarget.id }, { onSuccess: () => { toast('success', t('docker.toastBulkRemoveDone')); setDeleteTarget(null) }, onError: () => toast('error', t('docker.toastDeleteFailed')) }) } }} disabled={deleteImage.isPending}>{deleteImage.isPending ? t('common.loading') : t('common.delete')}</Button>
           </div>
         </div>
       </Modal>

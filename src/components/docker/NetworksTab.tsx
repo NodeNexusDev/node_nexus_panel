@@ -14,7 +14,7 @@ import { useToast } from '../ui/useToast'
 import { useSort } from '../../hooks/useSort'
 import { InfiniteScroll } from '../ui/InfiniteScroll'
 import { Checkbox } from '../ui/Checkbox'
-import { useInfiniteDockerNetworks, useCreateNetwork, useDeleteNetwork, usePruneNetworks, useBulkNetworkRemovals } from '../../hooks/useDocker'
+import { useInfiniteDockerNetworks, useCreateNetwork, usePruneNetworks, useBulkNetworkRemovals } from '../../hooks/useDocker'
 import { NetworkDrawer } from './NetworkDrawer'
 import type { DockerNetwork } from '../../api/types'
 
@@ -28,7 +28,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
   const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerNetworks(nodeId, { limit: 20 })
   const networkList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: DockerNetwork[] }).items) : [], [infiniteData])
   const createNetwork = useCreateNetwork()
-  const deleteNetwork = useDeleteNetwork()
   const pruneNetworks = usePruneNetworks()
   const bulkRemove = useBulkNetworkRemovals()
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -37,7 +36,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showPruneConfirm, setShowPruneConfirm] = useState(false)
   const [showBulkRemove, setShowBulkRemove] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const [drawerNetwork, setDrawerNetwork] = useState<DockerNetwork | null>(null)
 
   const filtered = useMemo(() => {
@@ -89,7 +87,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.name')} sortKey="name" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.driver')} sortKey="driver" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.scope')} sortKey="scope" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
@@ -99,12 +96,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
                 <td className="px-6 py-4 text-sm font-semibold text-surface-900 dark:text-white">{n.Name}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{n.Driver}</td>
                 <td className="px-6 py-4 text-sm text-surface-600 dark:text-surface-300">{n.Scope}</td>
-                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setDrawerNetwork(n)}>{t('docker.inspect')}</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ id: n.ID, name: n.Name })} className="text-red-500">{t('common.delete')}</Button>
-                  </div>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -126,16 +117,6 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={() => { if (createName.trim()) { createNetwork.mutate({ nodeId, data: { name: createName.trim(), driver: createDriver || 'bridge' } }, { onSuccess: () => { toast('success', t('docker.createNetwork')); setShowCreateModal(false); setCreateName(''); setCreateDriver('bridge') }, onError: () => toast('error', t('docker.toastCreateNetworkFailed')) }) } }} disabled={!createName.trim() || createNetwork.isPending}>{createNetwork.isPending ? t('common.loading') : t('common.create')}</Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('docker.deleteNetwork')}>
-        <div className="space-y-4">
-          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteNetworkMsg', { name: deleteTarget?.name })}</p>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
-            <Button variant="danger" onClick={() => { if (deleteTarget) { deleteNetwork.mutate({ nodeId, networkId: deleteTarget.id }, { onSuccess: () => { toast('success', t('docker.deleteNetwork')); setDeleteTarget(null) }, onError: () => toast('error', t('docker.toastDeleteNetworkFailed')) }) } }} disabled={deleteNetwork.isPending}>{deleteNetwork.isPending ? t('common.loading') : t('common.delete')}</Button>
           </div>
         </div>
       </Modal>
