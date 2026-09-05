@@ -18,20 +18,9 @@ import {
   useCreateComposeProject,
   useUpdateComposeProject,
   useDeleteComposeProject,
-  useComposeUp,
-  useComposeDown,
-  useComposeStart,
-  useComposeStop,
-  useComposeRestart,
-  useComposePull,
-  useComposeBuild,
-  useComposePause,
-  useComposeUnpause,
-  useComposeKill,
-  useComposePush,
-  useComposeRm,
 } from '../../hooks/useCompose'
 import { ComposeDrawer } from './ComposeDrawer'
+import { Checkbox } from '../ui/Checkbox'
 
 export function ComposeTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
@@ -41,18 +30,6 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
   const create = useCreateComposeProject()
   const update = useUpdateComposeProject()
   const remove = useDeleteComposeProject()
-  const up = useComposeUp()
-  const down = useComposeDown()
-  const start = useComposeStart()
-  const stop = useComposeStop()
-  const restart = useComposeRestart()
-  const pull = useComposePull()
-  const build = useComposeBuild()
-  const pause = useComposePause()
-  const unpause = useComposeUnpause()
-  const kill = useComposeKill()
-  const push = useComposePush()
-  const rm = useComposeRm()
 
   const [showCreate, setShowCreate] = useState(false)
   const [editTarget, setEditTarget] = useState<string | null>(null)
@@ -61,7 +38,10 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
   const [drawerProject, setDrawerProject] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const filtered = projects.filter((p)=> !search || p.project_name.toLowerCase().includes(search.toLowerCase()))
+
+  const toggleOne = (id: string) => setSelectedIds((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
   const handleCreate = () => {
     if (!projectName.trim() || !composeYaml.trim()) return
@@ -82,31 +62,20 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadCompose')} />
 
   const columns: Column<{ id: string; project_name: string; created_at: string }> [] = [
+    { key: 'select', header: '', render: (p) => <div onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedIds.has(p.id)} onChange={() => toggleOne(p.id)} ariaLabel={t('common.selectItem', { name: p.project_name })} /></div> },
     { key: 'project', header: t('docker.projectName'), render: (p)=> <span className="font-semibold text-surface-900 dark:text-white">{p.project_name}</span> },
     { key: 'created', header: t('docker.created'), render: (p)=> <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(p.created_at).toLocaleString()}</span> },
-    { key: 'actions', header: t('docker.actions'), render: (p)=> (
-      <div className="flex items-center gap-1 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => setDrawerProject(p.project_name)}>{t('docker.details')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> { const f=projects.find((x)=> x.project_name===p.project_name); setComposeYaml((f as unknown as {compose?:string})?.compose ?? composeYaml); setEditTarget(p.project_name)}}>{t('common.edit')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => up.mutate({ nodeId, projectName: p.project_name }, { onSuccess: () => toast('success', t('docker.composeUp')), onError: () => toast('error', t('docker.composeUpFailed')) })} disabled={up.isPending}>{t('docker.up')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => down.mutate({ nodeId, projectName: p.project_name }, { onSuccess: () => toast('success', t('docker.composeDown')), onError: () => toast('error', t('docker.composeDownFailed')) })} disabled={down.isPending}>{t('docker.down')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> start.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success',t('docker.toastStartFailed', 'Started')), onError:()=>toast('error','Failed')})} disabled={start.isPending}>{t('docker.start')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> stop.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Stopped'), onError:()=>toast('error','Failed')})} disabled={stop.isPending}>{t('docker.stop')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> restart.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Restarted'), onError:()=>toast('error','Failed')})} disabled={restart.isPending}>{t('docker.restartCompose')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> pull.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Pulled'), onError:()=>toast('error','Failed')})} disabled={pull.isPending}>{t('docker.pull')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> push.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Pushed'), onError:()=>toast('error','Failed')})} disabled={push.isPending}>{t('docker.push','Push')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> pause.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Paused'), onError:()=>toast('error','Failed')})} disabled={pause.isPending}>{t('docker.pause')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> unpause.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Unpaused'), onError:()=>toast('error','Failed')})} disabled={unpause.isPending}>{t('docker.unpause')}</Button>
-        <Button variant="ghost" size="sm" onClick={()=> kill.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Killed'), onError:()=>toast('error','Failed')})} disabled={kill.isPending}>Kill</Button>
-        <Button variant="ghost" size="sm" onClick={()=> rm.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Removed'), onError:()=>toast('error','Failed')})} disabled={rm.isPending}>RM</Button>
-        <Button variant="ghost" size="sm" onClick={()=> build.mutate({nodeId, projectName:p.project_name},{onSuccess:()=>toast('success','Built'), onError:()=>toast('error','Failed')})} disabled={build.isPending}>{t('docker.build')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(p.project_name)} className="text-red-500">{t('common.delete')}</Button>
-      </div>
-    )},
   ]
 
   return (
     <>
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800 mb-4">
+          <span className="text-sm text-accent-700 dark:text-accent-300">{t('docker.selected', { count: selectedIds.size })}</span>
+          <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(filtered.find((p) => selectedIds.has(p.id))?.project_name || null)} className="text-red-500">{t('common.delete')}</Button>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface-500 cursor-pointer">{t('docker.clearSelection')}</button>
+        </div>
+      )}
       <div className="flex gap-3 mb-4 px-4">
         <div className="flex-1 max-w-sm"><Input placeholder={t('common.search')} value={search} onChange={(e)=> setSearch(e.target.value)} /></div>
         <Button variant="ghost" onClick={()=> refetch()}>{t('common.refresh')}</Button>

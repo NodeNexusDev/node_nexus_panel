@@ -14,12 +14,6 @@ import { useToast } from '../ui/useToast'
 import { useSort } from '../../hooks/useSort'
 import {
   useInfiniteDockerContainers,
-  useStartContainer,
-  useStopContainer,
-  useRestartContainer,
-  useDeleteContainer,
-  usePauseContainer,
-  useUnpauseContainer,
   usePruneContainers,
   useBulkDockerExec,
   useBulkDockerRestart,
@@ -47,12 +41,6 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   useDockerContainerSse(nodeId)
   const { data: containersInfinite, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerContainers(nodeId, { limit: 20, all: true })
   const containerItems = useMemo(() => containersInfinite ? containersInfinite.pages.flatMap((p) => (p as unknown as { items: DockerContainer[] }).items) : [], [containersInfinite])
-  const startContainer = useStartContainer()
-  const stopContainer = useStopContainer()
-  const restartContainer = useRestartContainer()
-  const deleteContainer = useDeleteContainer()
-  const pauseContainer = usePauseContainer()
-  const unpauseContainer = useUnpauseContainer()
   const pruneContainers = usePruneContainers()
   const bulkExec = useBulkDockerExec()
   const bulkRestart = useBulkDockerRestart()
@@ -67,8 +55,6 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'stopped'>('all')
   const { sort, toggle } = useSort<SortKey>()
 
-  const [deleteTarget, setDeleteTarget] = useState<DockerContainer | null>(null)
-  const [forceDelete, setForceDelete] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [drawerContainer, setDrawerContainer] = useState<DockerContainer | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -139,11 +125,9 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
     )
   }
 
-  if (isLoading) return <TableSkeleton rows={5} cols={7} />
+  if (isLoading) return <TableSkeleton rows={5} cols={6} />
   if (error) return <ErrorState error={error} onRetry={refetch} title={t('docker.failedToLoadContainers')} />
   if (!containerItems.length) return <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noContainers')} description={t('docker.noContainersDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('docker.createContainer')}</Button>} />
-
-  const loading = startContainer.isPending || stopContainer.isPending || restartContainer.isPending || pauseContainer.isPending || unpauseContainer.isPending
 
   return (
     <>
@@ -181,23 +165,11 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.status')} sortKey="status" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.ports')}</th>
               <th className="px-6 py-3 text-left"><SortableHeader label={t('docker.created')} sortKey="created" sort={sort as SortState<SortKey> | null} onSort={toggle} /></th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('docker.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {filtered.map((c: DockerContainer) => (
-              <ContainerRow key={c.ID} container={c}
-                onStart={() => startContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.start')), onError: () => toast('error', t('docker.toastStartFailed')) })}
-                onStop={() => stopContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.stop')), onError: () => toast('error', t('docker.toastStopFailed')) })}
-                onRestart={() => restartContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('common.restart')), onError: () => toast('error', t('docker.toastRestartFailed')) })}
-                onDelete={() => setDeleteTarget(c)}
-                onPause={() => pauseContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('docker.pause')), onError: () => toast('error', t('docker.toastPauseFailed')) })}
-                onUnpause={() => unpauseContainer.mutate({ nodeId, containerId: c.ID }, { onSuccess: () => toast('success', t('docker.unpause')), onError: () => toast('error', t('docker.toastUnpauseFailed')) })}
-                onRename={() => setDrawerContainer(c)}
-                onTop={() => setDrawerContainer(c)}
-                loading={loading} selected={selectedIds.has(c.ID)} onSelect={() => toggleOne(c.ID)}
-                expanded={false} onToggleExpand={() => setDrawerContainer(c)}
-              />
+              <ContainerRow key={c.ID} container={c} selected={selectedIds.has(c.ID)} onSelect={() => toggleOne(c.ID)} onRowClick={() => setDrawerContainer(c)} />
             ))}
           </tbody>
         </table>
@@ -213,17 +185,6 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
 
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('docker.createContainer')} size="lg">
         <CreateContainerForm nodeId={nodeId} onClose={() => setShowCreateModal(false)} />
-      </Modal>
-
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('docker.deleteContainer')}>
-        <div className="space-y-4">
-          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteContainerMsg', { name: deleteTarget?.Names?.split('/').pop() })}</p>
-          <Checkbox checked={forceDelete} onChange={setForceDelete} label={t('docker.forceDelete', 'Force delete')} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
-            <Button variant="danger" onClick={() => { if (deleteTarget) { deleteContainer.mutate({ nodeId, containerId: deleteTarget.ID, force: forceDelete || undefined }, { onSuccess: () => { setDeleteTarget(null); setForceDelete(false) }, onError: () => toast('error', t('docker.toastDeleteFailed')) }) } }} disabled={deleteContainer.isPending}>{deleteContainer.isPending ? t('common.loading') : t('common.delete')}</Button>
-          </div>
-        </div>
       </Modal>
 
       <Modal isOpen={showBulkExecModal} onClose={() => setShowBulkExecModal(false)} title={t('docker.bulkExec', 'Bulk Exec')} size="lg">
