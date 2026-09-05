@@ -123,7 +123,7 @@ function CommandOverview({ command, copy }: { command: CommandResponse; copy: (t
     <Card>
       <CardContent className="pt-4 space-y-3">
         <div className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-          <p className="text-[11px] uppercase tracking-wide text-surface-500">Command</p>
+          <p className="text-[11px] uppercase tracking-wide text-surface-500">{t('commands.command')}</p>
           <div className="flex items-center gap-2 mt-1">
             <pre className="text-sm font-mono text-surface-900 dark:text-white whitespace-pre-wrap break-all flex-1">{command.command}</pre>
             <button onClick={() => copy(command.command)} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3.5 h-3.5 text-surface-400" /></button>
@@ -152,7 +152,7 @@ function CommandParamsTab({ command }: { command: CommandResponse }) {
               {p.description && <p className="text-xs text-surface-500">{p.description}</p>}
             </div>
             <div className="flex gap-1">
-              {p.required && <Badge variant="warning">required</Badge>}
+              {p.required && <Badge variant="warning">{t('common.required', 'required')}</Badge>}
               <Badge variant="default">{p.type}</Badge>
             </div>
           </div>
@@ -298,7 +298,7 @@ function CommandExecTab({ command }: { command: CommandResponse }) {
           const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null; status?: string }>; failed?: number }
           const first = batch.results?.[0] as unknown as { exit_code?: number | null; status?: string; stdout?: string; stderr?: string } | undefined
           const isFail = (first?.exit_code ?? (first?.status === 'success' ? 0 : first ? 1 : 0)) !== 0 || (batch as { failed?: number }).failed! > 0
-          if (isFail) toast('warning', t('commands.toastExecuted', { target: nodes.find((n) => n.id === nodeIds[0])?.name ?? nodeIds[0] }) + ' — failed')
+          if (isFail) toast('warning', t('commands.toastExecuted', { target: nodes.find((n) => n.id === nodeIds[0])?.name ?? nodeIds[0] }) + ' — ' + t('common.failed'))
           else toast('success', t('commands.toastExecuted', { target: nodes.find((n) => n.id === nodeIds[0])?.name ?? nodeIds[0] }))
           if (first) setResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? (first.status === 'success' ? 0 : 1) } as CommandResult)
           else setResult(res as unknown as CommandResult)
@@ -310,7 +310,7 @@ function CommandExecTab({ command }: { command: CommandResponse }) {
         onSuccess: (res) => {
           const batch = res as unknown as { results: Array<{ node_id?: string; node_name?: string; stdout: string; stderr: string; exit_code?: number | null; status: string }>; failed?: number }
           const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
-          if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + ` — ${failed} failed`)
+          if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + t('common.failedSuffix', { count: failed }))
           else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
           const mapped = (batch.results || []).map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? r.node_id ?? '', result: { stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status === 'success' ? 0 : 1) } as CommandResult }))
           setBulkResults(mapped)

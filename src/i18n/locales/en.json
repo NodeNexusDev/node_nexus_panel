@@ -196,7 +196,8 @@
     "noNodes": "No nodes",
     "selected_one": "{{count}} node selected",
     "selected_few": "{{count}} nodes selected",
-    "selected_many": "{{count}} nodes selected"
+    "selected_many": "{{count}} nodes selected",
+    "hasDockerBadge": "docker"
   },
   "commands": {
     "title": "Commands",
@@ -348,7 +349,8 @@
     "noExecutions": "No executions",
     "selectNodes": "Select nodes",
     "tags": "Tags",
-    "toastNameRequired": "Name is required"
+    "toastNameRequired": "Name is required",
+    "editStepsHint": "Edit steps in full page for full editor"
   },
   "docker": {
     "title": "Docker",
@@ -591,7 +593,10 @@
     "wait": "Wait",
     "pullBeforeUp": "Pull before up",
     "buildBeforeUp": "Build before up",
-    "pushById": "Push by ID"
+    "pushById": "Push by ID",
+    "orphans": "Orphans",
+    "servicesAll": "all services",
+    "servicesList": "services: {{list}}"
   },
   "audit": {
     "title": "Audit",
@@ -731,7 +736,7 @@
     "moreResults": "more results",
     "total": "Total",
     "succeeded": "Succeeded",
-    "failed": "Failed",
+    "failed": "failed",
     "create": "Create",
     "stdout": "stdout",
     "stderr": "stderr",
@@ -752,7 +757,12 @@
     "no": "No",
     "created": "Created",
     "description": "Description",
-    "history": "History"
+    "history": "History",
+    "failedSuffix": " — {{count}} failed",
+    "pageCurrent": "{{page}} current",
+    "goToPageLabel": "Go to page {{page}}",
+    "required": "required",
+    "commaSeparated": "comma, separated"
   },
   "errorBoundary": {
     "title": "Something went wrong",

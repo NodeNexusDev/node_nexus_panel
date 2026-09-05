@@ -198,7 +198,7 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
               bulkPull.mutate({ image: bulkPullImage, node_ids: [nodeId] }, {
                 onSuccess: (data: unknown) => {
                   const d = data as { failed?: number }
-                  if (d.failed && d.failed>0) toast('warning', t('docker.toastPullDone') + ` — ${d.failed} failed`)
+                  if (d.failed && d.failed>0) toast('warning', t('docker.toastPullDone') + t('common.failedSuffix', { count: d.failed }))
                   else toast('success', t('docker.toastPullDone'))
                   setShowBulkPull(false); setBulkPullImage('')
                 },

@@ -394,7 +394,7 @@ export function Nodes() {
               <Button variant="ghost" size="sm" onClick={() => setShowBulkScript(true)}>{t('nodes.bulkScript', 'Run Scripts')}</Button>
               <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
                 bulkCheck.mutate(selectedIds, {
-                  onSuccess: (data: unknown) => { const d = data as { failed?: number; succeeded?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkCheckDone') + ` — ${d.failed} failed`); else toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
+                  onSuccess: (data: unknown) => { const d = data as { failed?: number; succeeded?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkCheckDone') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
                   onError: () => toast('error', t('nodes.toastBulkCheckFailed')),
                 })
               }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
@@ -404,7 +404,7 @@ export function Nodes() {
                 bulkMetrics.mutate(selectedIds, {
                   onSuccess: (data) => {
                     setBulkMetricsResult(data)
-                    const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics') + ` — ${d.failed} failed`)
+                    const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics') + t('common.failedSuffix', { count: d.failed }))
                   },
                   onError: () => toast('error', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics')),
                 })

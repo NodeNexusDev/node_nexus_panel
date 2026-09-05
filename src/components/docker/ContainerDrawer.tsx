@@ -268,8 +268,8 @@ function ContainerOverview({ container, copy }: { container: DockerContainer; co
           </div>
         ))}
         <KeyValueList rows={[
-          { label: 'ID full', value: container.ID },
-          { label: 'Command', value: (container as unknown as { Command?: string }).Command || '—' },
+          { label: t('docker.id'), value: container.ID },
+          { label: t('docker.command'), value: (container as unknown as { Command?: string }).Command || '—' },
         ]} />
       </CardContent>
     </Card>

@@ -80,7 +80,7 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
           return (r as { status?: string }).status === 'error' || !!(r as { error?: string }).error
         }).length
         const countLabel = `${scriptIds.length} scripts`
-        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: countLabel }) + ` — ${failed} failed`)
+        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: countLabel }) + t('common.failedSuffix', { count: failed }))
         else toast('success', t('scripts.toastStarted', { name: countLabel }))
         if (results.length === 1) {
           setSingleResult(results[0] as unknown as ScriptNodeResult)

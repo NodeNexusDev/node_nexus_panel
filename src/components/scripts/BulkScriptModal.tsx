@@ -84,7 +84,7 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
           return (r as { status?: string }).status === 'error'
         }).length
         const countLabel = ids.length === 1 ? scripts.find((s) => s.id === ids[0])?.name ?? ids[0] : `${ids.length} scripts`
-        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: countLabel }) + ` — ${failed} failed`)
+        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: countLabel }) + t('common.failedSuffix', { count: failed }))
         else toast('success', t('scripts.toastStarted', { name: countLabel }))
         if (results.length === 0) {
           setBulkResults(null)

@@ -204,7 +204,7 @@ export function MainLayout() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
-              aria-label={i18n.language === 'en' ? 'Switch to Russian' : 'Переключить на английский'}
+              aria-label={t('common.switchLanguage')}
               lang={i18n.language === 'en' ? 'ru' : 'en'}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
             >

@@ -128,7 +128,7 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
               bulkRemove.mutate({ nodeId, volume_names: ids }, {
                 onSuccess: (data: unknown) => {
                   const d = data as { failed?: number }
-                  if (d.failed && d.failed>0) toast('warning', t('docker.toastBulkRemoveDone') + ` — ${d.failed} failed`)
+                  if (d.failed && d.failed>0) toast('warning', t('docker.toastBulkRemoveDone') + t('common.failedSuffix', { count: d.failed }))
                   else toast('success', t('docker.toastBulkRemoveDone'))
                   setShowBulkRemove(false); setSelectedIds(new Set())
                 },

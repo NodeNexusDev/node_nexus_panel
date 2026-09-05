@@ -70,7 +70,7 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
       onSuccess: (res) => {
         const batch = res as unknown as { results: Array<BulkNodeResult & { command_id?: string; command?: string }>; total?: number; succeeded?: number; failed?: number }
         const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? 1) !== 0).length
-        if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + ` — ${failed} failed`)
+        if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + t('common.failedSuffix', { count: failed }))
         else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
         setResults({ command: commandIds.map((id) => commands.find((c) => c.id === id)?.name ?? id).join(', '), results: batch.results })
       },

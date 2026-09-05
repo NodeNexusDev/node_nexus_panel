@@ -109,7 +109,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
         onSuccess: (res) => {
           const batch = res as unknown as { results: Array<{ node_id?: string|null; node_name?: string|null; stdout: string; stderr: string; exit_code?: number|null; status: string }>; total: number; succeeded: number; failed: number }
           const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
-          if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + ` — ${failed} failed`)
+          if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + t('common.failedSuffix', { count: failed }))
           else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
           setBulkResult({ command: singleSelected.command, results: batch.results.map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) })
         },
@@ -172,7 +172,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
       onSuccess: (res) => {
         const batch = res as unknown as { results: Array<{ node_id?: string|null; node_name?: string|null; stdout: string; stderr: string; exit_code?: number|null; status: string }>; total: number; succeeded: number; failed: number }
         const failed = (batch as { failed?: number }).failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
-        if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + ` — ${failed} failed`)
+        if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + t('common.failedSuffix', { count: failed }))
         else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
         setBulkResult({ command: customCommand, results: batch.results.map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) })
       },

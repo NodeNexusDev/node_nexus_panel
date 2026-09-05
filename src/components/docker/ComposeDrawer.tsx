@@ -77,13 +77,13 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
 
   const tabs: { key: DrawerTab; label: string }[] = [
     { key: 'overview', label: t('docker.overview', 'Overview') },
-    { key: 'ps', label: 'ps' },
-    { key: 'logs', label: 'logs' },
-    { key: 'config', label: 'config' },
-    { key: 'images', label: 'images' },
-    { key: 'top', label: 'top' },
-    { key: 'version', label: 'version' },
-    { key: 'port', label: 'port' },
+    { key: 'ps', label: t('docker.ps', 'ps') },
+    { key: 'logs', label: t('docker.logs') },
+    { key: 'config', label: t('docker.config', 'Config') },
+    { key: 'images', label: t('docker.images') },
+    { key: 'top', label: t('docker.top') },
+    { key: 'version', label: t('docker.version', 'Version') },
+    { key: 'port', label: t('docker.port', 'Port') },
   ]
 
   const parseServices = (): string[] | null => {
@@ -99,7 +99,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       onSuccess: (res) => {
         const bulk = res as unknown as BulkResult_ComposeServiceBulkResult_
         setUpResult(bulk)
-        if (bulk.failed > 0) toast('warning', t('docker.composeUp') + ` — ${bulk.failed} failed`)
+        if (bulk.failed > 0) toast('warning', t('docker.composeUp') + t('common.failedSuffix', { count: bulk.failed }))
         else toast('success', t('docker.composeUp'))
       },
       onError: () => toast('error', t('docker.composeUpFailed')),
@@ -130,10 +130,10 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       onSuccess: (res: unknown) => {
         const bulk = res as BulkResult_ComposeServiceBulkResult_
         if (bulk.results) setActionResult(bulk)
-        if (bulk.failed && bulk.failed > 0) toast('warning', name + ` — ${bulk.failed} failed`)
+        if (bulk.failed && bulk.failed > 0) toast('warning', name + t('common.failedSuffix', { count: bulk.failed }))
         else toast('success', name)
       },
-      onError: () => toast('error', 'Failed'),
+      onError: () => toast('error', t('common.failed')),
     })
   }
 
@@ -175,7 +175,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
           <div className="flex flex-wrap gap-3 items-center">
             <Checkbox checked={pull} onChange={setPull} label={t('docker.pullBeforeUp', 'Pull')} />
             <Checkbox checked={build} onChange={setBuild} label={t('docker.buildBeforeUp', 'Build')} />
-            <span className="text-xs text-surface-500 ml-auto">{servicesInput ? `services: ${parseServices()?.join(', ')}` : 'all services'}</span>
+            <span className="text-xs text-surface-500 ml-auto">{servicesInput ? t('docker.servicesList', { list: parseServices()?.join(', ') }) : t('docker.servicesAll', 'all services')}</span>
           </div>
         </CardContent>
       </Card>
@@ -193,7 +193,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
           <CardContent className="pt-4 space-y-2">
             {(() => {
               const bulk = (upResult || actionResult) as BulkResult_ComposeServiceBulkResult_
-              if (!bulk || !bulk.results) return <p className="text-sm text-surface-500">Done</p>
+              if (!bulk || !bulk.results) return <p className="text-sm text-surface-500">{t('common.done')}</p>
               return (
                 <div className="space-y-2">
                   <div className="flex gap-4 text-sm">
@@ -222,8 +222,8 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       )}
 
       <div className="flex flex-wrap gap-2 items-center text-xs">
-        <Checkbox checked={downVolumes} onChange={setDownVolumes} label="volumes" />
-        <Checkbox checked={downOrphans} onChange={setDownOrphans} label="orphans" />
+        <Checkbox checked={downVolumes} onChange={setDownVolumes} label={t('docker.volumes')} />
+        <Checkbox checked={downOrphans} onChange={setDownOrphans} label={t('docker.orphans', 'Orphans')} />
         <Input value={killSignal} onChange={(e) => setKillSignal(e.target.value)} placeholder="SIGTERM" className="w-24 ml-auto" />
       </div>
 

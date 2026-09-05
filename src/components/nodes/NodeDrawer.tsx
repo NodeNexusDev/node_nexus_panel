@@ -294,7 +294,7 @@ function DrawerOverview({ node }: { node: Node }) {
     [t('nodes.status'), <Badge key="s" variant={nodeStatusVariant(node.status)}>{node.status}</Badge>],
     [t('nodes.username', 'Username'), node.username ? <span key="u" className="inline-flex items-center gap-1 text-xs">{node.username}<button onClick={() => copy(node.username!)} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3 h-3 text-surface-400" /></button></span> : '—'],
     [t('nodes.dockerHost', 'Docker Host'), node.docker_host ? <span key="d" className="font-mono text-xs truncate max-w-[160px]">{node.docker_host}</span> : '—'],
-    [t('nodes.hasDocker', 'Has Docker'), node.has_docker ? <Badge key="hd" variant="success">Yes</Badge> : <Badge key="hd2" variant="default">No</Badge>],
+    [t('nodes.hasDocker', 'Has Docker'), node.has_docker ? <Badge key="hd" variant="success">{t('common.yes')}</Badge> : <Badge key="hd2" variant="default">{t('common.no')}</Badge>],
     [t('nodes.tags', 'Tags'), node.tags.length ? (
       <span key="tags" className="flex flex-wrap gap-1">
         {node.tags.map((tag) => <Badge key={tag} variant="default">{tag}</Badge>)}
@@ -513,7 +513,7 @@ function DrawerExec({ node }: { node: Node }) {
           const exitCode = (first as unknown as { exit_code?: number | null })?.exit_code ?? (res as unknown as { exit_code?: number })?.exit_code ?? 0
           const status = (first as unknown as { status?: string })?.status
           const isFail = exitCode !== 0 || status === 'error' || (batch as { failed?: number }).failed! > 0
-          if (isFail) toast('warning', t('commands.toastExecuted', { target: node.name }) + ' — failed')
+          if (isFail) toast('warning', t('commands.toastExecuted', { target: node.name }) + ' — ' + t('common.failed'))
           else toast('success', t('commands.toastExecuted', { target: node.name }))
           if (first) setCommandResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult)
           else setCommandResult(res as unknown as CommandResult)
@@ -691,7 +691,7 @@ function DrawerScript({ node }: { node: Node }) {
           const batch = response as unknown as { results?: Array<ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }>; total?: number; succeeded?: number; failed?: number }
           const first = (batch.results?.[0] ?? response) as ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }
           const failed = (batch as { failed?: number }).failed ?? (first?.steps?.some((s) => (s.exit_code ?? 0) !== 0) || (first as { status?: string })?.status === 'error' ? 1 : 0)
-          if (failed > 0) toast('warning', t('scripts.toastStarted', { name: selectedName }) + ' — failed')
+          if (failed > 0) toast('warning', t('scripts.toastStarted', { name: selectedName }) + ' — ' + t('common.failed'))
           else toast('success', t('scripts.toastStarted', { name: selectedName }))
           const fallback = response as unknown as { results?: Array<{ node_id: string; status: string; steps?: unknown[] }> }
           const resolved = batch.results?.[0] as ScriptNodeResult | undefined ?? (fallback.results?.[0] as unknown as ScriptNodeResult)
@@ -709,7 +709,7 @@ function DrawerScript({ node }: { node: Node }) {
           if (steps && steps.length > 0) return steps.some((s) => (s.exit_code ?? 0) !== 0)
           return (r as { status?: string }).status === 'error' || !!(r as { error?: string }).error
         }).length ?? 0
-        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: `${ids.length} scripts` }) + ` — ${failed} failed`)
+        if (failed > 0) toast('warning', t('scripts.toastStarted', { name: `${ids.length} scripts` }) + t('common.failedSuffix', { count: failed }))
         else toast('success', t('scripts.toastStarted', { name: `${ids.length} scripts` }))
         if (batch.results && Array.isArray(batch.results)) {
           const hasScriptId = batch.results.some((r) => !!(r as { script_id?: string }).script_id)

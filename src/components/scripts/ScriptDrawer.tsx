@@ -270,7 +270,7 @@ function ScriptEditTab({ script, onDone, updateScript }: { script: ScriptRespons
           const s = step as { label?: string; type: string; command?: string }
           return <div key={idx} className="text-xs font-mono text-surface-600 dark:text-surface-400 p-2 bg-white dark:bg-surface-900 rounded border mb-2">{idx + 1}. {s.label || s.type} — {s.command?.slice(0, 60) || s.type}</div>
         })}
-        <p className="text-xs text-surface-500">Edit steps in full page for full editor</p>
+        <p className="text-xs text-surface-500">{t('scripts.editStepsHint', 'Edit steps in full page for full editor')}</p>
       </div>
       <div className="flex justify-end gap-2"><Button variant="ghost" onClick={onDone}>{t('common.cancel')}</Button><Button onClick={handleSave} disabled={updateScript.isPending}>{updateScript.isPending ? t('common.loading') : t('common.save')}</Button></div>
     </div>
@@ -332,7 +332,7 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
           const batch = response as unknown as { results?: Array<ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }>; failed?: number }
           const first = batch.results?.[0] as ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string } | undefined
           const failed = (batch as { failed?: number }).failed ?? (first?.steps?.some((s) => (s.exit_code ?? 0) !== 0) || first?.status === 'error' ? 1 : 0)
-          if (failed > 0) toast('warning', t('scripts.toastStarted', { name: script.name }) + ' — failed')
+          if (failed > 0) toast('warning', t('scripts.toastStarted', { name: script.name }) + ' — ' + t('common.failed'))
           else toast('success', t('scripts.toastStarted', { name: script.name }))
           if (first) setResult(first as ScriptNodeResult)
         },

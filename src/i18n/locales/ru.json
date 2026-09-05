@@ -199,7 +199,8 @@
     "bulkUpdateMsg_many": "Обновить {{count}} выбранных нод",
     "execHistory": "История выполнения",
     "multiTagLimited": "Фильтр по нескольким тегам показывает только загруженные страницы. Сбросьте фильтр, чтобы загрузить ещё.",
-    "noNodes": "Нет нод"
+    "noNodes": "Нет нод",
+    "hasDockerBadge": "docker"
   },
   "commands": {
     "title": "Команды",
@@ -357,7 +358,8 @@
     "noExecutions": "Нет запусков",
     "selectNodes": "Выберите ноды",
     "tags": "Теги",
-    "toastNameRequired": "Название обязательно"
+    "toastNameRequired": "Название обязательно",
+    "editStepsHint": "Редактируйте шаги на полной странице"
   },
   "docker": {
     "title": "Docker",
@@ -572,7 +574,7 @@
     "prune": "Очистка",
     "pruneSystem": "Очистить систему",
     "history": "История",
-    "kill": "Прибить",
+    "kill": "Завершить",
     "noHistory": "Истории нет",
     "port": "Порт",
     "signal": "Сигнал",
@@ -591,8 +593,8 @@
     "toastDeleteNetworkDone": "Сеть удалена",
     "toastDeleteVolumeDone": "Том удалён",
     "toastDisconnectDone": "Контейнер отключён",
-    "toastKillDone": "Контейнер прибит",
-    "toastKillFailed": "Не удалось прибить контейнер",
+    "toastKillDone": "Контейнер завершён",
+    "toastKillFailed": "Не удалось завершить контейнер",
     "toastPushDone": "Отправлено в реестр",
     "toastPushFailed": "Не удалось отправить",
     "toastRenameDone": "Переименовано",
@@ -603,7 +605,10 @@
     "wait": "Ожидать",
     "pullBeforeUp": "Скачать перед запуском",
     "buildBeforeUp": "Собрать перед запуском",
-    "pushById": "Отправить по ID"
+    "pushById": "Отправить по ID",
+    "orphans": "осиротевшие",
+    "servicesAll": "все сервисы",
+    "servicesList": "сервисы: {{list}}"
   },
   "audit": {
     "title": "Аудит",
@@ -743,7 +748,7 @@
     "moreResults": "ещё результатов",
     "total": "Всего",
     "succeeded": "Успешно",
-    "failed": "Неудачно",
+    "failed": "не удалось",
     "create": "Создать",
     "stdout": "stdout",
     "stderr": "stderr",
@@ -767,7 +772,12 @@
     "history": "История",
     "selected_one": "{{count}} выбран",
     "selected_few": "{{count}} выбрано",
-    "selected_many": "{{count}} выбрано"
+    "selected_many": "{{count}} выбрано",
+    "failedSuffix": " — {{count}} не удалось",
+    "pageCurrent": "{{page}} текущая",
+    "goToPageLabel": "Перейти на страницу {{page}}",
+    "required": "обязательно",
+    "commaSeparated": "через запятую"
   },
   "errorBoundary": {
     "title": "Что-то пошло не так",
