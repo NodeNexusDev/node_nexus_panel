@@ -79,7 +79,7 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
         <Button onClick={() => setShowCreateModal(true)}>{t('docker.createVolume')}</Button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full table-zebra">
+        <table className="w-full">
           <thead className="table-sticky">
             <tr className="border-b border-surface-200 dark:border-surface-800">
               <th className="px-6 py-3"><div className="flex items-center"><Checkbox checked={!!allSelected} onChange={toggleAll} ariaLabel={t('common.selectAll')} /></div></th>

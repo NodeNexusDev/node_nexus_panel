@@ -398,14 +398,6 @@ body {
 }
 
 /* Table styles */
-.table-zebra tbody tr:nth-child(even) {
-  background-color: color-mix(in srgb, var(--color-accent-500) 2%, transparent);
-}
-
-.dark .table-zebra tbody tr:nth-child(even) {
-  background-color: color-mix(in srgb, var(--color-accent-500) 5%, transparent);
-}
-
 .table-row-hover {
   transition: none;
 }
@@ -416,14 +408,6 @@ body {
 
 .dark .table-row-hover:hover {
   background-color: color-mix(in srgb, var(--color-accent-500) 10%, transparent);
-}
-
-.table-zebra tbody tr.table-row-hover:hover {
-  background-color: color-mix(in srgb, var(--color-accent-500) 10%, transparent);
-}
-
-.dark .table-zebra tbody tr.table-row-hover:hover {
-  background-color: color-mix(in srgb, var(--color-accent-500) 14%, transparent);
 }
 
 .table-row-highlight {

@@ -192,7 +192,7 @@ export function Audit() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full table-zebra">
+              <table className="w-full">
                 <thead className="table-sticky">
                   <tr className="border-b border-surface-200 dark:border-surface-800">
                     <th className="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase">{t('audit.action')}</th>
