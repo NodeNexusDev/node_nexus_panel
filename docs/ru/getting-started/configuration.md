@@ -16,7 +16,7 @@ VITE_API_URL= # пусто = same-origin
 VITE_ENABLE_MOCKS=false
 ```
 
-В Docker переменные инжектируются при запуске через `docker/entrypoint.sh`. Подробности в [Переменные окружения](../operations/environment.md).
+В Docker переменные внедряются при запуске через `docker/entrypoint.sh`. Подробности в [Переменные окружения](../operations/environment.md).
 
 ## Конфигурация Vite
 
