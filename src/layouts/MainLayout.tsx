@@ -156,7 +156,7 @@ export function MainLayout() {
               end={item.to === '/'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all duration-200 stagger-item ${
+                `flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-none stagger-item ${
                   isActive
                     ? 'bg-gradient-to-r from-accent-500/10 to-purple-500/10 text-accent-600 dark:from-accent-500/20 dark:to-purple-500/20 dark:text-accent-400 shadow-sm'
                     : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white'
@@ -181,7 +181,7 @@ export function MainLayout() {
               aria-label={sidebarOpen ? t('common.closeMenu') : t('common.openMenu')}
               aria-expanded={sidebarOpen}
               aria-controls="sidebar"
-              className="lg:hidden mr-4 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+              className="lg:hidden mr-4 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-surface-400 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800 transition-none cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -195,7 +195,7 @@ export function MainLayout() {
               onClick={toggleLanguage}
               aria-label={t('common.switchLanguage')}
               lang={i18n.language === 'en' ? 'ru' : 'en'}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-all duration-200 cursor-pointer"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/50 dark:hover:text-white transition-none cursor-pointer"
             >
               <IconGlobe className="w-4 h-4" aria-hidden="true" />
               {i18n.language === 'en' ? 'РУ' : 'EN'}
@@ -210,7 +210,7 @@ export function MainLayout() {
                 onClick={() => queryClient.invalidateQueries()}
                 disabled={isFetching}
                 aria-label={t('common.refresh')}
-                className={`p-2 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 ${isFetching ? '' : 'cursor-pointer'}`}
+                className={`p-2 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-none ${isFetching ? '' : 'cursor-pointer'}`}
               >
                 <IconRefresh className={`w-4 h-4 ${isFetching ? 'animate-spin text-accent-500' : ''}`} />
               </button>
@@ -229,7 +229,7 @@ export function MainLayout() {
               <button
                 onClick={() => setCommandPaletteOpen(true)}
                 aria-label={t('common.search')}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:text-surface-500 dark:hover:text-surface-300 dark:hover:bg-surface-800 transition-none cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -246,7 +246,7 @@ export function MainLayout() {
               <button
                 onClick={handleLogout}
                 aria-label={t('common.logout')}
-                className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
+                className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:text-surface-400 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-none cursor-pointer"
               >
                 <IconLogout className="w-4 h-4" />
               </button>

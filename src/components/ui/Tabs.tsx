@@ -48,7 +48,7 @@ export function Tabs<T extends string>({ tabs, active, onChange, className = '' 
               aria-controls={panelId}
               tabIndex={isActive ? 0 : -1}
               onClick={() => onChange(tab.key)}
-              className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 snap-start transition-colors duration-100 ease-out will-change-[color,border-color] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 motion-reduce:transition-none ${
+              className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 snap-start transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 motion-reduce:transition-none ${
                 isActive
                   ? 'border-accent-500 dark:border-accent-400 text-accent-600 dark:text-accent-400'
                   : 'border-transparent text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200'
