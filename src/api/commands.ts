@@ -43,6 +43,12 @@ export const commandsApi = {
 
   remove: (id: string) => api.delete<void>(`/commands/${id}`),
 
+  bulkUpdate: (data: { updates: Array<{ id: string; changes: CommandUpdate }> }) =>
+    api.patch<BulkResult<CommandBulkCreateResult>>('/commands/', data as unknown as { updates: unknown }),
+
+  bulkDelete: (data: { ids: string[] }) =>
+    api.post<BulkResult<CommandBulkCreateResult>>('/commands/deletions', data),
+
   clone: (id: string, newName?: string) => {
     const qs = newName ? `?new_name=${encodeURIComponent(newName)}` : ''
     return api.post<CommandResponse>(`/commands/${id}/clone${qs}`)

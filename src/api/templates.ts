@@ -38,6 +38,14 @@ export const templatesApi = {
 
   createPack: (data: PackLocalCreateRequest) => api.post<PackResponse>('/templates/packs', data),
 
+  updatePackMeta: (packId: string, data: { name?: string; description?: string; version?: string }) =>
+    api.patch<PackResponse>(`/templates/packs/${packId}`, data),
+
+  deletePack: (packId: string) => api.delete<void>(`/templates/packs/${packId}`),
+
+  bulkDeletePacks: (data: { pack_ids: string[] }) =>
+    api.post<{ total: number; succeeded: number; failed: number; results: Array<{ pack_id: string; status: string; error: string }> }>('/templates/packs/deletions', data),
+
   getPackStats: (params?: { group_by?: string | null }) => {
     const qs = params?.group_by ? `?group_by=${encodeURIComponent(params.group_by)}` : ''
     return api.get<PackStatsResponse>(`/templates/packs/stats${qs}`)
@@ -80,6 +88,9 @@ export const templatesApi = {
   createRegistry: (data: RegistryCreate) => api.post<RegistryResponse>('/templates/registries', data),
 
   deleteRegistry: (registryId: string) => api.delete<void>(`/templates/registries/${registryId}`),
+
+  updateRegistry: (registryId: string, data: { name?: string; owner?: string; default_branch?: string }) =>
+    api.patch<RegistryResponse>(`/templates/registries/${registryId}`, data),
 
   syncRegistry: (registryId: string) =>
     api.post<RegistrySyncResult>(`/templates/registries/${registryId}/syncs`),

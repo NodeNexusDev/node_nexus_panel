@@ -15,4 +15,10 @@ export const favoritesApi = {
 
   remove: (targetType: string, targetId: string) =>
     api.delete<void>(`/favorites/${targetType}/${targetId}`),
+
+  getById: (targetType: string, targetId: string) =>
+    api.get<FavoriteResponse>(`/favorites/${targetType}/${targetId}`),
+
+  update: (targetType: string, targetId: string, data: { name?: string | null; note?: string | null }) =>
+    api.patch<FavoriteResponse>(`/favorites/${targetType}/${targetId}`, data),
 }

@@ -15,4 +15,10 @@ export const usersApi = {
 
   remove: (userId: string) =>
     api.delete<void>(`/users/${userId}`),
+
+  getById: (userId: string) =>
+    api.get<UserResponse>(`/users/${userId}`),
+
+  update: (userId: string, data: { is_active?: boolean; is_superuser?: boolean; email?: string }) =>
+    api.patch<UserResponse>(`/users/${userId}`, data),
 }
