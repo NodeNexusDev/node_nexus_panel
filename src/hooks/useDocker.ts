@@ -241,6 +241,11 @@ async function aggregateBulkResults<T extends { total: number; succeeded: number
   return { total, succeeded, failed, results } as T
 }
 
+function invalidateDocker(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ['docker'] })
+  qc.invalidateQueries({ queryKey: ['nodes'] })
+}
+
 // Per-node bulk wrappers (v2) — supports multi-node by aggregating per-node calls
 export function useBulkDockerExec() {
   const queryClient = useQueryClient()
@@ -255,10 +260,7 @@ export function useBulkDockerExec() {
       if (nodeIds.length === 1) return dockerApi.bulkExec(nodeIds[0], { container_ids, command, timeout } as Parameters<typeof dockerApi.bulkExec>[1])
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkExec(id, { container_ids, command, timeout } as Parameters<typeof dockerApi.bulkExec>[1])), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -273,10 +275,7 @@ export function useBulkDockerRestart() {
       if (nodeIds.length === 1) return dockerApi.bulkRestart(nodeIds[0], { container_ids })
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkRestart(id, { container_ids })), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -291,10 +290,7 @@ export function useBulkDockerStart() {
       if (nodeIds.length === 1) return dockerApi.bulkStart(nodeIds[0], { container_ids })
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkStart(id, { container_ids })), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -309,10 +305,7 @@ export function useBulkDockerStop() {
       if (nodeIds.length === 1) return dockerApi.bulkStop(nodeIds[0], { container_ids }, d.timeout)
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkStop(id, { container_ids }, d.timeout)), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -327,10 +320,7 @@ export function useBulkDockerRemove() {
       if (nodeIds.length === 1) return dockerApi.bulkRemove(nodeIds[0], { container_ids })
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkRemove(id, { container_ids })), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -349,10 +339,7 @@ export function useBulkDockerImageBuild() {
       for (const s of settled) if (s.status === 'fulfilled') succeeded++; else failed++
       return { total: nodeIds.length, succeeded, failed, results: settled.map((s, i) => ({ node_id: nodeIds[i], status: s.status === 'fulfilled' ? 'success' : 'failed' })) } as unknown as ReturnType<typeof dockerApi.buildImage> extends Promise<infer T> ? T : never
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -367,10 +354,7 @@ export function useBulkDockerImageRemove() {
       if (nodeIds.length === 1) return dockerApi.bulkImageRemovals(nodeIds[0], { image_ids })
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkImageRemovals(id, { image_ids })), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -385,10 +369,7 @@ export function useBulkDockerPull() {
       if (nodeIds.length === 1) return dockerApi.bulkImagePulls(nodeIds[0], { images, timeout: 300 } as Parameters<typeof dockerApi.bulkImagePulls>[1])
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkImagePulls(id, { images, timeout: 300 } as Parameters<typeof dockerApi.bulkImagePulls>[1])), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -403,10 +384,7 @@ export function useBulkDockerInspect() {
       if (nodeIds.length === 1) return dockerApi.bulkInspect(nodeIds[0], { container_ids })
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkInspect(id, { container_ids })), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -421,10 +399,7 @@ export function useBulkDockerLogs() {
       if (nodeIds.length === 1) return dockerApi.bulkLogs(nodeIds[0], { container_ids, tail: 100 } as Parameters<typeof dockerApi.bulkLogs>[1])
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkLogs(id, { container_ids, tail: 100 } as Parameters<typeof dockerApi.bulkLogs>[1])), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 
@@ -439,10 +414,7 @@ export function useBulkDockerStats() {
       if (nodeIds.length === 1) return dockerApi.bulkStats(nodeIds[0], { container_ids })
       return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkStats(id, { container_ids })), nodeIds)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
+    onSuccess: () => invalidateDocker(queryClient),
   })
 }
 

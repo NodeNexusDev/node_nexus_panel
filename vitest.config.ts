@@ -21,11 +21,5 @@ export default defineConfig({
       },
     },
   },
-  esbuild: {
-    tsconfigRaw: {
-      compilerOptions: {
-        types: ['vitest/globals'],
-      },
-    },
-  },
+
 })

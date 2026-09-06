@@ -1,3 +1,4 @@
+// oxlint-disable react/purity
 import { useMemo } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -60,6 +61,7 @@ export function MainLayout() {
     i18n.changeLanguage(i18n.language === 'en' ? 'ru' : 'en')
   }
 
+  // oxlint-disable-next-line react/purity
   const particles = useMemo(() => {
     return Array.from({ length: 40 }, (_, i) => ({
       id: i,
