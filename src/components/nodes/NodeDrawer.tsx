@@ -1,5 +1,5 @@
 // oxlint-disable react-hooks/exhaustive-deps
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '../ui/Badge'
@@ -51,7 +51,7 @@ import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from './connection-types
 import { getDefaultParams } from '../commands/command-form-utils'
 import { CommandParamInputs } from '../commands/CommandParamInputs'
 import { ExecutionResult } from '../commands/ExecutionResult'
-import type { CommandResult, Node, ScriptNodeResult } from '../../api/types'
+import type { CommandResult, CommandResponse, Node, ScriptNodeResult } from '../../api/types'
 
 type DrawerTab = 'overview' | 'metrics' | 'stats' | 'history' | 'edit' | 'exec' | 'script'
 
@@ -454,8 +454,8 @@ function DrawerExec({ node }: { node: Node }) {
     setTab('command')
   }, [node.id])
 
-  const filtered = commands.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-  const selectedCommands = filtered.filter((c) => selectedIds.has(c.id))
+  const filtered = useMemo(() => commands.filter((c: CommandResponse) => c.name.toLowerCase().includes(search.toLowerCase())), [commands, search])
+  const selectedCommands = useMemo(() => filtered.filter((c: CommandResponse) => selectedIds.has(c.id)), [filtered, selectedIds])
   const allFilteredSelected = filtered.length > 0 && filtered.every((c) => selectedIds.has(c.id))
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -470,13 +470,13 @@ function DrawerExec({ node }: { node: Node }) {
     if (allFilteredSelected) {
       setSelectedIds((prev) => {
         const next = new Set(prev)
-        filtered.forEach((c) => next.delete(c.id))
+        filtered.forEach((c: CommandResponse) => next.delete(c.id))
         return next
       })
     } else {
       setSelectedIds((prev) => {
         const next = new Set(prev)
-        filtered.forEach((c) => next.add(c.id))
+        filtered.forEach((c: CommandResponse) => next.add(c.id))
         return next
       })
     }
@@ -596,7 +596,7 @@ function DrawerExec({ node }: { node: Node }) {
               </div>
             )}
             <div className="w-full flex-1 min-h-[200px] overflow-y-auto divide-y divide-surface-200 dark:divide-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg">
-              {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noCommands', 'No commands')}</p> : filtered.map((cmd) => {
+              {filtered.length === 0 ? <p className="text-sm text-surface-500 text-center py-4">{t('nodes.noCommands', 'No commands')}</p> : filtered.map((cmd: CommandResponse) => {
                 const checked = selectedIds.has(cmd.id)
                 return (
                   <label key={cmd.id} className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm cursor-pointer ${checked ? 'bg-accent-50 dark:bg-accent-900/20' : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'}`}>
