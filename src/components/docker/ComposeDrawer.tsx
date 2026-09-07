@@ -97,7 +97,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
     const data = { build, pull, services: parseServices() }
     up.mutate({ nodeId, projectName, data }, {
       onSuccess: (res) => {
-        const bulk = res as unknown as BulkResult_ComposeServiceBulkResult_
+        const bulk = res as BulkResult_ComposeServiceBulkResult_
         setUpResult(bulk)
         if (bulk.failed > 0) toast('warning', t('docker.composeUp') + t('common.failedSuffix', { count: bulk.failed }))
         else toast('success', t('docker.composeUp'))
@@ -109,7 +109,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
     setActionResult(null); setUpResult(null)
     down.mutate({ nodeId, projectName, data: { volumes: downVolumes, remove_orphans: downOrphans } as never }, {
       onSuccess: (res) => {
-        const bulk = res as unknown as BulkResult_ComposeServiceBulkResult_ | { status: string }
+        const bulk = res as BulkResult_ComposeServiceBulkResult_ | { status: string }
         // downs returns ComposeActionResponse, not BulkResult — handle both
         if ((bulk as BulkResult_ComposeServiceBulkResult_).results) setActionResult(bulk as BulkResult_ComposeServiceBulkResult_)
         toast('success', t('docker.composeDown'))
@@ -240,7 +240,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       )}
       {showDeleteConfirm && (
         <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-center justify-between gap-3">
-          <p className="text-xs text-red-700 dark:text-red-300">{t('docker.deleteComposeMsg', { name: projectName } as unknown as string)}</p>
+          <p className="text-xs text-red-700 dark:text-red-300">{t('docker.deleteComposeMsg', { name: projectName })}</p>
           <div className="flex gap-2 shrink-0">
             <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>{t('common.cancel')}</Button>
             <Button variant="danger" size="sm" disabled={remove.isPending} onClick={handleDelete}>{remove.isPending ? t('common.loading') : t('common.delete')}</Button>

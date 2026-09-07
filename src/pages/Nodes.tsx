@@ -73,7 +73,7 @@ export function Nodes() {
     tag: tagFilter.length === 1 ? tagFilter[0] : undefined,
     search: search || undefined,
   })
-  const data = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as unknown as { items: Node[] } : undefined
+  const data = infiniteData ? { items: infiniteData.pages.flatMap((p) => (p as { items: Node[] }).items) } : undefined
   // keep hasNextPage for InfiniteScroll
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
@@ -164,7 +164,7 @@ export function Nodes() {
       host: node.host,
       port: String(node.port),
       connection_type: node.connection_type,
-      description: (node as unknown as { description?: string }).description || '',
+      description: node.description || '',
       username: node.username || '',
       password: '',
       ssh_key: '',
@@ -650,7 +650,7 @@ export function Nodes() {
           <Input label={t('nodes.node')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.name} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, name: e.target.value })} />
           <Input label={t('nodes.host')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, host: e.target.value })} />
           <Input label={t('nodes.port')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.port} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, port: e.target.value })} />
-          <Input label={t('nodes.descriptionLabel', 'Description')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={(bulkUpdateChanges as unknown as {description?:string}).description ?? ''} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, description: e.target.value } as never)} />
+          <Input label={t('nodes.descriptionLabel', 'Description')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.description ?? ''} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, description: e.target.value })} />
           <Input label={t('nodes.username', 'Username')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.username} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, username: e.target.value })} />
           <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder={t('common.leaveBlank', 'Leave blank to keep unchanged')} value={bulkUpdateChanges.docker_host} onChange={(e) => setBulkUpdateChanges({ ...bulkUpdateChanges, docker_host: e.target.value })} />
           <div className="space-y-1">
@@ -665,7 +665,7 @@ export function Nodes() {
               if (bulkUpdateChanges.name) changes.name = bulkUpdateChanges.name
               if (bulkUpdateChanges.host) changes.host = bulkUpdateChanges.host
               if (bulkUpdateChanges.port) changes.port = parseInt(bulkUpdateChanges.port, 10)
-              if ((bulkUpdateChanges as unknown as {description:string}).description) changes.description = (bulkUpdateChanges as unknown as {description:string}).description
+              if (bulkUpdateChanges.description) changes.description = bulkUpdateChanges.description
               if (bulkUpdateChanges.username) changes.username = bulkUpdateChanges.username
               if (bulkUpdateChanges.docker_host) changes.docker_host = bulkUpdateChanges.docker_host
               if (bulkUpdateChanges.has_docker !== undefined) changes.has_docker = bulkUpdateChanges.has_docker

@@ -155,8 +155,8 @@ function ImageHistory({ nodeId, imageId }: { nodeId: string; imageId: string }) 
   const { t } = useTranslation()
   const { data: history, isLoading } = useImageHistory(nodeId, imageId)
   if (isLoading) return <p className="text-sm text-surface-500 text-center py-4">{t('common.loading')}</p>
-  if (!history || (history as unknown as unknown[]).length === 0) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noHistory', 'No history')}</p>
-  const items = history as unknown as Array<{ id: string; created: string; created_by: string; size: string; comment: string }>
+  if (!history || (history as unknown[]).length === 0) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noHistory', 'No history')}</p>
+  const items = history as Array<{ id: string; created: string; created_by: string; size: string; comment: string }>
   return (
     <Card>
       <CardContent className="pt-4 space-y-2 max-h-96 overflow-y-auto">
