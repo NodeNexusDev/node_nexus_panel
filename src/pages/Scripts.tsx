@@ -237,7 +237,7 @@ export function Scripts() {
         pending={createScript.isPending}
         onClose={() => setShowCreateModal(false)}
         onSubmit={(values: ScriptFormValues) => {
-          createScript.mutate(values as unknown as ScriptCreate, {
+          createScript.mutate(values as ScriptCreate, {
             onSuccess: () => { toast('success', t('scripts.toastCreated', { name: values.name })); setShowCreateModal(false) },
             onError: () => toast('error', t('scripts.toastCreateFailed')),
           })

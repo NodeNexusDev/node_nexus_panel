@@ -13,7 +13,7 @@ import { scriptsApi } from '../../api/scripts'
 import { useToast } from '../ui/useToast'
 import { ExecutionResult } from '../commands/ExecutionResult'
 import { Badge } from '../ui/Badge'
-import type { ScriptNodeResult } from '../../api/types'
+import type { BulkScriptExecutionBatchResponse, ScriptNodeResult } from '../../api/types'
 
 interface BulkRunScriptsOnNodesModalProps {
   scriptIds: string[]
@@ -73,7 +73,7 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
     setBulkResults(null)
     bulkRun.mutate({ script_ids: scriptIds, node_ids: nodeIds }, {
       onSuccess: (response) => {
-        const batch = response as unknown as { results?: Array<ScriptNodeResult & { script_id?: string; node_id?: string; node_name?: string; status?: string; execution_id?: string; error?: string; steps?: Array<{ exit_code?: number }> }>; total?: number; succeeded?: number; failed?: number }
+        const batch = response as BulkScriptExecutionBatchResponse
         const results = batch.results ?? []
         const failed = batch.failed ?? results.filter((r) => {
           const steps = (r as { steps?: Array<{ exit_code?: number }> }).steps
@@ -99,7 +99,7 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
             const nodeLabel = (r as { node_name?: string; node_id?: string }).node_name ?? (r as { node_id?: string }).node_id ?? (hasScriptId ? '' : nodeIds[idx % nodeIds.length] ?? '')
             const name = scriptName && nodeLabel ? `${scriptName} — ${nodeLabel}` : scriptName || nodeLabel || `Result ${idx + 1}`
             const execId = (r as { execution_id?: string }).execution_id ?? `${(r as { script_id?: string }).script_id ?? scriptIds[Math.floor(idx / nodeIds.length)] ?? idx}:${(r as { node_id?: string }).node_id ?? nodeIds[idx % nodeIds.length] ?? idx}:${idx}`
-            return { id: execId, name, result: r as unknown as ScriptNodeResult }
+            return { id: execId, name, result: r as ScriptNodeResult }
           })
           setBulkResults(mapped)
         }

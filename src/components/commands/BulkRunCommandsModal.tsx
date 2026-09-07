@@ -12,7 +12,7 @@ import { useMutation } from '@tanstack/react-query'
 import { commandsApi } from '../../api/commands'
 import { useToast } from '../ui/useToast'
 import { ExecutionResult } from './ExecutionResult'
-import type { BulkNodeResult } from '../../api/types'
+import type { BulkExecutionBatchResponse, BulkNodeResult } from '../../api/types'
 
 interface BulkRunCommandsModalProps {
   commandIds: string[]
@@ -69,11 +69,11 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
     setResults(null)
     bulkExec.mutate({ command_ids: commandIds, node_ids: nodeIds }, {
       onSuccess: (res) => {
-        const batch = res as unknown as { results: Array<BulkNodeResult & { command_id?: string; command?: string }>; total?: number; succeeded?: number; failed?: number }
+        const batch = res as BulkExecutionBatchResponse
         const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? 1) !== 0).length
         if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + t('common.failedSuffix', { count: failed }))
         else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
-        setResults({ command: commandIds.map((id) => commands.find((c) => c.id === id)?.name ?? id).join(', '), results: batch.results })
+        setResults({ command: commandIds.map((id) => commands.find((c) => c.id === id)?.name ?? id).join(', '), results: batch.results as unknown as Array<BulkNodeResult & { command_id?: string }> })
       },
       onError: () => toast('error', t('commands.toastFailed')),
     })

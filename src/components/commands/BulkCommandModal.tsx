@@ -16,7 +16,7 @@ import { useToast } from '../ui/useToast'
 import { getDefaultParams } from './command-form-utils'
 import { CommandParamInputs } from './CommandParamInputs'
 import { ExecutionResult } from './ExecutionResult'
-import type { BulkNodeResult } from '../../api/types'
+import type { BulkExecutionBatchResponse, BulkNodeResult } from '../../api/types'
 
 type Tab = 'command' | 'custom'
 
@@ -108,7 +108,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
       const paramsMap = Object.keys(values).length > 0 ? { [singleSelected.id]: values } : undefined
       bulkExec.mutate({ command_ids: ids, node_ids: nodeIds, params: paramsMap as never }, {
         onSuccess: (res) => {
-          const batch = res as unknown as { results: Array<{ node_id?: string|null; node_name?: string|null; stdout: string; stderr: string; exit_code?: number|null; status: string }>; total: number; succeeded: number; failed: number }
+          const batch = res as BulkExecutionBatchResponse
           const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
           if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + t('common.failedSuffix', { count: failed }))
           else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
@@ -128,19 +128,19 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
     })
     bulkExec.mutate({ command_ids: ids, node_ids: nodeIds, params: Object.keys(paramsMap).length > 0 ? paramsMap as never : undefined }, {
       onSuccess: (res) => {
-        const batch = res as unknown as { results: Array<{ stdout: string; stderr: string; exit_code?: number|null; status: string; command_id?: string; node_id?: string; node_name?: string }>; total: number; succeeded: number; failed: number }
+        const batch = res as BulkExecutionBatchResponse
         const failed = (batch as { failed?: number }).failed ?? 0
         const succeeded = (batch as { succeeded?: number }).succeeded ?? batch.results.filter((r) => (r.exit_code ?? (r.status==='success'?0:1))===0).length
         if (failed > 0) toast('warning', t('commands.toastExecuted', { target: `${ids.length} commands` }) + ` — ${succeeded}/${(batch as { total?: number }).total ?? batch.results.length} ok`)
         else toast('success', t('commands.toastExecuted', { target: `${ids.length} commands` }))
         const results = batch.results || []
         // group by command_id+node correctly for M×N (M commands × N nodes)
-        const hasCommandId = results.some((r) => !!(r as { command_id?: string }).command_id)
+        const hasCommandId = results.some((r) => !!r.command_id)
         let grouped: Array<{ name: string; results: BulkNodeResult[] }>
         if (hasCommandId) {
           grouped = ids.map((id) => {
             const cmd = commands.find((c) => c.id === id)
-            const related = results.filter((r) => (r as { command_id?: string }).command_id === id)
+            const related = results.filter((r) => r.command_id === id)
             return { name: cmd?.name ?? id, results: related.map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? '', stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status==='success'?0:1) })) }
           })
         } else {
@@ -171,7 +171,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
     setBulkMultiResults(null)
     bulkRaw.mutate({ commands: [customCommand], node_ids: nodeIds }, {
       onSuccess: (res) => {
-        const batch = res as unknown as { results: Array<{ node_id?: string|null; node_name?: string|null; stdout: string; stderr: string; exit_code?: number|null; status: string }>; total: number; succeeded: number; failed: number }
+        const batch = res as BulkExecutionBatchResponse
         const failed = (batch as { failed?: number }).failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
         if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + t('common.failedSuffix', { count: failed }))
         else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))

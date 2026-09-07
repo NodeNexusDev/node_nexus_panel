@@ -13,7 +13,7 @@ import { useMutation } from '@tanstack/react-query'
 import { scriptsApi } from '../../api/scripts'
 import { useToast } from '../ui/useToast'
 import { ExecutionResult } from '../commands/ExecutionResult'
-import type { ScriptNodeResult } from '../../api/types'
+import type { BulkScriptExecutionBatchResponse, ScriptNodeResult } from '../../api/types'
 
 interface BulkScriptModalProps {
   nodeIds: string[]
@@ -77,10 +77,10 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
     setBulkResults(null)
     bulkRun.mutate({ script_ids: ids, node_ids: nodeIds }, {
       onSuccess: (response) => {
-        const batch = response as unknown as { results?: Array<ScriptNodeResult & { script_id?: string; node_id?: string; node_name?: string; error?: string; status?: string }>; batch_id?: string; total?: number; succeeded?: number; failed?: number }
+        const batch = response as BulkScriptExecutionBatchResponse
         const results = batch.results ?? []
         const failed = batch.failed ?? results.filter((r) => {
-          const steps = (r as unknown as { steps?: Array<{ exit_code?: number }> }).steps
+          const steps = r.steps
           if (steps && steps.length > 0) return steps.some((s) => (s.exit_code ?? 0) !== 0)
           return (r as { status?: string }).status === 'error'
         }).length
@@ -110,7 +110,7 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
             const nodeLabel = (r as { node_name?: string; node_id?: string }).node_name ?? (r as { node_id?: string }).node_id ?? (hasScriptId ? '' : nodeIds[idx % nodeIds.length] ?? '')
             const name = scriptName && nodeLabel ? `${scriptName} — ${nodeLabel}` : scriptName || nodeLabel || `Result ${idx + 1}`
             const execId = (r as { execution_id?: string }).execution_id ?? `${(r as { script_id?: string }).script_id ?? ids[Math.floor(idx / nodeIds.length)] ?? idx}:${(r as { node_id?: string }).node_id ?? nodeIds[idx % nodeIds.length] ?? idx}:${idx}`
-            return { id: execId, name, result: r as unknown as ScriptNodeResult }
+            return { id: execId, name, result: r as ScriptNodeResult }
           })
           setBulkResults(mapped)
           setSingleResult(null)

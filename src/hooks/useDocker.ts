@@ -232,10 +232,10 @@ async function aggregateBulkResults<T extends { total: number; succeeded: number
     } else {
       failed += 1
       total += 1
-      const reason = (s.reason as unknown as { message?: string; error?: { message?: string } })?.message ?? (s.reason as Error)?.message ?? String(s.reason)
+      const reason = (s.reason as { message?: string; error?: { message?: string } })?.message ?? (s.reason as Error)?.message ?? String(s.reason)
       const nodeId = nodeIds?.[i] ?? `unknown-${i}`
       // push synthetic error result so total === results.length and UI can show which node failed
-      results.push({ node_id: nodeId, container_id: nodeId, image: nodeId, network_id: nodeId, volume_name: nodeId, status: 'error', error: reason } as unknown as T['results'][number])
+      results.push({ node_id: nodeId, container_id: nodeId, image: nodeId, network_id: nodeId, volume_name: nodeId, status: 'error', error: reason } as T['results'][number])
     }
   }
   return { total, succeeded, failed, results } as T
@@ -451,7 +451,7 @@ export function useBulkContainerKill() {
   return useMutation({
     mutationFn: async (data: { container_ids: string[]; nodeId: string; signal?: string }) => {
       const { nodeId, container_ids, signal } = data as { nodeId: string; container_ids: string[]; signal?: string }
-      return dockerApi.bulkKill(nodeId, { container_ids, signal } as unknown as Parameters<typeof dockerApi.bulkKill>[1])
+      return dockerApi.bulkKill(nodeId, { container_ids, signal } as Parameters<typeof dockerApi.bulkKill>[1])
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['docker'] }),
   })

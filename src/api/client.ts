@@ -24,7 +24,7 @@ class ApiClient {
     try {
       const data = (await response.json()) as unknown as ApiError & { detail?: unknown; request_id?: string | null; code?: string; message?: string }
       // FastAPI 422 Validation Error: { detail: [{ loc: ["body","name"], msg: "...", type: "..." }] }
-      if (Array.isArray((data as unknown as { detail?: unknown }).detail)) {
+      if (Array.isArray((data as { detail?: unknown }).detail)) {
         const detail = (data as unknown as { detail: Array<{ loc?: (string|number)[]; msg?: string; type?: string }> }).detail
         const first = detail[0]
         const loc = first?.loc ? ` (${first.loc.join('.')})` : ''

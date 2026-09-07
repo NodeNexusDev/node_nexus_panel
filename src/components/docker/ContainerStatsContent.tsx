@@ -7,7 +7,7 @@ export function ContainerStatsContent({ nodeId, containerId }: { nodeId: string;
   const { data: statsRaw, isLoading } = useDockerContainerStats(nodeId, containerId)
   if (isLoading) return <FormSkeleton fields={4} />
   if (!statsRaw) return <p className="text-sm text-surface-500 text-center py-4">{t('docker.noStats')}</p>
-  const stats = statsRaw as unknown as { Container: string; Name: string; CPUPerc: string; MemUsage: string; MemPerc: string; NetIO: string; BlockIO: string; MemLimit?: string | null; PIDs?: string | null }
+  const stats = statsRaw as { Container: string; Name: string; CPUPerc: string; MemUsage: string; MemPerc: string; NetIO: string; BlockIO: string; MemLimit?: string | null; PIDs?: string | null }
   return (
     <div className="space-y-3">
       {( [

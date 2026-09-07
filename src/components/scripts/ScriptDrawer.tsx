@@ -346,7 +346,7 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
           const failed = (batch as { failed?: number }).failed ?? batch.results?.filter((r) => r.steps?.some((s) => (s.exit_code ?? 0) !== 0) || r.status === 'error').length ?? 0
           if (failed > 0) toast('warning', t('scripts.toastStarted', { name: script.name }) + ` (${nodeIds.length}) — ${failed} failed`)
           else toast('success', t('scripts.toastStarted', { name: script.name }) + ` (${nodeIds.length})`)
-          const mapped = (batch.results || []).map((r: BulkScriptExecutionItem) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? r.node_id ?? '', result: r as unknown as ScriptNodeResult }))
+          const mapped = (batch.results || []).map((r: BulkScriptExecutionItem) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? r.node_id ?? '', result: r as ScriptNodeResult }))
           setBulkResults(mapped)
         },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),

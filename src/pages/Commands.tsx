@@ -102,7 +102,7 @@ export function Commands() {
       name: values.name,
       command: values.command,
       description: values.description || undefined,
-      parameters: normalizeParameters(values.parameters) as unknown as CommandCreate['parameters'],
+      parameters: normalizeParameters(values.parameters) as CommandCreate['parameters'],
       tags: values.tags,
     }
     createCommand.mutate(data, {

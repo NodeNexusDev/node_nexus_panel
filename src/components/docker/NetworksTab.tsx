@@ -26,7 +26,7 @@ export function NetworksTab({ nodeId }: { nodeId: string }) {
   const [search, setSearch] = useState('')
   const { sort, toggle } = useSort<SortKey>()
   const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerNetworks(nodeId, { limit: 20 })
-  const networkList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: DockerNetwork[] }).items) : [], [infiniteData])
+  const networkList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as { items: DockerNetwork[] }).items) : [], [infiniteData])
   const createNetwork = useCreateNetwork()
   const pruneNetworks = usePruneNetworks()
   const bulkRemove = useBulkNetworkRemovals()
