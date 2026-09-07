@@ -43,6 +43,12 @@ export const scriptsApi = {
 
   remove: (id: string) => api.delete<void>(`/scripts/${id}`),
 
+  bulkUpdate: (data: { updates: Array<{ id: string; changes: ScriptUpdate }> }) =>
+    api.patch<BulkResult<ScriptBulkCreateResult>>('/scripts/', data as unknown as { updates: unknown }),
+
+  bulkDelete: (data: { ids: string[] }) =>
+    api.post<BulkResult<ScriptBulkCreateResult>>('/scripts/deletions', data),
+
   // M×N executions
   executions: (data: ScriptExecutionsRequest) =>
     api.post<BulkScriptExecutionBatchResponse>('/scripts/executions', data),

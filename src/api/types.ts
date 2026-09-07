@@ -27,7 +27,12 @@ export type BulkResult_BulkNodeUpdateResult_ = components['schemas']['BulkResult
 export type BulkResult_BulkRetryCommandResult_ = components['schemas']['BulkResult_BulkRetryCommandResult_']
 export type BulkResult_BulkRetryScriptResult_ = components['schemas']['BulkResult_BulkRetryScriptResult_']
 export type BulkResult_BulkValidateCredentialsResult_ = components['schemas']['BulkResult_BulkValidateCredentialsResult_']
+export type BulkAPIKeyDeleteRequest = components['schemas']['BulkAPIKeyDeleteRequest']
+export type BulkAPIKeyDeleteResult = components['schemas']['BulkAPIKeyDeleteResult']
+export type BulkPackDeleteRequest = components['schemas']['BulkPackDeleteRequest']
+export type BulkPackDeleteResult = components['schemas']['BulkPackDeleteResult']
 export type BulkResult_CommandBulkCreateResult_ = components['schemas']['BulkResult_CommandBulkCreateResult_']
+export type BulkResult_CommandBulkUpdateResult_ = components['schemas']['BulkResult_CommandBulkUpdateResult_']
 export type BulkResult_ComposeServiceBulkResult_ = components['schemas']['BulkResult_ComposeServiceBulkResult_']
 export type BulkResult_ContainerBulkResult_ = components['schemas']['BulkResult_ContainerBulkResult_']
 export type BulkResult_ContainerExecBulkResult_ = components['schemas']['BulkResult_ContainerExecBulkResult_']
@@ -251,7 +256,7 @@ export type ScriptStep = ScriptStep_Output
 // ── Helpers ─────────────────────────────────────────────────────
 export type NodeOffsetListResponse = { items: Node[]; total: number; page: number; size: number } // legacy
 export type NodeListResponse = NodeCursorListResponse | NodeOffsetListResponse
-export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursorListResponse { return 'next_cursor' in (resp as any) && 'has_more' in (resp as any) }
+export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursorListResponse { return 'next_cursor' in resp && 'has_more' in resp }
 
 export interface ApiError { code: string; message: string; detail?: unknown; request_id?: string | null; details?: Record<string, string[]> }
 

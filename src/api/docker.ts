@@ -206,9 +206,15 @@ export const dockerApi = {
   pruneNetworks: (nodeId: string) => api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/networks/prune`),
 
   // ── Singular container/image ops (v2) ───────────────────────
-  getContainerArchive: (nodeId: string, containerId: string) => api.get<{ data: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive`),
+  getContainerArchive: (nodeId: string, containerId: string, path?: string) => {
+    const qs = path ? `?path=${encodeURIComponent(path)}` : ''
+    return api.get<{ data: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`)
+  },
 
-  putContainerArchive: (nodeId: string, containerId: string, data: unknown) => api.put<{ status: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive`, data),
+  putContainerArchive: (nodeId: string, containerId: string, data: unknown, path?: string) => {
+    const qs = path ? `?path=${encodeURIComponent(path)}` : ''
+    return api.put<{ status: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`, data)
+  },
 
   killContainer: (nodeId: string, containerId: string, signal?: string) => {
     const qs = signal ? `?signal=${encodeURIComponent(signal)}` : ''

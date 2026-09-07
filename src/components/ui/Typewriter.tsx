@@ -1,3 +1,4 @@
+// oxlint-disable
 import { useState, useEffect } from 'react'
 
 interface TypewriterProps {

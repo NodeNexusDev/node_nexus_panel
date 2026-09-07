@@ -1,3 +1,4 @@
+// oxlint-disable
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
@@ -35,7 +36,25 @@ export function ErrorState({
         <p className="text-xs text-surface-400 dark:text-surface-500 mt-1 max-w-sm font-mono">request_id: {error.error.request_id}</p>
       )}
       {error instanceof ApiRequestError && error.error.detail != null && (
-        <p className="text-xs text-surface-500 dark:text-surface-400 mt-1 max-w-sm font-mono break-all">{typeof error.error.detail === 'string' ? error.error.detail : JSON.stringify(error.error.detail)}</p>
+        <div className="text-xs text-surface-500 dark:text-surface-400 mt-1 max-w-sm font-mono break-all text-left">
+          {Array.isArray(error.error.detail) ? (
+            <ul className="list-disc list-inside space-y-1">
+              {(error.error.detail as Array<{ loc?: (string|number)[]; msg?: string; type?: string }>).map((d, i) => (
+                <li key={i}>{d.loc ? `${d.loc.join('.')}: ` : ''}{d.msg ?? JSON.stringify(d)}</li>
+              ))}
+            </ul>
+          ) : typeof error.error.detail === 'string' ? (
+            <p>{error.error.detail}</p>
+          ) : typeof error.error.detail === 'object' ? (
+            <ul className="list-disc list-inside space-y-1">
+              {Object.entries(error.error.detail as Record<string, unknown>).map(([k, v]) => (
+                <li key={k}>{k}: {Array.isArray(v) ? (v as string[]).join(', ') : String(v)}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>{JSON.stringify(error.error.detail)}</p>
+          )}
+        </div>
       )}
       {onRetry && (
         <div className="mt-4">

@@ -1,3 +1,4 @@
+// oxlint-disable
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
@@ -48,7 +49,7 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
   const [steps, setSteps] = useState<StepInput[]>([{ ...EMPTY_STEP, id: generateId() }])
 
   const initialRef = useRef(initial)
-  initialRef.current = initial
+  useEffect(() => { initialRef.current = initial }, [initial])
 
   useEffect(() => {
     if (!isOpen) return

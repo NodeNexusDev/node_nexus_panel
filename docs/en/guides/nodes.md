@@ -2,7 +2,7 @@
 title: Nodes
 status: stable
 translation_key: guides.nodes
-source_revision: 2026-08-20
+source_revision: 2026-09-07
 ---
 
 # Nodes
@@ -13,11 +13,14 @@ Manage and monitor your connected nodes.
 
 View all registered nodes with their status, tags, and system info. Features:
 
-- **Search** by name or host
-- **Filter** by status (active, unreachable, offline)
-- **Filter** by tags
-- **Bulk operations** — select multiple nodes for bulk delete, bulk check, or bulk tag management
+- **Search** by name or host (debounced 300ms)
+- **Filter** by status (active, unreachable, error)
+- **Filter** by tags (single tag server-side, `multi-tag` shows `Multi-tag filter shows only loaded pages` hint)
+- **Sort** by name, host, status, tags, has_docker, created_at
 - **Favorites** — star nodes for quick access
+- **Docker column** — badge `docker` if `has_docker`
+- **Bulk bar** — select via checkbox, `{{count}} selected` (plural `one/few/many`), actions: `Check`, `Metrics`, `Update`, `Validate`, `Delete`, `Run Commands`, `Run Scripts` (no `Bulk` prefix)
+- **No per-row buttons** — click row to open Drawer (as in Commands/Scripts)
 
 ## Adding Nodes
 
@@ -26,61 +29,54 @@ View all registered nodes with their status, tags, and system info. Features:
    - **Name** — display name
    - **Host** — IP address or hostname
    - **Port** — SSH port (default: 22)
-   - **Connection Type** — SSH, Docker, or Proxmox
+   - **Connection Type** — SSH
    - **Username** — SSH username
    - **Password** — SSH password (optional if using key)
    - **SSH Key** — private key content (optional)
    - **Passphrase** — SSH key passphrase (optional)
-   - **Docker Host** — Docker socket path (for Docker connections)
-   - **Tags** — comma-separated tags
+   - **Docker Host** — Docker socket path
+   - **Has Docker** — toggle Docker support
+   - **Tags** — comma-separated, `^[a-z0-9_-]{1,30}$`, max 20, deduped lowercase
 3. Click "Validate" to test connectivity before saving
 
-## Node Detail Tabs
+## Node Drawer (Variant C)
 
-Each node has 6 tabs:
+Click row → side sheet `800px` (`lg` `max-w-4xl w-[min(800px,92vw)]`), `slide-in-right 0.2s`, `backdrop-blur`, `portal` to `body` (escapes `will-change-transform`), focus trap, `body overflow hidden`.
+
+7 tabs:
 
 ### Overview
 
-Basic node information: name, host, connection type, status, tags, and quick actions (edit, delete, check).
+Basic info: name, host:port (copy), description, connection type, status, username (copy), Docker host, has Docker, tags, created/updated. Badges for status variant.
 
 ### Metrics
 
-Real-time system metrics:
-
-- **CPU** — usage percentage and core count
-- **Memory** — total, used, and percentage
-- **Disk** — total, used, and percentage
-- **Uptime** — since when the node has been up
+Real-time via `GET /nodes/{id}/metrics` (10s stale): CPU (cores + %), Memory (used/total %), Disk (used/total %), Uptime since, Load average 1m/5m/15m. `Card` + `KeyValueList`.
 
 ### Stats
 
-Execution statistics with charts showing command and script execution counts over time.
+Execution stats `GET /commands/stats?node_id` with `date_from/date_to` inputs, `StatsGrid` total/successRate/avgDuration/failed.
 
-### Status History
+### History
 
-Timeline of status changes (active → unreachable → active) with timestamps and sources.
+Two infinite lists (limit 5, `InfiniteScroll`): Status History (`active→unreachable` with source) and Command History (`command_fingerprint` mono, `exit_code` badge, `Retry` for failed). Shows `command_fingerprint` (hash) — name resolved via `Command` lookup where available.
 
-### Command History
+### Edit
 
-List of commands executed on this node with:
+Inline form: name, host, port, connection_type, description (1000), credentials (username/password/ssh_key/passphrase with `Clear` toggles), Docker (host + has_docker), tags. `Save` → `PATCH /nodes/{id}`.
 
-- Command text
-- Exit code
-- Execution time
-- Stdout/stderr output
-- Retry option for failed commands
+### Exec (Commands)
 
-### Tags
+Nested `Command/Custom` tabs. `Command` → searchable checkbox list of commands (bulk select, `selected` count, `default params` hint for bulk), `Custom` → input `command` + `timeout`. `Execute` → `POST /commands/executions` `M×N` `command_ids+node_ids` with `207` handling, per-service `BulkResult` `succeeded/failed`. History of custom outputs with `Clear`.
 
-Manage node tags individually:
+### Script
 
-- Add tags via input field
-- Remove tags with one click
-- Tags are used for filtering and bulk operations
+Similar: searchable scripts, `Run` → `POST /scripts/executions` `M×N`, per-service steps with `ExecutionResult`.
 
-## Node Actions
+## Node Actions (in Drawer)
 
-- **Check** — trigger a health check
-- **Edit** — modify node configuration
-- **Delete** — remove the node
-- **Execute** — run an ad-hoc command
+- **Check** — `POST /nodes/checks` (bulk) / `POST /nodes/{id}/check`
+- **Validate** — inline `Check` badge `success/active` vs `failed`
+- **Edit** — via Edit tab
+- **Delete** — footer `Delete` → `DELETE /nodes/{id}` with confirm
+- **Docker** — `Open Docker` → `/docker?node=:id`

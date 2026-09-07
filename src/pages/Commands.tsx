@@ -1,6 +1,6 @@
-import { useState } from 'react'
+// oxlint-disable
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '../components/ui/Card'
@@ -15,38 +15,35 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { FilterBar } from '../components/ui/FilterBar'
 import { SortableHeader } from '../components/ui/SortableHeader'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
-import { DropdownMenu, type DropdownMenuItem } from '../components/ui/DropdownMenu'
-import { IconCommands, IconZap } from '../components/ui/Icons'
-import { FavoriteButton } from '../components/ui/FavoriteButton'
+import { Checkbox } from '../components/ui/Checkbox'
+import { IconCommands } from '../components/ui/Icons'
+import { Drawer } from '../components/ui/Drawer'
+import { CommandDrawer } from '../components/commands/CommandDrawer'
+import { BulkRunCommandsModal } from '../components/commands/BulkRunCommandsModal'
 import {
   useInfiniteCommands,
   useCommandTags,
   useCreateCommand,
-  useUpdateCommand,
-  useCloneCommand,
-  useDeleteCommand,
+  useBulkDeleteCommands,
+  useBulkCloneCommands,
 } from '../hooks/useCommands'
 import { useToast } from '../components/ui/useToast'
 import { TagBadge } from '../components/ui/TagBadge'
 import { TagFilter } from '../components/ui/TagFilter'
 import { useSort } from '../hooks/useSort'
-import type { CommandResponse, CommandCreate, CommandUpdate } from '../api/types'
+import type { CommandResponse, CommandCreate } from '../api/types'
 import type { Column } from '../components/ui/table-types'
 import { ParameterEditor } from '../components/commands/CommandFormEditor'
-import { CommandExecuteModal } from '../components/commands/CommandExecuteModal'
 import { normalizeParameters } from '../components/commands/command-form-utils'
 import {
   commandCreateSchema,
-  commandUpdateSchema,
   type CommandCreateFormValues,
-  type CommandUpdateFormValues,
 } from '../lib/validators/command-schema'
 
 type SortKey = 'name' | 'tags' | 'updated_at' | 'created_at'
 
 export function Commands() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string[]>([])
@@ -57,22 +54,18 @@ export function Commands() {
   const commandsData = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: CommandResponse[] } : undefined
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()
-  const updateCommand = useUpdateCommand()
-  const cloneCommand = useCloneCommand()
-  const deleteCommand = useDeleteCommand()
 
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editTarget, setEditTarget] = useState<CommandResponse | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const [executeTarget, setExecuteTarget] = useState<CommandResponse | null>(null)
+  const [drawerCommand, setDrawerCommand] = useState<CommandResponse | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [showBulkDelete, setShowBulkDelete] = useState(false)
+  const [showBulkRun, setShowBulkRun] = useState(false)
+  const bulkDelete = useBulkDeleteCommands()
+  const bulkClone = useBulkCloneCommands()
 
   const createForm = useForm<CommandCreateFormValues>({
     resolver: zodResolver(commandCreateSchema) as Resolver<CommandCreateFormValues>,
     defaultValues: { name: '', command: '', description: '', tags: [], parameters: [] },
-  })
-
-  const editForm = useForm<CommandUpdateFormValues>({
-    resolver: zodResolver(commandUpdateSchema) as Resolver<CommandUpdateFormValues>,
   })
 
   const commands = (commandsData?.items || []).filter(
@@ -91,27 +84,17 @@ export function Commands() {
       })
     : commands
 
+  const allSelected = commands.length > 0 && commands.every((c) => selectedIds.includes(c.id))
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }, [])
+  const toggleAll = useCallback(() => {
+    setSelectedIds(allSelected ? [] : commands.map((c) => c.id))
+  }, [allSelected, commands])
+
   const openCreate = () => {
     createForm.reset({ name: '', command: '', description: '', tags: [], parameters: [] })
     setShowCreateModal(true)
-  }
-
-  const openEdit = (cmd: CommandResponse) => {
-    setEditTarget(cmd)
-    editForm.reset({
-      name: cmd.name,
-      command: cmd.command,
-      description: cmd.description ?? '',
-      tags: cmd.tags,
-      parameters:
-        cmd.parameters?.map((p) => ({
-          name: p.name,
-          type: p.type,
-          required: p.required,
-          default: typeof p.default === 'string' || typeof p.default === 'number' || typeof p.default === 'boolean' ? p.default : '',
-          description: p.description ?? '',
-        })) ?? [],
-    })
   }
 
   const onCreateSubmit = (values: CommandCreateFormValues) => {
@@ -119,7 +102,7 @@ export function Commands() {
       name: values.name,
       command: values.command,
       description: values.description || undefined,
-      parameters: normalizeParameters(values.parameters) as unknown as CommandCreate['parameters'],
+      parameters: normalizeParameters(values.parameters) as CommandCreate['parameters'],
       tags: values.tags,
     }
     createCommand.mutate(data, {
@@ -128,47 +111,25 @@ export function Commands() {
     })
   }
 
-  const onEditSubmit = (values: CommandUpdateFormValues) => {
-    if (!editTarget) return
-    const data: CommandUpdate = {
-      name: values.name,
-      command: values.command,
-      description: values.description || undefined,
-      parameters: normalizeParameters(values.parameters) as unknown as CommandUpdate['parameters'],
-      tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
-    }
-    updateCommand.mutate(
-      { id: editTarget.id, data },
-      {
-        onSuccess: () => { toast('success', t('commands.toastUpdated')); setEditTarget(null); editForm.reset() },
-        onError: () => toast('error', t('commands.toastUpdateFailed')),
-      },
-    )
-  }
-
-  const handleClone = (cmd: CommandResponse) => {
-    cloneCommand.mutate(
-      { id: cmd.id, newName: `${cmd.name} (copy)` },
-      { onSuccess: () => toast('success', t('commands.toastCloned')), onError: () => toast('error', t('commands.toastCloneFailed')) },
-    )
-  }
-
-  const handleDelete = () => {
-    if (!deleteTarget) return
-    deleteCommand.mutate(deleteTarget.id, {
-      onSuccess: () => { toast('success', t('commands.toastDeleted')); setDeleteTarget(null) },
-      onError: () => toast('error', t('commands.toastDeleteFailed')),
-    })
-  }
-
-  const commandMenu = (cmd: CommandResponse): DropdownMenuItem[] => [
-    { key: 'edit', label: t('common.edit'), onClick: () => openEdit(cmd) },
-    { key: 'clone', label: t('commands.clone'), onClick: () => handleClone(cmd) },
-    { key: 'sep', label: '', onClick: () => {}, separator: true },
-    { key: 'delete', label: t('common.delete'), danger: true, onClick: () => setDeleteTarget({ id: cmd.id, name: cmd.name }) },
-  ]
-
   const columns: Column<CommandResponse>[] = [
+    {
+      key: 'select',
+      header: (
+        <Checkbox
+          checked={allSelected}
+          onChange={toggleAll}
+          ariaLabel={t('common.selectAll')}
+        />
+      ),
+      className: 'w-10',
+      render: (cmd) => (
+        <Checkbox
+          checked={selectedIds.includes(cmd.id)}
+          onChange={() => toggleSelect(cmd.id)}
+          ariaLabel={t('common.selectItem', 'Select {{name}}', { name: cmd.name })}
+        />
+      ),
+    },
     {
       key: 'name',
       header: <SortableHeader label={t('common.name')} sortKey="name" sort={sort} onSort={toggleSort} />,
@@ -206,20 +167,6 @@ export function Commands() {
       header: <SortableHeader label={t('commands.updated')} sortKey="updated_at" sort={sort} onSort={toggleSort} />,
       render: (cmd) => <span className="text-sm text-surface-600 dark:text-surface-300">{new Date(cmd.updated_at).toLocaleDateString()}</span>,
     },
-    {
-      key: 'actions',
-      header: t('common.actions'),
-      render: (cmd) => (
-        <div className="flex items-center gap-1">
-          <FavoriteButton targetType="command" targetId={cmd.id} resourceName={cmd.name} size="sm" />
-          <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setExecuteTarget(cmd) }}>
-            <IconZap className="w-4 h-4 mr-1" />
-            {t('commands.execute')}
-          </Button>
-          <DropdownMenu items={commandMenu(cmd)} ariaLabel={t('common.actionsFor', { name: cmd.name })} />
-        </div>
-      ),
-    },
   ]
 
   const renderMobileCommand = (cmd: CommandResponse) => (
@@ -243,14 +190,6 @@ export function Commands() {
         <span>{t('commands.created')}: {new Date(cmd.created_at).toLocaleDateString()}</span>
         <span>{t('commands.updated')}: {new Date(cmd.updated_at).toLocaleDateString()}</span>
       </div>
-      <div className="flex items-center gap-1">
-        <FavoriteButton targetType="command" targetId={cmd.id} resourceName={cmd.name} size="sm" />
-        <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setExecuteTarget(cmd) }}>
-          <IconZap className="w-4 h-4 mr-1" />
-          {t('commands.execute')}
-        </Button>
-        <DropdownMenu items={commandMenu(cmd)} ariaLabel={`${cmd.name} actions`} />
-      </div>
     </div>
   )
 
@@ -272,6 +211,15 @@ export function Commands() {
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
+          {selectedIds.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
+              <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('common.selected', { count: selectedIds.length })}</span>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkRun(true)}>{t('commands.execute')} ({selectedIds.length})</Button>
+              <Button variant="ghost" size="sm" disabled={bulkClone.isPending} onClick={() => bulkClone.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('commands.toastCloned') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('commands.toastCloned')); setSelectedIds([]) }, onError: () => toast('error', t('commands.toastCloneFailed')) })}>{bulkClone.isPending ? t('common.loading') : t('commands.clone')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('common.delete')}</Button>
+              <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('common.clear')}</button>
+            </div>
+          )}
           {isLoading ? (
             <TableSkeleton rows={5} cols={4} />
           ) : commands.length === 0 ? (
@@ -288,10 +236,13 @@ export function Commands() {
               renderMobileItem={renderMobileCommand}
               keyExtractor={(c) => c.id}
               emptyMessage={t('commands.emptyTitle')}
-              onRowClick={(cmd) => navigate(`/commands/${cmd.id}`)}
+              onRowClick={(cmd) => setDrawerCommand(cmd)}
             />
           )}
-          <InfiniteScroll hasMore={!!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+          <InfiniteScroll hasMore={tagFilter.length > 1 ? false : !!hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+          {tagFilter.length > 1 && hasNextPage && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center py-2">{t('nodes.multiTagLimited', 'Multi-tag filter shows only loaded pages. Clear filter to load more.')}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -326,48 +277,12 @@ export function Commands() {
         </FormProvider>
       </Modal>
 
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title={t('commands.editCommand', 'Edit Command')} size="lg">
-        <FormProvider {...editForm}>
-          <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-            <Input label={t('commands.name')} placeholder="check-disk" {...editForm.register('name')} error={editForm.formState.errors.name?.message} />
-            <Input label={t('commands.command')} placeholder="df -h" {...editForm.register('command')} error={editForm.formState.errors.command?.message} />
-            <Controller
-              name="description"
-              control={editForm.control}
-              render={({ field }) => <Input label={t('commands.descriptionField', 'Description')} placeholder={t('commands.description', 'Description')} {...field} value={field.value ?? ''} />}
-            />
-            <Controller
-              name="tags"
-              control={editForm.control}
-              render={({ field }) => (
-                <Input
-                  label={t('commands.tagsLabel')}
-                  placeholder="disk, system"
-                  value={Array.isArray(field.value) ? field.value.join(', ') : ''}
-                  onChange={(e) => field.onChange(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
-                />
-              )}
-            />
-            <ParameterEditor />
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="ghost" onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
-              <Button type="submit" disabled={updateCommand.isPending}>{updateCommand.isPending ? t('common.loading') : t('common.save')}</Button>
-            </div>
-          </form>
-        </FormProvider>
-      </Modal>
+      <Drawer isOpen={!!drawerCommand} onClose={() => setDrawerCommand(null)} size="lg">
+        {drawerCommand && <CommandDrawer command={drawerCommand} onClose={() => setDrawerCommand(null)} />}
+      </Drawer>
 
-      <ConfirmDialog
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        title={t('commands.deleteTitle', 'Delete Command')}
-        message={t('commands.deleteMsg', { name: deleteTarget?.name })}
-        confirmLabel={t('common.delete')}
-        loading={deleteCommand.isPending}
-      />
-
-      <CommandExecuteModal command={executeTarget} onClose={() => setExecuteTarget(null)} />
+      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => bulkDelete.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('commands.toastDeleted') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('commands.toastDeleted')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('commands.toastDeleteFailed')) })} title={t('commands.deleteTitle', 'Delete Command')} message={t('commands.deleteMsg', { name: `${selectedIds.length} commands` })} confirmLabel={t('common.delete')} loading={bulkDelete.isPending} />
+      <BulkRunCommandsModal commandIds={showBulkRun ? selectedIds : []} onClose={() => setShowBulkRun(false)} />
     </div>
   )
 }

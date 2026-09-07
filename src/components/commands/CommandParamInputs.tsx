@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { CommandParameter } from '../../api/types'
 import { Checkbox } from '../ui/Checkbox'
 
@@ -9,6 +10,7 @@ interface CommandParamInputsProps {
 }
 
 export function CommandParamInputs({ parameters, values, onChange, errors }: CommandParamInputsProps) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-2">
       {parameters.map((param) => (
@@ -23,7 +25,7 @@ export function CommandParamInputs({ parameters, values, onChange, errors }: Com
             ) : (
               <input
                 type={param.type === 'integer' ? 'number' : 'text'}
-                placeholder={param.description || `${param.type}${param.required ? ' (required)' : ''}`}
+                placeholder={param.description || `${param.type}${param.required ? ` (${t('common.required')})` : ''}`}
                 value={String(values[param.name] ?? param.default ?? '')}
                 onChange={(e) => onChange(param.name, e.target.value)}
                 className={`px-3 py-1 bg-white border rounded text-sm dark:bg-surface-800 dark:text-white ${

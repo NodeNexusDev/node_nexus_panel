@@ -2,7 +2,7 @@
 title: Forms
 status: stable
 translation_key: guides.forms
-source_revision: 2026-08-20
+source_revision: 2026-09-07
 ---
 
 # Forms

@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getNextCursor } from '../lib/pagination'
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { dockerApi } from '../api/docker'
 import type {
   DockerContainerInspect,
@@ -54,6 +55,50 @@ export function useDockerVolumes(nodeId: string) {
   return useQuery<CursorPage_DockerVolume_>({
     queryKey: ['docker', nodeId, 'volumes'],
     queryFn: () => dockerApi.getVolumes(nodeId),
+    enabled: !!nodeId,
+    refetchInterval: 60_000,
+  })
+}
+
+export function useInfiniteDockerContainers(nodeId: string, params?: { limit?: number; all?: boolean }) {
+  return useInfiniteQuery<CursorPage_DockerContainer_>({
+    queryKey: ['docker', nodeId, 'containers', 'infinite', params],
+    queryFn: ({ pageParam }) => dockerApi.getContainers(nodeId, { cursor: pageParam as string | null, limit: params?.limit, all: params?.all }),
+    initialPageParam: null as string | null,
+    getNextPageParam: getNextCursor,
+    enabled: !!nodeId,
+    refetchInterval: 60_000,
+  })
+}
+
+export function useInfiniteDockerImages(nodeId: string, params?: { limit?: number }) {
+  return useInfiniteQuery<CursorPage_DockerImage_>({
+    queryKey: ['docker', nodeId, 'images', 'infinite', params],
+    queryFn: ({ pageParam }) => dockerApi.getImages(nodeId, { cursor: pageParam as string | null, limit: params?.limit }),
+    initialPageParam: null as string | null,
+    getNextPageParam: getNextCursor,
+    enabled: !!nodeId,
+    refetchInterval: 60_000,
+  })
+}
+
+export function useInfiniteDockerNetworks(nodeId: string, params?: { limit?: number }) {
+  return useInfiniteQuery<CursorPage_DockerNetwork_>({
+    queryKey: ['docker', nodeId, 'networks', 'infinite', params],
+    queryFn: ({ pageParam }) => dockerApi.getNetworks(nodeId, { cursor: pageParam as string | null, limit: params?.limit }),
+    initialPageParam: null as string | null,
+    getNextPageParam: getNextCursor,
+    enabled: !!nodeId,
+    refetchInterval: 60_000,
+  })
+}
+
+export function useInfiniteDockerVolumes(nodeId: string, params?: { limit?: number }) {
+  return useInfiniteQuery<CursorPage_DockerVolume_>({
+    queryKey: ['docker', nodeId, 'volumes', 'infinite', params],
+    queryFn: ({ pageParam }) => dockerApi.getVolumes(nodeId, { cursor: pageParam as string | null, limit: params?.limit }),
+    initialPageParam: null as string | null,
+    getNextPageParam: getNextCursor,
     enabled: !!nodeId,
     refetchInterval: 60_000,
   })
@@ -170,231 +215,6 @@ export function useTagImage() {
   })
 }
 
-async function aggregateBulkResults<T extends { total: number; succeeded: number; failed: number; results: unknown[] }>(calls: Promise<T>[]): Promise<T> {
-  const settled = await Promise.allSettled(calls)
-  const results: unknown[] = []
-  let total = 0
-  let succeeded = 0
-  let failed = 0
-  for (const s of settled) {
-    if (s.status === 'fulfilled') {
-      const v = s.value as T
-      total += v.total ?? 0
-      succeeded += v.succeeded ?? 0
-      failed += v.failed ?? 0
-      results.push(...(v.results ?? []))
-    } else {
-      failed += 1
-      total += 1
-    }
-  }
-  return { total, succeeded, failed, results } as T
-}
-
-// Per-node bulk wrappers (v2) — supports multi-node by aggregating per-node calls
-export function useBulkDockerExec() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { container_id: string; node_ids: string[]; command?: string; timeout?: number } | { nodeId: string; container_ids: string[]; command: string }) => {
-      const d = data as { container_id?: string; node_ids?: string[]; nodeId?: string; container_ids?: string[]; command?: string; timeout?: number }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const container_ids = d.container_ids || (d.container_id ? [d.container_id] : [])
-      const command = d.command || ''
-      const timeout = d.timeout ?? 30
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkExec(nodeIds[0], { container_ids, command, timeout } as Parameters<typeof dockerApi.bulkExec>[1])
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkExec(id, { container_ids, command, timeout } as Parameters<typeof dockerApi.bulkExec>[1])))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerRestart() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { container_id: string; node_ids: string[] } | { nodeId: string; container_ids: string[] }) => {
-      const d = data as { container_id?: string; node_ids?: string[]; nodeId?: string; container_ids?: string[] }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const container_ids = d.container_ids || (d.container_id ? [d.container_id] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkRestart(nodeIds[0], { container_ids })
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkRestart(id, { container_ids })))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerStart() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { container_id: string; node_ids: string[] } | { nodeId: string; container_ids: string[] }) => {
-      const d = data as { container_id?: string; node_ids?: string[]; nodeId?: string; container_ids?: string[] }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const container_ids = d.container_ids || (d.container_id ? [d.container_id] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkStart(nodeIds[0], { container_ids })
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkStart(id, { container_ids })))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerStop() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { container_id: string; node_ids: string[]; timeout?: number } | { nodeId: string; container_ids: string[]; timeout?: number }) => {
-      const d = data as { container_id?: string; node_ids?: string[]; nodeId?: string; container_ids?: string[]; timeout?: number }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const container_ids = d.container_ids || (d.container_id ? [d.container_id] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkStop(nodeIds[0], { container_ids }, d.timeout)
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkStop(id, { container_ids }, d.timeout)))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerRemove() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { container_id: string; node_ids: string[] } | { nodeId: string; container_ids: string[] }) => {
-      const d = data as { container_id?: string; node_ids?: string[]; nodeId?: string; container_ids?: string[] }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const container_ids = d.container_ids || (d.container_id ? [d.container_id] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkRemove(nodeIds[0], { container_ids })
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkRemove(id, { container_ids })))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerImageBuild() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { node_ids?: string[]; node_tags?: string[]; dockerfile: string; tag: string } | { nodeId: string; dockerfile: string; tag: string }) => {
-      const d = data as { node_ids?: string[]; nodeId?: string; dockerfile: string; tag: string; no_cache?: boolean }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.buildImage(nodeIds[0], { dockerfile: d.dockerfile, tag: d.tag, no_cache: d.no_cache })
-      const settled = await Promise.allSettled(nodeIds.map((id) => dockerApi.buildImage(id, { dockerfile: d.dockerfile, tag: d.tag, no_cache: d.no_cache })))
-      // buildImage not bulk — aggregate as simple success count
-      let succeeded = 0
-      let failed = 0
-      for (const s of settled) if (s.status === 'fulfilled') succeeded++; else failed++
-      return { total: nodeIds.length, succeeded, failed, results: settled.map((s, i) => ({ node_id: nodeIds[i], status: s.status === 'fulfilled' ? 'success' : 'failed' })) } as unknown as ReturnType<typeof dockerApi.buildImage> extends Promise<infer T> ? T : never
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerImageRemove() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { image_id: string; node_ids: string[] } | { nodeId: string; image_ids: string[] }) => {
-      const d = data as { image_id?: string; node_ids?: string[]; nodeId?: string; image_ids?: string[] }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const image_ids = d.image_ids || (d.image_id ? [d.image_id] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkImageRemovals(nodeIds[0], { image_ids })
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkImageRemovals(id, { image_ids })))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerPull() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { image: string; node_ids: string[] } | { nodeId: string; images: string[] }) => {
-      const d = data as { image?: string; node_ids?: string[]; nodeId?: string; images?: string[] }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const images = d.images || (d.image ? [d.image] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkImagePulls(nodeIds[0], { images, timeout: 300 } as Parameters<typeof dockerApi.bulkImagePulls>[1])
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkImagePulls(id, { images, timeout: 300 } as Parameters<typeof dockerApi.bulkImagePulls>[1])))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerInspect() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { container_id: string; node_ids: string[] } | { nodeId: string; container_ids: string[] }) => {
-      const d = data as { container_id?: string; node_ids?: string[]; nodeId?: string; container_ids?: string[] }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const container_ids = d.container_ids || (d.container_id ? [d.container_id] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkInspect(nodeIds[0], { container_ids })
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkInspect(id, { container_ids })))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerLogs() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { container_id: string; node_ids: string[] } | { nodeId: string; container_ids: string[] }) => {
-      const d = data as { container_id?: string; node_ids?: string[]; nodeId?: string; container_ids?: string[] }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const container_ids = d.container_ids || (d.container_id ? [d.container_id] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkLogs(nodeIds[0], { container_ids, tail: 100 } as Parameters<typeof dockerApi.bulkLogs>[1])
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkLogs(id, { container_ids, tail: 100 } as Parameters<typeof dockerApi.bulkLogs>[1])))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-export function useBulkDockerStats() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { container_id: string; node_ids: string[] } | { nodeId: string; container_ids: string[] }) => {
-      const d = data as { container_id?: string; node_ids?: string[]; nodeId?: string; container_ids?: string[] }
-      const nodeIds = d.nodeId ? [d.nodeId] : d.node_ids ?? []
-      const container_ids = d.container_ids || (d.container_id ? [d.container_id] : [])
-      if (nodeIds.length === 0) throw new Error('nodeIds required')
-      if (nodeIds.length === 1) return dockerApi.bulkStats(nodeIds[0], { container_ids })
-      return aggregateBulkResults(nodeIds.map((id) => dockerApi.bulkStats(id, { container_ids })))
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['docker'] })
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
 
 export function usePauseContainer() {
   const queryClient = useQueryClient()
@@ -581,3 +401,4 @@ export function usePruneSystem() {
 export function useDockerSystemVersion(nodeId: string) {
   return useQuery<{ version: string; api_version: string }>({ queryKey:['docker',nodeId,'system','version'], queryFn:()=> dockerApi.getSystemVersion(nodeId), enabled: !!nodeId })
 }
+export * from './useDockerBulk'

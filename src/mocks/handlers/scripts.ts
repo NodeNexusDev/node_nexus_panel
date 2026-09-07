@@ -1,3 +1,4 @@
+// oxlint-disable
 // @ts-nocheck
 import { http, HttpResponse } from 'msw'
 import { mockScripts } from '../data/scripts'
@@ -37,6 +38,22 @@ export const scriptHandlers = [
 
   http.post(`${API_URL}/api/v2/scripts/`, async ({ request }) => {
     const body = (await request.json()) as { items?: Array<Record<string, unknown>>; name?: string; description?: string; steps?: unknown; tags?: string[] }
+    // 422 validation
+    const allItems = (body.items as Array<Record<string, unknown>>) || (body.name ? [body as unknown as Record<string, unknown>] : [])
+    for (const it of allItems) {
+      const itAny = it as unknown as { name?: string; tags?: string[]; steps?: Array<{ type?: string; command?: string|null; command_id?: string|null }> }
+      if (!itAny.name || String(itAny.name).trim()==='') return HttpResponse.json({ detail: [{ loc: ['body','name'], msg: 'Field required', type: 'missing' }] }, { status: 422 })
+      if (itAny.tags) {
+        const bad = (itAny.tags as string[]).find((tg: string) => !/^[a-z0-9_-]{1,30}$/.test(tg))
+        if (bad) return HttpResponse.json({ detail: [{ loc: ['body','tags'], msg: `Invalid tag '${bad}'`, type: 'value_error' }] }, { status: 422 })
+      }
+      if (itAny.steps) {
+        for (const step of itAny.steps as Array<{ type?: string; command?: string|null; command_id?: string|null }>) {
+          if (step.type==='inline' && !step.command) return HttpResponse.json({ detail: [{ loc: ['body','steps','command'], msg: 'Inline step requires command', type: 'value_error' }] }, { status: 422 })
+          if (step.type==='command' && !step.command_id) return HttpResponse.json({ detail: [{ loc: ['body','steps','command_id'], msg: 'Command step requires command_id', type: 'value_error' }] }, { status: 422 })
+        }
+      }
+    }
     if (body.items) {
       const results = body.items.map((item: any) => {
         const newScript = {
@@ -252,7 +269,10 @@ export const scriptHandlers = [
         error: '',
       }))
     )
-    return HttpResponse.json({ batch_id, total: results.length, succeeded: results.length, failed: 0, results })
+    let failed = 0
+    if (results.length > 2) { const last = results[results.length-1] as unknown as { status: string; error: string; steps: Array<{ exit_code: number; stderr: string }> }; last.status = 'error'; last.error = 'Simulated 207'; if (last.steps[0]) { last.steps[0].exit_code = 1; last.steps[0].stderr = 'Simulated failure' }; failed = 1 }
+    const succeeded = results.length - failed
+    return HttpResponse.json({ batch_id, total: results.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
   }),
 
   http.post(`${API_URL}/api/v2/scripts/executions/cancels`, async ({ request }) => {

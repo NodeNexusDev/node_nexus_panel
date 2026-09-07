@@ -78,6 +78,16 @@ export const commandHandlers = [
 
   http.post(`${API_URL}/api/v2/commands/`, async ({ request }) => {
     const body = (await request.json()) as { items?: Array<Record<string, unknown>>; name?: string; command?: string; description?: string; parameters?: unknown; tags?: string[] }
+    // 422 validation for tags and name
+    const allItems = body.items || (body.name ? [body] : [])
+    for (const it of allItems) {
+      const itAny = it as unknown as { name?: string; tags?: string[] }
+      if (!itAny.name || String(itAny.name).trim()==='') return HttpResponse.json({ detail: [{ loc: ['body','name'], msg: 'Field required', type: 'missing' }] }, { status: 422 })
+      if (itAny.tags) {
+        const bad = (itAny.tags as string[]).find((tg: string) => !/^[a-z0-9_-]{1,30}$/.test(tg))
+        if (bad) return HttpResponse.json({ detail: [{ loc: ['body','tags'], msg: `Invalid tag '${bad}'`, type: 'value_error' }] }, { status: 422 })
+      }
+    }
     if (body.items && Array.isArray(body.items)) {
       const results = body.items.map((item: any) => {
         const newCmd = {
@@ -235,7 +245,7 @@ export const commandHandlers = [
     const body = (await request.json()) as { command_ids: string[]; node_ids?: string[]; node_tags?: string[]; params?: Record<string, unknown> }
     const batch_id = 'batch-' + Math.random().toString(36).slice(2, 10)
     const nodeIds = body.node_ids || ['1', '2']
-    const results = (body.command_ids || ['cmd1']).flatMap((cid) =>
+    let results = (body.command_ids || ['cmd1']).flatMap((cid) =>
       nodeIds.map((nid) => ({
         command: `cmd-${cid}`,
         command_id: cid,
@@ -248,7 +258,15 @@ export const commandHandlers = [
         error: '',
       }))
     )
-    return HttpResponse.json({ batch_id, total: results.length, succeeded: results.length, failed: 0, results })
+    // Simulate 207 partial when >2 results: last fails
+    let failed = 0
+    if (results.length > 2) {
+      const last = results[results.length-1] as unknown as { status: string; exit_code: number; stderr: string; error: string }
+      last.status = 'error'; last.exit_code = 1; last.stderr = 'Simulated failure'; last.error = 'Simulated 207'
+      failed = 1
+    }
+    const succeeded = results.length - failed
+    return HttpResponse.json({ batch_id, total: results.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
   }),
 
   http.post(`${API_URL}/api/v2/commands/raw-executions`, async ({ request }) => {

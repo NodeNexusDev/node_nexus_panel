@@ -2,7 +2,7 @@
 title: Шаблоны
 status: stable
 translation_key: guides.templates
-source_revision: 2026-08-20
+source_revision: 2026-09-07
 ---
 
 # Шаблоны

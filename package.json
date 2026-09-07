@@ -1,7 +1,7 @@
 {
   "name": "node_nexus_panel",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.3.3",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -21,7 +21,7 @@
     "test:e2e:report": "playwright show-report",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "prepare": "husky || true"
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.0",
@@ -49,18 +49,19 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.4",
-    "@types/node": "^24.13.3",
+    "@types/node": "^26.4.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
+    "@vitest/coverage-v8": "^5.0.0",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "msw": "^2.15.0",
     "oxlint": "^1.75.0",
     "storybook": "^10.5.8",
-    "typescript": "~6.0.2",
+    "typescript": "^7.0.2",
     "vite": "^8.2.0",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

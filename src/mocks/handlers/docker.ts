@@ -1,3 +1,4 @@
+// oxlint-disable
 import { http, HttpResponse } from 'msw'
 import { mockContainers, mockImages, mockNetworks, mockVolumes } from '../data/docker'
 
@@ -418,76 +419,162 @@ export const dockerHandlers = [
   // ── v2 per-node bulk (new) ─────────────────────────────────
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/executions`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[]; command: string }
-    return HttpResponse.json({
-      total: body.container_ids.length,
-      succeeded: body.container_ids.length,
-      failed: 0,
-      results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '', stdout: 'executed', stderr: '', exit_code: 0 })),
-    })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207', stdout: '', stderr: 'Simulated failure', exit_code: 1 } : { container_id: id, status: 'success', error: '', stdout: 'executed', stderr: '', exit_code: 0 })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/inspections`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({
-      total: body.container_ids.length,
-      succeeded: body.container_ids.length,
-      failed: 0,
-      results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '', data: { Id: id, Name: '/mock', State: { status: 'running', running: true, exit_code: 0 }, Config: {} } })),
-    })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207', data: null } : { container_id: id, status: 'success', error: '', data: { Id: id, Name: '/mock', State: { status: 'running', running: true, exit_code: 0 }, Config: {} } })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/kills`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207 failure' } : { container_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/logs`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '', logs: 'log line' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207', logs: '' } : { container_id: id, status: 'success', error: '', logs: 'log line' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/pauses`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207 failure' } : { container_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/removals`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207 failure' } : { container_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/restarts`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207 failure' } : { container_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/starts`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207 failure' } : { container_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/stats`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '', stats: { Container: id, Name: 'nginx', CPUPerc: '1%', MemUsage: '10MiB', MemPerc: '1%', NetIO: '0', BlockIO: '0' } })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207', stats: null } : { container_id: id, status: 'success', error: '', stats: { Container: id, Name: 'nginx', CPUPerc: '1%', MemUsage: '10MiB', MemPerc: '1%', NetIO: '0', BlockIO: '0' } })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/stops`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207 failure' } : { container_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/unpauses`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207 failure' } : { container_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/updates`, async ({ request }) => {
     const body = (await request.json()) as { container_ids: string[] }
-    return HttpResponse.json({ total: body.container_ids.length, succeeded: body.container_ids.length, failed: 0, results: body.container_ids.map((id) => ({ container_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.container_ids.length > 2
+      const results = body.container_ids.map((id, idx) => shouldFail && idx === body.container_ids.length - 1 ? { container_id: id, status: 'error', error: 'Simulated 207 failure' } : { container_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.container_ids.length - failed
+      return HttpResponse.json({ total: body.container_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/images/pulls`, async ({ request }) => {
     const body = (await request.json()) as { images: string[] }
-    return HttpResponse.json({ total: body.images.length, succeeded: body.images.length, failed: 0, results: body.images.map((img) => ({ image: img, status: 'success', error: '', output: 'pulled' })) })
+    {
+      const shouldFail = body.images.length > 2
+      const results = body.images.map((img, idx) => shouldFail && idx === body.images.length - 1 ? { image: img, status: 'error', error: 'Simulated 207', output: '' } : { image: img, status: 'success', error: '', output: 'pulled' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.images.length - failed
+      return HttpResponse.json({ total: body.images.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/images/removals`, async ({ request }) => {
     const body = (await request.json()) as { image_ids: string[] }
-    return HttpResponse.json({ total: body.image_ids.length, succeeded: body.image_ids.length, failed: 0, results: body.image_ids.map((id) => ({ image_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.image_ids.length > 2
+      const results = body.image_ids.map((id, idx) => shouldFail && idx === body.image_ids.length - 1 ? { image_id: id, status: 'error', error: 'Simulated 207' } : { image_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.image_ids.length - failed
+      return HttpResponse.json({ total: body.image_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/networks/removals`, async ({ request }) => {
     const body = (await request.json()) as { network_ids: string[] }
-    return HttpResponse.json({ total: body.network_ids.length, succeeded: body.network_ids.length, failed: 0, results: body.network_ids.map((id) => ({ network_id: id, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.network_ids.length > 2
+      const results = body.network_ids.map((id, idx) => shouldFail && idx === body.network_ids.length - 1 ? { network_id: id, status: 'error', error: 'Simulated 207' } : { network_id: id, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.network_ids.length - failed
+      return HttpResponse.json({ total: body.network_ids.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
   http.post(`${API}/api/v2/nodes/:nodeId/docker/volumes/removals`, async ({ request }) => {
     const body = (await request.json()) as { volume_names: string[] }
-    return HttpResponse.json({ total: body.volume_names.length, succeeded: body.volume_names.length, failed: 0, results: body.volume_names.map((n) => ({ volume_name: n, status: 'success', error: '' })) })
+    {
+      const shouldFail = body.volume_names.length > 2
+      const results = body.volume_names.map((n, idx) => shouldFail && idx === body.volume_names.length - 1 ? { volume_name: n, status: 'error', error: 'Simulated 207' } : { volume_name: n, status: 'success', error: '' })
+      const failed = shouldFail ? 1 : 0
+      const succeeded = body.volume_names.length - failed
+      return HttpResponse.json({ total: body.volume_names.length, succeeded, failed, results }, { status: failed ? 207 : 200 })
+    }
   }),
 ]

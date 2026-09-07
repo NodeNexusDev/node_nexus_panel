@@ -2,14 +2,14 @@
 title: Переменные окружения
 status: stable
 translation_key: operations.environment
-source_revision: 2026-08-17
+source_revision: 2026-09-07
 ---
 
 # Переменные окружения
 
 ## Runtime переменные
 
-Переменные инжектируются при запуске контейнера через `docker/entrypoint.sh` (Docker) или `window.__ENV__` (браузер).
+Переменные внедряются при запуске контейнера через `docker/entrypoint.sh` (Docker) или `window.__ENV__` (браузер).
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|

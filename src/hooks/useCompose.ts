@@ -1,3 +1,4 @@
+import { getNextCursor } from '../lib/pagination'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { composeApi } from '../api/compose'
 import type {
@@ -13,6 +14,10 @@ import type {
   ComposePortResponse,
   ComposeVersionResponse,
   ComposeExecRequest,
+  ComposeUpRequest,
+  ComposeDownRequest,
+  ComposeServicesRequest,
+  ComposeKillRequest,
 } from '../api/types'
 
 export function useComposeProjects(nodeId: string, params?: { cursor?: string | null; limit?: number }) {
@@ -28,7 +33,7 @@ export function useInfiniteComposeProjects(nodeId: string, params?: { limit?: nu
     queryKey: ['compose', nodeId, 'projects', 'infinite', params],
     queryFn: ({ pageParam }) => composeApi.list(nodeId, { cursor: pageParam as string | null, limit: params?.limit }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    getNextPageParam: getNextCursor,
     enabled: !!nodeId,
   })
 }
@@ -92,43 +97,43 @@ export function useComposeConfig(nodeId: string, projectName: string, enabled = 
 export function useComposeUp() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ nodeId, projectName }: { nodeId: string; projectName: string }) => composeApi.ups(nodeId, projectName),
+    mutationFn: ({ nodeId, projectName, data }: { nodeId: string; projectName: string; data: ComposeUpRequest }) => composeApi.ups(nodeId, projectName, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }),
   })
 }
 export function useComposeDown() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ nodeId, projectName }: { nodeId: string; projectName: string }) => composeApi.downs(nodeId, projectName), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
+  return useMutation({ mutationFn: ({ nodeId, projectName, data }: { nodeId: string; projectName: string; data: ComposeDownRequest }) => composeApi.downs(nodeId, projectName, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
 }
 export function useComposeStart() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ nodeId, projectName }: { nodeId: string; projectName: string }) => composeApi.starts(nodeId, projectName), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
+  return useMutation({ mutationFn: ({ nodeId, projectName, data }: { nodeId: string; projectName: string; data: ComposeServicesRequest }) => composeApi.starts(nodeId, projectName, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
 }
 export function useComposeStop() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ nodeId, projectName }: { nodeId: string; projectName: string }) => composeApi.stops(nodeId, projectName), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
+  return useMutation({ mutationFn: ({ nodeId, projectName, data }: { nodeId: string; projectName: string; data: ComposeServicesRequest }) => composeApi.stops(nodeId, projectName, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
 }
 export function useComposeRestart() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ nodeId, projectName }: { nodeId: string; projectName: string }) => composeApi.restarts(nodeId, projectName), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
+  return useMutation({ mutationFn: ({ nodeId, projectName, data }: { nodeId: string; projectName: string; data: ComposeServicesRequest }) => composeApi.restarts(nodeId, projectName, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
 }
 export function useComposeBuild() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ nodeId, projectName }: { nodeId: string; projectName: string }) => composeApi.builds(nodeId, projectName), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
+  return useMutation({ mutationFn: ({ nodeId, projectName, data }: { nodeId: string; projectName: string; data: ComposeServicesRequest }) => composeApi.builds(nodeId, projectName, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
 }
 export function useComposePull() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ nodeId, projectName }: { nodeId: string; projectName: string }) => composeApi.pulls(nodeId, projectName), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
+  return useMutation({ mutationFn: ({ nodeId, projectName, data }: { nodeId: string; projectName: string; data: ComposeServicesRequest }) => composeApi.pulls(nodeId, projectName, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['compose'] }) })
 }
-export function useComposeCreate() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.creates(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
-export function useComposeKill() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.kills(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
-export function useComposePause() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.pauses(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
-export function useComposeUnpause() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.unpauses(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeCreate() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:ComposeServicesRequest})=> composeApi.creates(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeKill() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:ComposeKillRequest})=> composeApi.kills(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposePause() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:ComposeServicesRequest})=> composeApi.pauses(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeUnpause() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:ComposeServicesRequest})=> composeApi.unpauses(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
 export function useComposePort(nodeId:string,projectName:string,service:string,port:string,enabled=true){ return useQuery<ComposePortResponse>({ queryKey:['compose',nodeId,projectName,'port',service,port], queryFn:()=> composeApi.port(nodeId,projectName,{service,private_port:port}), enabled: !!nodeId && !!projectName && enabled })}
 export function useComposeImages(nodeId:string,projectName:string,enabled=true){ return useQuery<ComposeImagesResponse>({ queryKey:['compose',nodeId,projectName,'images'], queryFn:()=> composeApi.images(nodeId,projectName), enabled: !!nodeId && !!projectName && enabled })}
 export function useComposeTop(nodeId:string,projectName:string,enabled=true){ return useQuery<ComposeTopResponse>({ queryKey:['compose',nodeId,projectName,'top'], queryFn:()=> composeApi.top(nodeId,projectName), enabled: !!nodeId && !!projectName && enabled })}
 export function useComposeVersion(nodeId:string,projectName:string,enabled=true){ return useQuery<ComposeVersionResponse>({ queryKey:['compose',nodeId,projectName,'version'], queryFn:()=> composeApi.version(nodeId,projectName), enabled: !!nodeId && !!projectName && enabled })}
-export function useComposePush() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.pushs(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
-export function useComposeRm() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName}:{nodeId:string;projectName:string})=> composeApi.rms(nodeId,projectName), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposePush() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:ComposeServicesRequest})=> composeApi.pushs(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
+export function useComposeRm() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:ComposeServicesRequest})=> composeApi.rms(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
 export function useComposeRun() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:import('../api/types').ComposeRunRequest})=> composeApi.runs(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}
 export function useComposeExec() { const qc=useQueryClient(); return useMutation({ mutationFn: ({nodeId,projectName,data}:{nodeId:string;projectName:string;data:ComposeExecRequest})=> composeApi.executions(nodeId,projectName,data), onSuccess:()=>qc.invalidateQueries({queryKey:['compose']}) })}

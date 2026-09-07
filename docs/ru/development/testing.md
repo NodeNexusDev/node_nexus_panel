@@ -2,7 +2,7 @@
 title: Тестирование
 status: stable
 translation_key: development.testing
-source_revision: 2026-08-20
+source_revision: 2026-09-07
 ---
 
 # Тестирование

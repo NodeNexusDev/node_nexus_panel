@@ -22,12 +22,29 @@ class ApiClient {
 
   private async parseError(response: Response): Promise<ApiError> {
     try {
-      const data = (await response.json()) as ApiError
-      // Back-compat: map legacy details -> detail
-      if (data.details && !data.detail) {
-        return { ...data, detail: data.details } as ApiError
+      const data = (await response.json()) as unknown as ApiError & { detail?: unknown; request_id?: string | null; code?: string; message?: string }
+      // FastAPI 422 Validation Error: { detail: [{ loc: ["body","name"], msg: "...", type: "..." }] }
+      if (Array.isArray((data as { detail?: unknown }).detail)) {
+        const detail = (data as unknown as { detail: Array<{ loc?: (string|number)[]; msg?: string; type?: string }> }).detail
+        const first = detail[0]
+        const loc = first?.loc ? ` (${first.loc.join('.')})` : ''
+        const msg = first?.msg ? `${first.msg}${loc}` : 'Validation failed'
+        return {
+          code: (data as unknown as { code?: string }).code || 'VALIDATION_ERROR',
+          message: (data as unknown as { message?: string }).message || msg,
+          detail: detail as unknown,
+          request_id: (data as unknown as { request_id?: string | null }).request_id ?? null,
+        } as ApiError
       }
-      return data
+      // Back-compat: map legacy details -> detail
+      if ((data as ApiError & { details?: unknown }).details && !data.detail) {
+        return { ...data, detail: (data as unknown as { details: unknown }).details } as ApiError
+      }
+      // Ensure code/message for generic ErrorResponse even if missing
+      if (!data.code && response.status === 422) {
+        return { code: 'VALIDATION_ERROR', message: (data as unknown as { message?: string }).message || 'Validation failed', detail: data.detail, request_id: (data as unknown as { request_id?: string | null }).request_id ?? null } as ApiError
+      }
+      return data as ApiError
     } catch {
       return {
         code: 'UNKNOWN_ERROR',

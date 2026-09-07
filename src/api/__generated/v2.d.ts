@@ -28,7 +28,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v2/api-keys/{key_id}": {
+    "/api/v2/api-keys/deletions": {
         parameters: {
             query?: never;
             header?: never;
@@ -36,6 +36,30 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
+        /**
+         * Bulk Revoke Api Keys
+         * @description Bulk revoke API keys (POST, 207 on partial).
+         */
+        post: operations["post_api_v2_api_keys_deletions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/api-keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Api Key
+         * @description Get one API key by id.
+         */
+        get: operations["get_api_v2_api_keys_key_id"];
         put?: never;
         post?: never;
         /**
@@ -241,6 +265,30 @@ export interface paths {
          * @description Bulk create commands (1..20). Returns 207 when partially succeeded.
          */
         post: operations["post_api_v2_commands"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Bulk Update Commands
+         * @description Bulk update commands via PATCH / (bulk-first, no bulk keyword).
+         */
+        patch: operations["patch_api_v2_commands"];
+        trace?: never;
+    };
+    "/api/v2/commands/deletions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk Delete Commands
+         * @description Bulk delete commands via POST /deletions (RESTful body, 207 on partial).
+         */
+        post: operations["post_api_v2_commands_deletions"];
         delete?: never;
         options?: never;
         head?: never;
@@ -564,7 +612,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get Favorite
+         * @description Get a single favorite by composite key.
+         */
+        get: operations["get_api_v2_favorites_target_type_target_id"];
         put?: never;
         post?: never;
         /**
@@ -574,7 +626,11 @@ export interface paths {
         delete: operations["delete_api_v2_favorites_target_type_target_id"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch Favorite
+         * @description Patch favorite name/note.
+         */
+        patch: operations["patch_api_v2_favorites_target_type_target_id"];
         trace?: never;
     };
     "/api/v2/nodes/": {
@@ -621,6 +677,10 @@ export interface paths {
         /**
          * Bulk Check Nodes
          * @description Check existence/connectivity for multiple nodes (no bulk keyword).
+         *
+         *     Modes:
+         *     - db: check existence in DB (legacy)
+         *     - ssh: SSH connectivity check with status update (echo ok)
          */
         post: operations["post_api_v2_nodes_checks"];
         delete?: never;
@@ -2387,6 +2447,30 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /**
+         * Bulk Update Scripts
+         * @description Bulk update scripts via PATCH /.
+         */
+        patch: operations["patch_api_v2_scripts"];
+        trace?: never;
+    };
+    "/api/v2/scripts/deletions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk Delete Scripts
+         * @description Bulk delete scripts via POST /deletions (207 on partial).
+         */
+        post: operations["post_api_v2_scripts_deletions"];
+        delete?: never;
+        options?: never;
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -2659,6 +2743,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/templates/packs/deletions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk Delete Packs
+         * @description Bulk delete packs (POST for RESTful body, 207 on partial).
+         */
+        post: operations["post_api_v2_templates_packs_deletions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/templates/packs/stats": {
         parameters: {
             query?: never;
@@ -2693,10 +2797,18 @@ export interface paths {
         get: operations["get_api_v2_templates_packs_pack_id"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Pack
+         * @description Hard delete pack with assets and installations.
+         */
+        delete: operations["delete_api_v2_templates_packs_pack_id"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch Pack
+         * @description Partially update pack metadata (name, description, version, tags, etc.).
+         */
+        patch: operations["patch_api_v2_templates_packs_pack_id"];
         trace?: never;
     };
     "/api/v2/templates/packs/{pack_id}/archive": {
@@ -2838,7 +2950,11 @@ export interface paths {
         delete: operations["delete_api_v2_templates_registries_registry_id"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch Registry
+         * @description Partially update registry (owner, name, token, branch).
+         */
+        patch: operations["patch_api_v2_templates_registries_registry_id"];
         trace?: never;
     };
     "/api/v2/templates/registries/{registry_id}/syncs": {
@@ -2892,7 +3008,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get User
+         * @description Get one user by id (superuser only).
+         */
+        get: operations["get_api_v2_users_user_id"];
         put?: never;
         post?: never;
         /**
@@ -2902,7 +3022,11 @@ export interface paths {
         delete: operations["delete_api_v2_users_user_id"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch User
+         * @description Patch all mutable user fields (superuser only).
+         */
+        patch: operations["patch_api_v2_users_user_id"];
         trace?: never;
     };
     "/health": {
@@ -3073,6 +3197,43 @@ export interface components {
             user: string | null;
         };
         /**
+         * BulkAPIKeyDeleteRequest
+         * @description Bulk delete API keys by IDs (POST for body).
+         */
+        BulkAPIKeyDeleteRequest: {
+            /** Key Ids */
+            key_ids: string[];
+        };
+        /** BulkAPIKeyDeleteResponse */
+        BulkAPIKeyDeleteResponse: {
+            /** Failed */
+            failed: number;
+            /** Results */
+            results: components["schemas"]["BulkAPIKeyDeleteResult"][];
+            /** Succeeded */
+            succeeded: number;
+            /** Total */
+            total: number;
+        };
+        /** BulkAPIKeyDeleteResult */
+        BulkAPIKeyDeleteResult: {
+            /**
+             * Error
+             * @default
+             */
+            error: string;
+            /**
+             * Key Id
+             * Format: uuid
+             */
+            key_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "success" | "error";
+        };
+        /**
          * BulkCancelCommandResult
          * @description Result of cancelling a single command execution.
          */
@@ -3208,6 +3369,52 @@ export interface components {
              */
             status: "success" | "error";
         };
+        /**
+         * BulkPackDeleteRequest
+         * @description Request to delete multiple packs by ID.
+         */
+        BulkPackDeleteRequest: {
+            /**
+             * Pack Ids
+             * @description Pack IDs to delete (1..100)
+             */
+            pack_ids: string[];
+        };
+        /**
+         * BulkPackDeleteResponse
+         * @description Response for bulk pack delete (207 Multi-Status).
+         */
+        BulkPackDeleteResponse: {
+            /** Failed */
+            failed: number;
+            /** Results */
+            results: components["schemas"]["BulkPackDeleteResult"][];
+            /** Succeeded */
+            succeeded: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * BulkPackDeleteResult
+         * @description Result of a single bulk delete item.
+         */
+        BulkPackDeleteResult: {
+            /**
+             * Error
+             * @default
+             */
+            error: string;
+            /**
+             * Pack Id
+             * Format: uuid
+             */
+            pack_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "success" | "error";
+        };
         /** BulkResult[BulkCancelCommandResult] */
         BulkResult_BulkCancelCommandResult_: {
             /** Failed */
@@ -3291,6 +3498,17 @@ export interface components {
             failed: number;
             /** Results */
             results: components["schemas"]["CommandBulkCreateResult"][];
+            /** Succeeded */
+            succeeded: number;
+            /** Total */
+            total: number;
+        };
+        /** BulkResult[CommandBulkUpdateResult] */
+        BulkResult_CommandBulkUpdateResult_: {
+            /** Failed */
+            failed: number;
+            /** Results */
+            results: components["schemas"]["CommandBulkUpdateResult"][];
             /** Succeeded */
             succeeded: number;
             /** Total */
@@ -3412,6 +3630,17 @@ export interface components {
             failed: number;
             /** Results */
             results: components["schemas"]["ScriptBulkCreateResult"][];
+            /** Succeeded */
+            succeeded: number;
+            /** Total */
+            total: number;
+        };
+        /** BulkResult[ScriptBulkUpdateResult] */
+        BulkResult_ScriptBulkUpdateResult_: {
+            /** Failed */
+            failed: number;
+            /** Results */
+            results: components["schemas"]["ScriptBulkUpdateResult"][];
             /** Succeeded */
             succeeded: number;
             /** Total */
@@ -3560,6 +3789,38 @@ export interface components {
              */
             status: "success" | "error";
         };
+        /** CommandBulkUpdateItem */
+        CommandBulkUpdateItem: {
+            changes: components["schemas"]["CommandUpdate"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** CommandBulkUpdateRequest */
+        CommandBulkUpdateRequest: {
+            /** Updates */
+            updates: components["schemas"]["CommandBulkUpdateItem"][];
+        };
+        /** CommandBulkUpdateResult */
+        CommandBulkUpdateResult: {
+            /**
+             * Command Id
+             * Format: uuid
+             */
+            command_id: string;
+            /**
+             * Error
+             * @default
+             */
+            error: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "success" | "error";
+        };
         /**
          * CommandCreate
          * @description Schema for creating a command template.
@@ -3575,6 +3836,11 @@ export interface components {
             parameters?: components["schemas"]["CommandParameter-Input"][];
             /** Tags */
             tags?: string[];
+        };
+        /** CommandDeletionsRequest */
+        CommandDeletionsRequest: {
+            /** Ids */
+            ids: string[];
         };
         /**
          * CommandExecutionsRequest
@@ -5391,6 +5657,16 @@ export interface components {
             target_type: string;
         };
         /**
+         * FavoriteUpdate
+         * @description Patch favorite note/name.
+         */
+        FavoriteUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /**
          * GlobalSearchResponse
          * @description Aggregated global search results across entities.
          */
@@ -6143,6 +6419,26 @@ export interface components {
             total: number;
         };
         /**
+         * PackUpdate
+         * @description Schema for updating a template pack (partial).
+         */
+        PackUpdate: {
+            /** Author */
+            author?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Manifest Sha */
+            manifest_sha?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Readme */
+            readme?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Version */
+            version?: string | null;
+        };
+        /**
          * RawExecutionsRequest
          * @description Bulk raw command executions.
          */
@@ -6283,6 +6579,20 @@ export interface components {
             total: number;
         };
         /**
+         * RegistryUpdate
+         * @description Schema for updating a template registry (partial).
+         */
+        RegistryUpdate: {
+            /** Default Branch */
+            default_branch?: string | null;
+            /** Github Token */
+            github_token?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Owner */
+            owner?: string | null;
+        };
+        /**
          * ScheduleRequest
          * @description Request to schedule a script.
          */
@@ -6396,6 +6706,38 @@ export interface components {
              */
             status: "success" | "error";
         };
+        /** ScriptBulkUpdateItem */
+        ScriptBulkUpdateItem: {
+            changes: components["schemas"]["ScriptUpdate"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** ScriptBulkUpdateRequest */
+        ScriptBulkUpdateRequest: {
+            /** Updates */
+            updates: components["schemas"]["ScriptBulkUpdateItem"][];
+        };
+        /** ScriptBulkUpdateResult */
+        ScriptBulkUpdateResult: {
+            /**
+             * Error
+             * @default
+             */
+            error: string;
+            /**
+             * Script Id
+             * Format: uuid
+             */
+            script_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "success" | "error";
+        };
         /**
          * ScriptCreate
          * @description Schema for creating a script.
@@ -6409,6 +6751,11 @@ export interface components {
             steps: components["schemas"]["ScriptStep-Input"][];
             /** Tags */
             tags?: string[];
+        };
+        /** ScriptDeletionsRequest */
+        ScriptDeletionsRequest: {
+            /** Ids */
+            ids: string[];
         };
         /**
          * ScriptExecutionResponse
@@ -6723,6 +7070,20 @@ export interface components {
             /** Is Superuser */
             is_superuser: boolean;
         };
+        /**
+         * UserUpdate
+         * @description Patch user (all fields).
+         */
+        UserUpdate: {
+            /** Email */
+            email?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Is Superuser */
+            is_superuser?: boolean | null;
+            /** Password */
+            password?: string | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -6924,6 +7285,214 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIKeyCreated"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    post_api_v2_api_keys_deletions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkAPIKeyDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkAPIKeyDeleteResponse"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_api_v2_api_keys_key_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIKeyResponse"];
                 };
             };
             /** @description Authentication credentials are missing or invalid. */
@@ -8087,6 +8656,216 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BulkResult_CommandBulkCreateResult_"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    patch_api_v2_commands: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandBulkUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkResult_CommandBulkUpdateResult_"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    post_api_v2_commands_deletions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandDeletionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkResult_CommandBulkUpdateResult_"];
                 };
             };
             /** @description Authentication credentials are missing or invalid. */
@@ -9958,6 +10737,110 @@ export interface operations {
             };
         };
     };
+    get_api_v2_favorites_target_type_target_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                target_type: string;
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoriteResponse"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     delete_api_v2_favorites_target_type_target_id: {
         parameters: {
             query?: never;
@@ -9976,6 +10859,114 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    patch_api_v2_favorites_target_type_target_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                target_type: string;
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FavoriteUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoriteResponse"];
+                };
             };
             /** @description Authentication credentials are missing or invalid. */
             401: {
@@ -10382,7 +11373,10 @@ export interface operations {
     };
     post_api_v2_nodes_checks: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Check mode: db or ssh */
+                mode?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -21000,6 +21994,216 @@ export interface operations {
             };
         };
     };
+    patch_api_v2_scripts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScriptBulkUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkResult_ScriptBulkUpdateResult_"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    post_api_v2_scripts_deletions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScriptDeletionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkResult_ScriptBulkUpdateResult_"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     post_api_v2_scripts_executions: {
         parameters: {
             query?: never;
@@ -22796,6 +24000,111 @@ export interface operations {
             };
         };
     };
+    post_api_v2_templates_packs_deletions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkPackDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkPackDeleteResponse"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_api_v2_templates_packs_stats: {
         parameters: {
             query?: {
@@ -22918,6 +24227,214 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PackDetailWithAssetsResponse"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_api_v2_templates_packs_pack_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    patch_api_v2_templates_packs_pack_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PackUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackResponse"];
                 };
             };
             /** @description Authentication credentials are missing or invalid. */
@@ -23940,6 +25457,113 @@ export interface operations {
             };
         };
     };
+    patch_api_v2_templates_registries_registry_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistryResponse"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     post_api_v2_templates_registries_registry_id_syncs: {
         parameters: {
             query?: never;
@@ -24252,6 +25876,109 @@ export interface operations {
             };
         };
     };
+    get_api_v2_users_user_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     delete_api_v2_users_user_id: {
         parameters: {
             query?: never;
@@ -24269,6 +25996,113 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    patch_api_v2_users_user_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
             };
             /** @description Authentication credentials are missing or invalid. */
             401: {

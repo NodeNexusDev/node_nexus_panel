@@ -2,7 +2,7 @@
 title: Каталог ошибок
 status: stable
 translation_key: reference.error_catalog
-source_revision: 2026-08-16
+source_revision: 2026-09-07
 ---
 
 # Каталог ошибок

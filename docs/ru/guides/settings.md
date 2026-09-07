@@ -2,7 +2,7 @@
 title: Настройки
 status: stable
 translation_key: guides.settings
-source_revision: 2026-08-16
+source_revision: 2026-09-07
 ---
 
 # Настройки

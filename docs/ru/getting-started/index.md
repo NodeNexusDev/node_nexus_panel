@@ -2,7 +2,7 @@
 title: Начало работы
 status: stable
 translation_key: getting_started
-source_revision: 2026-08-16
+source_revision: 2026-09-07
 ---
 
 # Начало работы

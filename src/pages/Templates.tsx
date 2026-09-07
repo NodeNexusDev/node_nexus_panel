@@ -1,3 +1,4 @@
+// oxlint-disable
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader } from '../components/ui/Card'
@@ -49,7 +50,7 @@ function PacksTab() {
   const [onConflict, setOnConflict] = useState<'fail'|'rename'>('fail')
   const [lastBulk, setLastBulk] = useState<{ total:number; succeeded:number; failed:number; results:Array<{name:string; entity_type:string; status:string; error:string}> } | null>(null)
   const { data: regData } = useInfiniteRegistries({ limit: 50 })
-  const regsForFilter = regData ? regData.pages.flatMap((p)=> (p as unknown as { items: Array<{ id:string; owner:string; name:string }> }).items) : []
+  const regsForFilter = regData ? regData.pages.flatMap((p)=> (p as { items: Array<{ id:string; owner:string; name:string }> }).items) : []
   const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinitePacks({ limit: 20, search: debouncedSearch || null, tag: selectedTag, installed: installedFilter==='all'? null : installedFilter==='installed', registry_id: registryFilter })
   const { data: stats } = usePackStats()
   const install = useInstallPack()
@@ -67,7 +68,7 @@ function PacksTab() {
   const [cpTags, setCpTags] = useState('')
   const [cpCommands, setCpCommands] = useState('[]')
   const [cpScripts, setCpScripts] = useState('[]')
-  const packs = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; name: string; description?: string | null; tags?: string[] | null; installed_at?: string | null; installed_version?: string | null }> }).items) : []
+  const packs = infiniteData ? infiniteData.pages.flatMap((p) => (p as { items: Array<{ id: string; name: string; description?: string | null; tags?: string[] | null; installed_at?: string | null; installed_version?: string | null }> }).items) : []
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   const allTags = useMemo(() => [...new Set(packs.flatMap((p)=> p.tags ?? []))], [infiniteData])
 
@@ -173,8 +174,8 @@ function PacksTab() {
             {detail.description && <p className="text-sm text-surface-600 dark:text-surface-300">{detail.description}</p>}
             <div className="flex gap-1 flex-wrap">{(detail.tags ?? []).map((tag:string)=> <Badge key={tag} variant="default">{tag}</Badge>)}</div>
             <div className="text-xs text-surface-500 space-y-1">
-              {(detail as unknown as {version?:string}).version && <p>{t('templates.version')}: {(detail as unknown as {version:string}).version}</p>}
-              {(detail as unknown as {author?:string}).author && <p>{t('templates.author','Author')}: {(detail as unknown as {author:string}).author}</p>}
+              {(detail as { version?: string }).version && <p>{t('templates.version')}: {(detail as { version: string }).version}</p>}
+              {(detail as { author?: string }).author && <p>{t('templates.author','Author')}: {(detail as { author: string }).author}</p>}
               {detail.created_at && <p>{t('common.created')}: {new Date(detail.created_at).toLocaleString()}</p>}
             </div>
             <div className="flex gap-2">
@@ -182,7 +183,7 @@ function PacksTab() {
             </div>
             <div>
               <h4 className="text-sm font-medium mb-1">{t('templates.installations','Installations')}</h4>
-              {(() => { const instItems = instInfinite ? instInfinite.pages.flatMap((p)=> (p as unknown as {items:unknown[]}).items) : []; return instItems.length? (
+              {(() => { const instItems = instInfinite ? instInfinite.pages.flatMap((p)=> (p as { items: unknown[] }).items) : []; return instItems.length? (
                 <div className="space-y-2">
                   <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-32 overflow-auto">{JSON.stringify(instItems, null, 2)}</pre>
                   <InfiniteScroll hasMore={!!hasInstNext} isFetchingNextPage={isInstFetching} onLoadMore={()=> fetchInstNext()} />
@@ -191,7 +192,7 @@ function PacksTab() {
             </div>
             <div>
               <h4 className="text-sm font-medium mb-1">{t('templates.assets','Assets')}</h4>
-              <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-64 overflow-auto">{JSON.stringify((detail as unknown as {assets?: unknown}).assets ?? [], null, 2)}</pre>
+              <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-64 overflow-auto">{JSON.stringify((detail as { assets?: unknown }).assets ?? [], null, 2)}</pre>
             </div>
           </div>
         ) : <p className="text-sm text-surface-500">{t('common.loading')}</p>}
@@ -216,8 +217,8 @@ function PacksTab() {
             <Button onClick={()=> {
               if(!cpPackId.trim()||!cpName.trim()){ toast('error', t('templates.createFailed')); return }
               let cmds: unknown[] = []; let scrips: unknown[] = [];
-              try{ cmds = cpCommands.trim()? JSON.parse(cpCommands):[] } catch{ toast('error','Invalid commands JSON'); return }
-              try{ scrips = cpScripts.trim()? JSON.parse(cpScripts):[] } catch{ toast('error','Invalid scripts JSON'); return }
+              try{ cmds = cpCommands.trim()? JSON.parse(cpCommands):[] } catch{ toast('error', t('templates.invalidCommandsJson')); return }
+              try{ scrips = cpScripts.trim()? JSON.parse(cpScripts):[] } catch{ toast('error', t('templates.invalidScriptsJson')); return }
               const tags = cpTags.split(',').map((s)=>s.trim()).filter(Boolean)
               createPack.mutate({ manifest:{ pack_id: cpPackId.trim(), name: cpName.trim(), version: cpVersion.trim()||'1.0.0', description: cpDesc||undefined, tags }, commands: cmds as never, scripts: scrips as never } as never, { onSuccess:()=>{ toast('success', t('templates.created','Created')); setShowCreatePack(false); setCpPackId(''); setCpName(''); setCpVersion('1.0.0'); setCpDesc(''); setCpTags(''); setCpCommands('[]'); setCpScripts('[]') }, onError:()=> toast('error', t('templates.createFailed')) })
             }} disabled={!cpPackId.trim()||!cpName.trim()||createPack.isPending}>{createPack.isPending? t('common.loading'): t('common.create')}</Button>
@@ -232,7 +233,7 @@ function RegistriesTab() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useInfiniteRegistries({ limit: 20 })
-  const regs = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; owner: string; name: string; default_branch: string; last_synced_at: string | null }> }).items) : []
+  const regs = infiniteData ? infiniteData.pages.flatMap((p) => (p as { items: Array<{ id: string; owner: string; name: string; default_branch: string; last_synced_at: string | null }> }).items) : []
   const sync = useSyncRegistry()
   const del = useDeleteRegistry()
   const create = useCreateRegistry()

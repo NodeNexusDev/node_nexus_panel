@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { getNextCursor } from '../lib/pagination'
 import { nodesApi } from '../api/nodes'
 import { commandsApi } from '../api/commands'
 import type {
@@ -35,7 +36,7 @@ export function useInfiniteNodes(params?: { limit?: number; tag?: string | null;
     queryKey: ['nodes', 'infinite', params],
     queryFn: ({ pageParam }) => nodesApi.getAll({ cursor: pageParam as string | null, limit: params?.limit, tag: params?.tag, search: params?.search }),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => (lastPage as unknown as { has_more: boolean; next_cursor: string | null }).has_more ? (lastPage as unknown as { next_cursor: string | null }).next_cursor : undefined,
+    getNextPageParam: getNextCursor,
   })
 }
 

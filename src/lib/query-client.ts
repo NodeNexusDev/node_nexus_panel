@@ -35,11 +35,9 @@ export const queryClient = new QueryClient({
       staleTime: 30_000,
       gcTime: 300_000,
       retry: (failureCount, error) => {
-        if (error instanceof ApiRequestError && error.status === 404) {
-          return false
-        }
-        if (error instanceof ApiRequestError && error.status === 401) {
-          return false
+        if (error instanceof ApiRequestError) {
+          // Do not retry client errors (validation, auth, not found, conflict, rate limit)
+          if (error.status >= 400 && error.status < 500) return false
         }
         return failureCount < 3
       },

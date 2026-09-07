@@ -104,14 +104,14 @@ export function Select({ options, value, onChange, label, placeholder, error, id
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-invalid={!!error}
-        className={`w-full flex items-center justify-between px-4 py-2.5 bg-white border rounded-[var(--radius-md)] text-sm text-left transition-all duration-200 dark:bg-surface-800 dark:text-white ${
+        className={`w-full flex items-center justify-between px-4 py-2.5 bg-white border rounded-[var(--radius-md)] text-sm text-left transition-all duration-150 dark:bg-surface-800 dark:text-white ${
           error ? 'border-red-500 focus-visible:ring-2 focus-visible:ring-red-500' : 'border-surface-300 dark:border-surface-700'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-surface-400 dark:hover:border-surface-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:border-transparent'}`}
       >
         <span className={selected ? 'text-surface-900 dark:text-white' : 'text-surface-400 dark:text-surface-500'}>
           {selected?.label ?? placeholder ?? t('common.selectPlaceholder', 'Select...')}
         </span>
-        <svg className={`w-4 h-4 text-surface-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className={`w-4 h-4 text-surface-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>

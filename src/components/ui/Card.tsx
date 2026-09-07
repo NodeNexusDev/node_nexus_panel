@@ -9,7 +9,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ children, className = '', hover = false, gradient = false, glass = false, ...props }: CardProps) {
-  const base = 'rounded-[var(--radius-md)] border transition-all duration-300 motion-reduce:transition-none'
+  const base = 'rounded-[var(--radius-md)] border transition-all duration-150 ease-out will-change-transform motion-reduce:transition-none'
   const bg = glass
     ? 'glass border-surface-200/50 dark:border-surface-700/50'
     : gradient

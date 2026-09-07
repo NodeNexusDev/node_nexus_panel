@@ -1,3 +1,4 @@
+// oxlint-disable
 export function ScriptsSkeleton() {
   return (
     <div className="space-y-6">

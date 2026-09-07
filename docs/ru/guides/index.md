@@ -2,7 +2,7 @@
 title: Гайды
 status: stable
 translation_key: guides
-source_revision: 2026-08-20
+source_revision: 2026-09-07
 ---
 
 # Гайды
