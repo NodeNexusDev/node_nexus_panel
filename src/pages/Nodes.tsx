@@ -10,18 +10,17 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
-import { TagFilter } from '../components/ui/TagFilter'
 import { Select } from '../components/ui/Select'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { Spinner } from '../components/ui/Spinner'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
-import { FilterBar } from '../components/ui/FilterBar'
 import { Checkbox } from '../components/ui/Checkbox'
 import { Drawer } from '../components/ui/Drawer'
 import { NodeDrawer } from '../components/nodes/NodeDrawer'
 import { NodesTable } from '../components/nodes/NodesTable'
+import { NodesFilters } from '../components/nodes/NodesFilters'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
 import { BulkScriptModal } from '../components/scripts/BulkScriptModal'
@@ -245,13 +244,7 @@ export function Nodes() {
         actions={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
       />
 
-      <FilterBar search={search} onSearch={setSearch} searchPlaceholder={t('nodes.searchPlaceholder', 'Search nodes...')}>
-        <TagFilter
-          available={allTags ?? []}
-          selected={tagFilter}
-          onChange={setTagFilter}
-        />
-      </FilterBar>
+      <NodesFilters search={search} setSearch={setSearch} tagFilter={tagFilter} setTagFilter={setTagFilter} allTags={allTags ?? []} />
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
