@@ -2,7 +2,7 @@
 title: WebSocket
 status: stable
 translation_key: guides.websocket
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # WebSocket

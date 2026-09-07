@@ -26,7 +26,7 @@ export function VolumesTab({ nodeId }: { nodeId: string }) {
   const [search, setSearch] = useState('')
   const { sort, toggle } = useSort<SortKey>()
   const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerVolumes(nodeId, { limit: 20 })
-  const volumeList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: DockerVolume[] }).items) : [], [infiniteData])
+  const volumeList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as { items: DockerVolume[] }).items) : [], [infiniteData])
   const createVolume = useCreateVolume()
   const pruneVolumes = usePruneVolumes()
   const bulkRemove = useBulkVolumeRemovals()

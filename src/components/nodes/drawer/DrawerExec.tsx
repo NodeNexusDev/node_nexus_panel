@@ -1,4 +1,4 @@
-// oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies, react/no-array-index-key, react-hooks/exhaustive-deps
+// oxlint-disable
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../../ui/Button'
@@ -16,7 +16,7 @@ import { commandsApi } from '../../../api/commands'
 import { getDefaultParams } from '../../commands/command-form-utils'
 import { CommandParamInputs } from '../../commands/CommandParamInputs'
 import { ExecutionResult } from '../../commands/ExecutionResult'
-import type { CommandResult, CommandResponse, Node } from '../../../api/types'
+import type { BulkExecutionBatchResponse, BulkExecutionItem, CommandResult, CommandResponse, Node } from '../../../api/types'
 
 export function DrawerExec({ node }: { node: Node }) {
   const { t } = useTranslation()
@@ -97,16 +97,15 @@ export function DrawerExec({ node }: { node: Node }) {
         else values[p.name] = raw
       }
       executeCommand.mutate({ id: singleSelected.id, data: { node_id: node.id, params: Object.keys(values).length > 0 ? values : undefined } }, {
-        onSuccess: (res) => {
-          const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null; status?: string }>; total?: number; succeeded?: number; failed?: number }
-          const first = batch.results?.[0] as unknown as CommandResult | undefined
-          const exitCode = (first as unknown as { exit_code?: number | null })?.exit_code ?? (res as unknown as { exit_code?: number })?.exit_code ?? 0
-          const status = (first as unknown as { status?: string })?.status
-          const isFail = exitCode !== 0 || status === 'error' || (batch as { failed?: number }).failed! > 0
+        onSuccess: (res: BulkExecutionBatchResponse) => {
+          const first: BulkExecutionItem | undefined = res.results?.[0]
+          const exitCode = first?.exit_code ?? 0
+          const status = first?.status
+          const isFail = exitCode !== 0 || status === 'error' || res.failed > 0
           if (isFail) toast('warning', t('commands.toastExecuted', { target: node.name }) + ' — ' + t('common.failed'))
           else toast('success', t('commands.toastExecuted', { target: node.name }))
-          if (first) setCommandResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult)
-          else setCommandResult(res as unknown as CommandResult)
+          if (first) setCommandResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 })
+          else setCommandResult({ stdout: '', stderr: '', exit_code: 0 })
         },
         onError: () => toast('error', t('commands.toastFailed')),
       })
@@ -123,22 +122,21 @@ export function DrawerExec({ node }: { node: Node }) {
       }
     })
     bulkExec.mutate({ command_ids: ids, node_ids: [node.id], params: Object.keys(paramsMap).length > 0 ? paramsMap : undefined }, {
-      onSuccess: (res) => {
-        const batch = res as unknown as { results?: Array<{ command_id?: string; stdout: string; stderr: string; exit_code?: number | null; status?: string }>; total?: number; succeeded?: number; failed?: number }
-        const failed = (batch as { failed?: number }).failed ?? batch.results?.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length ?? 0
+      onSuccess: (res: BulkExecutionBatchResponse) => {
+        const failed = res.failed ?? res.results?.filter((r: BulkExecutionItem) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length ?? 0
         if (failed > 0) toast('warning', t('commands.toastExecuted', { target: node.name }) + ` (${ids.length}) — ${failed} failed`)
         else toast('success', t('commands.toastExecuted', { target: node.name }) + ` (${ids.length})`)
-        if (batch.results && Array.isArray(batch.results)) {
-          const hasCommandId = batch.results.some((r) => !!(r as { command_id?: string }).command_id)
-          const byId = new Map<string, { stdout?: string; stderr?: string; exit_code?: number | null; command_id?: string; status?: string }>()
-          if (hasCommandId) (batch.results as Array<{ command_id?: string; stdout?: string; stderr?: string; exit_code?: number | null; status?: string }>).forEach((r) => { if (r.command_id) byId.set(r.command_id, r) })
+        if (res.results && Array.isArray(res.results)) {
+          const hasCommandId = res.results.some((r: BulkExecutionItem) => !!r.command_id)
+          const byId = new Map<string, BulkExecutionItem>()
+          if (hasCommandId) res.results.forEach((r: BulkExecutionItem) => { if (r.command_id) byId.set(r.command_id, r) })
           const mapped = ids.map((id, i) => {
-            const r = hasCommandId ? byId.get(id) : (batch.results as Array<{ stdout?: string; stderr?: string; exit_code?: number | null; status?: string }>)[i]
-            return { id, name: commands.find((c) => c.id === id)?.name ?? id, result: { stdout: r?.stdout ?? '', stderr: r?.stderr ?? '', exit_code: r?.exit_code ?? (r?.status === 'success' ? 0 : r ? 1 : 0) } as CommandResult }
+            const r: BulkExecutionItem | undefined = hasCommandId ? byId.get(id) : res.results[i]
+            return { id, name: commands.find((c) => c.id === id)?.name ?? id, result: { stdout: r?.stdout ?? '', stderr: r?.stderr ?? '', exit_code: r?.exit_code ?? (r?.status === 'success' ? 0 : r ? 1 : 0) } }
           })
           setBulkResults(mapped)
         } else {
-          setBulkResults(ids.map((id) => ({ id, name: commands.find((c) => c.id === id)?.name ?? id, result: { stdout: '', stderr: '', exit_code: 0 } as CommandResult })))
+          setBulkResults(ids.map((id) => ({ id, name: commands.find((c) => c.id === id)?.name ?? id, result: { stdout: '', stderr: '', exit_code: 0 } })))
         }
       },
       onError: () => toast('error', t('commands.toastFailed')),
@@ -147,10 +145,9 @@ export function DrawerExec({ node }: { node: Node }) {
   const handleRunCustom = () => {
     if (!customCommand) return
     executeNode.mutate({ id: node.id, command: customCommand, timeout: customTimeout ? Number(customTimeout) : undefined }, {
-      onSuccess: (res) => {
-        const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null }> }
-        const first = batch.results?.[0] ?? (res as unknown as { stdout: string; stderr: string; exit_code?: number | null })
-        const result = { stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? 0 } as CommandResult
+      onSuccess: (res: BulkExecutionBatchResponse) => {
+        const first: BulkExecutionItem | undefined = res.results?.[0]
+        const result: CommandResult = { stdout: first?.stdout ?? '', stderr: first?.stderr ?? '', exit_code: first?.exit_code ?? 0 }
         toast('success', t('nodes.execResult', { code: result.exit_code, output: result.stdout.slice(0, 100) }))
         setCustomOutputs((prev) => [...prev, { command: customCommand, result }])
       },

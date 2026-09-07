@@ -2,7 +2,7 @@
 title: Локальная разработка
 status: stable
 translation_key: development.local_setup
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # Локальная разработка

@@ -27,7 +27,7 @@ export function Drawer({ isOpen, onClose, title, description, children, size = '
   const onCloseRef = useRef(onClose)
   const initialFocusRef = useRef(false)
 
-  onCloseRef.current = onClose
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
   useEffect(() => {
     if (!isOpen) {

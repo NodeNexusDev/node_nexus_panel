@@ -2,7 +2,7 @@
 title: Glossary
 status: stable
 translation_key: reference.glossary
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # Glossary

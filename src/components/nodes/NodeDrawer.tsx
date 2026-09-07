@@ -42,12 +42,12 @@ export function NodeDrawer({ node, onClose, onDelete }: NodeDrawerProps) {
   const deleteNode = useDeleteNode()
   const updateNode = useUpdateNode()
 
-  const [editNode, setEditNode] = useState({ name: node.name, host: node.host, port: String(node.port), connection_type: node.connection_type as ConnectionType, description: (node as unknown as { description?: string }).description || '', username: node.username || '', password: '', ssh_key: '', passphrase: '', docker_host: node.docker_host || '', has_docker: node.has_docker ?? false, tags: node.tags.join(', ') })
+  const [editNode, setEditNode] = useState({ name: node.name, host: node.host, port: String(node.port), connection_type: node.connection_type as ConnectionType, description: node.description || '', username: node.username || '', password: '', ssh_key: '', passphrase: '', docker_host: node.docker_host || '', has_docker: node.has_docker ?? false, tags: node.tags.join(', ') })
   const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
 
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    setEditNode({ name: node.name, host: node.host, port: String(node.port), connection_type: node.connection_type as ConnectionType, description: (node as unknown as { description?: string }).description || '', username: node.username || '', password: '', ssh_key: '', passphrase: '', docker_host: node.docker_host || '', has_docker: node.has_docker ?? false, tags: node.tags.join(', ') })
+    setEditNode({ name: node.name, host: node.host, port: String(node.port), connection_type: node.connection_type as ConnectionType, description: node.description || '', username: node.username || '', password: '', ssh_key: '', passphrase: '', docker_host: node.docker_host || '', has_docker: node.has_docker ?? false, tags: node.tags.join(', ') })
     setClearFields({})
     setValidateResult(null)
     setShowDeleteConfirm(false)

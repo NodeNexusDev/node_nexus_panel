@@ -13,7 +13,7 @@ export function useHotkey(
   { ctrl = false, shift = false, alt = false, preventDefault = true }: UseHotkeyOptions = {},
 ) {
   const callbackRef = useRef(callback)
-  callbackRef.current = callback
+  useEffect(() => { callbackRef.current = callback }, [callback])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

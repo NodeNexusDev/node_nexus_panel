@@ -2,7 +2,7 @@
 title: Configuration Reference
 status: stable
 translation_key: reference.configuration
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # Configuration Reference

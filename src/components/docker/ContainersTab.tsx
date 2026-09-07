@@ -40,7 +40,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const { toast } = useToast()
   useDockerContainerSse(nodeId)
   const { data: containersInfinite, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerContainers(nodeId, { limit: 20, all: true })
-  const containerItems = useMemo(() => containersInfinite ? containersInfinite.pages.flatMap((p) => (p as unknown as { items: DockerContainer[] }).items) : [], [containersInfinite])
+  const containerItems = useMemo(() => containersInfinite ? containersInfinite.pages.flatMap((p) => (p as { items: DockerContainer[] }).items) : [], [containersInfinite])
   const pruneContainers = usePruneContainers()
   const bulkExec = useBulkDockerExec()
   const bulkRestart = useBulkDockerRestart()
@@ -74,11 +74,11 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
     const q = search.toLowerCase()
     return [...containerItems]
       .filter((c: DockerContainer) => {
-        const name = (c as unknown as { Names?: string }).Names?.split('/').pop()?.toLowerCase() || ''
-        const image = (c as unknown as { Image?: string }).Image?.toLowerCase() || ''
+        const name = c.Names?.split('/').pop()?.toLowerCase() || ''
+        const image = c.Image?.toLowerCase() || ''
         if (q && !name.includes(q) && !image.includes(q)) return false
-        if (statusFilter === 'running' && (c as unknown as { State?: string }).State?.toLowerCase() !== 'running') return false
-        if (statusFilter === 'stopped' && (c as unknown as { State?: string }).State?.toLowerCase() === 'running') return false
+        if (statusFilter === 'running' && c.State?.toLowerCase() !== 'running') return false
+        if (statusFilter === 'stopped' && c.State?.toLowerCase() === 'running') return false
         return true
       })
       .sort((a: DockerContainer, b: DockerContainer) => {
@@ -86,13 +86,13 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
         const dir = sort.dir === 'asc' ? 1 : -1
         switch (sort.key) {
           case 'name': {
-            const aName = (a as unknown as { Names?: string }).Names?.split('/').pop() || ''
-            const bName = (b as unknown as { Names?: string }).Names?.split('/').pop() || ''
+            const aName = a.Names?.split('/').pop() || ''
+            const bName = b.Names?.split('/').pop() || ''
             return aName.localeCompare(bName) * dir
           }
-          case 'image': return ((a as unknown as { Image?: string }).Image || '').localeCompare((b as unknown as { Image?: string }).Image || '') * dir
-          case 'status': return ((a as unknown as { State?: string }).State || '').localeCompare((b as unknown as { State?: string }).State || '') * dir
-          case 'created': return ((a as unknown as { CreatedAt?: string }).CreatedAt || '').localeCompare((b as unknown as { CreatedAt?: string }).CreatedAt || '') * dir
+          case 'image': return (a.Image || '').localeCompare(b.Image || '') * dir
+          case 'status': return (a.State || '').localeCompare(b.State || '') * dir
+          case 'created': return (a.CreatedAt || '').localeCompare(b.CreatedAt || '') * dir
           default: return 0
         }
       })
@@ -101,7 +101,7 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const allSelected = filtered.length > 0 && selectedIds.size === filtered.length
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set())
-    else setSelectedIds(new Set(filtered.map((c: DockerContainer) => (c as unknown as { ID: string }).ID)))
+    else setSelectedIds(new Set(filtered.map((c: DockerContainer) => c.ID)))
   }
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })

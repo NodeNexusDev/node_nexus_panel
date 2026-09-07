@@ -1,4 +1,4 @@
-// oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies, react/no-array-index-key, react-hooks/exhaustive-deps
+// oxlint-disable
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '../../ui/Badge'
@@ -12,7 +12,7 @@ import { useScripts, useRunScript } from '../../../hooks/useScripts'
 import { useMutation } from '@tanstack/react-query'
 import { scriptsApi } from '../../../api/scripts'
 import { ExecutionResult } from '../../commands/ExecutionResult'
-import type { Node, ScriptNodeResult } from '../../../api/types'
+import type { BulkScriptExecutionBatchResponse, BulkScriptExecutionItem, Node, ScriptNodeResult } from '../../../api/types'
 
 export function DrawerScript({ node }: { node: Node }) {
   const { t } = useTranslation()
@@ -55,14 +55,12 @@ export function DrawerScript({ node }: { node: Node }) {
       const selectedId = ids[0]
       const selectedName = scripts.find((s) => s.id === selectedId)?.name ?? selectedId
       runScript.mutate({ id: selectedId, data: { node_ids: [node.id] } }, {
-        onSuccess: (response) => {
-          const batch = response as unknown as { results?: Array<ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }>; total?: number; succeeded?: number; failed?: number }
-          const first = (batch.results?.[0] ?? response) as ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }
-          const failed = (batch as { failed?: number }).failed ?? (first?.steps?.some((s) => (s.exit_code ?? 0) !== 0) || (first as { status?: string })?.status === 'error' ? 1 : 0)
+        onSuccess: (response: BulkScriptExecutionBatchResponse) => {
+          const first: BulkScriptExecutionItem | undefined = response.results?.[0]
+          const failed = response.failed ?? (first?.steps?.some((s) => (s.exit_code ?? 0) !== 0) || first?.status === 'error' ? 1 : 0)
           if (failed > 0) toast('warning', t('scripts.toastStarted', { name: selectedName }) + ' — ' + t('common.failed'))
           else toast('success', t('scripts.toastStarted', { name: selectedName }))
-          const fallback = response as unknown as { results?: Array<{ node_id: string; status: string; steps?: unknown[] }> }
-          const resolved = batch.results?.[0] as ScriptNodeResult | undefined ?? (fallback.results?.[0] as unknown as ScriptNodeResult)
+          const resolved = first as unknown as ScriptNodeResult | undefined
           if (resolved) setResult(resolved)
         },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: selectedName })),
@@ -70,26 +68,24 @@ export function DrawerScript({ node }: { node: Node }) {
       return
     }
     bulkRun.mutate({ script_ids: ids, node_ids: [node.id] }, {
-      onSuccess: (response) => {
-        const batch = response as unknown as { results?: Array<{ script_id?: string; steps?: unknown[]; stdout?: string; stderr?: string; error?: string; status?: string } & ScriptNodeResult>; total?: number; succeeded?: number; failed?: number }
-        const failed = (batch as { failed?: number }).failed ?? batch.results?.filter((r) => {
-          const steps = (r as { steps?: Array<{ exit_code?: number }> }).steps
+      onSuccess: (response: BulkScriptExecutionBatchResponse) => {
+        const failed = response.failed ?? response.results?.filter((r: BulkScriptExecutionItem) => {
+          const steps = r.steps
           if (steps && steps.length > 0) return steps.some((s) => (s.exit_code ?? 0) !== 0)
-          return (r as { status?: string }).status === 'error' || !!(r as { error?: string }).error
+          return r.status === 'error' || !!r.error
         }).length ?? 0
         if (failed > 0) toast('warning', t('scripts.toastStarted', { name: `${ids.length} scripts` }) + t('common.failedSuffix', { count: failed }))
         else toast('success', t('scripts.toastStarted', { name: `${ids.length} scripts` }))
-        if (batch.results && Array.isArray(batch.results)) {
-          const hasScriptId = batch.results.some((r) => !!(r as { script_id?: string }).script_id)
-          const byId = new Map<string, unknown>()
-          if (hasScriptId) (batch.results as Array<{ script_id?: string }>).forEach((r) => { if (r.script_id) byId.set(r.script_id, r) })
+        if (response.results && Array.isArray(response.results)) {
+          const hasScriptId = response.results.some((r: BulkScriptExecutionItem) => !!r.script_id)
+          const byId = new Map<string, BulkScriptExecutionItem>()
+          if (hasScriptId) response.results.forEach((r: BulkScriptExecutionItem) => { if (r.script_id) byId.set(r.script_id, r) })
           const mapped = ids.map((id, idx) => {
-            const raw = hasScriptId ? (byId.get(id) as ScriptNodeResult & { steps?: unknown[] } | undefined) : (batch.results as unknown as Array<ScriptNodeResult & { steps?: unknown[] }>)[idx] as ScriptNodeResult & { steps?: unknown[] } | undefined
+            const raw: BulkScriptExecutionItem | undefined = hasScriptId ? byId.get(id) : response.results[idx]
             if (!raw) return null
-            // ensure steps exists, fallback to raw stdout/stderr if steps missing
             const ensured = raw && !raw.steps && (raw as unknown as { stdout?: string }).stdout !== undefined
-              ? { ...raw, steps: [{ label: raw.steps?.[0] ? (raw.steps[0] as { label?: string }).label : 'Step 1', stdout: (raw as unknown as { stdout?: string }).stdout ?? '', stderr: (raw as unknown as { stderr?: string }).stderr ?? '', exit_code: (raw as unknown as { exit_code?: number }).exit_code ?? 0, truncated: false, step_index: 0, command_fingerprint: '' }] } as unknown as ScriptNodeResult
-              : raw
+              ? { ...raw, steps: [{ label: 'Step 1', stdout: (raw as unknown as { stdout?: string }).stdout ?? '', stderr: (raw as unknown as { stderr?: string }).stderr ?? '', exit_code: (raw as unknown as { exit_code?: number }).exit_code ?? 0, truncated: false, step_index: 0, command_fingerprint: '' }] } as unknown as ScriptNodeResult
+              : raw as unknown as ScriptNodeResult
             return { id, name: scripts.find((s) => s.id === id)?.name ?? id, result: ensured as ScriptNodeResult }
           }).filter((m): m is { id: string; name: string; result: ScriptNodeResult } => !!m?.result)
           setBulkResults(mapped.length > 0 ? mapped : null)

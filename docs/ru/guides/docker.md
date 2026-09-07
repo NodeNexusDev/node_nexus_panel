@@ -2,7 +2,7 @@
 title: Docker
 status: stable
 translation_key: guides.docker
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # Docker

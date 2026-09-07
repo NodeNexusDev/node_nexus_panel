@@ -2,7 +2,7 @@
 title: Deployment
 status: stable
 translation_key: operations.deployment
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # Deployment

@@ -25,7 +25,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   const onCloseRef = useRef(onClose)
   const initialFocusRef = useRef(false)
 
-  onCloseRef.current = onClose
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
   useEffect(() => {
     if (!isOpen) {

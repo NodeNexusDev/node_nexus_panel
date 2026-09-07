@@ -2,7 +2,7 @@
 title: Templates
 status: stable
 translation_key: guides.templates
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # Templates

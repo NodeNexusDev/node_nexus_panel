@@ -608,7 +608,8 @@
     "pushById": "Отправить по ID",
     "orphans": "осиротевшие",
     "servicesAll": "все сервисы",
-    "servicesList": "сервисы: {{list}}"
+    "servicesList": "сервисы: {{list}}",
+    "version": "Версия"
   },
   "audit": {
     "title": "Аудит",
@@ -873,6 +874,8 @@
     "bulkResult": "Результат",
     "commandsJson": "Команды JSON",
     "scriptsJson": "Скрипты JSON",
-    "updateFailed": "Не удалось обновить"
+    "updateFailed": "Не удалось обновить",
+    "invalidCommandsJson": "Некорректный JSON команд",
+    "invalidScriptsJson": "Некорректный JSON скриптов"
   }
 }

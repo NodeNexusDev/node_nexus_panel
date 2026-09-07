@@ -197,7 +197,11 @@
     "selected_one": "{{count}} node selected",
     "selected_few": "{{count}} nodes selected",
     "selected_many": "{{count}} nodes selected",
-    "hasDockerBadge": "docker"
+    "hasDockerBadge": "docker",
+    "bulkUpdateMsg_one": "Update {{count}} selected node",
+    "bulkUpdateMsg_other": "Update {{count}} selected nodes",
+    "bulkUpdateMsg_few": "Update {{count}} selected nodes",
+    "bulkUpdateMsg_many": "Update {{count}} selected nodes"
   },
   "commands": {
     "title": "Commands",
@@ -254,7 +258,11 @@
     "succeeded": "Succeeded",
     "selectNodes": "Select nodes",
     "selectedCount": "{{count}} selected",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "toastBulkExecuted_one": "Command executed on {{count}} node",
+    "toastBulkExecuted_other": "Command executed on {{count}} nodes",
+    "toastBulkExecuted_few": "Command executed on {{count}} nodes",
+    "toastBulkExecuted_many": "Command executed on {{count}} nodes"
   },
   "scripts": {
     "title": "Scripts",
@@ -350,7 +358,11 @@
     "selectNodes": "Select nodes",
     "tags": "Tags",
     "toastNameRequired": "Name is required",
-    "editStepsHint": "Edit steps in full page for full editor"
+    "editStepsHint": "Edit steps in full page for full editor",
+    "selectedNodes_one": "{{count}} node selected",
+    "selectedNodes_other": "{{count}} nodes selected",
+    "selectedNodes_few": "{{count}} nodes selected",
+    "selectedNodes_many": "{{count}} nodes selected"
   },
   "docker": {
     "title": "Docker",
@@ -596,7 +608,12 @@
     "pushById": "Push by ID",
     "orphans": "Orphans",
     "servicesAll": "all services",
-    "servicesList": "services: {{list}}"
+    "servicesList": "services: {{list}}",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "selected_few": "{{count}} selected",
+    "selected_many": "{{count}} selected",
+    "version": "Version"
   },
   "audit": {
     "title": "Audit",
@@ -762,7 +779,11 @@
     "pageCurrent": "{{page}} current",
     "goToPageLabel": "Go to page {{page}}",
     "required": "required",
-    "commaSeparated": "comma, separated"
+    "commaSeparated": "comma, separated",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "selected_few": "{{count}} selected",
+    "selected_many": "{{count}} selected"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -858,6 +879,8 @@
     "bulkResult": "Bulk result",
     "commandsJson": "Commands JSON",
     "scriptsJson": "Scripts JSON",
-    "updateFailed": "Update failed"
+    "updateFailed": "Update failed",
+    "invalidCommandsJson": "Invalid commands JSON",
+    "invalidScriptsJson": "Invalid scripts JSON"
   }
 }

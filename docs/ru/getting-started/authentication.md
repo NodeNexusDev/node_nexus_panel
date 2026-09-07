@@ -2,7 +2,7 @@
 title: Авторизация
 status: stable
 translation_key: getting_started.authentication
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # Авторизация

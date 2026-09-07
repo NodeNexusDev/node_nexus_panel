@@ -2,7 +2,7 @@
 title: Управление состоянием
 status: stable
 translation_key: architecture.state_management
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # Управление состоянием

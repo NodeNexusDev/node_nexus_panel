@@ -2,7 +2,7 @@
 title: NodeNexus Panel Documentation
 status: stable
 translation_key: home
-source_revision: 2026-09-06
+source_revision: 2026-09-07
 ---
 
 # NodeNexus Panel Documentation
