@@ -95,8 +95,8 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
     { key: 'top', label: t('docker.top', 'Top') },
   ]
 
-  const isRunning = (container as unknown as { State?: string }).State?.toLowerCase() === 'running'
-  const isPaused = (container as unknown as { State?: string }).State?.toLowerCase() === 'paused'
+  const isRunning = container.State?.toLowerCase() === 'running'
+  const isPaused = container.State?.toLowerCase() === 'paused'
 
   const handleDelete = () => {
     deleteContainer.mutate({ nodeId, containerId: container.ID, force: forceDelete || undefined }, {
@@ -143,8 +143,8 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
     })
   }
 
-  const name = (container as unknown as { Names?: string }).Names?.split('/').pop() || container.ID.slice(0, 12)
-  const image = (container as unknown as { Image?: string }).Image || '—'
+  const name = container.Names?.split('/').pop() || container.ID.slice(0, 12)
+  const image = container.Image || '—'
 
   return (
     <div className="flex flex-col flex-1 min-h-0 space-y-4">
@@ -162,9 +162,9 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        <ContainerStatusBadge state={(container as unknown as { State?: string }).State || ''} />
+        <ContainerStatusBadge state={container.State || ''} />
         <Badge variant="default">{image.slice(0, 30)}</Badge>
-        {(container as unknown as { Ports?: string | null }).Ports && <Badge variant="default">{(container as unknown as { Ports: string }).Ports}</Badge>}
+        {container.Ports && <Badge variant="default">{container.Ports}</Badge>}
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
@@ -253,11 +253,11 @@ function ContainerOverview({ container, copy }: { container: DockerContainer; co
     [t('docker.id', 'ID'), (
       <span key="id" className="inline-flex items-center gap-2 font-mono text-xs">{container.ID.slice(0, 12)}<button onClick={() => copy(container.ID)} className="p-1 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer"><IconCopy className="w-3 h-3 text-surface-400" /></button></span>
     )],
-    [t('docker.name', 'Name'), (container as unknown as { Names?: string }).Names?.split('/').pop() || '—'],
-    [t('docker.image', 'Image'), (container as unknown as { Image?: string }).Image || '—'],
-    [t('docker.status', 'Status'), <ContainerStatusBadge key="st" state={(container as unknown as { State?: string }).State || ''} />],
-    [t('docker.ports', 'Ports'), (container as unknown as { Ports?: string | null }).Ports || '—'],
-    [t('docker.created', 'Created'), (container as unknown as { CreatedAt?: string }).CreatedAt ? new Date((container as unknown as { CreatedAt: string }).CreatedAt).toLocaleString() : '—'],
+    [t('docker.name', 'Name'), container.Names?.split('/').pop() || '—'],
+    [t('docker.image', 'Image'), container.Image || '—'],
+    [t('docker.status', 'Status'), <ContainerStatusBadge key="st" state={container.State || ''} />],
+    [t('docker.ports', 'Ports'), container.Ports || '—'],
+    [t('docker.created', 'Created'), container.CreatedAt ? new Date(container.CreatedAt).toLocaleString() : '—'],
   ]
   return (
     <Card>
@@ -270,7 +270,7 @@ function ContainerOverview({ container, copy }: { container: DockerContainer; co
         ))}
         <KeyValueList rows={[
           { label: t('docker.id'), value: container.ID },
-          { label: t('docker.command'), value: (container as unknown as { Command?: string }).Command || '—' },
+          { label: t('docker.command'), value: container.Command || '—' },
         ]} />
       </CardContent>
     </Card>

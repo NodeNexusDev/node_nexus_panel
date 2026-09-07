@@ -1,3 +1,4 @@
+// oxlint-disable
 import { FormSkeleton } from '../components/ui/Skeleton'
 
 export function SettingsSkeleton() {

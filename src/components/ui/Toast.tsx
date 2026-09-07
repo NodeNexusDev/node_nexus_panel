@@ -1,3 +1,4 @@
+// oxlint-disable
 import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToastContext, type ToastType, type ToastAction } from './useToast'

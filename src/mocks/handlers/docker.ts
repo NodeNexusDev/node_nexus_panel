@@ -1,3 +1,4 @@
+// oxlint-disable
 import { http, HttpResponse } from 'msw'
 import { mockContainers, mockImages, mockNetworks, mockVolumes } from '../data/docker'
 

@@ -30,7 +30,7 @@ import { useForm, Controller, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { commandUpdateSchema, type CommandUpdateFormValues } from '../../lib/validators/command-schema'
 import { normalizeParameters } from './command-form-utils'
-import type { CommandResponse, CommandResult } from '../../api/types'
+import type { BulkExecutionBatchResponse, BulkExecutionItem, CommandResponse, CommandResult } from '../../api/types'
 
 type DrawerTab = 'overview' | 'params' | 'stats' | 'edit' | 'exec'
 
@@ -207,7 +207,7 @@ function CommandEditTab({ command, onDone }: { command: CommandResponse; onDone:
       name: values.name,
       command: values.command,
       description: values.description || undefined,
-      parameters: normalizeParameters(values.parameters) as unknown as CommandResponse['parameters'],
+      parameters: normalizeParameters(values.parameters) as CommandResponse['parameters'],
       tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
     }
     updateCommand.mutate({ id: command.id, data: data as never }, {
@@ -294,25 +294,23 @@ function CommandExecTab({ command }: { command: CommandResponse }) {
     const paramsMap = Object.keys(values).length > 0 ? { [command.id]: values } : undefined
     if (nodeIds.length === 1) {
       executeCommand.mutate({ id: command.id, data: { node_ids: nodeIds, params: values } }, {
-        onSuccess: (res) => {
-          const batch = res as unknown as { results?: Array<{ stdout: string; stderr: string; exit_code?: number | null; status?: string }>; failed?: number }
-          const first = batch.results?.[0] as unknown as { exit_code?: number | null; status?: string; stdout?: string; stderr?: string } | undefined
-          const isFail = (first?.exit_code ?? (first?.status === 'success' ? 0 : first ? 1 : 0)) !== 0 || (batch as { failed?: number }).failed! > 0
+        onSuccess: (res: BulkExecutionBatchResponse) => {
+          const first: BulkExecutionItem | undefined = res.results?.[0]
+          const isFail = (first?.exit_code ?? (first?.status === 'success' ? 0 : first ? 1 : 0)) !== 0 || res.failed > 0
           if (isFail) toast('warning', t('commands.toastExecuted', { target: nodes.find((n) => n.id === nodeIds[0])?.name ?? nodeIds[0] }) + ' — ' + t('common.failed'))
           else toast('success', t('commands.toastExecuted', { target: nodes.find((n) => n.id === nodeIds[0])?.name ?? nodeIds[0] }))
-          if (first) setResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? (first.status === 'success' ? 0 : 1) } as CommandResult)
-          else setResult(res as unknown as CommandResult)
+          if (first) setResult({ stdout: first.stdout ?? '', stderr: first.stderr ?? '', exit_code: first.exit_code ?? (first.status === 'success' ? 0 : 1) })
+          else setResult({ stdout: '', stderr: '', exit_code: 0 })
         },
         onError: () => toast('error', t('commands.toastFailed')),
       })
     } else {
       bulkExec.mutate({ command_ids: [command.id], node_ids: nodeIds, params: paramsMap as never }, {
-        onSuccess: (res) => {
-          const batch = res as unknown as { results: Array<{ node_id?: string; node_name?: string; stdout: string; stderr: string; exit_code?: number | null; status: string }>; failed?: number }
-          const failed = batch.failed ?? batch.results.filter((r) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
+        onSuccess: (res: BulkExecutionBatchResponse) => {
+          const failed = res.failed ?? res.results.filter((r: BulkExecutionItem) => (r.exit_code ?? (r.status === 'success' ? 0 : 1)) !== 0).length
           if (failed > 0) toast('warning', t('commands.toastBulkExecuted', { count: nodeIds.length }) + t('common.failedSuffix', { count: failed }))
           else toast('success', t('commands.toastBulkExecuted', { count: nodeIds.length }))
-          const mapped = (batch.results || []).map((r) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? r.node_id ?? '', result: { stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status === 'success' ? 0 : 1) } as CommandResult }))
+          const mapped = (res.results || []).map((r: BulkExecutionItem) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? r.node_id ?? '', result: { stdout: r.stdout, stderr: r.stderr, exit_code: r.exit_code ?? (r.status === 'success' ? 0 : 1) } }))
           setBulkResults(mapped)
         },
         onError: () => toast('error', t('commands.toastFailed')),

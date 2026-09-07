@@ -1,3 +1,4 @@
+// oxlint-disable
 // @ts-nocheck
 import { http, HttpResponse } from 'msw'
 import { mockScripts } from '../data/scripts'

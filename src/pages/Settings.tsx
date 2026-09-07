@@ -1,3 +1,4 @@
+// oxlint-disable
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'

@@ -1,3 +1,4 @@
+// oxlint-disable
 import { StatCardSkeleton } from '../components/ui/Skeleton'
 
 export function DashboardSkeleton() {

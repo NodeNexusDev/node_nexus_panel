@@ -25,7 +25,7 @@ import { useMutation } from '@tanstack/react-query'
 import { scriptsApi } from '../../api/scripts'
 import type { ScriptFormValues } from './ScriptFormModal'
 import { ExecutionResult } from '../commands/ExecutionResult'
-import type { ScriptResponse, ScriptNodeResult } from '../../api/types'
+import type { BulkScriptExecutionBatchResponse, BulkScriptExecutionItem, ScriptResponse, ScriptNodeResult } from '../../api/types'
 
 type DrawerTab = 'overview' | 'steps' | 'executions' | 'schedule' | 'stats' | 'edit' | 'run'
 
@@ -190,7 +190,7 @@ function ScriptSchedule({ scriptId }: { scriptId: string }) {
   const { t } = useTranslation()
   const { data: schedule, isLoading, error, refetch } = useScriptSchedule(scriptId)
   const { data: historyData, isLoading: hLoading, error: hError, refetch: hRefetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScriptScheduleHistory(scriptId, { limit: 5 })
-  const historyItems = historyData ? (historyData as unknown as { pages: Array<{ items: unknown[] }> }).pages.flatMap((p) => p.items) : []
+  const historyItems = historyData ? historyData.pages.flatMap((p) => p.items) : []
   if (isLoading) return <StatCardSkeleton />
   if (error) return <ErrorState error={error} onRetry={refetch} />
   return (
@@ -252,7 +252,7 @@ function ScriptEditTab({ script, onDone, updateScript }: { script: ScriptRespons
   useEffect(() => { setFormValues({ name: script.name, description: script.description || '', tags: script.tags, steps: script.steps as never }) }, [script.id])
   const handleSave = () => {
     if (!formValues.name.trim()) { toast('error', t('scripts.toastNameRequired', 'Name required')); return }
-    updateScript.mutate({ id: script.id, data: formValues as unknown as never }, {
+    updateScript.mutate({ id: script.id, data: formValues as never }, {
       onSuccess: () => { toast('success', t('scripts.toastUpdated')); onDone() },
       onError: () => toast('error', t('scripts.toastUpdateFailed')),
     })
@@ -330,8 +330,8 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
     if (nodeIds.length === 1) {
       runScript.mutate({ id: script.id, data: { node_ids: nodeIds } }, {
         onSuccess: (response) => {
-          const batch = response as unknown as { results?: Array<ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string }>; failed?: number }
-          const first = batch.results?.[0] as ScriptNodeResult & { steps?: Array<{ exit_code?: number }>; status?: string } | undefined
+          const batch = response as BulkScriptExecutionBatchResponse
+          const first = batch.results?.[0] as BulkScriptExecutionItem | undefined
           const failed = (batch as { failed?: number }).failed ?? (first?.steps?.some((s) => (s.exit_code ?? 0) !== 0) || first?.status === 'error' ? 1 : 0)
           if (failed > 0) toast('warning', t('scripts.toastStarted', { name: script.name }) + ' — ' + t('common.failed'))
           else toast('success', t('scripts.toastStarted', { name: script.name }))
@@ -342,11 +342,11 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
     } else {
       bulkRun.mutate({ script_ids: [script.id], node_ids: nodeIds }, {
         onSuccess: (response) => {
-          const batch = response as unknown as { results?: Array<ScriptNodeResult & { node_id?: string; node_name?: string; steps?: Array<{ exit_code?: number }>; status?: string }>; failed?: number }
+          const batch = response as BulkScriptExecutionBatchResponse
           const failed = (batch as { failed?: number }).failed ?? batch.results?.filter((r) => r.steps?.some((s) => (s.exit_code ?? 0) !== 0) || r.status === 'error').length ?? 0
           if (failed > 0) toast('warning', t('scripts.toastStarted', { name: script.name }) + ` (${nodeIds.length}) — ${failed} failed`)
           else toast('success', t('scripts.toastStarted', { name: script.name }) + ` (${nodeIds.length})`)
-          const mapped = (batch.results || []).map((r) => ({ node_id: (r as unknown as { node_id: string }).node_id ?? '', node_name: (r as unknown as { node_name: string }).node_name ?? (r as unknown as { node_id: string }).node_id ?? '', result: r as ScriptNodeResult }))
+          const mapped = (batch.results || []).map((r: BulkScriptExecutionItem) => ({ node_id: r.node_id ?? '', node_name: r.node_name ?? r.node_id ?? '', result: r as unknown as ScriptNodeResult }))
           setBulkResults(mapped)
         },
         onError: () => toast('error', t('scripts.toastRunFailed', { name: script.name })),

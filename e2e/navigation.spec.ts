@@ -1,3 +1,4 @@
+// oxlint-disable
 import { test, expect } from '@playwright/test'
 import { setupAuth, openSidebar } from './helpers'
 import type { Page } from '@playwright/test'

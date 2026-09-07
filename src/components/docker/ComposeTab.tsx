@@ -26,7 +26,7 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteComposeProjects(nodeId, { limit: 20 })
-  const projects = infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: Array<{ id: string; project_name: string; created_at: string; updated_at: string; compose?: string }> }).items) : []
+  const projects = infiniteData ? infiniteData.pages.flatMap((p) => (p as { items: Array<{ id: string; project_name: string; created_at: string; updated_at: string; compose?: string }> }).items) : []
   const create = useCreateComposeProject()
   const update = useUpdateComposeProject()
   const remove = useDeleteComposeProject()
@@ -85,7 +85,7 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
         <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noCompose')} description={t('docker.noComposeDesc')} action={<Button onClick={() => setShowCreate(true)}>{t('docker.createCompose')}</Button>} />
       ) : (
         <>
-          <ResponsiveTable data={filtered} columns={columns as unknown as Column<typeof filtered[number]>[]} keyExtractor={(p)=>p.id} renderMobileItem={(p)=> (
+          <ResponsiveTable data={filtered} columns={columns as Column<typeof filtered[number]>[]} keyExtractor={(p)=>p.id} renderMobileItem={(p)=> (
             <div className="p-4 space-y-2">
               <div className="flex gap-2"><span className="font-semibold">{p.project_name}</span><Badge variant="default">{p.id.slice(0,8)}</Badge></div>
               <p className="text-xs text-surface-500">{new Date(p.created_at).toLocaleString()}</p>
@@ -125,7 +125,7 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
 
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('docker.deleteCompose')}>
         <div className="space-y-4">
-          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteComposeMsg', { name: deleteTarget } as unknown as string)}</p>
+          <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.deleteComposeMsg', { name: deleteTarget })}</p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
             <Button variant="danger" onClick={() => { if (deleteTarget) remove.mutate({ nodeId, projectName: deleteTarget }, { onSuccess: () => { toast('success', t('docker.composeDeleted')); setDeleteTarget(null) }, onError: () => toast('error', t('docker.composeDeleteFailed')) }) }} disabled={remove.isPending}>{remove.isPending ? t('common.loading') : t('common.delete')}</Button>
@@ -134,7 +134,7 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
       </Modal>
 
       <Drawer isOpen={!!drawerProject} onClose={() => setDrawerProject(null)} size="lg">
-        {drawerProject && <ComposeDrawer nodeId={nodeId} projectName={drawerProject} composeYaml={(projects.find((p) => p.project_name === drawerProject) as unknown as { compose?: string })?.compose} onClose={() => setDrawerProject(null)} />}
+        {drawerProject && <ComposeDrawer nodeId={nodeId} projectName={drawerProject} composeYaml={(projects.find((p) => p.project_name === drawerProject) as { compose?: string } | undefined)?.compose} onClose={() => setDrawerProject(null)} />}
       </Drawer>
     </>
   )

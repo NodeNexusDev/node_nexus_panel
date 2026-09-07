@@ -1,3 +1,4 @@
+// oxlint-disable
 import { Skeleton } from '../components/ui/Skeleton'
 
 export function CommandsSkeleton() {

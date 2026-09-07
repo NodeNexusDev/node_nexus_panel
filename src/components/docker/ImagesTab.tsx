@@ -26,7 +26,7 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
   const [search, setSearch] = useState('')
   const { sort, toggle } = useSort<SortKey>()
   const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerImages(nodeId, { limit: 20 })
-  const imageList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as unknown as { items: DockerImage[] }).items) : [], [infiniteData])
+  const imageList = useMemo(() => infiniteData ? infiniteData.pages.flatMap((p) => (p as { items: DockerImage[] }).items) : [], [infiniteData])
   const buildImage = useBuildImage()
   const bulkImageRemove = useBulkDockerImageRemove()
   const bulkImageBuild = useBulkDockerImageBuild()
@@ -48,15 +48,15 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
     const q = search.toLowerCase()
     return [...imageList]
       .filter((img) => {
-        const im = img as unknown as { Repository?: string; Tag?: string; ID?: string }
+        const im = img
         if (q && !(im.Repository?.toLowerCase().includes(q) || im.Tag?.toLowerCase().includes(q) || im.ID?.toLowerCase().includes(q))) return false
         return true
       })
       .sort((a, b) => {
         if (!sort) return 0
         const dir = sort.dir === 'asc' ? 1 : -1
-        const av = a as unknown as { Repository?: string; Tag?: string; Size?: string; CreatedAt?: string }
-        const bv = b as unknown as { Repository?: string; Tag?: string; Size?: string; CreatedAt?: string }
+        const av = a
+        const bv = b
         switch (sort.key) {
           case 'repository': return (av.Repository || '').localeCompare(bv.Repository || '') * dir
           case 'tag': return (av.Tag || '').localeCompare(bv.Tag || '') * dir
@@ -67,10 +67,10 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
       })
   }, [imageList, search, sort])
 
-  const allSelected = filtered.length > 0 && filtered.every((img) => selectedIds.has((img as unknown as { ID: string }).ID))
+  const allSelected = filtered.length > 0 && filtered.every((img) => selectedIds.has(img.ID))
   const toggleAll = () => {
     if (allSelected) setSelectedIds(new Set())
-    else setSelectedIds(new Set(filtered.map((img) => (img as unknown as { ID: string }).ID)))
+    else setSelectedIds(new Set(filtered.map((img) => img.ID)))
   }
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
@@ -111,7 +111,7 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
             {filtered.map((img: DockerImage) => {
-              const im = img as unknown as { ID: string; Repository?: string; Tag?: string; Size?: string }
+              const im = img
               return (
               <tr key={im.ID} className="table-row-hover cursor-pointer" onClick={() => setDrawerImage(img)}>
                 <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}><div className="flex items-center"><Checkbox checked={selectedIds.has(im.ID)} onChange={() => toggleOne(im.ID)} ariaLabel={t('common.selectItem', { name: im.Repository || im.ID?.slice(0, 12) || '' })} /></div></td>
