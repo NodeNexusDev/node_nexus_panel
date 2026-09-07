@@ -26,6 +26,7 @@ import { NodeDrawer } from '../components/nodes/NodeDrawer'
 import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from '../components/nodes/connection-types'
 import { BulkCommandModal } from '../components/commands/BulkCommandModal'
 import { BulkScriptModal } from '../components/scripts/BulkScriptModal'
+import { NodesBulkBar } from '../components/nodes/NodesBulkBar'
 import { IconNodes, IconDocker } from '../components/ui/Icons'
 import {
   useInfiniteNodes,
@@ -385,42 +386,7 @@ export function Nodes() {
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
-          {selectedIds.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
-              <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('nodes.selected', { count: selectedIds.length })}</span>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulkExec(true)}>{t('nodes.bulkExec', 'Run Commands')}</Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulkScript(true)}>{t('nodes.bulkScript', 'Run Scripts')}</Button>
-              <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
-                bulkCheck.mutate(selectedIds, {
-                  onSuccess: (data: unknown) => { const d = data as { failed?: number; succeeded?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkCheckDone') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
-                  onError: () => toast('error', t('nodes.toastBulkCheckFailed')),
-                })
-              }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
-              <Button variant="ghost" size="sm" onClick={() => {
-                setShowBulkMetrics(true)
-                setBulkMetricsResult(null)
-                bulkMetrics.mutate(selectedIds, {
-                  onSuccess: (data) => {
-                    setBulkMetricsResult(data)
-                    const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics') + t('common.failedSuffix', { count: d.failed }))
-                  },
-                  onError: () => toast('error', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics')),
-                })
-              }} disabled={bulkMetrics.isPending}>{bulkMetrics.isPending ? t('common.loading') : t('nodes.bulkMetrics', 'Bulk Metrics')}</Button>
-              <Button variant="ghost" size="sm" onClick={() => {
-                setShowBulkUpdate(true)
-                setBulkUpdateChanges({ name: '', host: '', port: '', description: '', username: '', docker_host: '', has_docker: undefined, tags: '' })
-              }}>{t('nodes.bulkUpdate', 'Bulk Update')}</Button>
-              <Button variant="ghost" size="sm" disabled={bulkValidateCreds.isPending} onClick={() => {
-                bulkValidateCreds.mutate({ ids: selectedIds }, {
-                  onSuccess: (data: unknown) => { const d = data as { succeeded: number; failed: number }; if (d.failed > 0) toast('warning', t('nodes.toastBulkValidateDone', { succeeded: d.succeeded, failed: d.failed })); else toast('success', t('nodes.toastBulkValidateDone', { succeeded: d.succeeded, failed: d.failed })); setSelectedIds([]) },
-                  onError: () => toast('error', t('nodes.toastBulkValidateFailed', 'Failed to validate credentials')),
-                })
-              }}>{bulkValidateCreds.isPending ? t('common.loading') : t('nodes.bulkValidate', 'Bulk Validate')}</Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('nodes.bulkDelete', 'Bulk Delete')}</Button>
-              <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('nodes.clearSelection', 'Clear')}</button>
-            </div>
-          )}
+          <NodesBulkBar selectedIds={selectedIds} setSelectedIds={setSelectedIds} setShowBulkExec={setShowBulkExec} setShowBulkScript={setShowBulkScript} setShowBulkMetrics={setShowBulkMetrics} setBulkMetricsResult={setBulkMetricsResult} setShowBulkUpdate={setShowBulkUpdate} setBulkUpdateChanges={setBulkUpdateChanges} setShowBulkDelete={setShowBulkDelete} bulkCheck={bulkCheck} bulkMetrics={bulkMetrics} bulkValidateCreds={bulkValidateCreds} />
           {!isLoading && selectedIds.length === 0 && data && data.items.length > 0 && (
             <div className="px-6 py-2 text-xs text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-800 flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
