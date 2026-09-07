@@ -12,11 +12,11 @@ export const dashboardApi = {
         api.get<{ total?: number; items?: unknown[] }>(`/scripts/?limit=1`).catch(() => ({ total: 0 })),
         api.get<{ total: number; installed: number; not_installed: number }>(`/templates/packs/stats`).catch(() => ({ total: 0, installed: 0, not_installed: 0 })),
       ])
-      const nodes = (nodesRes as unknown as { items: Array<{ id: string; status: string; has_docker?: boolean }> }).items || []
+      const nodes = nodesRes.items || []
       const total = (nodesRes as { total?: number })?.total ?? nodes.length
       const active = nodes.filter((n) => n.status === 'active').length
       const unreachable = nodes.filter((n) => n.status === 'unreachable').length
-      const recent_activity = ((auditRes as unknown as { items: unknown[] }).items || []).slice(0, 8) as DashboardResponse['recent_activity']
+      const recent_activity = (auditRes.items || []).slice(0, 8) as DashboardResponse['recent_activity']
       const commandsTotal = (commandsRes as { total?: number })?.total ?? (commandsRes as { items?: unknown[] })?.items?.length ?? 0
       const scriptsTotal = (scriptsRes as { total?: number })?.total ?? (scriptsRes as { items?: unknown[] })?.items?.length ?? 0
       const packs = packsRes as { total: number; installed: number; not_installed: number }
