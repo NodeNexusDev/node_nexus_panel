@@ -2,7 +2,7 @@
 title: Шпаргалка
 status: stable
 translation_key: reference.cheat_sheet
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Шпаргалка

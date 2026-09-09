@@ -2,7 +2,7 @@
 title: Панель управления
 status: stable
 translation_key: guides.dashboard
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Панель управления

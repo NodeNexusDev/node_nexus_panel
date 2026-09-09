@@ -2,7 +2,7 @@
 title: Дизайн-система
 status: stable
 translation_key: architecture.design_system
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Дизайн-система

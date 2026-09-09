@@ -2,7 +2,7 @@
 title: Интеграция с API
 status: stable
 translation_key: architecture.api_integration
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Интеграция с API

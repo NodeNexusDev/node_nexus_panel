@@ -2,10 +2,12 @@
 title: NodeNexus Panel Documentation
 status: stable
 translation_key: home
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # NodeNexus Panel Documentation
+
+![Version: 2.3.3](https://img.shields.io/badge/version-2.3.3-blue)
 
 Welcome to the NodeNexus Panel documentation.
 

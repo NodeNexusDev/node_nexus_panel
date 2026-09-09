@@ -2,7 +2,7 @@
 title: Справочник конфигурации
 status: stable
 translation_key: reference.configuration
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Справочник конфигурации

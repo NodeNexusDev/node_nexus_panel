@@ -2,7 +2,7 @@
 title: FAQ
 status: stable
 translation_key: guides.faq
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # FAQ
