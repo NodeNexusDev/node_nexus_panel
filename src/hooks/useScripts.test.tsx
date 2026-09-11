@@ -37,7 +37,7 @@ describe('useScript', () => {
 describe('useCreateScript', () => {
   it('creates a script', async () => {
     const { result } = renderHook(() => useCreateScript(), { wrapper: createWrapper() })
-    result.current.mutate({ name: 'new-script', steps: [] })
+    result.current.mutate({ name: 'new-script', steps: [], timeout: 30 })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toBeDefined()
   })
