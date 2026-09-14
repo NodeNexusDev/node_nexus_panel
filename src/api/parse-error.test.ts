@@ -2,41 +2,67 @@ import { describe, expect, it } from 'vitest';
 import { problemSlugToCode, toApiError } from './client';
 
 describe('toApiError', () => {
-  it('maps problem+json to ApiError', () => {
-    const err = toApiError(500, {
-      type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/audit-read-error',
-      title: 'Internal Server Error', status: 500,
-      detail: 'Audit log request failed', code: 'AuditReadError',
-      message: 'Audit log request failed', request_id: 'abc', instance: '/api/v2/audit/x',
-    } as never);
-    expect(err.code).toBe('AuditReadError');
-    expect(err.message).toBe('Audit log request failed');
-    expect(err.request_id).toBe('abc');
-  });
-
-  it('derives code from type slug when code missing', () => {
-    const err = toApiError(501, {
-      type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/audit-stats-unavailable-error',
-      title: 'Not Implemented', status: 501, detail: 'Audit stats not available',
-    } as never);
-    expect(err.code).toBe('AUDIT_STATS_UNAVAILABLE_ERROR');
-  });
-
-  it('keeps legacy FastAPI 422 array shape', () => {
+  it('maps 422 problem with errors member via slug fallback', () => {
     const err = toApiError(422, {
-      detail: [{ loc: ['body', 'name'], msg: 'Field required', type: 'missing' }],
+      type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/validation-error',
+      title: 'Unprocessable Entity', status: 422,
+      detail: 'Validation failed', request_id: 'req-422',
+      errors: { name: ['Field required'] },
     } as never);
     expect(err.code).toBe('VALIDATION_ERROR');
-    expect(err.message).toContain('body.name');
+    expect(err.message).toBe('Unprocessable Entity');
+    expect(err.detail).toBe('Validation failed');
+    expect(err.request_id).toBe('req-422');
   });
 
-  it('keeps legacy domain envelope', () => {
-    const err = toApiError(404, {
-      code: 'NodeNotFoundError', message: 'Node not found',
-      detail: 'Node not found', request_id: 'r1',
+  it('maps 429 problem via slug fallback', () => {
+    const err = toApiError(429, {
+      type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/rate-limited-error',
+      title: 'Too Many Requests', status: 429,
+      detail: 'Rate limit exceeded', request_id: 'req-429',
     } as never);
-    expect(err.code).toBe('NodeNotFoundError');
-    expect(err.request_id).toBe('r1');
+    expect(err.code).toBe('RATE_LIMITED_ERROR');
+    expect(err.message).toBe('Too Many Requests');
+    expect(err.detail).toBe('Rate limit exceeded');
+    expect(err.request_id).toBe('req-429');
+  });
+
+  it('maps 504 problem via slug fallback', () => {
+    const err = toApiError(504, {
+      type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/gateway-timeout-error',
+      title: 'Gateway Timeout', status: 504,
+      detail: 'Upstream timed out', request_id: 'req-504',
+    } as never);
+    expect(err.code).toBe('GATEWAY_TIMEOUT_ERROR');
+    expect(err.message).toBe('Gateway Timeout');
+    expect(err.detail).toBe('Upstream timed out');
+    expect(err.request_id).toBe('req-504');
+  });
+
+  it('maps generic 500 problem via slug fallback', () => {
+    const err = toApiError(500, {
+      type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/internal-server-error',
+      title: 'Internal Server Error', status: 500,
+      detail: 'Unexpected failure', request_id: 'req-500',
+    } as never);
+    expect(err.code).toBe('INTERNAL_SERVER_ERROR');
+    expect(err.message).toBe('Internal Server Error');
+    expect(err.detail).toBe('Unexpected failure');
+    expect(err.request_id).toBe('req-500');
+  });
+
+  it('preserves typed code on 409 problem', () => {
+    const err = toApiError(409, {
+      type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/node-name-conflict-error',
+      title: 'Conflict', status: 409,
+      detail: 'Node name already exists', code: 'NodeNameConflictError',
+      message: 'Node name already exists', request_id: 'req-409',
+      instance: '/api/v2/nodes',
+    } as never);
+    expect(err.code).toBe('NodeNameConflictError');
+    expect(err.message).toBe('Node name already exists');
+    expect(err.detail).toBe('Node name already exists');
+    expect(err.request_id).toBe('req-409');
   });
 
   it('slug helper', () => {

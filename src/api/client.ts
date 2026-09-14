@@ -207,35 +207,13 @@ export function problemSlugToCode(typeUri: string): string {
   return slug.toUpperCase().replace(/-/g, '_');
 }
 
-export function toApiError(status: number, data: ApiError & ProblemBody): ApiError {
-  if (typeof data.type === 'string' && typeof data.title === 'string' && typeof data.status === 'number') {
-    return {
-      code: typeof data.code === 'string' && data.code ? data.code : problemSlugToCode(data.type),
-      message: typeof data.message === 'string' && data.message ? data.message : data.title,
-      detail: (data.detail ?? null) as unknown,
-      request_id: (typeof data.request_id === 'string' ? data.request_id : null),
-    } as ApiError;
-  }
-  // FastAPI 422 Validation Error: { detail: [{ loc: ["body","name"], msg: "...", type: "..." }] }
-  if (Array.isArray((data as { detail?: unknown }).detail)) {
-    const detail = (data as unknown as { detail: Array<{ loc?: (string|number)[]; msg?: string; type?: string }> }).detail
-    const first = detail[0]
-    const loc = first?.loc ? ` (${first.loc.join('.')})` : ''
-    const msg = first?.msg ? `${first.msg}${loc}` : 'Validation failed'
-    return {
-      code: (data as unknown as { code?: string }).code || 'VALIDATION_ERROR',
-      message: (data as unknown as { message?: string }).message || msg,
-      detail: detail as unknown,
-      request_id: (data as unknown as { request_id?: string | null }).request_id ?? null,
-    } as ApiError
-  }
-  // Back-compat: map legacy details -> detail
-  if ((data as ApiError & { details?: unknown }).details && !data.detail) {
-    return { ...data, detail: (data as unknown as { details: unknown }).details } as ApiError
-  }
-  // Ensure code/message for generic ErrorResponse even if missing
-  if (!data.code && status === 422) {
-    return { code: 'VALIDATION_ERROR', message: (data as unknown as { message?: string }).message || 'Validation failed', detail: data.detail, request_id: (data as unknown as { request_id?: string | null }).request_id ?? null } as ApiError
-  }
-  return data as ApiError
+export function toApiError(_status: number, data: ApiError & ProblemBody): ApiError {
+  const type = typeof data.type === 'string' && data.type ? data.type : 'unknown-error'
+  const title = typeof data.title === 'string' && data.title ? data.title : 'Request failed'
+  return {
+    code: typeof data.code === 'string' && data.code ? data.code : problemSlugToCode(type),
+    message: typeof data.message === 'string' && data.message ? data.message : title,
+    detail: (data.detail ?? null) as unknown,
+    request_id: (typeof data.request_id === 'string' ? data.request_id : null),
+  } as ApiError;
 }
