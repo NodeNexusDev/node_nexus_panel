@@ -5,6 +5,7 @@ import type {
   CommandResponse,
   CommandCreate,
   CommandUpdate,
+  CursorPage_CommandHistoryResponse_,
   CursorPage_CommandResponse_,
   ExecutionStatsResponse,
 } from '../api/types'
@@ -180,7 +181,7 @@ export function useBulkUpdateCommands() {
 }
 
 export function useCommandExecutionsHistory(batchId: string, params?: { cursor?: string | null; limit?: number }) {
-  return useQuery({ queryKey:['commands','executions','history', batchId, params], queryFn: ()=> (commandsApi as unknown as { getExecutionsHistory: (a:string,b:unknown)=>Promise<unknown> }).getExecutionsHistory(batchId, params as never), enabled: !!batchId })
+  return useQuery<CursorPage_CommandHistoryResponse_>({ queryKey:['commands','executions','history', batchId, params], queryFn: ()=> commandsApi.getExecutionsHistory({ batch_id: batchId, cursor: params?.cursor, limit: params?.limit }), enabled: !!batchId })
 }
 
 export function useCommandHistory(params?: { node_id?: string; cursor?: string | null; limit?: number }) {
