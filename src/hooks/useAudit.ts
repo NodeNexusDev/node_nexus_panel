@@ -3,10 +3,10 @@ import { getNextCursor } from '../lib/pagination'
 import { auditApi } from '../api/audit'
 import type { CursorPage_AuditLogResponse_ } from '../api/types'
 
-export function useAuditLogs(params?: { page?: number; size?: number; cursor?: string | null; limit?: number; node_id?: string | null; action?: string | null; user?: string | null; date_from?: string | null; date_to?: string | null }) {
+export function useAuditLogs(params?: { size?: number; cursor?: string | null; limit?: number; node_id?: string | null; action?: string | null; user?: string | null; date_from?: string | null; date_to?: string | null }) {
   const apiParams: { cursor?: string | null; limit?: number; node_id?: string | null; action?: string | null; user?: string | null; date_from?: string | null; date_to?: string | null } = {}
   if (params?.cursor !== undefined) apiParams.cursor = params.cursor
-  else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+  else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
   if (params?.node_id) apiParams.node_id = params.node_id
   if (params?.action) apiParams.action = params.action
   if (params?.user) apiParams.user = params.user

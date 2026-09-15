@@ -145,18 +145,6 @@ export const commandsApi = {
     return api.get<CursorPage_CommandHistoryResponse_>(`/commands/history?${qs}`)
   },
 
-  getExecutionsHistory: (params: { batch_id: string; cursor?: string | null; limit?: number }) => {
-    const query = new URLSearchParams({ batch_id: params.batch_id })
-    if (params.cursor) query.set('cursor', params.cursor)
-    if (params.limit != null) query.set('limit', String(params.limit))
-    const qs = query.toString()
-    return api.get<CursorPage_CommandHistoryResponse_>(`/commands/executions/history?${qs}`)
-  },
-
-  // Legacy alias
-  getBulkHistory: (batchId: string, params?: { cursor?: string | null; limit?: number }) =>
-    api.get<CursorPage_CommandHistoryResponse_>(`/commands/executions/history?batch_id=${batchId}${params?.cursor ? `&cursor=${params.cursor}` : ''}${params?.limit ? `&limit=${params.limit}` : ''}`),
-
   getStats: (id: string, params?: { date_from?: string; date_to?: string; group_by?: string }) => {
     const query = new URLSearchParams()
     if (params?.date_from) query.set('date_from', params.date_from)

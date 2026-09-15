@@ -9,9 +9,10 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/useToast'
-import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack, useInfinitePackInstallations, useCreatePack, useUpdatePack, useRegistry } from '../hooks/useTemplates'
+import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack, useInfinitePackInstallations, useCreatePack, useUpdatePack, useDeletePack, useRegistry } from '../hooks/useTemplates'
 import { templatesApi } from '../api/templates'
 import { Modal } from '../components/ui/Modal'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
@@ -55,6 +56,8 @@ function PacksTab() {
   const { data: stats } = usePackStats()
   const install = useInstallPack()
   const uninstall = useUninstallPack()
+  const deletePack = useDeletePack()
+  const [deletePackTarget, setDeletePackTarget] = useState<{ id: string; name: string } | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
   const { data: detail } = usePack(detailId ?? '')
   const { data: instInfinite, fetchNextPage: fetchInstNext, hasNextPage: hasInstNext, isFetchingNextPage: isInstFetching } = useInfinitePackInstallations(detailId ?? '')
@@ -91,6 +94,7 @@ function PacksTab() {
           <Button variant="ghost" size="sm" onClick={() => install.mutate({ packId: p.id, on_conflict: onConflict }, { onSuccess: (res) => { setLastBulk(res as never); toast('success', `${t('templates.installStarted')} ${res.succeeded}/${res.total}`)}, onError: () => toast('error', t('templates.installFailed')) })} disabled={install.isPending}>{t('templates.install')}</Button>
         )}
         <Button variant="ghost" size="sm" onClick={()=> setDetailId(p.id)}>{t('common.view')}</Button>
+        <Button variant="ghost" size="sm" onClick={()=> setDeletePackTarget({ id: p.id, name: p.name })} className="text-red-500">{t('common.delete')}</Button>
       </div>
     )},
   ]
@@ -152,6 +156,7 @@ function PacksTab() {
                       <Button variant="ghost" size="sm" onClick={()=> install.mutate({packId:p.id, on_conflict:onConflict},{onSuccess:(res)=>{ setLastBulk(res as never); toast('success', t('templates.installStarted')) }})} disabled={install.isPending}>{t('templates.install')}</Button>
                     )}
                     <Button variant="ghost" size="sm" onClick={()=> setDetailId(p.id)}>{t('common.view')}</Button>
+                    <Button variant="ghost" size="sm" onClick={()=> setDeletePackTarget({ id: p.id, name: p.name })} className="text-red-500">{t('common.delete')}</Button>
                   </div>
                 </div>
               )} onRowClick={(p)=> setDetailId(p.id)} />
@@ -197,6 +202,7 @@ function PacksTab() {
           </div>
         ) : <p className="text-sm text-surface-500">{t('common.loading')}</p>}
       </Modal>
+      <ConfirmDialog isOpen={!!deletePackTarget} onClose={()=> setDeletePackTarget(null)} onConfirm={()=> deletePackTarget && deletePack.mutate(deletePackTarget.id, { onSuccess: ()=> { toast('success', t('templates.deleted')); setDeletePackTarget(null) }, onError: ()=> toast('error', t('templates.deleteFailed')) })} title={t('templates.deleteTitle', 'Delete Pack')} message={t('templates.deleteMsg', { name: deletePackTarget?.name ?? '' })} confirmLabel={t('common.delete')} loading={deletePack.isPending} />
       <Modal isOpen={showCreatePack} onClose={()=> setShowCreatePack(false)} title={t('templates.createPack')} size="lg">
         <div className="space-y-4">
           <Input label={t('templates.packId')} placeholder="my-pack" value={cpPackId} onChange={(e)=> setCpPackId(e.target.value)} />

@@ -39,9 +39,6 @@ export const templatesApi = {
 
   createPack: (data: PackLocalCreateRequest) => api.post<PackResponse>('/templates/packs', data),
 
-  updatePackMeta: (packId: string, data: { name?: string; description?: string; version?: string }) =>
-    api.patch<PackResponse>(`/templates/packs/${packId}`, data),
-
   deletePack: (packId: string) => api.delete<void>(`/templates/packs/${packId}`),
 
   bulkDeletePacks: (data: { pack_ids: string[] }) =>

@@ -1,7 +1,6 @@
 import { api } from './client'
 import { runBulkChunks } from '../lib/chunks'
 import type {
-  DockerContainer,
   DockerContainerInspect,
   ContainerCreateRequest,
   ContainerCreatedResponse,
@@ -72,12 +71,6 @@ export const dockerApi = {
     if (params?.all) query.set('all', 'true')
     const qs = query.toString()
     return api.get<CursorPage_DockerContainer_>(`${nodesBase(nodeId)}/containers${qs ? `?${qs}` : ''}`)
-  },
-
-  // Legacy wrapper returning array (unwrap cursor)
-  getContainersLegacy: async (nodeId: string, params?: { all?: boolean }) => {
-    const res = await api.get<CursorPage_DockerContainer_>(`${nodesBase(nodeId)}/containers${params?.all ? '?all=true' : ''}`)
-    return (res as unknown as CursorPage_DockerContainer_).items ?? (res as unknown as DockerContainer[])
   },
 
   createContainer: (nodeId: string, data: ContainerCreateRequest) =>
@@ -311,16 +304,4 @@ export const dockerApi = {
   bulkVolumeRemovals: (nodeId: string, data: VolumeRemovalsRequest) =>
     runBulkChunks(data.volume_names, 100, (volume_names) =>
       api.post<BulkResult_VolumeBulkResult_>(`${nodesBase(nodeId)}/volumes/removals`, { ...data, volume_names })),
-
-  // ── Deprecated global bulk (pre-v2) ─────────────────────────
-  // Kept for type compat, delegates to per-node for first node if available
-  bulkExecLegacy: (data: { container_id: string; node_ids: string[]; command?: string; timeout?: number }) => {
-    const nodeId = data.node_ids[0]
-    if (!nodeId) return Promise.reject(new Error('node_ids required'))
-    return api.post<BulkResult_ContainerExecBulkResult_>(`${nodesBase(nodeId)}/containers/executions`, {
-      container_ids: [data.container_id],
-      command: data.command || '',
-      timeout: data.timeout,
-    })
-  },
 }

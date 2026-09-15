@@ -123,11 +123,6 @@ export const scriptsApi = {
 
   removeSchedule: (id: string) => api.delete<void>(`/scripts/${id}/schedules`),
 
-  // Legacy singular wrappers
-  getScheduleLegacy: (id: string) => scriptsApi.getSchedule(id),
-  setScheduleLegacy: (id: string, data: ScheduleRequest) => api.post<ScheduleResponse>(`/scripts/${id}/schedules`, data),
-  removeScheduleLegacy: (id: string) => api.delete<void>(`/scripts/${id}/schedules`),
-
   getExecutions: (id: string, params?: { cursor?: string | null; limit?: number }) => {
     const query = new URLSearchParams()
     if (params?.cursor) query.set('cursor', params.cursor)

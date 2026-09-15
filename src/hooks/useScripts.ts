@@ -12,15 +12,10 @@ import type {
   ExecutionStatsResponse,
 } from '../api/types'
 
-export function useScripts(params?: { page?: number; size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
+export function useScripts(params?: { size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
   const apiParams: { cursor?: string | null; limit?: number; tag?: string | null; search?: string | null } = {}
   if (params?.cursor !== undefined) apiParams.cursor = params.cursor
-  else if (params?.page != null) {
-    const limit = params.limit ?? params.size ?? 20
-    const offset = (params.page - 1) * limit
-    apiParams.cursor = offset ? btoa(String(offset)) : null
-    apiParams.limit = limit
-  } else {
+  else {
     if (params?.limit != null) apiParams.limit = params.limit
     if (params?.size != null) apiParams.limit = params.size
   }
@@ -50,13 +45,13 @@ export function useScript(id: string) {
   })
 }
 
-export function useScriptExecutions(id: string, params?: { page?: number; size?: number; cursor?: string | null; limit?: number }) {
+export function useScriptExecutions(id: string, params?: { size?: number; cursor?: string | null; limit?: number }) {
   return useQuery<CursorPage_ScriptExecutionResponse_>({
     queryKey: ['scripts', 'detail', id, 'executions', params],
     queryFn: () => {
       const apiParams: { cursor?: string | null; limit?: number } = {}
       if (params?.cursor !== undefined) apiParams.cursor = params.cursor
-      else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+      else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
       return scriptsApi.getExecutions(id, apiParams)
     },
     enabled: !!id,
@@ -73,13 +68,13 @@ export function useInfiniteScriptExecutions(id: string, params?: { limit?: numbe
   })
 }
 
-export function useScriptScheduleHistory(id: string, params?: { page?: number; size?: number; cursor?: string | null; limit?: number }) {
+export function useScriptScheduleHistory(id: string, params?: { size?: number; cursor?: string | null; limit?: number }) {
   return useQuery<CursorPage_ScriptExecutionResponse_>({
     queryKey: ['scripts', 'detail', id, 'schedule-history', params],
     queryFn: () => {
       const apiParams: { cursor?: string | null; limit?: number } = {}
       if (params?.cursor !== undefined) apiParams.cursor = params.cursor
-      else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+      else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
       return scriptsApi.getScheduleHistory(id, apiParams)
     },
     enabled: !!id,

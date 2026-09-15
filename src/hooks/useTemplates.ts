@@ -148,3 +148,11 @@ export function useUninstallPack() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['templates'] }),
   })
 }
+
+export function useDeletePack() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (packId) => templatesApi.deletePack(packId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['templates'] }),
+  })
+}
