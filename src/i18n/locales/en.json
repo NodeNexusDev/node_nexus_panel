@@ -647,6 +647,7 @@
     "restart": "Restart",
     "close": "Close",
     "searchResults": "Search Results",
+    "refineSearchHint": "Showing first 100 — refine search to see more",
     "noResults": "No results found",
     "name": "Name",
     "actions": "Actions",

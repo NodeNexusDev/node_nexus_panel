@@ -17,11 +17,11 @@ import type { BulkScriptExecutionBatchResponse, BulkScriptExecutionItem, Node, S
 export function DrawerScript({ node }: { node: Node }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: scriptsData } = useScripts({ size: 100 })
+  const [search, setSearch] = useState('')
+  const { data: scriptsData } = useScripts({ size: 100, search: search || null })
   const scripts = scriptsData?.items || []
   const runScript = useRunScript()
   const bulkRun = useMutation({ mutationFn: (data: { script_ids: string[]; node_ids: string[] }) => scriptsApi.executions({ script_ids: data.script_ids, node_ids: data.node_ids }) })
-  const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [result, setResult] = useState<ScriptNodeResult | null>(null)
   const [bulkResults, setBulkResults] = useState<Array<{ id: string; name: string; result: ScriptNodeResult }> | null>(null)
@@ -134,6 +134,7 @@ export function DrawerScript({ node }: { node: Node }) {
   return (
     <div className="flex flex-col flex-1 min-h-0 space-y-3">
       <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectScript', 'Search scripts...')} />
+      {scriptsData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
       {filtered.length > 0 && (
         <div className="flex items-center justify-between px-1">
           <label className="flex items-center gap-2 text-xs cursor-pointer">

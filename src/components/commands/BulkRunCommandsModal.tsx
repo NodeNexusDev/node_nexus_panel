@@ -22,11 +22,11 @@ interface BulkRunCommandsModalProps {
 export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsModalProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [search, setSearch] = useState('')
+  const { data: nodesData } = useNodes({ size: 100, search: search || null })
   const nodes = nodesData?.items || []
   const { data: commandsData } = useCommands({ size: 100 })
   const commands = commandsData?.items || []
-  const [search, setSearch] = useState('')
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set())
   const [results, setResults] = useState<{ command: string; results: Array<BulkNodeResult & { command_id?: string }> } | null>(null)
   const bulkExec = useMutation({ mutationFn: (data: { command_ids: string[]; node_ids: string[] }) => commandsApi.executions({ command_ids: data.command_ids, node_ids: data.node_ids } as never) })
@@ -115,6 +115,7 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
     <Modal isOpen={commandIds.length > 0} onClose={onClose} title={`${t('commands.execute', 'Execute')} (${commandIds.length})`} size="lg">
       <div className="space-y-3">
         <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.searchPlaceholder', 'Search nodes...')} />
+        {nodesData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
         {filtered.length > 0 && (
           <div className="flex items-center justify-between px-1">
             <label className="flex items-center gap-2 text-xs cursor-pointer">

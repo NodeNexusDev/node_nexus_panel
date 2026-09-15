@@ -23,11 +23,11 @@ interface BulkRunScriptsOnNodesModalProps {
 export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScriptsOnNodesModalProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [search, setSearch] = useState('')
+  const { data: nodesData } = useNodes({ size: 100, search: search || null })
   const nodes = nodesData?.items || []
   const { data: scriptsData } = useScripts({ size: 100 })
   const scripts = scriptsData?.items || []
-  const [search, setSearch] = useState('')
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set())
   const [bulkResults, setBulkResults] = useState<Array<{ id: string; name: string; result: ScriptNodeResult }> | null>(null)
   const [singleResult, setSingleResult] = useState<ScriptNodeResult | null>(null)
@@ -150,6 +150,7 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
     <Modal isOpen={scriptIds.length > 0} onClose={onClose} title={`${t('scripts.run', 'Run')} (${scriptIds.length})`} size="lg">
       <div className="space-y-3">
         <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.searchPlaceholder', 'Search nodes...')} />
+        {nodesData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
         {filtered.length > 0 && (
           <div className="flex items-center justify-between px-1">
             <label className="flex items-center gap-2 text-xs cursor-pointer">

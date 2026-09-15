@@ -21,13 +21,13 @@ import type { BulkExecutionBatchResponse, BulkExecutionItem, CommandResult, Comm
 export function DrawerExec({ node }: { node: Node }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: commandsData } = useCommands({ size: 100 })
+  const [search, setSearch] = useState('')
+  const { data: commandsData } = useCommands({ size: 100, search: search || null })
   const commands = commandsData?.items || []
   const executeCommand = useExecuteCommand()
   const executeNode = useExecuteNode()
   const bulkExec = useMutation({ mutationFn: (data: { command_ids: string[]; node_ids: string[]; params?: Record<string, Record<string, unknown>> }) => commandsApi.executions({ command_ids: data.command_ids, node_ids: data.node_ids, params: data.params as never }) })
   const [tab, setTab] = useState<'command' | 'custom'>('command')
-  const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [params, setParams] = useState<Record<string, unknown>>({})
   const [customCommand, setCustomCommand] = useState('')
@@ -177,6 +177,7 @@ export function DrawerExec({ node }: { node: Node }) {
         ) : (
           <div className="flex flex-col flex-1 min-h-0 space-y-3">
             <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectCommand', 'Search commands...')} />
+            {commandsData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
             {filtered.length > 0 && (
               <div className="flex items-center justify-between px-1">
                 <label className="flex items-center gap-2 text-xs cursor-pointer">

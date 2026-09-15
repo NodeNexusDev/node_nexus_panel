@@ -281,11 +281,11 @@ function ScriptEditTab({ script, onDone, updateScript }: { script: ScriptRespons
 function ScriptRunTab({ script }: { script: ScriptResponse }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [searchNode, setSearchNode] = useState('')
+  const { data: nodesData } = useNodes({ size: 100, search: searchNode || null })
   const nodes = nodesData?.items || []
   const runScript = useRunScript()
   const bulkRun = useMutation({ mutationFn: (data: { script_ids: string[]; node_ids: string[] }) => scriptsApi.executions({ script_ids: data.script_ids, node_ids: data.node_ids }) })
-  const [searchNode, setSearchNode] = useState('')
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set())
   const [result, setResult] = useState<ScriptNodeResult | null>(null)
   const [bulkResults, setBulkResults] = useState<Array<{ node_id: string; node_name: string; result: ScriptNodeResult }> | null>(null)
@@ -393,6 +393,7 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
   return (
     <div className="flex flex-col flex-1 min-h-0 space-y-3">
       <SearchInput value={searchNode} onChange={setSearchNode} placeholder={t('nodes.searchPlaceholder', 'Search nodes...')} />
+      {nodesData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
       {filteredNodes.length > 0 && (
         <div className="flex items-center justify-between px-1">
           <label className="flex items-center gap-2 text-xs cursor-pointer">

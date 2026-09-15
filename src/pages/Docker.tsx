@@ -14,6 +14,7 @@ import { Tabs } from '../components/ui/Tabs'
 import { IconDocker } from '../components/ui/Icons'
 import { usePullImage } from '../hooks/useDocker'
 import { useNodes } from '../hooks/useNodes'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { useToast } from '../components/ui/useToast'
 import { ContainersTab } from '../components/docker/ContainersTab'
 import { ImagesTab } from '../components/docker/ImagesTab'
@@ -30,7 +31,9 @@ export function Docker() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [nodeSearch, setNodeSearch] = useState('')
+  const debouncedNodeSearch = useDebouncedValue(nodeSearch, 300)
+  const { data: nodesData, isFetching: nodesFetching } = useNodes({ size: 100, search: debouncedNodeSearch || null })
   const dockerNodes = useMemo(
     () => (nodesData?.items || []).filter((n) => n.has_docker),
     [nodesData]
@@ -40,14 +43,14 @@ export function Docker() {
   const validTabs: Tab[] = ['containers', 'images', 'networks', 'volumes', 'system', 'compose']
 
   useEffect(() => {
-    if (dockerNodes.length > 0 && !dockerNodes.some((n) => n.id === selectedNodeId)) {
+    if (!nodeSearch && dockerNodes.length > 0 && !dockerNodes.some((n) => n.id === selectedNodeId)) {
       const first = dockerNodes[0].id
       setSelectedNodeId(first)
       const next = new URLSearchParams(searchParams)
       next.set('node', first)
       setSearchParams(next, { replace: true })
     }
-  }, [dockerNodes, selectedNodeId, searchParams, setSearchParams])
+  }, [dockerNodes, selectedNodeId, searchParams, setSearchParams, nodeSearch])
   const [activeTab, setActiveTab] = useState<Tab>(validTabs.includes(initialTab) ? initialTab : 'containers')
 
   const handleNodeChange = (id: string) => {
@@ -106,6 +109,11 @@ export function Docker() {
             value={selectedNodeId}
             onChange={handleNodeChange}
             options={dockerNodes.map((n) => ({ value: n.id, label: n.name }))}
+            searchable
+            searchValue={nodeSearch}
+            onSearchChange={setNodeSearch}
+            isSearching={nodesFetching}
+            footerHint={nodesData?.has_more ? t('common.refineSearchHint') : undefined}
           />
         </div>
       </div>

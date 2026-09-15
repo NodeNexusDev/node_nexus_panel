@@ -12,6 +12,7 @@ import { IconAudit } from '../components/ui/Icons'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { useInfiniteAuditLogs, useClearAudit, useExportAudit } from '../hooks/useAudit'
 import { useNodes } from '../hooks/useNodes'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { useToast } from '../components/ui/useToast'
 import { activityVariant } from '../lib/variants'
 
@@ -58,7 +59,9 @@ const COMMON_ACTIONS = [
 export function Audit() {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [nodeSearch, setNodeSearch] = useState('')
+  const debouncedNodeSearch = useDebouncedValue(nodeSearch, 300)
+  const { data: nodesData, isFetching: nodesFetching } = useNodes({ size: 100, search: debouncedNodeSearch || null })
   const nodes = nodesData?.items || []
 
   const [nodeFilter, setNodeFilter] = useState('')
@@ -191,6 +194,11 @@ export function Audit() {
               onChange={setNodeFilter}
               placeholder={t('audit.allNodes', 'All nodes')}
               options={nodes.map((n) => ({ value: n.id, label: n.name }))}
+              searchable
+              searchValue={nodeSearch}
+              onSearchChange={setNodeSearch}
+              isSearching={nodesFetching}
+              footerHint={nodesData?.has_more ? t('common.refineSearchHint') : undefined}
             />
             <Select
               value={actionFilter}
