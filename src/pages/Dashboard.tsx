@@ -50,22 +50,18 @@ export function Dashboard() {
   const { from: metricsFrom, to: metricsTo } = useMemo(() => getDateRange(datePreset), [datePreset])
   const { data: dashboard, isLoading: dashboardLoading, refetch: refetchDashboard } = useDashboard()
   const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useDashboardMetrics({ date_from: metricsFrom || undefined, date_to: metricsTo || undefined, group_by: groupBy })
-  const { data: nodesData, isLoading: nodesLoading, refetch: refetchNodes } = useNodes()
+  const { data: nodesData, isLoading: nodesLoading } = useNodes()
   const { data: favorites } = useFavorites()
   const { on: onSseEvent } = useSse()
 
   useEffect(() => {
+    // NOTE: the backend currently publishes a single SSE type (`execution.cancelled`).
+    // Keep subscriptions to real backend names only — fictional names never fire.
     const unsubs = [
-      onSseEvent('node:status', () => { refetchDashboard(); refetchNodes() }),
-      onSseEvent('node:metrics', () => { refetchDashboard() }),
-      onSseEvent('command:complete', () => { refetchDashboard(); refetchMetrics() }),
-      onSseEvent('script:complete', () => { refetchDashboard(); refetchMetrics() }),
-      onSseEvent('docker:container:started', () => { refetchDashboard() }),
-      onSseEvent('docker:container:stopped', () => { refetchDashboard() }),
-      onSseEvent('system:alert', () => { refetchDashboard() }),
+      onSseEvent('execution.cancelled', () => { refetchDashboard(); refetchMetrics() }),
     ]
     return () => { unsubs.forEach((u) => u()) }
-  }, [onSseEvent, refetchDashboard, refetchNodes, refetchMetrics])
+  }, [onSseEvent, refetchDashboard, refetchMetrics])
 
   const cmdTrend = useMemo(() => computeTrend(metrics?.command_metrics), [metrics])
   const scrTrend = useMemo(() => computeTrend(metrics?.script_metrics), [metrics])

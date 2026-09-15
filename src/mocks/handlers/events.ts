@@ -2,49 +2,39 @@ import { http, HttpResponse } from 'msw'
 
 const API_URL = '*'
 
+// Mirrors the real backend wire format (app/api/v2/events.py):
+// the event name travels in the SSE `event:` field, the payload is a plain
+// JSON object with NO `type` member. The backend currently publishes only
+// `execution.cancelled`. Keep this handler in sync with the backend.
 function encodeSse(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
 }
 
 export const eventsHandlers = [
   http.get(`${API_URL}/api/v2/events/stream`, () => {
-    let heartbeatInterval: ReturnType<typeof setInterval> | null = null
-    let realEventInterval: ReturnType<typeof setInterval> | null = null
+    let keepaliveInterval: ReturnType<typeof setInterval> | null = null
+    let eventInterval: ReturnType<typeof setInterval> | null = null
 
     const stream = new ReadableStream({
       start(controller) {
-        const sendEvent = (type: string, payload: unknown) => {
-          const event = {
-            type,
-            payload,
-            timestamp: new Date().toISOString(),
-          }
-          controller.enqueue(new TextEncoder().encode(encodeSse(type, event)))
-        }
-
-        sendEvent('heartbeat', { message: 'connected' })
-
-        heartbeatInterval = setInterval(() => {
-          sendEvent('heartbeat', { message: 'keep-alive' })
+        const enc = new TextEncoder()
+        keepaliveInterval = setInterval(() => {
+          controller.enqueue(enc.encode(': keepalive\n\n'))
         }, 15000)
 
-        const realEvents = [
-          'node:status',
-          'node:metrics',
-          'command:complete',
-          'script:complete',
-          'docker:container:started',
-          'docker:container:stopped',
-          'system:alert',
-        ]
-        realEventInterval = setInterval(() => {
-          const type = realEvents[Math.floor(Math.random() * realEvents.length)]
-          sendEvent(type, {})
+        eventInterval = setInterval(() => {
+          controller.enqueue(
+            enc.encode(
+              encodeSse('execution.cancelled', {
+                execution_id: '00000000-0000-4000-8000-000000000000',
+              }),
+            ),
+          )
         }, 30000)
       },
       cancel() {
-        if (heartbeatInterval) clearInterval(heartbeatInterval)
-        if (realEventInterval) clearInterval(realEventInterval)
+        if (keepaliveInterval) clearInterval(keepaliveInterval)
+        if (eventInterval) clearInterval(eventInterval)
       },
     })
 

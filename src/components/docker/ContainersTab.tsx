@@ -24,7 +24,6 @@ import {
   useBulkDockerLogs,
   useBulkDockerStats,
 } from '../../hooks/useDocker'
-import { useDockerContainerSse } from '../../hooks/useDockerContainerSse'
 import { InfiniteScroll } from '../ui/InfiniteScroll'
 import { ContainerRow } from './ContainerRow'
 import { CreateContainerForm } from './CreateContainerForm'
@@ -38,7 +37,6 @@ type SortKey = 'name' | 'image' | 'status' | 'created'
 export function ContainersTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  useDockerContainerSse(nodeId)
   const { data: containersInfinite, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerContainers(nodeId, { limit: 20, all: true })
   const containerItems = useMemo(() => containersInfinite ? containersInfinite.pages.flatMap((p) => (p as { items: DockerContainer[] }).items) : [], [containersInfinite])
   const pruneContainers = usePruneContainers()
