@@ -27,7 +27,9 @@ export async function runBulkChunks<T, R>(
   const chunks = chunkItems(items, size)
   if (chunks.length <= 1) return run([...items])
   const merged: BulkLike<R> = { total: 0, succeeded: 0, failed: 0, results: [] }
+  // Sequential on purpose: server-friendly and keeps the merged order stable.
   for (const c of chunks) {
+    // oxlint-disable-next-line no-await-in-loop
     const r = await run(c)
     merged.total += r.total
     merged.succeeded += r.succeeded

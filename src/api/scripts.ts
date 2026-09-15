@@ -57,7 +57,9 @@ export const scriptsApi = {
     const ids = data.script_ids ?? []
     if (ids.length <= 20) return api.post<BulkScriptExecutionBatchResponse>('/scripts/executions', data)
     let merged: BulkScriptExecutionBatchResponse | null = null
+    // Sequential chunks: server-friendly, merged in order.
     for (const c of chunkItems(ids, 20)) {
+      // oxlint-disable-next-line no-await-in-loop
       const r = await api.post<BulkScriptExecutionBatchResponse>('/scripts/executions', { ...data, script_ids: c })
       merged = merged
         ? { ...r, batch_id: merged.batch_id, total: merged.total + r.total, succeeded: merged.succeeded + r.succeeded, failed: merged.failed + r.failed, results: [...merged.results, ...r.results] }

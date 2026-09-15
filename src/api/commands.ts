@@ -62,7 +62,9 @@ export const commandsApi = {
     const ids = data.command_ids ?? []
     if (ids.length <= 20) return api.post<BulkExecutionBatchResponse>('/commands/executions', data)
     let merged: BulkExecutionBatchResponse | null = null
+    // Sequential chunks: server-friendly, merged in order.
     for (const c of chunkItems(ids, 20)) {
+      // oxlint-disable-next-line no-await-in-loop
       const r = await api.post<BulkExecutionBatchResponse>('/commands/executions', { ...data, command_ids: c })
       merged = merged
         ? { batch_id: merged.batch_id, total: merged.total + r.total, succeeded: merged.succeeded + r.succeeded, failed: merged.failed + r.failed, results: [...merged.results, ...r.results] }
@@ -75,7 +77,9 @@ export const commandsApi = {
     const cmds = data.commands ?? []
     if (cmds.length <= 20) return api.post<BulkExecutionBatchResponse>('/commands/raw-executions', data)
     let merged: BulkExecutionBatchResponse | null = null
+    // Sequential chunks: server-friendly, merged in order.
     for (const c of chunkItems(cmds, 20)) {
+      // oxlint-disable-next-line no-await-in-loop
       const r = await api.post<BulkExecutionBatchResponse>('/commands/raw-executions', { ...data, commands: c })
       merged = merged
         ? { batch_id: merged.batch_id, total: merged.total + r.total, succeeded: merged.succeeded + r.succeeded, failed: merged.failed + r.failed, results: [...merged.results, ...r.results] }

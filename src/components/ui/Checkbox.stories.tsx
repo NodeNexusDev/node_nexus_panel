@@ -1,5 +1,5 @@
+// oxlint-disable react-hooks/rules-of-hooks (stories use hooks in render callbacks by design)
 // @ts-nocheck
-// oxlint-disable
 import type { Meta, StoryObj } from '@storybook/react'
 import { useState } from 'react'
 import { Checkbox } from './Checkbox'
