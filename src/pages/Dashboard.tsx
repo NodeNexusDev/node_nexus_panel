@@ -116,7 +116,7 @@ export function Dashboard() {
           ? Array.from({ length: 7 }).map((_, i) => (<StatCardSkeleton key={i} />))
           : (
             <>
-              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes')}><CardContent><StatCard label={t('dashboard.totalNodes')} value={dashboard?.nodes.total ?? 0} icon={<IconNodes className="w-5 h-5" />} /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes')}><CardContent><StatCard label={t('dashboard.totalNodes')} value={dashboard?.nodes.has_more ? `${dashboard?.nodes.total ?? 0}+` : (dashboard?.nodes.total ?? 0)} icon={<IconNodes className="w-5 h-5" />} /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes?status=active')}><CardContent><StatCard label={t('dashboard.online')} value={dashboard?.nodes.active ?? 0} icon={<IconCheckCircle className="w-5 h-5" />} tone="success" /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes?status=unreachable')}><CardContent><StatCard label={t('dashboard.offline')} value={dashboard?.nodes.unreachable ?? 0} icon={<IconXCircle className="w-5 h-5" />} tone="danger" /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/commands')}><CardContent><StatCard label={t('dashboard.totalCommands')} value={dashboard?.commands.total ?? 0} icon={<IconZap className="w-5 h-5" />} /></CardContent></Card>

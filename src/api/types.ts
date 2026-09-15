@@ -261,7 +261,7 @@ export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursor
 export interface ApiError { code: string; message: string; detail?: unknown; request_id?: string | null; details?: Record<string, string[]> }
 
 // ── Panel-specific extensions (not in spec, kept for UI) ────────
-export interface NodeStats { total: number; active: number; unreachable: number }
+export interface NodeStats { total: number; active: number; unreachable: number; has_more: boolean }
 export interface DashboardDockerStats { total: number; running: number; stopped: number }
 export interface EntityStats { total: number }
 export interface RecentActivity { id: string; action: string; node_id?: string | null; user?: string | null; details?: string | null; created_at: string }
