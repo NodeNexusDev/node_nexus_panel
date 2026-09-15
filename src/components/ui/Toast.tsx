@@ -1,5 +1,5 @@
 // oxlint-disable
-import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToastContext, type ToastType, type ToastAction } from './useToast'
 
@@ -69,8 +69,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }, EXIT_DURATION)
   }, [])
 
+  const contextValue = useMemo(() => ({ toast }), [toast])
+
   return (
-    <ToastContext.Provider value={{ toast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <div className="fixed bottom-4 right-4 z-[var(--z-toast)] flex flex-col gap-2 max-w-[calc(100vw-2rem)] left-4 sm:left-auto" role="status" aria-live="polite">
         {toasts.map((t) => (

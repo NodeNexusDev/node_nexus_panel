@@ -30,7 +30,7 @@ export function TableSkeleton({ rows = 5, cols = 7 }: { rows?: number; cols?: nu
     <div className="space-y-3 p-6">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 stagger-item" style={{ animationDelay: `${i * 50}ms` }}>
-          {Array.from({ length: cols }).map((_, j) => (
+          {Array.from({ length: cols }).map((_col, j) => (
             <Skeleton key={j} variant="text" className={j === 0 ? 'w-1/4' : 'w-1/6'} />
           ))}
         </div>

@@ -302,8 +302,8 @@ export function Settings() {
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.nodesToCreate', 'Nodes to create')}: {importPreview.result.would_create.nodes.length}</h4>
               <div className="space-y-1">
-                {(importPreview.result.would_create.nodes as { name: string; host: string }[]).map((n, i) => (
-                  <div key={i} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{n.name} ({n.host})</div>
+                {(importPreview.result.would_create.nodes as { name: string; host: string }[]).map((n) => (
+                  <div key={`${n.name}:${n.host}`} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{n.name} ({n.host})</div>
                 ))}
               </div>
             </div>
@@ -312,8 +312,8 @@ export function Settings() {
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.commandsToCreate', 'Commands to create')}: {importPreview.result.would_create.commands.length}</h4>
               <div className="space-y-1">
-                {(importPreview.result.would_create.commands as { name: string }[]).map((c, i) => (
-                  <div key={i} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{c.name}</div>
+                {(importPreview.result.would_create.commands as { name: string }[]).map((c) => (
+                  <div key={c.name} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{c.name}</div>
                 ))}
               </div>
             </div>
@@ -322,8 +322,8 @@ export function Settings() {
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.scriptsToCreate', 'Scripts to create')}: {importPreview.result.would_create.scripts.length}</h4>
               <div className="space-y-1">
-                {(importPreview.result.would_create.scripts as { name: string }[]).map((s, i) => (
-                  <div key={i} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{s.name}</div>
+                {(importPreview.result.would_create.scripts as { name: string }[]).map((s) => (
+                  <div key={s.name} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{s.name}</div>
                 ))}
               </div>
             </div>

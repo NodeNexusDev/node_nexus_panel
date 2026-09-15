@@ -183,7 +183,7 @@ function PacksTab() {
                 <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
                   <h4 className="text-xs font-medium mb-2">{t('templates.bulkResult','Bulk result')}: {lastBulk.succeeded}/{lastBulk.total}</h4>
                   <div className="space-y-1 max-h-32 overflow-auto">
-                    {lastBulk.results.map((r,i)=> <div key={i} className="text-xs flex gap-2"><Badge variant={r.status==='success'?'success':'danger'}>{r.status}</Badge><span>{r.entity_type}:{r.name}</span>{r.error && <span className="text-red-500">{r.error}</span>}</div>)}
+                    {lastBulk.results.map((r)=> <div key={`${r.entity_type}:${r.name}:${r.status}`} className="text-xs flex gap-2"><Badge variant={r.status==='success'?'success':'danger'}>{r.status}</Badge><span>{r.entity_type}:{r.name}</span>{r.error && <span className="text-red-500">{r.error}</span>}</div>)}
                   </div>
                 </div>
               )}

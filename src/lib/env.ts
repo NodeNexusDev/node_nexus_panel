@@ -31,6 +31,7 @@ function isValidApiUrl(v: string): boolean {
 }
 
 function resolveEnv(): Env {
+  // oxlint-disable-next-line eslint(no-underscore-dangle) -- __ENV__ is the documented Vite-injected runtime config global, name is fixed
   const raw = window.__ENV__ ?? {}
   const filtered = Object.fromEntries(
     Object.entries(raw).filter(([, v]) => !isUnset(v as string)),

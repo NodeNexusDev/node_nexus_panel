@@ -26,13 +26,13 @@ export function DropdownMenu({ items, align = 'right', ariaLabel }: DropdownMenu
   const [pos, setPos] = useState<{ top: number; left: number; flip: boolean }>({ top: 0, left: 0, flip: false })
   const activeIndexRef = useRef(-1)
 
-  const focusItem = (index: number) => {
+  const focusItem = useCallback((index: number) => {
     const menuItems = panelRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
     if (!menuItems?.length) return
     const idx = Math.max(0, Math.min(index, menuItems.length - 1))
     activeIndexRef.current = idx
     menuItems[idx].focus()
-  }
+  }, [])
 
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return
@@ -112,7 +112,7 @@ export function DropdownMenu({ items, align = 'right', ariaLabel }: DropdownMenu
       window.removeEventListener('scroll', handleScroll, true)
       window.removeEventListener('resize', updatePosition)
     }
-  }, [open, updatePosition])
+  }, [open, updatePosition, focusItem])
 
   return (
     <div ref={triggerRef} className="relative inline-flex">

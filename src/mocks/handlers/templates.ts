@@ -71,7 +71,7 @@ export const templatesHandlers = [
     const pack = packs.find((p)=> p.id===params.packId); if(!pack) return HttpResponse.json({code:'not_found',message:'Pack not found'},{status:404})
     pack.updated_at=new Date().toISOString(); return HttpResponse.json({ total:1, succeeded:1, failed:0, results:[{ entity_type:'command', name: pack.name, status:'success', entity_id: crypto.randomUUID(), error:'' }] })
   }),
-  http.post(`${API_URL}/api/v2/templates/packs/:packId/installations`, ({ params, request }) => {
+  http.post(`${API_URL}/api/v2/templates/packs/:packId/installations`, ({ params }) => {
     const pack = packs.find((p) => p.id === params.packId)
     if (pack) { pack.installed_at = new Date().toISOString(); pack.installed_version = pack.version }
     const url = new URL(request.url); const onConflict = url.searchParams.get('on_conflict')||'fail'

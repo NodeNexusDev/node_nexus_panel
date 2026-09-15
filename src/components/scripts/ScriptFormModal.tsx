@@ -68,7 +68,7 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
       setCommandSearch('')
       setSteps([{ ...EMPTY_STEP, id: generateId() }])
     }
-  }, [isOpen, t])
+  }, [isOpen])
 
   const handleSubmit = () => {
     if (steps.some((s) => !s.label.trim())) { toast('error', t('scripts.toastStepLabelRequired', 'Step label is required')); return }

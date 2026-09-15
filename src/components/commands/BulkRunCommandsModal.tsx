@@ -91,11 +91,11 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
             <span className="text-red-600 dark:text-red-400">{t('commands.failed', 'Failed')}: {results.results.filter((r) => r.exit_code !== 0).length}</span>
           </div>
           <div className="max-h-96 overflow-y-auto space-y-3">
-            {results.results.map((r, idx) => {
+            {results.results.map((r) => {
               const cmdName = (r as { command_id?: string }).command_id ? commands.find((c) => c.id === (r as { command_id?: string }).command_id)?.name ?? (r as { command_id?: string }).command_id : undefined
               const label = cmdName ? `${cmdName} — ${r.node_name ?? r.node_id}` : (r.node_name ?? r.node_id)
               return (
-                <div key={`${(r as { command_id?: string }).command_id ?? 'cmd'}:${r.node_id}:${idx}`} className="border border-surface-200 dark:border-surface-700 rounded-lg p-3">
+                <div key={`${(r as { command_id?: string }).command_id ?? 'cmd'}:${r.node_id}`} className="border border-surface-200 dark:border-surface-700 rounded-lg p-3">
                   <p className="text-sm font-medium text-surface-900 dark:text-white">{label}</p>
                   <ExecutionResult stdout={r.stdout} stderr={r.stderr} exitCode={r.exit_code} />
                 </div>

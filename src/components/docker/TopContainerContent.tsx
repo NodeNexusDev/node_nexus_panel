@@ -23,8 +23,8 @@ export function TopContainerContent({ nodeId, containerId }: { nodeId: string; c
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-200 dark:divide-surface-800">
-            {top.processes?.map((process, i) => (
-              <tr key={i} className="table-row-hover">
+            {top.processes?.map((process) => (
+              <tr key={process[0]} className="table-row-hover">
                 {process.map((cell: string, j: number) => (
                   <td key={j} className="px-3 py-2 text-sm text-surface-700 dark:text-surface-300 font-mono">{cell}</td>
                 ))}

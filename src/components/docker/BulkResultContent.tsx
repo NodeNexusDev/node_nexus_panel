@@ -36,7 +36,7 @@ export function BulkResultContent({ result, isLoading, title }: BulkResultConten
           const label = item.node_name ?? item.container_id ?? item.image ?? item.network_id ?? item.volume_name ?? item.node_id ?? `result-${idx}`
           return (
             <div
-              key={`${label}:${idx}`}
+              key={label}
               className={`p-3 rounded-lg border text-xs font-mono ${
                 item.status === 'success'
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'

@@ -14,7 +14,9 @@ interface TestProvidersProps {
   queryClient?: QueryClient
 }
 
-export function TestProviders({ children, initialEntries = ['/'], queryClient }: TestProvidersProps) {
+const DEFAULT_ENTRIES = ['/']
+
+export function TestProviders({ children, initialEntries = DEFAULT_ENTRIES, queryClient }: TestProvidersProps) {
   const client = queryClient || createTestQueryClient()
   return (
     <MemoryRouter initialEntries={initialEntries}>

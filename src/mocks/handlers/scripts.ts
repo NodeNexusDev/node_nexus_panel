@@ -201,7 +201,7 @@ export const scriptHandlers = [
     const cursor = url.searchParams.get('cursor')
     const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
     const page = Number(url.searchParams.get('page') || '1')
-    let offset=0; if(cursor) offset=parseCursor(cursor); else if(url.searchParams.get('page')) offset=(page-1)*limit
+    let _offset=0; if(cursor) _offset=parseCursor(cursor); else if(url.searchParams.get('page')) _offset=(page-1)*limit
     const items: unknown[] = []
     const has_more = false
     const next_cursor = null

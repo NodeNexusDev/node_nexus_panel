@@ -18,12 +18,14 @@ import { CommandParamInputs } from '../../commands/CommandParamInputs'
 import { ExecutionResult } from '../../commands/ExecutionResult'
 import type { BulkExecutionBatchResponse, BulkExecutionItem, CommandResult, CommandResponse, Node } from '../../../api/types'
 
+const EMPTY_COMMANDS: CommandResponse[] = []
+
 export function DrawerExec({ node }: { node: Node }) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const [search, setSearch] = useState('')
   const { data: commandsData } = useCommands({ size: 100, search: search || null })
-  const commands = commandsData?.items || []
+  const commands = commandsData?.items ?? EMPTY_COMMANDS
   const executeCommand = useExecuteCommand()
   const executeNode = useExecuteNode()
   const bulkExec = useMutation({ mutationFn: (data: { command_ids: string[]; node_ids: string[]; params?: Record<string, Record<string, unknown>> }) => commandsApi.executions({ command_ids: data.command_ids, node_ids: data.node_ids, params: data.params as never }) })

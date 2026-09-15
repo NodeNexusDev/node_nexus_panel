@@ -70,7 +70,7 @@ export function Commands() {
   })
 
   const commands = (commandsData?.items || []).filter(
-    (cmd: CommandResponse) => tagFilter.length <= 1 || tagFilter.some((t) => cmd.tags.includes(t))
+    (cmd: CommandResponse) => tagFilter.length <= 1 || tagFilter.some((tag) => cmd.tags.includes(tag))
   )
 
   const sortedCommands = sort
@@ -154,7 +154,7 @@ export function Commands() {
       render: (cmd) => (
         <div className="flex flex-wrap gap-1">
           {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((s) => s !== tag) : [...prev, tag])} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -185,7 +185,7 @@ export function Commands() {
       </div>
       <div className="flex flex-wrap gap-1">
         {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((s) => s !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-3 text-xs text-surface-500">
