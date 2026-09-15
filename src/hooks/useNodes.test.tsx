@@ -3,7 +3,6 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useNodes, useNode, useCreateNode, useDeleteNode } from './useNodes'
-import { isNodeCursorResponse } from '../api/types'
 
 function createWrapper() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
@@ -18,10 +17,8 @@ describe('useNodes', () => {
     expect(result.current.isLoading).toBe(true)
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data?.items).toHaveLength(4)
-    const data = result.current.data
-    if (data && !isNodeCursorResponse(data)) {
-      expect(data.total).toBe(4)
-    }
+    expect(result.current.data?.has_more).toBe(false)
+    expect(result.current.data?.next_cursor).toBeNull()
   })
 })
 

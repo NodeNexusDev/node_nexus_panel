@@ -5,7 +5,6 @@ import type { components } from './__generated/v2'
 // ── Generic helpers ─────────────────────────────────────────────
 export type CursorPage<T> = { items: T[]; limit: number; next_cursor: string | null; has_more: boolean; total?: number; page?: number; size?: number }
 export type BulkResult<T> = { total: number; succeeded: number; failed: number; results: T[]; items?: T[]; page?: number; size?: number }
-export interface PaginatedResponse<T> { items: T[]; total: number; page: number; size: number; limit?: number; next_cursor?: string | null; has_more?: boolean } // @deprecated use CursorPage
 
 // ── Re-exports from generated schemas ───────────────────────────
 export type APIKeyCreate = Omit<components['schemas']['APIKeyCreate'], 'scope'> & { scope?: "read-only" | "read-write" }
@@ -254,9 +253,6 @@ export type CommandParameter = CommandParameter_Output // legacy unified
 export type ScriptStep = ScriptStep_Output
 
 // ── Helpers ─────────────────────────────────────────────────────
-export type NodeOffsetListResponse = { items: Node[]; total: number; page: number; size: number } // legacy
-export type NodeListResponse = NodeCursorListResponse | NodeOffsetListResponse
-export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursorListResponse { return 'next_cursor' in resp && 'has_more' in resp }
 
 export interface ApiError { code: string; message: string; detail?: unknown; request_id?: string | null; details?: Record<string, string[]> }
 
@@ -304,7 +300,6 @@ export interface ScriptBulkOperationResponse { results: { execution_id: string; 
 export interface ScriptBulkResult { execution_id: string; status: string; message: string }
 export interface NodeValidateRequest { host: string; port?: number; connection_type?: ConnectionType; username?: string | null; password?: string | null; ssh_key?: string | null; passphrase?: string | null }
 export interface NodeValidateResponse { status: NodeStatus; message: string }
-export interface NodeStatusHistoryResponse { items: NodeStatusHistoryItem[]; total: number; page: number; size: number }
 export interface DockerContainerStatsResponse { Container: string; Name: string; CPUPerc: string; MemUsage: string; MemPerc: string; NetIO: string; BlockIO: string; MemLimit?: string | null; PIDs?: string | null }
 export interface BulkDockerRequest { container_id: string; command?: string | null; node_ids: string[]; node_tags?: string[]; timeout?: number | null }
 export interface BulkDockerResponse { action: string; results: { node_id: string; node_name: string; status: string; output?: string; error?: string }[]; total: number; succeeded: number; failed: number }

@@ -8,7 +8,7 @@ import type {
   NodeUpdate,
   NodeMetrics,
   ExecutionStatsResponse,
-  NodeListResponse,
+  NodeCursorListResponse,
   CursorPage_NodeStatusHistoryItem_,
   CursorPage_CommandHistoryResponse_,
   BulkResult_BulkNodeUpdateResult_,
@@ -24,7 +24,7 @@ export function useNodes(params?: { size?: number; cursor?: string | null; limit
   else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
   if (params?.tag) apiParams.tag = params.tag
   if (params?.search) apiParams.search = params.search
-  return useQuery<NodeListResponse>({
+  return useQuery<NodeCursorListResponse>({
     queryKey: ['nodes', 'list', params],
     queryFn: () => nodesApi.getAll(apiParams),
     placeholderData: keepPreviousData,
