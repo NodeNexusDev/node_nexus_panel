@@ -17,6 +17,7 @@ import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { ResponsiveTable } from '../components/ui/ResponsiveTable'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import type { Column } from '../components/ui/table-types'
+import type { PackAssetResponse, PackInstallationResponse } from '../api/types'
 
 type Tab = 'packs' | 'registries'
 
@@ -102,6 +103,18 @@ function PacksTab() {
         <Button variant="ghost" size="sm" onClick={()=> setDeletePackTarget({ id: p.id, name: p.name })} className="text-red-500">{t('common.delete')}</Button>
       </div>
     )},
+  ]
+
+  const formatBytes = (size: number) => size >= 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`
+  const instColumns: Column<PackInstallationResponse>[] = [
+    { key: 'type', header: t('templates.entityType'), render: (r) => <Badge variant="default">{r.entity_type}</Badge> },
+    { key: 'entity', header: t('templates.entityId'), render: (r) => <span className="text-xs font-mono" title={r.entity_id}>{r.entity_id.slice(0, 8)}</span> },
+    { key: 'created', header: t('common.created'), render: (r) => <span className="text-xs text-surface-500">{new Date(r.created_at).toLocaleString()}</span> },
+  ]
+  const assetColumns: Column<PackAssetResponse>[] = [
+    { key: 'path', header: t('templates.path'), render: (a) => <span className="text-xs font-mono">{a.path}</span> },
+    { key: 'size', header: t('templates.size'), render: (a) => <span className="text-xs text-surface-500">{formatBytes(a.size)}</span> },
+    { key: 'sha', header: t('templates.sha'), render: (a) => <span className="text-xs font-mono text-surface-500" title={a.sha ?? ''}>{(a.sha ?? '').slice(0, 8) || '—'}</span> },
   ]
 
   return (
@@ -208,16 +221,28 @@ function PacksTab() {
             )}
             <div>
               <h4 className="text-sm font-medium mb-1">{t('templates.installations','Installations')}</h4>
-              {(() => { const instItems = instInfinite ? instInfinite.pages.flatMap((p)=> (p as { items: unknown[] }).items) : []; return instItems.length? (
+              {(() => { const instItems = instInfinite ? instInfinite.pages.flatMap((p)=> (p as { items: PackInstallationResponse[] }).items) : []; return instItems.length? (
                 <div className="space-y-2">
-                  <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-32 overflow-auto">{JSON.stringify(instItems, null, 2)}</pre>
+                  <ResponsiveTable data={instItems} columns={instColumns} keyExtractor={(r)=>r.id} renderMobileItem={(r)=> (
+                    <div className="p-3 space-y-1">
+                      <p className="text-sm"><Badge variant="default">{r.entity_type}</Badge></p>
+                      <p className="text-xs font-mono text-surface-500">{r.entity_id}</p>
+                    </div>
+                  )} />
                   <InfiniteScroll hasMore={!!hasInstNext} isFetchingNextPage={isInstFetching} onLoadMore={()=> fetchInstNext()} />
                 </div>
               ) : <p className="text-xs text-surface-500">{t('templates.noInstallations','No installations')}</p> })()}
             </div>
             <div>
               <h4 className="text-sm font-medium mb-1">{t('templates.assets','Assets')}</h4>
-              <pre className="text-xs bg-surface-900 text-white p-3 rounded-lg max-h-64 overflow-auto">{JSON.stringify((detail as { assets?: unknown }).assets ?? [], null, 2)}</pre>
+              {(() => { const assets = detail.assets ?? []; return assets.length? (
+                <ResponsiveTable data={assets} columns={assetColumns} keyExtractor={(a)=>a.id} renderMobileItem={(a)=> (
+                  <div className="p-3 space-y-1">
+                    <p className="text-xs font-mono">{a.path}</p>
+                    <p className="text-xs text-surface-500">{formatBytes(a.size)}</p>
+                  </div>
+                )} />
+              ) : <p className="text-xs text-surface-500">{t('templates.noAssets')}</p> })()}
             </div>
           </div>
         ) : <p className="text-sm text-surface-500">{t('common.loading')}</p>}
