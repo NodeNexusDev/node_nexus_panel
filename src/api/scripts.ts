@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, ApiRequestError } from './client'
 import type {
   ScriptResponse,
   ScriptCreate,
@@ -93,8 +93,15 @@ export const scriptsApi = {
     } catch { return [] as string[] }
   },
 
-  // Schedules (plural in v2)
-  getSchedule: (id: string) => api.get<ScheduledJob | null>(`/scripts/${id}/schedules`),
+  // Schedules (plural in v2). Backend returns 404 when no schedule exists — map to null.
+  getSchedule: async (id: string): Promise<ScheduledJob | null> => {
+    try {
+      return await api.get<ScheduledJob>(`/scripts/${id}/schedules`)
+    } catch (e) {
+      if (e instanceof ApiRequestError && e.status === 404) return null
+      throw e
+    }
+  },
 
   setSchedule: (id: string, data: ScheduleRequest) =>
     api.post<ScheduleResponse>(`/scripts/${id}/schedules`, data),
@@ -102,7 +109,7 @@ export const scriptsApi = {
   removeSchedule: (id: string) => api.delete<void>(`/scripts/${id}/schedules`),
 
   // Legacy singular wrappers
-  getScheduleLegacy: (id: string) => api.get<ScheduledJob | null>(`/scripts/${id}/schedules`),
+  getScheduleLegacy: (id: string) => scriptsApi.getSchedule(id),
   setScheduleLegacy: (id: string, data: ScheduleRequest) => api.post<ScheduleResponse>(`/scripts/${id}/schedules`, data),
   removeScheduleLegacy: (id: string) => api.delete<void>(`/scripts/${id}/schedules`),
 
