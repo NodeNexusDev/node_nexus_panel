@@ -1,4 +1,5 @@
 import { api } from './client'
+import { runBulkChunks } from '../lib/chunks'
 import type {
   DockerContainer,
   DockerContainerInspect,
@@ -240,60 +241,76 @@ export const dockerApi = {
 
   pushImageById: (nodeId: string, imageId: string) => api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/${imageId}/push`),
 
-  // ── Per-node bulk (v2) ──────────────────────────────────────
+  // ── Per-node bulk (v2; id-lists auto-chunked to the server max of 100) ──
   bulkExec: (nodeId: string, data: ContainerExecutionsRequest) =>
-    api.post<BulkResult_ContainerExecBulkResult_>(`${nodesBase(nodeId)}/containers/executions`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerExecBulkResult_>(`${nodesBase(nodeId)}/containers/executions`, { ...data, container_ids })),
 
   bulkInspect: (nodeId: string, data: ContainerInspectionsRequest) =>
-    api.post<BulkResult_ContainerInspectBulkResult_>(`${nodesBase(nodeId)}/containers/inspections`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerInspectBulkResult_>(`${nodesBase(nodeId)}/containers/inspections`, { ...data, container_ids })),
 
   bulkKill: (nodeId: string, data: ContainerKillsRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/kills`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/kills`, { ...data, container_ids })),
 
   bulkLogs: (nodeId: string, data: ContainerLogsRequest) =>
-    api.post<BulkResult_ContainerLogsBulkResult_>(`${nodesBase(nodeId)}/containers/logs`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerLogsBulkResult_>(`${nodesBase(nodeId)}/containers/logs`, { ...data, container_ids })),
 
   bulkPause: (nodeId: string, data: ContainerIdsRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/pauses`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/pauses`, { ...data, container_ids })),
 
   bulkRemove: (nodeId: string, data: ContainerIdsRequest, force?: boolean) => {
     const qs = force ? '?force=true' : ''
-    return api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/removals${qs}`, data)
+    return runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/removals${qs}`, { ...data, container_ids }))
   },
 
   bulkRestart: (nodeId: string, data: ContainerIdsRequest, timeout?: number) => {
     const qs = timeout ? `?timeout=${timeout}` : ''
-    return api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/restarts${qs}`, data)
+    return runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/restarts${qs}`, { ...data, container_ids }))
   },
 
   bulkStart: (nodeId: string, data: ContainerIdsRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/starts`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/starts`, { ...data, container_ids })),
 
   bulkStats: (nodeId: string, data: ContainerStatsRequest) =>
-    api.post<BulkResult_ContainerStatsBulkResult_>(`${nodesBase(nodeId)}/containers/stats`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerStatsBulkResult_>(`${nodesBase(nodeId)}/containers/stats`, { ...data, container_ids })),
 
   bulkStop: (nodeId: string, data: ContainerIdsRequest, timeout?: number) => {
     const qs = timeout ? `?timeout=${timeout}` : ''
-    return api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/stops${qs}`, data)
+    return runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/stops${qs}`, { ...data, container_ids }))
   },
 
   bulkUnpause: (nodeId: string, data: ContainerIdsRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/unpauses`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/unpauses`, { ...data, container_ids })),
 
   bulkUpdate: (nodeId: string, data: ContainerUpdatesRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/updates`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/updates`, { ...data, container_ids })),
 
   bulkImagePulls: (nodeId: string, data: ImagePullsRequest) =>
-    api.post<BulkResult_ImageBulkResult_>(`${nodesBase(nodeId)}/images/pulls`, data),
+    runBulkChunks(data.images, 100, (images) =>
+      api.post<BulkResult_ImageBulkResult_>(`${nodesBase(nodeId)}/images/pulls`, { ...data, images })),
 
   bulkImageRemovals: (nodeId: string, data: ImageRemovalsRequest) =>
-    api.post<BulkResult_ImageBulkResult_>(`${nodesBase(nodeId)}/images/removals`, data),
+    runBulkChunks(data.image_ids, 100, (image_ids) =>
+      api.post<BulkResult_ImageBulkResult_>(`${nodesBase(nodeId)}/images/removals`, { ...data, image_ids })),
 
   bulkNetworkRemovals: (nodeId: string, data: NetworkRemovalsRequest) =>
-    api.post<BulkResult_NetworkBulkResult_>(`${nodesBase(nodeId)}/networks/removals`, data),
+    runBulkChunks(data.network_ids, 100, (network_ids) =>
+      api.post<BulkResult_NetworkBulkResult_>(`${nodesBase(nodeId)}/networks/removals`, { ...data, network_ids })),
 
   bulkVolumeRemovals: (nodeId: string, data: VolumeRemovalsRequest) =>
-    api.post<BulkResult_VolumeBulkResult_>(`${nodesBase(nodeId)}/volumes/removals`, data),
+    runBulkChunks(data.volume_names, 100, (volume_names) =>
+      api.post<BulkResult_VolumeBulkResult_>(`${nodesBase(nodeId)}/volumes/removals`, { ...data, volume_names })),
 
   // ── Deprecated global bulk (pre-v2) ─────────────────────────
   // Kept for type compat, delegates to per-node for first node if available

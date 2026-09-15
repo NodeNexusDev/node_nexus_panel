@@ -1,4 +1,5 @@
 import { api } from './client'
+import { runBulkChunks } from '../lib/chunks'
 import type {
   ComposeCreate,
   ComposeUpdate,
@@ -31,6 +32,15 @@ function enc(s: string) {
   return encodeURIComponent(s)
 }
 
+// Per-service bulk verbs accept up to 100 services — larger selections are chunked.
+function chunkedServices(
+  data: ComposeServicesRequest,
+  run: (d: ComposeServicesRequest) => Promise<BulkResult_ComposeServiceBulkResult_>,
+): Promise<BulkResult_ComposeServiceBulkResult_> {
+  if (!data.services || data.services.length <= 100) return run(data)
+  return runBulkChunks(data.services, 100, (services) => run({ ...data, services }))
+}
+
 export const composeApi = {
   list: (nodeId: string, params?: { cursor?: string | null; limit?: number }) => {
     const query = new URLSearchParams()
@@ -54,14 +64,14 @@ export const composeApi = {
   // ── Actions ─────────────────────────────────────────────────
   builds: (nodeId: string, projectName: string, data: ComposeServicesRequest, params?: { no_cache?: boolean }) => {
     const qs = params?.no_cache ? '?no_cache=true' : ''
-    return api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/builds${qs}`, data)
+    return chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/builds${qs}`, d))
   },
 
   config: (nodeId: string, projectName: string) =>
     api.get<ComposeConfigResponse>(`${composeBase(nodeId)}/${enc(projectName)}/config`),
 
   creates: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
-    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/creates`, data),
+    chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/creates`, d)),
 
   downs: (nodeId: string, projectName: string, data: ComposeDownRequest) =>
     api.post<ComposeActionResponse>(`${composeBase(nodeId)}/${enc(projectName)}/downs`, data),
@@ -73,7 +83,7 @@ export const composeApi = {
     api.get<ComposeImagesResponse>(`${composeBase(nodeId)}/${enc(projectName)}/images`),
 
   kills: (nodeId: string, projectName: string, data: ComposeKillRequest) =>
-    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/kills`, data),
+    chunkedServices(data as ComposeServicesRequest, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/kills`, { ...data, services: d.services })),
 
   logs: (nodeId: string, projectName: string, params?: { tail?: number; since?: string; services?: string }) => {
     const query = new URLSearchParams()
@@ -85,7 +95,7 @@ export const composeApi = {
   },
 
   pauses: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
-    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pauses`, data),
+    chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pauses`, d)),
 
   port: (nodeId: string, projectName: string, params: { service: string; private_port: string }) => {
     const query = new URLSearchParams({ service: params.service, private_port: params.private_port })
@@ -98,30 +108,30 @@ export const composeApi = {
   },
 
   pulls: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
-    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pulls`, data),
+    chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pulls`, d)),
 
   pushs: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
-    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pushs`, data),
+    chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/pushs`, d)),
 
   restarts: (nodeId: string, projectName: string, data: ComposeServicesRequest, params?: { timeout?: number }) => {
     const qs = params?.timeout ? `?timeout=${params.timeout}` : ''
-    return api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/restarts${qs}`, data)
+    return chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/restarts${qs}`, d))
   },
 
   rms: (nodeId: string, projectName: string, data: ComposeServicesRequest, params?: { volumes?: boolean }) => {
     const qs = params?.volumes ? '?volumes=true' : ''
-    return api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/rms${qs}`, data)
+    return chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/rms${qs}`, d))
   },
 
   runs: (nodeId: string, projectName: string, data: ComposeRunRequest) =>
     api.post<ComposeRunResponse>(`${composeBase(nodeId)}/${enc(projectName)}/runs`, data),
 
   starts: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
-    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/starts`, data),
+    chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/starts`, d)),
 
   stops: (nodeId: string, projectName: string, data: ComposeServicesRequest, params?: { timeout?: number }) => {
     const qs = params?.timeout ? `?timeout=${params.timeout}` : ''
-    return api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/stops${qs}`, data)
+    return chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/stops${qs}`, d))
   },
 
   top: (nodeId: string, projectName: string, params?: { service?: string }) => {
@@ -130,7 +140,7 @@ export const composeApi = {
   },
 
   unpauses: (nodeId: string, projectName: string, data: ComposeServicesRequest) =>
-    api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/unpauses`, data),
+    chunkedServices(data, (d) => api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/unpauses`, d)),
 
   ups: (nodeId: string, projectName: string, data: ComposeUpRequest) =>
     api.post<BulkResult_ComposeServiceBulkResult_>(`${composeBase(nodeId)}/${enc(projectName)}/ups`, data),

@@ -1,4 +1,5 @@
 import { api } from './client'
+import { runBulkChunks } from '../lib/chunks'
 import type {
   Node,
   NodeCreate,
@@ -65,9 +66,10 @@ export const nodesApi = {
 
   remove: (id: string) => api.delete<void>(`/nodes/${id}`),
 
-  // ── Bulk operations (v2, no /bulk prefix) ─────────────────────
+  // ── Bulk operations (v2, no /bulk prefix; id-lists auto-chunked to the server max of 100) ──
   bulkUpdate: (data: NodeBulkUpdatesRequest) =>
-    api.patch<BulkResult_BulkNodeUpdateResult_>('/nodes/', data),
+    runBulkChunks(data.updates, 100, (updates) =>
+      api.patch<BulkResult_BulkNodeUpdateResult_>('/nodes/', { ...data, updates })),
 
   // Legacy wrapper: {node_ids, changes} -> {updates:[{id, changes}]}
   bulkUpdateLegacy: (data: { node_ids: string[]; changes: NodeUpdate }) =>
@@ -76,16 +78,19 @@ export const nodesApi = {
     }),
 
   bulkDelete: (ids: string[]) =>
-    api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/deletions', { ids } satisfies NodeDeletionsRequest),
+    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/deletions', { ids: c } satisfies NodeDeletionsRequest)),
 
   bulkCheck: (ids: string[]) =>
-    api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/checks', { ids } satisfies NodeChecksRequest),
+    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/checks', { ids: c } satisfies NodeChecksRequest)),
 
   bulkMetrics: (ids: string[]) =>
-    api.post<BulkResult_BulkNodeMetricsResult_>('/nodes/metrics', { ids } satisfies NodeMetricsRequest),
+    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeMetricsResult_>('/nodes/metrics', { ids: c } satisfies NodeMetricsRequest)),
 
-  bulkValidateCredentials: (data: CredentialValidationsRequest) =>
-    api.post<BulkResult_BulkValidateCredentialsResult_>('/nodes/credential-validations', data),
+  bulkValidateCredentials: (data: CredentialValidationsRequest) => {
+    if (!data.ids || data.ids.length <= 100) return api.post<BulkResult_BulkValidateCredentialsResult_>('/nodes/credential-validations', data)
+    return runBulkChunks(data.ids, 100, (c) =>
+      api.post<BulkResult_BulkValidateCredentialsResult_>('/nodes/credential-validations', { ...data, ids: c }))
+  },
 
   getStatusHistory: (id: string, params?: { cursor?: string | null; limit?: number }) => {
     const query = new URLSearchParams()

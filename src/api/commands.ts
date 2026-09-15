@@ -1,4 +1,5 @@
 import { api } from './client'
+import { chunkItems, runBulkChunks } from '../lib/chunks'
 import type {
   CommandResponse,
   CommandCreate,
@@ -44,22 +45,44 @@ export const commandsApi = {
   remove: (id: string) => api.delete<void>(`/commands/${id}`),
 
   bulkUpdate: (data: { updates: Array<{ id: string; changes: CommandUpdate }> }) =>
-    api.patch<BulkResult<CommandBulkCreateResult>>('/commands/', data as unknown as { updates: unknown }),
+    runBulkChunks(data.updates, 20, (updates) =>
+      api.patch<BulkResult<CommandBulkCreateResult>>('/commands/', { updates } as unknown as { updates: unknown })),
 
   bulkDelete: (data: { ids: string[] }) =>
-    api.post<BulkResult<CommandBulkCreateResult>>('/commands/deletions', data),
+    runBulkChunks(data.ids, 100, (ids) =>
+      api.post<BulkResult<CommandBulkCreateResult>>('/commands/deletions', { ids })),
 
   clone: (id: string, newName?: string) => {
     const qs = newName ? `?new_name=${encodeURIComponent(newName)}` : ''
     return api.post<CommandResponse>(`/commands/${id}/clone${qs}`)
   },
 
-  // ── Executions (M×N) ────────────────────────────────────────
-  executions: (data: CommandExecutionsRequest) =>
-    api.post<BulkExecutionBatchResponse>('/commands/executions', data),
+  // ── Executions (M×N; command_ids auto-chunked to the server max of 20) ──
+  executions: async (data: CommandExecutionsRequest): Promise<BulkExecutionBatchResponse> => {
+    const ids = data.command_ids ?? []
+    if (ids.length <= 20) return api.post<BulkExecutionBatchResponse>('/commands/executions', data)
+    let merged: BulkExecutionBatchResponse | null = null
+    for (const c of chunkItems(ids, 20)) {
+      const r = await api.post<BulkExecutionBatchResponse>('/commands/executions', { ...data, command_ids: c })
+      merged = merged
+        ? { batch_id: merged.batch_id, total: merged.total + r.total, succeeded: merged.succeeded + r.succeeded, failed: merged.failed + r.failed, results: [...merged.results, ...r.results] }
+        : r
+    }
+    return merged as BulkExecutionBatchResponse
+  },
 
-  rawExecutions: (data: RawExecutionsRequest) =>
-    api.post<BulkExecutionBatchResponse>('/commands/raw-executions', data),
+  rawExecutions: async (data: RawExecutionsRequest): Promise<BulkExecutionBatchResponse> => {
+    const cmds = data.commands ?? []
+    if (cmds.length <= 20) return api.post<BulkExecutionBatchResponse>('/commands/raw-executions', data)
+    let merged: BulkExecutionBatchResponse | null = null
+    for (const c of chunkItems(cmds, 20)) {
+      const r = await api.post<BulkExecutionBatchResponse>('/commands/raw-executions', { ...data, commands: c })
+      merged = merged
+        ? { batch_id: merged.batch_id, total: merged.total + r.total, succeeded: merged.succeeded + r.succeeded, failed: merged.failed + r.failed, results: [...merged.results, ...r.results] }
+        : r
+    }
+    return merged as BulkExecutionBatchResponse
+  },
 
   // Legacy single execute -> maps to executions with single command
   execute: (id: string, data: { node_id?: string; node_ids?: string[]; node_tags?: string[]; params?: Record<string, unknown> }) => {
@@ -96,12 +119,14 @@ export const commandsApi = {
       node_ids: [data.node_id],
     } as RawExecutionsRequest),
 
-  // ── Cancels / Retries ───────────────────────────────────────
+  // ── Cancels / Retries (execution_ids auto-chunked to the server max of 100) ──
   bulkCancel: (data: ExecutionCancelsRequest) =>
-    api.post<BulkResult<BulkCancelCommandResult>>('/commands/executions/cancels', data),
+    runBulkChunks(data.execution_ids, 100, (execution_ids) =>
+      api.post<BulkResult<BulkCancelCommandResult>>('/commands/executions/cancels', { ...data, execution_ids })),
 
   bulkRetry: (data: ExecutionRetriesRequest) =>
-    api.post<BulkResult<BulkRetryCommandResult>>('/commands/executions/retries', data),
+    runBulkChunks(data.execution_ids, 100, (execution_ids) =>
+      api.post<BulkResult<BulkRetryCommandResult>>('/commands/executions/retries', { ...data, execution_ids })),
 
   // Legacy per-execution retry -> bulk
   retryExecution: (executionId: string) =>

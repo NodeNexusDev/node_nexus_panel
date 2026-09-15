@@ -1,4 +1,5 @@
 import { api } from './client'
+import { runBulkChunks } from '../lib/chunks'
 import type {
   APIKeyResponse,
   ApiKeyCreate,
@@ -29,5 +30,6 @@ export const apiKeysApi = {
     api.get<APIKeyResponse>(`/api-keys/${id}`),
 
   bulkDelete: (data: { key_ids: string[] }) =>
-    api.post<{ total: number; succeeded: number; failed: number; results: Array<{ key_id: string; status: string; error: string }> }>('/api-keys/deletions', data),
+    runBulkChunks(data.key_ids, 100, (key_ids) =>
+      api.post<{ total: number; succeeded: number; failed: number; results: Array<{ key_id: string; status: string; error: string }> }>('/api-keys/deletions', { key_ids })),
 }

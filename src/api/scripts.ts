@@ -1,4 +1,5 @@
 import { api, ApiRequestError } from './client'
+import { chunkItems, runBulkChunks } from '../lib/chunks'
 import type {
   ScriptResponse,
   ScriptCreate,
@@ -44,14 +45,26 @@ export const scriptsApi = {
   remove: (id: string) => api.delete<void>(`/scripts/${id}`),
 
   bulkUpdate: (data: { updates: Array<{ id: string; changes: ScriptUpdate }> }) =>
-    api.patch<BulkResult<ScriptBulkCreateResult>>('/scripts/', data as unknown as { updates: unknown }),
+    runBulkChunks(data.updates, 20, (updates) =>
+      api.patch<BulkResult<ScriptBulkCreateResult>>('/scripts/', { updates } as unknown as { updates: unknown })),
 
   bulkDelete: (data: { ids: string[] }) =>
-    api.post<BulkResult<ScriptBulkCreateResult>>('/scripts/deletions', data),
+    runBulkChunks(data.ids, 100, (ids) =>
+      api.post<BulkResult<ScriptBulkCreateResult>>('/scripts/deletions', { ids })),
 
-  // M×N executions
-  executions: (data: ScriptExecutionsRequest) =>
-    api.post<BulkScriptExecutionBatchResponse>('/scripts/executions', data),
+  // M×N executions (script_ids auto-chunked to the server max of 20)
+  executions: async (data: ScriptExecutionsRequest): Promise<BulkScriptExecutionBatchResponse> => {
+    const ids = data.script_ids ?? []
+    if (ids.length <= 20) return api.post<BulkScriptExecutionBatchResponse>('/scripts/executions', data)
+    let merged: BulkScriptExecutionBatchResponse | null = null
+    for (const c of chunkItems(ids, 20)) {
+      const r = await api.post<BulkScriptExecutionBatchResponse>('/scripts/executions', { ...data, script_ids: c })
+      merged = merged
+        ? { ...r, batch_id: merged.batch_id, total: merged.total + r.total, succeeded: merged.succeeded + r.succeeded, failed: merged.failed + r.failed, results: [...merged.results, ...r.results] }
+        : r
+    }
+    return merged as BulkScriptExecutionBatchResponse
+  },
 
   // Legacy single execute -> maps to bulk, params keyed by script_id per spec
   execute: (id: string, data: { node_ids?: string[] | null; node_tags?: string[] | null; params?: Record<string, unknown> }) =>
@@ -129,12 +142,14 @@ export const scriptsApi = {
     return api.get<CursorPage_ScriptExecutionResponse_>(`/scripts/${id}/schedule/history${qs ? `?${qs}` : ''}`)
   },
 
-  // Bulk cancels/retries (v2)
+  // Bulk cancels/retries (v2; execution_ids auto-chunked to the server max of 100)
   bulkCancel: (data: ExecutionCancelsRequest) =>
-    api.post<BulkResult<BulkCancelScriptResult>>('/scripts/executions/cancels', data),
+    runBulkChunks(data.execution_ids, 100, (execution_ids) =>
+      api.post<BulkResult<BulkCancelScriptResult>>('/scripts/executions/cancels', { ...data, execution_ids })),
 
   bulkRetry: (data: ExecutionRetriesRequest) =>
-    api.post<BulkResult<BulkRetryScriptResult>>('/scripts/executions/retries', data),
+    runBulkChunks(data.execution_ids, 100, (execution_ids) =>
+      api.post<BulkResult<BulkRetryScriptResult>>('/scripts/executions/retries', { ...data, execution_ids })),
 
   cancelExecution: (executionId: string) =>
     api.post<BulkResult<BulkCancelScriptResult>>('/scripts/executions/cancels', { execution_ids: [executionId] }),

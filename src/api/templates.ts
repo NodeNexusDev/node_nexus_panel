@@ -1,4 +1,5 @@
 import { api } from './client'
+import { runBulkChunks } from '../lib/chunks'
 import type {
   PackResponse,
   PackDetailWithAssetsResponse,
@@ -44,7 +45,8 @@ export const templatesApi = {
   deletePack: (packId: string) => api.delete<void>(`/templates/packs/${packId}`),
 
   bulkDeletePacks: (data: { pack_ids: string[] }) =>
-    api.post<{ total: number; succeeded: number; failed: number; results: Array<{ pack_id: string; status: string; error: string }> }>('/templates/packs/deletions', data),
+    runBulkChunks(data.pack_ids, 100, (pack_ids) =>
+      api.post<{ total: number; succeeded: number; failed: number; results: Array<{ pack_id: string; status: string; error: string }> }>('/templates/packs/deletions', { pack_ids })),
 
   getPackStats: (params?: { group_by?: string | null }) => {
     const qs = params?.group_by ? `?group_by=${encodeURIComponent(params.group_by)}` : ''
