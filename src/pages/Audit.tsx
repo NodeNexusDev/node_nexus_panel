@@ -79,6 +79,19 @@ export function Audit() {
       fmt: exportFormat,
     }, {
       onSuccess: (data) => {
+        const download = (blob: Blob, extension: string) => {
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.${extension}`
+          a.click()
+          URL.revokeObjectURL(url)
+        }
+        if (exportFormat === 'csv' && data instanceof Blob) {
+          download(data, 'csv')
+          toast('success', t('audit.toastExported'))
+          return
+        }
         let content: string
         let mimeType: string
         let extension: string
@@ -103,12 +116,7 @@ export function Audit() {
         }
 
         const blob = new Blob([content], { type: mimeType })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.${extension}`
-        a.click()
-        URL.revokeObjectURL(url)
+        download(blob, extension)
         toast('success', t('audit.toastExported'))
       },
       onError: () => toast('error', t('audit.toastExportFailed')),
