@@ -26,7 +26,6 @@ import { IconNodes } from '../components/ui/Icons'
 import {
   useInfiniteNodes,
   useCreateNode,
-  useUpdateNode,
   useDeleteNode,
   useBulkCheck,
   useNodeTags,
@@ -61,7 +60,6 @@ export function Nodes() {
   // keep hasNextPage for InfiniteScroll
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
-  const updateNode = useUpdateNode()
   const deleteNode = useDeleteNode()
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
@@ -70,7 +68,6 @@ export function Nodes() {
   const bulkUpdateNodes = useBulkUpdateNodes()
 
   const [showAddModal, setShowAddModal] = useState(false)
-  const [editTarget, setEditTarget] = useState<Node | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const addForm = useForm<NodeCreateFormValues>({
@@ -90,13 +87,6 @@ export function Nodes() {
       tags: undefined,
     },
   })
-
-  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as const, description: '', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', has_docker: false, tags: '' })
-  const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
-
-  const toggleClear = (field: string) => {
-    setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
-  }
 
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
@@ -141,27 +131,6 @@ export function Nodes() {
     setSelectedIds(allSelected ? [] : nodes.map((n) => n.id))
   }, [allSelected, nodes])
 
-  const openEdit = useCallback((node: Node) => {
-    setEditTarget(node)
-    setEditNode({
-      name: node.name,
-      host: node.host,
-      port: String(node.port),
-      connection_type: node.connection_type,
-      description: node.description || '',
-      username: node.username || '',
-      password: '',
-      ssh_key: '',
-      passphrase: '',
-      docker_host: node.docker_host || '',
-      has_docker: node.has_docker ?? false,
-      tags: node.tags.join(', '),
-    })
-    setClearFields({})
-  }, [])
-  void openEdit
-
-
   const handleAdd = (values: NodeCreateFormValues) => {
     createNode.mutate(
       {
@@ -190,37 +159,6 @@ export function Nodes() {
           addForm.reset()
         },
         onError: () => toast('error', t('nodes.toastAddFailed')),
-      },
-    )
-  }
-
-  const handleEdit = () => {
-    if (!editTarget) return
-    if (!editNode.name.trim()) { toast('error', t('nodes.toastNameRequired', 'Name is required')); return }
-    const port = parseInt(String(editNode.port), 10)
-    if (isNaN(port) || port < 1 || port > 65535) { toast('error', t('nodes.toastInvalidPort', 'Invalid port number')); return }
-    const toNull = (v: string) => v === '' ? null : v
-    updateNode.mutate(
-      {
-        id: editTarget.id,
-        data: {
-          name: editNode.name,
-          host: editNode.host,
-          port,
-          connection_type: editNode.connection_type,
-          description: toNull(editNode.description),
-          username: toNull(editNode.username),
-          password: editNode.password ? editNode.password : clearFields.password ? null : undefined,
-          ssh_key: editNode.ssh_key ? editNode.ssh_key : clearFields.ssh_key ? null : undefined,
-          passphrase: editNode.passphrase ? editNode.passphrase : clearFields.passphrase ? null : undefined,
-          docker_host: toNull(editNode.docker_host),
-          has_docker: editNode.has_docker,
-          tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
-        },
-      },
-      {
-        onSuccess: () => { toast('success', t('nodes.toastUpdated', { name: editNode.name })); setEditTarget(null) },
-        onError: () => toast('error', t('nodes.toastUpdateFailed')),
       },
     )
   }
@@ -282,7 +220,7 @@ export function Nodes() {
         </CardContent>
       </Card>
 
-      <NodesForms showAddModal={showAddModal} setShowAddModal={setShowAddModal} addForm={addForm} handleAdd={handleAdd} createNode={createNode} editTarget={editTarget} setEditTarget={setEditTarget} editNode={editNode} setEditNode={setEditNode} clearFields={clearFields} toggleClear={toggleClear} handleEdit={handleEdit} updateNode={updateNode} showBulkUpdate={showBulkUpdate} setShowBulkUpdate={setShowBulkUpdate} bulkUpdateChanges={bulkUpdateChanges} setBulkUpdateChanges={setBulkUpdateChanges} bulkUpdateNodes={bulkUpdateNodes} selectedIds={selectedIds} setSelectedIds={setSelectedIds} />
+      <NodesForms showAddModal={showAddModal} setShowAddModal={setShowAddModal} addForm={addForm} handleAdd={handleAdd} createNode={createNode} showBulkUpdate={showBulkUpdate} setShowBulkUpdate={setShowBulkUpdate} bulkUpdateChanges={bulkUpdateChanges} setBulkUpdateChanges={setBulkUpdateChanges} bulkUpdateNodes={bulkUpdateNodes} selectedIds={selectedIds} setSelectedIds={setSelectedIds} />
 
 
       <BulkCommandModal nodeIds={showBulkExec ? selectedIds : []} onClose={() => setShowBulkExec(false)} />
