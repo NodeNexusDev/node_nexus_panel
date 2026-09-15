@@ -169,7 +169,8 @@ export function Audit() {
               onClick={() => {
                 clearAudit.mutate(undefined, {
                   onSuccess: () => toast('success', t('audit.toastCleared')),
-                  onError: () => toast('error', t('audit.toastClearFailed')),
+                  // Backend restricts clear to the master key (403 otherwise) — surface its message.
+                  onError: (e: unknown) => toast('error', e instanceof Error && e.message ? e.message : t('audit.toastClearFailed')),
                 })
               }}
               disabled={clearAudit.isPending}
