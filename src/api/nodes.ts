@@ -92,11 +92,10 @@ export const nodesApi = {
       if (!first || first.status !== 'success' || !first.metrics) throw new Error(first?.error || 'metrics failed')
       return first.metrics
     }),
-  /** Tags derived from the first list page (no dedicated endpoint) */
+  /** Tags from the dedicated vocabulary endpoint */
   getTags: async () => {
     try {
-      const page = await api.get<NodeCursorListResponse>('/nodes/?limit=100')
-      return [...new Set(page.items.flatMap((n) => n.tags ?? []))]
+      return await api.get<string[]>('/nodes/tags')
     } catch { return [] as string[] }
   },
 }

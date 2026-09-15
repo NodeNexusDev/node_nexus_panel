@@ -103,8 +103,7 @@ export const scriptsApi = {
 
   getTags: async () => {
     try {
-      const page = await api.get<CursorPage_ScriptResponse_>('/scripts/?limit=100')
-      return [...new Set(page.items.flatMap((s) => s.tags ?? []))]
+      return await api.get<string[]>('/scripts/tags')
     } catch { return [] as string[] }
   },
 

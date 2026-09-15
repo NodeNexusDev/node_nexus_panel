@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
@@ -31,6 +31,18 @@ import { BulkResultContent } from './BulkResultContent'
 import { ContainerDrawer } from './ContainerDrawer'
 import { Checkbox } from '../ui/Checkbox'
 import type { DockerContainer, BulkDockerResponse } from '../../api/types'
+import { useSse } from '../../hooks/useSse'
+
+const DOCKER_CONTAINER_EVENTS = [
+  'docker.container.start',
+  'docker.container.stop',
+  'docker.container.restart',
+  'docker.container.remove',
+  'docker.container.pause',
+  'docker.container.unpause',
+  'docker.container.kill',
+  'docker.container.rename',
+]
 
 type SortKey = 'name' | 'image' | 'status' | 'created'
 
@@ -38,6 +50,17 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { data: containersInfinite, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteDockerContainers(nodeId, { limit: 20, all: true })
+  const { on: onSseEvent } = useSse()
+  useEffect(() => {
+    // Live-refresh on container lifecycle events published by the backend
+    // (see events.py docstring); only refetch events for the selected node.
+    const unsubs = DOCKER_CONTAINER_EVENTS.map((name) =>
+      onSseEvent(name, (data) => {
+        if ((data as unknown as { node_id?: string }).node_id === nodeId) refetch()
+      }),
+    )
+    return () => { unsubs.forEach((u) => u()) }
+  }, [onSseEvent, refetch, nodeId])
   const containerItems = useMemo(() => containersInfinite ? containersInfinite.pages.flatMap((p) => (p as { items: DockerContainer[] }).items) : [], [containersInfinite])
   const pruneContainers = usePruneContainers()
   const bulkExec = useBulkDockerExec()

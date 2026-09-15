@@ -54,10 +54,13 @@ export function Dashboard() {
   const { on: onSseEvent } = useSse()
 
   useEffect(() => {
-    // NOTE: the backend currently publishes a single SSE type (`execution.cancelled`).
-    // Keep subscriptions to real backend names only — fictional names never fire.
+    // Subscribed only to event names the backend actually publishes (see events.py docstring).
+    const refresh = () => { refetchDashboard(); refetchMetrics() }
     const unsubs = [
-      onSseEvent('execution.cancelled', () => { refetchDashboard(); refetchMetrics() }),
+      onSseEvent('execution.cancelled', refresh),
+      onSseEvent('execution.completed', refresh),
+      onSseEvent('execution.failed', refresh),
+      onSseEvent('node.status_changed', refresh),
     ]
     return () => { unsubs.forEach((u) => u()) }
   }, [onSseEvent, refetchDashboard, refetchMetrics])

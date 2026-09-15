@@ -165,8 +165,7 @@ export const commandsApi = {
 
   getTags: async () => {
     try {
-      const page = await api.get<CursorPage_CommandResponse_>('/commands/?limit=100')
-      return [...new Set(page.items.flatMap((c) => c.tags ?? []))]
+      return await api.get<string[]>('/commands/tags')
     } catch { return [] as string[] }
   },
 }

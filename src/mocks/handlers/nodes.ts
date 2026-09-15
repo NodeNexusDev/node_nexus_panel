@@ -72,6 +72,11 @@ export const nodeHandlers = [
     })
   }),
 
+  http.get(`${API_URL}/api/v2/nodes/tags`, () => {
+    const tags = [...new Set(mockNodes.flatMap((n) => n.tags ?? []))]
+    return HttpResponse.json(tags)
+  }),
+
   http.get(`${API_URL}/api/v2/nodes/:id`, ({ params }) => {
     const node = mockNodes.find((n) => n.id === params.id)
     if (!node) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
