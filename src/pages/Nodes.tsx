@@ -1,13 +1,13 @@
-// oxlint-disable
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
 import { Modal } from '../components/ui/Modal'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
@@ -26,7 +26,6 @@ import { IconNodes } from '../components/ui/Icons'
 import {
   useInfiniteNodes,
   useCreateNode,
-  useUpdateNode,
   useDeleteNode,
   useBulkCheck,
   useNodeTags,
@@ -47,12 +46,17 @@ export function Nodes() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState(() => {
+    const s = searchParams.get('status') ?? ''
+    return s === 'active' || s === 'unreachable' || s === 'error' ? s : ''
+  })
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodes({
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodes({
     limit,
     tag: tagFilter.length === 1 ? tagFilter[0] : undefined,
     search: search || undefined,
@@ -61,7 +65,6 @@ export function Nodes() {
   // keep hasNextPage for InfiniteScroll
   const { data: allTags } = useNodeTags()
   const createNode = useCreateNode()
-  const updateNode = useUpdateNode()
   const deleteNode = useDeleteNode()
   const bulkCheck = useBulkCheck()
   const bulkDeleteNodes = useBulkDeleteNodes()
@@ -70,7 +73,6 @@ export function Nodes() {
   const bulkUpdateNodes = useBulkUpdateNodes()
 
   const [showAddModal, setShowAddModal] = useState(false)
-  const [editTarget, setEditTarget] = useState<Node | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const addForm = useForm<NodeCreateFormValues>({
@@ -91,13 +93,6 @@ export function Nodes() {
     },
   })
 
-  const [editNode, setEditNode] = useState({ name: '', host: '', port: '22', connection_type: 'ssh' as const, description: '', username: '', password: '', ssh_key: '', passphrase: '', docker_host: '', has_docker: false, tags: '' })
-  const [clearFields, setClearFields] = useState<Record<string, boolean>>({})
-
-  const toggleClear = (field: string) => {
-    setClearFields((prev) => ({ ...prev, [field]: !prev[field] }))
-  }
-
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [showBulkExec, setShowBulkExec] = useState(false)
   const [showBulkScript, setShowBulkScript] = useState(false)
@@ -110,7 +105,7 @@ export function Nodes() {
   const [drawerNode, setDrawerNode] = useState<Node | null>(null)
 
   const nodes = (data?.items || []).filter(
-    (node) => tagFilter.length <= 1 || tagFilter.some((t) => node.tags.includes(t))
+    (node) => (tagFilter.length <= 1 || tagFilter.some((tag) => node.tags.includes(tag))) && (!statusFilter || node.status === statusFilter),
   )
   const allSelected = nodes.length > 0 && nodes.every((n) => selectedIds.includes(n.id))
 
@@ -135,32 +130,11 @@ export function Nodes() {
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-  }, [])
+  }, [setSelectedIds])
 
   const toggleAll = useCallback(() => {
     setSelectedIds(allSelected ? [] : nodes.map((n) => n.id))
-  }, [allSelected, nodes])
-
-  const openEdit = useCallback((node: Node) => {
-    setEditTarget(node)
-    setEditNode({
-      name: node.name,
-      host: node.host,
-      port: String(node.port),
-      connection_type: node.connection_type,
-      description: node.description || '',
-      username: node.username || '',
-      password: '',
-      ssh_key: '',
-      passphrase: '',
-      docker_host: node.docker_host || '',
-      has_docker: node.has_docker ?? false,
-      tags: node.tags.join(', '),
-    })
-    setClearFields({})
-  }, [])
-  void openEdit
-
+  }, [allSelected, nodes, setSelectedIds])
 
   const handleAdd = (values: NodeCreateFormValues) => {
     createNode.mutate(
@@ -194,37 +168,6 @@ export function Nodes() {
     )
   }
 
-  const handleEdit = () => {
-    if (!editTarget) return
-    if (!editNode.name.trim()) { toast('error', t('nodes.toastNameRequired', 'Name is required')); return }
-    const port = parseInt(String(editNode.port), 10)
-    if (isNaN(port) || port < 1 || port > 65535) { toast('error', t('nodes.toastInvalidPort', 'Invalid port number')); return }
-    const toNull = (v: string) => v === '' ? null : v
-    updateNode.mutate(
-      {
-        id: editTarget.id,
-        data: {
-          name: editNode.name,
-          host: editNode.host,
-          port,
-          connection_type: editNode.connection_type,
-          description: toNull(editNode.description),
-          username: toNull(editNode.username),
-          password: editNode.password ? editNode.password : clearFields.password ? null : undefined,
-          ssh_key: editNode.ssh_key ? editNode.ssh_key : clearFields.ssh_key ? null : undefined,
-          passphrase: editNode.passphrase ? editNode.passphrase : clearFields.passphrase ? null : undefined,
-          docker_host: toNull(editNode.docker_host),
-          has_docker: editNode.has_docker,
-          tags: editNode.tags ? editNode.tags.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
-        },
-      },
-      {
-        onSuccess: () => { toast('success', t('nodes.toastUpdated', { name: editNode.name })); setEditTarget(null) },
-        onError: () => toast('error', t('nodes.toastUpdateFailed')),
-      },
-    )
-  }
-
   const handleDelete = () => {
     if (!deleteTarget) return
     deleteNode.mutate(deleteTarget.id, {
@@ -241,7 +184,7 @@ export function Nodes() {
         actions={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
       />
 
-      <NodesFilters search={search} setSearch={setSearch} tagFilter={tagFilter} setTagFilter={setTagFilter} allTags={allTags ?? []} />
+      <NodesFilters search={search} setSearch={setSearch} tagFilter={tagFilter} setTagFilter={setTagFilter} allTags={allTags ?? []} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
@@ -256,6 +199,8 @@ export function Nodes() {
           )}
           {isLoading ? (
             <TableSkeleton rows={5} cols={8} />
+          ) : error ? (
+            <ErrorState error={error as Error} onRetry={() => refetch()} />
           ) : nodes.length === 0 ? (
             data && data.items.length > 0 ? (
               <EmptyState
@@ -282,13 +227,13 @@ export function Nodes() {
         </CardContent>
       </Card>
 
-      <NodesForms showAddModal={showAddModal} setShowAddModal={setShowAddModal} addForm={addForm} handleAdd={handleAdd} createNode={createNode} editTarget={editTarget} setEditTarget={setEditTarget} editNode={editNode} setEditNode={setEditNode} clearFields={clearFields} toggleClear={toggleClear} handleEdit={handleEdit} updateNode={updateNode} showBulkUpdate={showBulkUpdate} setShowBulkUpdate={setShowBulkUpdate} bulkUpdateChanges={bulkUpdateChanges} setBulkUpdateChanges={setBulkUpdateChanges} bulkUpdateNodes={bulkUpdateNodes} selectedIds={selectedIds} setSelectedIds={setSelectedIds} />
+      <NodesForms showAddModal={showAddModal} setShowAddModal={setShowAddModal} addForm={addForm} handleAdd={handleAdd} createNode={createNode} showBulkUpdate={showBulkUpdate} setShowBulkUpdate={setShowBulkUpdate} bulkUpdateChanges={bulkUpdateChanges} setBulkUpdateChanges={setBulkUpdateChanges} bulkUpdateNodes={bulkUpdateNodes} selectedIds={selectedIds} setSelectedIds={setSelectedIds} />
 
 
       <BulkCommandModal nodeIds={showBulkExec ? selectedIds : []} onClose={() => setShowBulkExec(false)} />
       <BulkScriptModal nodeIds={showBulkScript ? selectedIds : []} onClose={() => setShowBulkScript(false)} />
 
-      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed: number; succeeded: number }; if (d.failed && d.failed > 0) { toast('warning', t('nodes.toastBulkDeletePartial', { failed: d.failed, succeeded: d.succeeded })) } else { toast('success', t('nodes.toastBulkDeleteDone')) } setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
+      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => { bulkDeleteNodes.mutate(selectedIds, { onSuccess: (res: unknown) => { const d = res as { failed: number; succeeded: number }; if (d.failed && d.failed > 0) { toast('warning', t('nodes.toastBulkDeletePartial', { failed: d.failed, succeeded: d.succeeded })) } else { toast('success', t('nodes.toastBulkDeleteDone')) } setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('nodes.toastDeleteFailed')) }) }} title={t('nodes.bulkDelete', 'Bulk Delete')} message={t('nodes.bulkDeleteMsg', { count: selectedIds.length })} confirmLabel={t('common.delete')} loading={bulkDeleteNodes.isPending} />
 
       <Modal isOpen={showBulkMetrics} onClose={() => { setShowBulkMetrics(false); setBulkMetricsResult(null) }} title={t('nodes.bulkMetrics', 'Bulk Metrics')} size="lg">
         <div className="space-y-4">

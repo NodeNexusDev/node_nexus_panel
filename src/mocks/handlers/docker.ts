@@ -1,4 +1,3 @@
-// oxlint-disable
 import { http, HttpResponse } from 'msw'
 import { mockContainers, mockImages, mockNetworks, mockVolumes } from '../data/docker'
 
@@ -31,7 +30,7 @@ export const dockerHandlers = [
   }),
 
   http.get(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId`, ({ params }) => {
-    const c = mockContainers.find((c) => c.ID === params.containerId)
+    const c = mockContainers.find((ctn) => ctn.ID === params.containerId)
     if (!c) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     return HttpResponse.json({ Id: c.ID, Name: c.Names, State: { status: c.State, running: c.State === 'running', exit_code: 0 }, Config: { image: c.Image } })
   }),
@@ -43,38 +42,38 @@ export const dockerHandlers = [
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/start`, ({ params }) => {
-    const c = mockContainers.find((c) => c.ID === params.containerId)
+    const c = mockContainers.find((ctn) => ctn.ID === params.containerId)
     if (c) { c.State = 'running'; c.Status = 'Up less than a second' }
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/stop`, ({ params }) => {
-    const c = mockContainers.find((c) => c.ID === params.containerId)
+    const c = mockContainers.find((ctn) => ctn.ID === params.containerId)
     if (c) { c.State = 'exited'; c.Status = 'Exited (0) less than a second ago' }
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/restart`, ({ params }) => {
-    const c = mockContainers.find((c) => c.ID === params.containerId)
+    const c = mockContainers.find((ctn) => ctn.ID === params.containerId)
     if (c) { c.Status = 'Up less than a second' }
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/pause`, ({ params }) => {
-    const c = mockContainers.find((c) => c.ID === params.containerId)
+    const c = mockContainers.find((ctn) => ctn.ID === params.containerId)
     if (c) { c.State = 'paused'; c.Status = 'Paused' }
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/unpause`, ({ params }) => {
-    const c = mockContainers.find((c) => c.ID === params.containerId)
+    const c = mockContainers.find((ctn) => ctn.ID === params.containerId)
     if (c) { c.State = 'running'; c.Status = 'Up less than a second' }
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API}/api/v2/nodes/:nodeId/docker/containers/:containerId/rename`, async ({ params, request }) => {
     const body = await request.json() as { new_name: string }
-    const c = mockContainers.find((c) => c.ID === params.containerId)
+    const c = mockContainers.find((ctn) => ctn.ID === params.containerId)
     if (c) c.Names = `/${body.new_name}`
     return HttpResponse.json({ message: `Container renamed to ${body.new_name}` })
   }),

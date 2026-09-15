@@ -1,4 +1,5 @@
 import { api } from './client'
+import { runBulkChunks } from '../lib/chunks'
 import type {
   Node,
   NodeCreate,
@@ -29,18 +30,6 @@ export const nodesApi = {
     return api.get<NodeCursorListResponse>(`/nodes/${qs ? `?${qs}` : ''}`)
   },
 
-  // Legacy compat: keep page/size/tags support via translation (deprecated)
-  getAllLegacy: (params?: { page?: number; size?: number; tags?: string; search?: string; cursor?: string; limit?: number }) => {
-    const query = new URLSearchParams()
-    if (params?.cursor) query.set('cursor', params.cursor)
-    if (params?.limit != null) query.set('limit', String(params.limit))
-    else if (params?.size != null) query.set('limit', String(params.size))
-    if (params?.tags) query.set('tag', params.tags.split(',')[0])
-    if (params?.search) query.set('search', params.search)
-    const qs = query.toString()
-    return api.get<NodeCursorListResponse>(`/nodes/${qs ? `?${qs}` : ''}`)
-  },
-
   getById: (id: string) => api.get<Node>(`/nodes/${id}`),
 
   // ── Bulk create (v2) ──────────────────────────────────────────
@@ -65,27 +54,25 @@ export const nodesApi = {
 
   remove: (id: string) => api.delete<void>(`/nodes/${id}`),
 
-  // ── Bulk operations (v2, no /bulk prefix) ─────────────────────
+  // ── Bulk operations (v2, no /bulk prefix; id-lists auto-chunked to the server max of 100) ──
   bulkUpdate: (data: NodeBulkUpdatesRequest) =>
-    api.patch<BulkResult_BulkNodeUpdateResult_>('/nodes/', data),
-
-  // Legacy wrapper: {node_ids, changes} -> {updates:[{id, changes}]}
-  bulkUpdateLegacy: (data: { node_ids: string[]; changes: NodeUpdate }) =>
-    api.patch<BulkResult_BulkNodeUpdateResult_>('/nodes/', {
-      updates: data.node_ids.map((id) => ({ id, changes: data.changes })),
-    }),
+    runBulkChunks(data.updates, 100, (updates) =>
+      api.patch<BulkResult_BulkNodeUpdateResult_>('/nodes/', { ...data, updates })),
 
   bulkDelete: (ids: string[]) =>
-    api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/deletions', { ids } satisfies NodeDeletionsRequest),
+    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/deletions', { ids: c } satisfies NodeDeletionsRequest)),
 
   bulkCheck: (ids: string[]) =>
-    api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/checks', { ids } satisfies NodeChecksRequest),
+    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/checks', { ids: c } satisfies NodeChecksRequest, { timeoutMs: 120_000 })),
 
   bulkMetrics: (ids: string[]) =>
-    api.post<BulkResult_BulkNodeMetricsResult_>('/nodes/metrics', { ids } satisfies NodeMetricsRequest),
+    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeMetricsResult_>('/nodes/metrics', { ids: c } satisfies NodeMetricsRequest, { timeoutMs: 120_000 })),
 
-  bulkValidateCredentials: (data: CredentialValidationsRequest) =>
-    api.post<BulkResult_BulkValidateCredentialsResult_>('/nodes/credential-validations', data),
+  bulkValidateCredentials: (data: CredentialValidationsRequest) => {
+    if (!data.ids || data.ids.length <= 100) return api.post<BulkResult_BulkValidateCredentialsResult_>('/nodes/credential-validations', data)
+    return runBulkChunks(data.ids, 100, (c) =>
+      api.post<BulkResult_BulkValidateCredentialsResult_>('/nodes/credential-validations', { ...data, ids: c }))
+  },
 
   getStatusHistory: (id: string, params?: { cursor?: string | null; limit?: number }) => {
     const query = new URLSearchParams()
@@ -95,30 +82,20 @@ export const nodesApi = {
     return api.get<CursorPage_NodeStatusHistoryItem_>(`/nodes/${id}/status-history${qs ? `?${qs}` : ''}`)
   },
 
-  // Legacy page/size wrapper
-  getStatusHistoryLegacy: (id: string, params?: { page?: number; size?: number }) => {
-    const query = new URLSearchParams()
-    if (params?.page != null) query.set('cursor', String(params.page))
-    if (params?.size != null) query.set('limit', String(params.size))
-    const qs = query.toString()
-    return api.get<CursorPage_NodeStatusHistoryItem_>(`/nodes/${id}/status-history${qs ? `?${qs}` : ''}`)
-  },
-
-  // ── Deprecated / removed in v2 (kept for type compat, will 404) ─
-  /** @deprecated removed in v2, use bulkCheck */
+  // ── Single-item conveniences over the v2 bulk endpoints ─
+  /** Single check via bulk */
   check: (id: string) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/checks', { ids: [id] }),
-  /** @deprecated removed in v2, use bulkMetrics */
+  /** Single metrics via bulk */
   getMetrics: (id: string) =>
     api.post<BulkResult_BulkNodeMetricsResult_>('/nodes/metrics', { ids: [id] }).then((r) => {
       const first = r.results[0]
       if (!first || first.status !== 'success' || !first.metrics) throw new Error(first?.error || 'metrics failed')
       return first.metrics
     }),
-  /** @deprecated removed in v2, tags derived from list */
+  /** Tags from the dedicated vocabulary endpoint */
   getTags: async () => {
     try {
-      const page = await api.get<NodeCursorListResponse>('/nodes/?limit=100')
-      return [...new Set(page.items.flatMap((n) => n.tags ?? []))]
+      return await api.get<string[]>('/nodes/tags')
     } catch { return [] as string[] }
   },
 }

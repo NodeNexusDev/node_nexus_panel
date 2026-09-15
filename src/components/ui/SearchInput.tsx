@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -16,9 +15,11 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', deboun
   const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
+  /* oxlint-disable react/no-deriving-state-in-effects, react/set-state-in-effect -- controlled draft with debounced propagation; syncs external resets (render-time sync would cascade) */
   useEffect(() => {
     setLocalValue(value)
   }, [value])
+  /* oxlint-enable react/no-deriving-state-in-effects, react/set-state-in-effect */
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value

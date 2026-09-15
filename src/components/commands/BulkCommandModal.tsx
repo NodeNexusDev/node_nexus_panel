@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
@@ -28,13 +27,13 @@ interface BulkCommandModalProps {
 export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: commandsData } = useCommands({ size: 100 })
+  const [search, setSearch] = useState('')
+  const { data: commandsData } = useCommands({ size: 100, search: search || null })
   const commands = commandsData?.items || []
   const bulkExec = useMutation({ mutationFn: (data: { command_ids: string[]; node_ids: string[]; params?: Record<string, Record<string, unknown>> }) => commandsApi.executions({ command_ids: data.command_ids, node_ids: data.node_ids, params: data.params as never }) })
   const bulkRaw = useMutation({ mutationFn: (data: { commands: string[]; node_ids: string[] }) => commandsApi.rawExecutions({ commands: data.commands, node_ids: data.node_ids } as never) })
 
   const [tab, setTab] = useState<Tab>('command')
-  const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [params, setParams] = useState<Record<string, unknown>>({})
   const [customCommand, setCustomCommand] = useState('')
@@ -42,6 +41,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
   const [bulkResult, setBulkResult] = useState<{ command: string; results: BulkNodeResult[] } | null>(null)
   const [bulkMultiResults, setBulkMultiResults] = useState<Array<{ name: string; results: BulkNodeResult[] }> | null>(null)
 
+  /* oxlint-disable react/set-state-in-effect -- intentional reset of tab/search/selection when the modal target changes */
   useEffect(() => {
     if (nodeIds.length > 0) {
       setTab('command')
@@ -53,16 +53,19 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
       setBulkMultiResults(null)
     }
   }, [nodeIds])
+  /* oxlint-enable react/set-state-in-effect */
 
   const filtered = commands.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
   const allFilteredSelected = filtered.length > 0 && filtered.every((c) => selectedIds.has(c.id))
   const selectedCommands = commands.filter((c) => selectedIds.has(c.id))
   const singleSelected = selectedCommands.length === 1 ? selectedCommands[0] : null
 
+  /* oxlint-disable react/set-state-in-effect -- derives default params from the single selected command; selection object identity changes only on user action */
   useEffect(() => {
     if (singleSelected) setParams(getDefaultParams(singleSelected.parameters))
     else setParams({})
   }, [singleSelected])
+  /* oxlint-enable react/set-state-in-effect */
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -221,6 +224,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
         ) : tab === 'command' ? (
           <div className="space-y-3">
             <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectCommand', 'Search commands...')} />
+            {commandsData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
             {filtered.length > 0 && (
               <div className="flex items-center justify-between px-1">
                 <label className="flex items-center gap-2 text-xs cursor-pointer">

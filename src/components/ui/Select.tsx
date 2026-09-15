@@ -16,9 +16,15 @@ interface SelectProps {
   error?: string
   id?: string
   disabled?: boolean
+  searchable?: boolean
+  searchValue?: string
+  onSearchChange?: (value: string) => void
+  searchPlaceholder?: string
+  isSearching?: boolean
+  footerHint?: string
 }
 
-export function Select({ options, value, onChange, label, placeholder, error, id: propId, disabled }: SelectProps) {
+export function Select({ options, value, onChange, label, placeholder, error, id: propId, disabled, searchable, searchValue, onSearchChange, searchPlaceholder, isSearching, footerHint }: SelectProps) {
   const { t } = useTranslation()
   const autoId = useId()
   const id = propId ?? autoId
@@ -123,6 +129,21 @@ export function Select({ options, value, onChange, label, placeholder, error, id
           className="fixed z-[var(--z-dropdown)] rounded-[var(--radius-md)] bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 shadow-[var(--shadow-lg)] py-1 animate-fade-in max-h-60 overflow-y-auto"
           style={{ top: pos.top, left: pos.left, width: pos.width }}
         >
+          {searchable && (
+            <div className="sticky top-0 px-2 py-1.5 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
+              <input
+                value={searchValue ?? ''}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                placeholder={searchPlaceholder ?? t('common.search', 'Search...')}
+                aria-label={searchPlaceholder ?? t('common.search', 'Search...')}
+                className="w-full px-3 py-1.5 bg-surface-50 border border-surface-200 rounded-md text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+              />
+            </div>
+          )}
+          {isSearching && (
+            <div className="px-4 py-2 text-xs text-surface-400 dark:text-surface-500">{t('common.loading')}</div>
+          )}
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -138,6 +159,9 @@ export function Select({ options, value, onChange, label, placeholder, error, id
               {opt.label}
             </button>
           ))}
+          {footerHint && (
+            <div className="px-4 py-1.5 text-xs text-surface-400 dark:text-surface-500 border-t border-surface-200 dark:border-surface-700">{footerHint}</div>
+          )}
         </div>,
         document.body,
       )}

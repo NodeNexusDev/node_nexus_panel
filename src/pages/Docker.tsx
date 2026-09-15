@@ -1,7 +1,6 @@
-// oxlint-disable
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
@@ -14,6 +13,7 @@ import { Tabs } from '../components/ui/Tabs'
 import { IconDocker } from '../components/ui/Icons'
 import { usePullImage } from '../hooks/useDocker'
 import { useNodes } from '../hooks/useNodes'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { useToast } from '../components/ui/useToast'
 import { ContainersTab } from '../components/docker/ContainersTab'
 import { ImagesTab } from '../components/docker/ImagesTab'
@@ -27,9 +27,12 @@ type Tab = 'containers' | 'images' | 'networks' | 'volumes' | 'system' | 'compos
 
 export function Docker() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { toast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [nodeSearch, setNodeSearch] = useState('')
+  const debouncedNodeSearch = useDebouncedValue(nodeSearch, 300)
+  const { data: nodesData, isFetching: nodesFetching } = useNodes({ size: 100, search: debouncedNodeSearch || null })
   const dockerNodes = useMemo(
     () => (nodesData?.items || []).filter((n) => n.has_docker),
     [nodesData]
@@ -38,15 +41,17 @@ export function Docker() {
   const initialTab = (searchParams.get('tab') as Tab | null) ?? 'containers'
   const validTabs: Tab[] = ['containers', 'images', 'networks', 'volumes', 'system', 'compose']
 
+  /* oxlint-disable react/set-state-in-effect -- selects the first docker node by default once the list loads; skipped while searching */
   useEffect(() => {
-    if (dockerNodes.length > 0 && !dockerNodes.some((n) => n.id === selectedNodeId)) {
+    if (!nodeSearch && dockerNodes.length > 0 && !dockerNodes.some((n) => n.id === selectedNodeId)) {
       const first = dockerNodes[0].id
       setSelectedNodeId(first)
       const next = new URLSearchParams(searchParams)
       next.set('node', first)
       setSearchParams(next, { replace: true })
     }
-  }, [dockerNodes, selectedNodeId, searchParams, setSearchParams])
+  }, [dockerNodes, selectedNodeId, searchParams, setSearchParams, nodeSearch])
+  /* oxlint-enable react/set-state-in-effect */
   const [activeTab, setActiveTab] = useState<Tab>(validTabs.includes(initialTab) ? initialTab : 'containers')
 
   const handleNodeChange = (id: string) => {
@@ -105,6 +110,11 @@ export function Docker() {
             value={selectedNodeId}
             onChange={handleNodeChange}
             options={dockerNodes.map((n) => ({ value: n.id, label: n.name }))}
+            searchable
+            searchValue={nodeSearch}
+            onSearchChange={setNodeSearch}
+            isSearching={nodesFetching}
+            footerHint={nodesData?.has_more ? t('common.refineSearchHint') : undefined}
           />
         </div>
       </div>
@@ -114,7 +124,7 @@ export function Docker() {
       <Card hover className="stagger-item">
         <CardContent className="p-0">
           {dockerNodes.length === 0 ? (
-            <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noDockerNodes', 'No Docker nodes')} description={t('docker.noDockerNodesDesc', 'Add a Docker node to manage containers, images, networks and volumes')} action={<Button onClick={()=> window.location.href='/nodes'}>{t('nodes.addNode')}</Button>} />
+            <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noDockerNodes', 'No Docker nodes')} description={t('docker.noDockerNodesDesc', 'Add a Docker node to manage containers, images, networks and volumes')} action={<Button onClick={() => navigate('/nodes')}>{t('nodes.addNode')}</Button>} />
           ) : !selectedNodeId ? (
             <TableSkeleton rows={6} cols={6} />
           ) : (

@@ -1,7 +1,6 @@
 import { nodeHandlers } from './nodes'
 import { commandHandlers } from './commands'
 import { scriptHandlers } from './scripts'
-import { dashboardHandlers } from './dashboard'
 import { apiKeyHandlers } from './api-keys'
 import { dockerHandlers } from './docker'
 import { composeHandlers } from './compose'
@@ -20,7 +19,6 @@ export const handlers = [
   ...nodeHandlers,
   ...commandHandlers,
   ...scriptHandlers,
-  ...dashboardHandlers,
   ...apiKeyHandlers,
   ...dockerHandlers,
   ...composeHandlers,

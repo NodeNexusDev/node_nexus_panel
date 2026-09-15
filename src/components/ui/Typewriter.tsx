@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useEffect } from 'react'
 
 interface TypewriterProps {
@@ -12,6 +11,7 @@ export function Typewriter({ text, speed = 30, className = '', onComplete }: Typ
   const [displayedText, setDisplayedText] = useState('')
   const [isComplete, setIsComplete] = useState(false)
 
+  /* oxlint-disable react/set-state-in-effect -- typewriter animation intentionally writes state from an interval effect */
   useEffect(() => {
     setDisplayedText('')
     setIsComplete(false)
@@ -32,6 +32,7 @@ export function Typewriter({ text, speed = 30, className = '', onComplete }: Typ
 
     return () => clearInterval(timer)
   }, [text, speed, onComplete])
+  /* oxlint-enable react/set-state-in-effect */
 
   return (
     <span className={`font-mono ${className}`}>

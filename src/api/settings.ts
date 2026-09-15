@@ -27,7 +27,4 @@ export const apiKeysApi = {
 
   getById: (id: string) =>
     api.get<APIKeyResponse>(`/api-keys/${id}`),
-
-  bulkDelete: (data: { key_ids: string[] }) =>
-    api.post<{ total: number; succeeded: number; failed: number; results: Array<{ key_id: string; status: string; error: string }> }>('/api-keys/deletions', data),
 }

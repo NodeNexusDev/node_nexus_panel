@@ -1,4 +1,3 @@
-// oxlint-disable
 export function ScriptsSkeleton() {
   return (
     <div className="space-y-6">
@@ -12,6 +11,7 @@ export function ScriptsSkeleton() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
+          // oxlint-disable-next-line react/no-array-index-key -- static loading placeholder, never reorders
           <div key={i} className="rounded-xl bg-white border border-surface-200 dark:bg-surface-900 dark:border-surface-800 p-6">
             <div className="flex items-start justify-between mb-2">
               <div className="h-5 w-28 bg-surface-200 dark:bg-surface-700 rounded animate-pulse" />

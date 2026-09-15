@@ -1,4 +1,3 @@
-// oxlint-disable
 import type { ReactNode } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -14,7 +13,9 @@ interface TestProvidersProps {
   queryClient?: QueryClient
 }
 
-export function TestProviders({ children, initialEntries = ['/'], queryClient }: TestProvidersProps) {
+const DEFAULT_ENTRIES = ['/']
+
+export function TestProviders({ children, initialEntries = DEFAULT_ENTRIES, queryClient }: TestProvidersProps) {
   const client = queryClient || createTestQueryClient()
   return (
     <MemoryRouter initialEntries={initialEntries}>

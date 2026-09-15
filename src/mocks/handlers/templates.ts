@@ -1,4 +1,3 @@
-// oxlint-disable
 // @ts-nocheck
 import { http, HttpResponse } from 'msw'
 
@@ -45,6 +44,17 @@ export const templatesHandlers = [
     if (!pack) return HttpResponse.json({ code: 'not_found', message: 'Pack not found' }, { status: 404 })
     return HttpResponse.json({ ...pack, assets: [] })
   }),
+  http.patch(`${API_URL}/api/v2/templates/packs/:packId`, async ({ params, request }) => {
+    const pack = packs.find((p) => p.id === params.packId)
+    if (!pack) return HttpResponse.json({ code: 'not_found', message: 'Pack not found' }, { status: 404 })
+    const body = await request.json() as { name?: string; description?: string | null; version?: string; author?: string | null }
+    if (body.name !== undefined) pack.name = body.name
+    if (body.description !== undefined) pack.description = body.description ?? ''
+    if (body.version !== undefined) pack.version = body.version
+    if (body.author !== undefined) pack.author = body.author
+    pack.updated_at = new Date().toISOString()
+    return HttpResponse.json(pack)
+  }),
   http.post(`${API_URL}/api/v2/templates/packs`, async ({ request }) => {
     const body = await request.json() as { name: string; description?: string; tags?: string[]; pack_id?: string; version?: string; author?: string }
     const pack = { id: crypto.randomUUID(), pack_id: body.pack_id || body.name, name: body.name, description: body.description||'', tags: body.tags||[], version: body.version||'1.0.0', author: body.author||null, readme: null, registry_id: null, manifest_sha: null, installed_at: null, installed_version: null, created_at:new Date().toISOString(), updated_at:new Date().toISOString(), assets:[] }
@@ -56,11 +66,11 @@ export const templatesHandlers = [
     return new HttpResponse(tar, { headers: { 'Content-Type': 'application/x-tar', 'Content-Disposition': `attachment; filename="${pack.name}.tar"` } })
   }),
   http.get(`${API_URL}/api/v2/templates/packs/:packId/installations`, () => HttpResponse.json({ items: [], limit: 20, next_cursor: null, has_more: false })),
-  http.post(`${API_URL}/api/v2/templates/packs/:packId/updates`, async ({ params, request }) => {
+  http.post(`${API_URL}/api/v2/templates/packs/:packId/updates`, async ({ params }) => {
     const pack = packs.find((p)=> p.id===params.packId); if(!pack) return HttpResponse.json({code:'not_found',message:'Pack not found'},{status:404})
     pack.updated_at=new Date().toISOString(); return HttpResponse.json({ total:1, succeeded:1, failed:0, results:[{ entity_type:'command', name: pack.name, status:'success', entity_id: crypto.randomUUID(), error:'' }] })
   }),
-  http.post(`${API_URL}/api/v2/templates/packs/:packId/installations`, ({ params, request }) => {
+  http.post(`${API_URL}/api/v2/templates/packs/:packId/installations`, ({ params }) => {
     const pack = packs.find((p) => p.id === params.packId)
     if (pack) { pack.installed_at = new Date().toISOString(); pack.installed_version = pack.version }
     const url = new URL(request.url); const onConflict = url.searchParams.get('on_conflict')||'fail'

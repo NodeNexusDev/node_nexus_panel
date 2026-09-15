@@ -5,9 +5,9 @@ import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { Checkbox } from '../ui/Checkbox'
 import { Modal } from '../ui/Modal'
-import { CONNECTION_TYPE_OPTIONS, type ConnectionType } from './connection-types'
+import { CONNECTION_TYPE_OPTIONS } from './connection-types'
 import { useToast } from '../ui/useToast'
-import type { Node, NodeUpdate } from '../../api/types'
+import type { NodeUpdate } from '../../api/types'
 import type { UseFormReturn } from 'react-hook-form'
 import type { NodeCreateFormValues } from '../../lib/validators/node-schema'
 import type { UseMutationResult } from '@tanstack/react-query'
@@ -18,14 +18,6 @@ type Props = {
   addForm: UseFormReturn<NodeCreateFormValues>
   handleAdd: (values: NodeCreateFormValues) => void
   createNode: UseMutationResult<any, any, any, any>
-  editTarget: Node | null
-  setEditTarget: (v: Node | null) => void
-  editNode: { name: string; host: string; port: string; connection_type: ConnectionType; description: string; username: string; password: string; ssh_key: string; passphrase: string; docker_host: string; has_docker: boolean; tags: string }
-  setEditNode: (v: Props['editNode']) => void
-  clearFields: Record<string, boolean>
-  toggleClear: (field: string) => void
-  handleEdit: () => void
-  updateNode: UseMutationResult<any, any, any, any>
   showBulkUpdate: boolean
   setShowBulkUpdate: (v: boolean) => void
   bulkUpdateChanges: { name: string; host: string; port: string; description: string; username: string; docker_host: string; has_docker: boolean | undefined; tags: string }
@@ -35,7 +27,7 @@ type Props = {
   setSelectedIds: (ids: string[]) => void
 }
 
-export function NodesForms({ showAddModal, setShowAddModal, addForm, handleAdd, createNode, editTarget, setEditTarget, editNode, setEditNode, clearFields, toggleClear, handleEdit, updateNode, showBulkUpdate, setShowBulkUpdate, bulkUpdateChanges, setBulkUpdateChanges, bulkUpdateNodes, selectedIds, setSelectedIds }: Props) {
+export function NodesForms({ showAddModal, setShowAddModal, addForm, handleAdd, createNode, showBulkUpdate, setShowBulkUpdate, bulkUpdateChanges, setBulkUpdateChanges, bulkUpdateNodes, selectedIds, setSelectedIds }: Props) {
   const { t } = useTranslation()
   const { toast } = useToast()
   return (
@@ -77,63 +69,6 @@ export function NodesForms({ showAddModal, setShowAddModal, addForm, handleAdd, 
             <Button type="submit" disabled={createNode.isPending}>{createNode.isPending ? t('common.loading') : t('common.save')}</Button>
           </div>
         </form>
-      </Modal>
-
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title={t('nodes.editNode', 'Edit Node')}>
-        <div className="space-y-4">
-          <Input label={t('nodes.node')} placeholder="prod-server-05" value={editNode.name} onChange={(e) => setEditNode({ ...editNode, name: e.target.value })} />
-          <Input label={t('nodes.host')} placeholder="192.168.1.105" value={editNode.host} onChange={(e) => setEditNode({ ...editNode, host: e.target.value })} />
-          <Input label={t('nodes.port')} placeholder="22" type="number" value={editNode.port} onChange={(e) => setEditNode({ ...editNode, port: e.target.value })} />
-          <Select label={t('nodes.connectionType')} value={editNode.connection_type} onChange={(val) => setEditNode({ ...editNode, connection_type: val as ConnectionType })} options={CONNECTION_TYPE_OPTIONS} />
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.descriptionLabel', 'Description')}</label>
-              <Button variant="ghost" size="sm" onClick={() => setEditNode({ ...editNode, description: '' })} className="h-6 px-2 text-xs">{t('common.clear', 'Clear')}</Button>
-            </div>
-            <textarea placeholder={t('nodes.descriptionPlaceholder', 'Main production node')} value={editNode.description} onChange={(e) => setEditNode({ ...editNode, description: e.target.value })} maxLength={1000} rows={3} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
-            <p className="text-xs text-surface-400 text-right">{editNode.description.length}/1000</p>
-          </div>
-          <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
-            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.credentialsSection', 'Credentials')} {t('common.requiredMark', '*')}</p>
-            <div className="space-y-3 p-3 bg-surface-50 dark:bg-surface-800/30 rounded-lg border border-surface-200 dark:border-surface-800">
-              <Input label={t('nodes.username', 'Username')} placeholder="root" value={editNode.username} onChange={(e) => setEditNode({ ...editNode, username: e.target.value })} />
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.password', 'Password')}</label>
-                  <Button variant="ghost" size="sm" onClick={() => toggleClear('password')} className="h-6 px-2 text-xs">{clearFields.password ? t('common.cancel') : t('common.clear', 'Clear')}</Button>
-                </div>
-                <Input type="password" placeholder={clearFields.password ? t('common.willBeCleared') : t('common.leaveBlank')} value={editNode.password} onChange={(e) => setEditNode({ ...editNode, password: e.target.value })} disabled={clearFields.password} />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.sshKey', 'SSH Key')}</label>
-                  <Button variant="ghost" size="sm" onClick={() => toggleClear('ssh_key')} className="h-6 px-2 text-xs">{clearFields.ssh_key ? t('common.cancel') : t('common.clear', 'Clear')}</Button>
-                </div>
-                <textarea placeholder={clearFields.ssh_key ? t('common.willBeCleared') : t('common.leaveBlank')} value={editNode.ssh_key} onChange={(e) => setEditNode({ ...editNode, ssh_key: e.target.value })} disabled={clearFields.ssh_key} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-800 dark:border-surface-700 dark:text-white" rows={4} />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-surface-600 dark:text-surface-400">{t('nodes.passphrase', 'Passphrase')}</label>
-                  <Button variant="ghost" size="sm" onClick={() => toggleClear('passphrase')} className="h-6 px-2 text-xs">{clearFields.passphrase ? t('common.cancel') : t('common.clear', 'Clear')}</Button>
-                </div>
-                <Input type="password" placeholder={clearFields.passphrase ? t('common.willBeCleared') : t('common.leaveBlank')} value={editNode.passphrase} onChange={(e) => setEditNode({ ...editNode, passphrase: e.target.value })} disabled={clearFields.passphrase} />
-              </div>
-              <p className="text-xs text-surface-500">{t('nodes.credentialsHint', 'Provide password or SSH key, leave others blank')}</p>
-            </div>
-          </div>
-          <div className="pt-2 border-t border-surface-200 dark:border-surface-800">
-            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wide mb-2">{t('nodes.dockerSection', 'Docker')}</p>
-            <div className="space-y-3 p-3 bg-surface-50 dark:bg-surface-800/30 rounded-lg border border-surface-200 dark:border-surface-800">
-              <Input label={t('nodes.dockerHost', 'Docker Host')} placeholder="/var/run/docker.sock" value={editNode.docker_host} onChange={(e) => setEditNode({ ...editNode, docker_host: e.target.value })} />
-              <Checkbox checked={editNode.has_docker} onChange={(v) => setEditNode({ ...editNode, has_docker: v })} label={t('nodes.hasDocker', 'Has Docker')} />
-            </div>
-          </div>
-          <Input label={t('nodes.tagsLabel', 'Tags')} placeholder="production, linux" value={editNode.tags} onChange={(e) => setEditNode({ ...editNode, tags: e.target.value })} />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
-            <Button onClick={handleEdit} disabled={updateNode.isPending || !editNode.name || !editNode.host}>{updateNode.isPending ? t('common.loading') : t('common.save')}</Button>
-          </div>
-        </div>
       </Modal>
 
       <Modal isOpen={showBulkUpdate} onClose={() => setShowBulkUpdate(false)} title={t('nodes.bulkUpdate', 'Bulk Update')} size="lg">

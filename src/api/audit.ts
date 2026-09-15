@@ -37,6 +37,8 @@ export const auditApi = {
     if (params?.cursor) query.set('cursor', params.cursor)
     if (params?.limit != null) query.set('limit', String(params.limit))
     const qs = query.toString()
+    // CSV comes back as text/csv — fetch as Blob, response.json() would throw.
+    if (params?.fmt === 'csv') return api.getBlob(`/audit/exports${qs ? `?${qs}` : ''}`)
     return api.get<unknown>(`/audit/exports${qs ? `?${qs}` : ''}`)
   },
 

@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
 import { PageHeader } from '../components/ui/PageHeader'
 import { IconStar } from '../components/ui/Icons'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
@@ -28,7 +29,7 @@ export function Favorites() {
   const [targetType, setTargetType] = useState('')
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteFavorites({ limit, target_type: targetType || undefined })
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteFavorites({ limit, target_type: targetType || undefined })
   const removeFavorite = useRemoveFavorite()
 
   const favorites = infiniteData ? infiniteData.pages.flatMap((p) => p.items) : []
@@ -76,6 +77,8 @@ export function Favorites() {
         <CardContent className="p-0">
           {isLoading ? (
             <TableSkeleton rows={5} cols={4} />
+          ) : error ? (
+            <ErrorState error={error as Error} onRetry={() => refetch()} />
           ) : favorites.length === 0 ? (
             <EmptyState
               icon={<IconStar className="w-10 h-10" />}

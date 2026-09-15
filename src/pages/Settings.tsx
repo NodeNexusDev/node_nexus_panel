@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
@@ -302,8 +301,8 @@ export function Settings() {
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.nodesToCreate', 'Nodes to create')}: {importPreview.result.would_create.nodes.length}</h4>
               <div className="space-y-1">
-                {(importPreview.result.would_create.nodes as { name: string; host: string }[]).map((n, i) => (
-                  <div key={i} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{n.name} ({n.host})</div>
+                {(importPreview.result.would_create.nodes as { name: string; host: string }[]).map((n) => (
+                  <div key={`${n.name}:${n.host}`} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{n.name} ({n.host})</div>
                 ))}
               </div>
             </div>
@@ -312,8 +311,8 @@ export function Settings() {
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.commandsToCreate', 'Commands to create')}: {importPreview.result.would_create.commands.length}</h4>
               <div className="space-y-1">
-                {(importPreview.result.would_create.commands as { name: string }[]).map((c, i) => (
-                  <div key={i} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{c.name}</div>
+                {(importPreview.result.would_create.commands as { name: string }[]).map((c) => (
+                  <div key={c.name} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{c.name}</div>
                 ))}
               </div>
             </div>
@@ -322,8 +321,8 @@ export function Settings() {
             <div>
               <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">{t('settings.scriptsToCreate', 'Scripts to create')}: {importPreview.result.would_create.scripts.length}</h4>
               <div className="space-y-1">
-                {(importPreview.result.would_create.scripts as { name: string }[]).map((s, i) => (
-                  <div key={i} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{s.name}</div>
+                {(importPreview.result.would_create.scripts as { name: string }[]).map((s) => (
+                  <div key={s.name} className="text-xs text-surface-600 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 p-2 rounded">{s.name}</div>
                 ))}
               </div>
             </div>
@@ -333,6 +332,7 @@ export function Settings() {
               <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">{t('settings.duplicates', 'Duplicates')}: {importPreview.result.duplicates.length}</h4>
               <div className="space-y-1">
                 {importPreview.result.duplicates.map((d, i) => (
+                  // oxlint-disable-next-line react/no-array-index-key -- static import preview; duplicate strings carry no identity by definition
                   <div key={i} className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">{d}</div>
                 ))}
               </div>
@@ -343,6 +343,7 @@ export function Settings() {
               <h4 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">{t('settings.errors', 'Errors')}: {importPreview.result.errors.length}</h4>
               <div className="space-y-1">
                 {importPreview.result.errors.map((e, i) => (
+                  // oxlint-disable-next-line react/no-array-index-key -- static import preview; error entries carry no stable id
                   <div key={i} className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">{e}</div>
                 ))}
               </div>

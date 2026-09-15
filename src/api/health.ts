@@ -5,8 +5,8 @@ const API_URL = env.VITE_API_URL
 
 export const healthApi = {
   getHealth: () =>
-    fetch(`${API_URL}/health`).then((r) => r.json() as Promise<HealthResponse>),
+    fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(10_000) }).then((r) => r.json() as Promise<HealthResponse>),
 
   getReady: () =>
-    fetch(`${API_URL}/ready`).then((r) => r.json() as Promise<ReadyResponse>),
+    fetch(`${API_URL}/ready`, { signal: AbortSignal.timeout(10_000) }).then((r) => r.json() as Promise<ReadyResponse>),
 }

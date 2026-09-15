@@ -18,6 +18,8 @@ import type {
   DockerTopResult,
   DockerSystemInfo,
   DockerSystemDfItem,
+  DockerVersionResponse,
+  DockerArchiveResponse,
   CursorPage_DockerContainer_,
   CursorPage_DockerImage_,
   CursorPage_DockerNetwork_,
@@ -353,7 +355,7 @@ export function useDockerContainerTop(nodeId: string, containerId: string) {
 }
 
 export function useDockerContainerArchive(nodeId: string, containerId: string) {
-  return useQuery<{ data: string }>({
+  return useQuery<DockerArchiveResponse>({
     queryKey: ['docker', nodeId, 'containers', containerId, 'archive'],
     queryFn: () => dockerApi.getContainerArchive(nodeId, containerId),
     enabled: !!nodeId && !!containerId,
@@ -395,10 +397,10 @@ export function usePruneNetworks() {
 
 export function usePruneSystem() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (nodeId: string) => dockerApi.pruneSystem(nodeId), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
+  return useMutation({ mutationFn: ({ nodeId, volumes }: { nodeId: string; volumes?: boolean }) => dockerApi.pruneSystem(nodeId, volumes), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
 }
 
 export function useDockerSystemVersion(nodeId: string) {
-  return useQuery<{ version: string; api_version: string }>({ queryKey:['docker',nodeId,'system','version'], queryFn:()=> dockerApi.getSystemVersion(nodeId), enabled: !!nodeId })
+  return useQuery<DockerVersionResponse>({ queryKey:['docker',nodeId,'system','version'], queryFn:()=> dockerApi.getSystemVersion(nodeId), enabled: !!nodeId })
 }
 export * from './useDockerBulk'

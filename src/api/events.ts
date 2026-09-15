@@ -83,14 +83,18 @@ export class EventsClient {
       },
       onmessage: (event) => {
         if (event.id) this.lastEventId = event.id
-        const msg = new MessageEvent(event.event || 'message', {
+        // Backend sends the event name in the SSE `event:` field (e.g. `execution.cancelled`)
+        // with a plain JSON payload that carries no `type` member — dispatch by name first.
+        const name = event.event || 'message'
+        const msg = new MessageEvent(name, {
           data: event.data,
           lastEventId: event.id,
         })
         this.emit('*', msg)
+        this.emit(name, msg)
         try {
           const data = JSON.parse(event.data)
-          if (data.type) {
+          if (data.type && data.type !== name) {
             this.emit(data.type, msg)
           }
         } catch {

@@ -1,4 +1,3 @@
-// oxlint-disable
 import { StatCardSkeleton } from '../components/ui/Skeleton'
 
 export function DashboardSkeleton() {
@@ -11,6 +10,7 @@ export function DashboardSkeleton() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" aria-busy="true" aria-live="polite">
         {Array.from({ length: 5 }).map((_, i) => (
+          // oxlint-disable-next-line react/no-array-index-key -- static loading placeholder, never reorders
           <StatCardSkeleton key={i} />
         ))}
       </div>
@@ -20,6 +20,7 @@ export function DashboardSkeleton() {
           <div className="h-5 w-32 bg-surface-200 dark:bg-surface-700 rounded animate-pulse mb-4" />
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
+              // oxlint-disable-next-line react/no-array-index-key -- static loading placeholder, never reorders
               <div key={i} className="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-surface-300 dark:bg-surface-600" />
@@ -38,6 +39,7 @@ export function DashboardSkeleton() {
           <div className="h-5 w-32 bg-surface-200 dark:bg-surface-700 rounded animate-pulse mb-4" />
           <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
+              // oxlint-disable-next-line react/no-array-index-key -- static loading placeholder, never reorders
               <div key={i} className="p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
                 <div className="h-6 w-6 bg-surface-200 dark:bg-surface-700 rounded animate-pulse" />
                 <div className="h-4 w-20 bg-surface-200 dark:bg-surface-700 rounded animate-pulse mt-2" />

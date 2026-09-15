@@ -5,38 +5,63 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { IconAudit } from '../components/ui/Icons'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
 import { useInfiniteAuditLogs, useClearAudit, useExportAudit } from '../hooks/useAudit'
 import { useNodes } from '../hooks/useNodes'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { useToast } from '../components/ui/useToast'
 import { activityVariant } from '../lib/variants'
 
+// Stored audit action vocabulary (exact-match filter on the backend).
+// Must stay in sync with action= literals in app/application/services/*.
 const COMMON_ACTIONS = [
-  'node.create',
-  'node.update',
-  'node.delete',
-  'node.check',
-  'command.create',
-  'command.execute',
-  'command.delete',
-  'script.create',
-  'script.execute',
-  'script.schedule',
-  'api_key.create',
-  'api_key.revoke',
-  'config.export',
-  'config.import',
-  'favorite.add',
-  'favorite.remove',
+  'create',
+  'update',
+  'delete',
+  'check',
+  'clone',
+  'execute',
+  'bulk_execute',
+  'bulk_execute.requested',
+  'bulk_nodes.add_tags',
+  'bulk_nodes.check',
+  'bulk_nodes.delete',
+  'bulk_nodes.remove_tags',
+  'docker.containers.list',
+  'docker.containers.prune',
+  'docker.image.build',
+  'docker.image.build.requested',
+  'docker.image.history',
+  'docker.image.inspect',
+  'docker.image.pull',
+  'docker.image.pull.requested',
+  'docker.image.push',
+  'docker.image.push.requested',
+  'docker.image.remove',
+  'docker.image.remove.requested',
+  'docker.image.tag',
+  'docker.image.tag.requested',
+  'docker.images.list',
+  'docker.images.prune',
+  'docker.networks.create',
+  'docker.networks.prune',
+  'docker.networks.remove',
+  'docker.system.prune',
+  'docker.volumes.create',
+  'docker.volumes.prune',
+  'docker.volumes.remove',
 ]
 
 export function Audit() {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [nodeSearch, setNodeSearch] = useState('')
+  const debouncedNodeSearch = useDebouncedValue(nodeSearch, 300)
+  const { data: nodesData, isFetching: nodesFetching } = useNodes({ size: 100, search: debouncedNodeSearch || null })
   const nodes = nodesData?.items || []
 
   const [nodeFilter, setNodeFilter] = useState('')
@@ -47,7 +72,7 @@ export function Audit() {
   const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json')
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteAuditLogs({
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteAuditLogs({
     limit,
     node_id: nodeFilter || undefined,
     action: actionFilter || undefined,
@@ -79,6 +104,19 @@ export function Audit() {
       fmt: exportFormat,
     }, {
       onSuccess: (data) => {
+        const download = (blob: Blob, extension: string) => {
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.${extension}`
+          a.click()
+          URL.revokeObjectURL(url)
+        }
+        if (exportFormat === 'csv' && data instanceof Blob) {
+          download(data, 'csv')
+          toast('success', t('audit.toastExported'))
+          return
+        }
         let content: string
         let mimeType: string
         let extension: string
@@ -103,12 +141,7 @@ export function Audit() {
         }
 
         const blob = new Blob([content], { type: mimeType })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.${extension}`
-        a.click()
-        URL.revokeObjectURL(url)
+        download(blob, extension)
         toast('success', t('audit.toastExported'))
       },
       onError: () => toast('error', t('audit.toastExportFailed')),
@@ -140,7 +173,8 @@ export function Audit() {
               onClick={() => {
                 clearAudit.mutate(undefined, {
                   onSuccess: () => toast('success', t('audit.toastCleared')),
-                  onError: () => toast('error', t('audit.toastClearFailed')),
+                  // Backend restricts clear to the master key (403 otherwise) — surface its message.
+                  onError: (e: unknown) => toast('error', e instanceof Error && e.message ? e.message : t('audit.toastClearFailed')),
                 })
               }}
               disabled={clearAudit.isPending}
@@ -160,6 +194,11 @@ export function Audit() {
               onChange={setNodeFilter}
               placeholder={t('audit.allNodes', 'All nodes')}
               options={nodes.map((n) => ({ value: n.id, label: n.name }))}
+              searchable
+              searchValue={nodeSearch}
+              onSearchChange={setNodeSearch}
+              isSearching={nodesFetching}
+              footerHint={nodesData?.has_more ? t('common.refineSearchHint') : undefined}
             />
             <Select
               value={actionFilter}
@@ -184,6 +223,8 @@ export function Audit() {
         <CardContent className="p-0">
           {isLoading ? (
             <TableSkeleton rows={10} cols={5} />
+          ) : error ? (
+            <ErrorState error={error as Error} onRetry={() => refetch()} />
           ) : logs.length === 0 ? (
             <EmptyState
               icon={<IconAudit className="w-10 h-10" />}

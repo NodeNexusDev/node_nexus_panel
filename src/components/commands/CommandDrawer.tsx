@@ -234,11 +234,11 @@ function CommandEditTab({ command, onDone }: { command: CommandResponse; onDone:
 function CommandExecTab({ command }: { command: CommandResponse }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [searchNode, setSearchNode] = useState('')
+  const { data: nodesData } = useNodes({ size: 100, search: searchNode || null })
   const nodes = nodesData?.items || []
   const executeCommand = useExecuteCommand()
   const bulkExec = useMutation({ mutationFn: (data: { command_ids: string[]; node_ids: string[]; params?: Record<string, Record<string, unknown>> }) => commandsApi.executions({ command_ids: data.command_ids, node_ids: data.node_ids, params: data.params as never }) })
-  const [searchNode, setSearchNode] = useState('')
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set())
   const [params, setParams] = useState<Record<string, unknown>>({})
   const [result, setResult] = useState<CommandResult | null>(null)
@@ -345,6 +345,7 @@ function CommandExecTab({ command }: { command: CommandResponse }) {
   return (
     <div className="flex flex-col flex-1 min-h-0 space-y-3">
       <SearchInput value={searchNode} onChange={setSearchNode} placeholder={t('nodes.searchPlaceholder', 'Search nodes...')} />
+      {nodesData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
       {filteredNodes.length > 0 && (
         <div className="flex items-center justify-between px-1">
           <label className="flex items-center gap-2 text-xs cursor-pointer">

@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
@@ -23,14 +22,15 @@ interface BulkScriptModalProps {
 export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: scriptsData } = useScripts({ size: 100 })
+  const [search, setSearch] = useState('')
+  const { data: scriptsData } = useScripts({ size: 100, search: search || null })
   const scripts = scriptsData?.items || []
   const bulkRun = useMutation({ mutationFn: (data: { script_ids: string[]; node_ids: string[] }) => scriptsApi.executions({ script_ids: data.script_ids, node_ids: data.node_ids }) })
-  const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkResults, setBulkResults] = useState<Array<{ id: string; name: string; result: ScriptNodeResult }> | null>(null)
   const [singleResult, setSingleResult] = useState<ScriptNodeResult | null>(null)
 
+  /* oxlint-disable react/set-state-in-effect -- intentional reset of search/selection/results when the modal target changes */
   useEffect(() => {
     if (nodeIds.length > 0) {
       setSearch('')
@@ -39,6 +39,7 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
       setSingleResult(null)
     }
   }, [nodeIds])
+  /* oxlint-enable react/set-state-in-effect */
 
   const filtered = scripts.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
   const allFilteredSelected = filtered.length > 0 && filtered.every((s) => selectedIds.has(s.id))
@@ -129,6 +130,7 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
           <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.result', 'Result')}</p>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {singleResult.steps.map((step, idx) => (
+              // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
               <div key={idx} className="space-y-1">
                 <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
                 <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
@@ -149,6 +151,7 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
             <div key={item.id} className="space-y-2">
               <p className="text-xs font-medium text-surface-700 dark:text-surface-300">{item.name}</p>
               {item.result.steps.map((step, idx) => (
+                // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
                 <div key={idx} className="space-y-1">
                   <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
                   <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
@@ -166,6 +169,7 @@ export function BulkScriptModal({ nodeIds, onClose }: BulkScriptModalProps) {
     <Modal isOpen={nodeIds.length > 0} onClose={onClose} title={t('nodes.bulkScript', 'Run Scripts')} size="lg">
       <div className="space-y-3">
         <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.selectScript', 'Search scripts...')} />
+        {scriptsData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
         {filtered.length > 0 && (
           <div className="flex items-center justify-between px-1">
             <label className="flex items-center gap-2 text-xs cursor-pointer">

@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
@@ -84,6 +83,7 @@ export function Pagination({ page, totalPages, onPageChange, className = '', sho
 
         {pages.map((p, i) =>
           p === '...' ? (
+            // oxlint-disable-next-line react/no-array-index-key -- ellipsis slots are positional; at most two exist and carry no identity
             <span key={`dots-${i}`} aria-hidden="true" className="px-2 text-surface-400 dark:text-surface-500">
               ...
             </span>

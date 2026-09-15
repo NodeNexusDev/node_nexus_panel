@@ -87,7 +87,7 @@ export function NodesTable({ nodes, selectedIds, sort, toggleSort, toggleSelect,
       header: <SortableHeader label={t('nodes.tags')} sortKey="tags" sort={sort as never} onSort={toggleSort as never} />,
       render: (node) => (
         <div className="flex flex-wrap gap-1">
-          {node.tags.length > 0 ? node.tags.map((tag) => <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />) : <span className="text-surface-400">—</span>}
+          {node.tags.length > 0 ? node.tags.map((tag) => <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((s) => s !== tag) : [...prev, tag])} />) : <span className="text-surface-400">—</span>}
         </div>
       ),
     },
@@ -121,7 +121,7 @@ export function NodesTable({ nodes, selectedIds, sort, toggleSort, toggleSelect,
         </div>
       </div>
       <div className="flex flex-wrap gap-1">
-        {node.tags.length > 0 ? node.tags.map((tag) => <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />) : <span className="text-surface-400">—</span>}
+        {node.tags.length > 0 ? node.tags.map((tag) => <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((s) => s !== tag) : [...prev, tag])} />) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-3 text-xs text-surface-500">
         <span>{t('nodes.created')}: {new Date(node.created_at).toLocaleDateString()}</span>

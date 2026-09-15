@@ -1,4 +1,3 @@
-// oxlint-disable
 // @ts-nocheck
 import { http, HttpResponse } from 'msw'
 import { mockScripts } from '../data/scripts'
@@ -198,10 +197,8 @@ export const scriptHandlers = [
     const script = mockScripts.find((s) => s.id === params.id)
     if (!script) return HttpResponse.json({ code: 'NOT_FOUND', message: 'Not found', request_id: 'mock-request-id' }, { status: 404 })
     const url = new URL(request.url)
-    const cursor = url.searchParams.get('cursor')
     const limit = Number(url.searchParams.get('limit') || url.searchParams.get('size') || '20')
     const page = Number(url.searchParams.get('page') || '1')
-    let offset=0; if(cursor) offset=parseCursor(cursor); else if(url.searchParams.get('page')) offset=(page-1)*limit
     const items: unknown[] = []
     const has_more = false
     const next_cursor = null

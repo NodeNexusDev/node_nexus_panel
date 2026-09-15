@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -50,22 +49,21 @@ export function Dashboard() {
   const { from: metricsFrom, to: metricsTo } = useMemo(() => getDateRange(datePreset), [datePreset])
   const { data: dashboard, isLoading: dashboardLoading, refetch: refetchDashboard } = useDashboard()
   const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useDashboardMetrics({ date_from: metricsFrom || undefined, date_to: metricsTo || undefined, group_by: groupBy })
-  const { data: nodesData, isLoading: nodesLoading, refetch: refetchNodes } = useNodes()
+  const { data: nodesData, isLoading: nodesLoading } = useNodes()
   const { data: favorites } = useFavorites()
   const { on: onSseEvent } = useSse()
 
   useEffect(() => {
+    // Subscribed only to event names the backend actually publishes (see events.py docstring).
+    const refresh = () => { refetchDashboard(); refetchMetrics() }
     const unsubs = [
-      onSseEvent('node:status', () => { refetchDashboard(); refetchNodes() }),
-      onSseEvent('node:metrics', () => { refetchDashboard() }),
-      onSseEvent('command:complete', () => { refetchDashboard(); refetchMetrics() }),
-      onSseEvent('script:complete', () => { refetchDashboard(); refetchMetrics() }),
-      onSseEvent('docker:container:started', () => { refetchDashboard() }),
-      onSseEvent('docker:container:stopped', () => { refetchDashboard() }),
-      onSseEvent('system:alert', () => { refetchDashboard() }),
+      onSseEvent('execution.cancelled', refresh),
+      onSseEvent('execution.completed', refresh),
+      onSseEvent('execution.failed', refresh),
+      onSseEvent('node.status_changed', refresh),
     ]
     return () => { unsubs.forEach((u) => u()) }
-  }, [onSseEvent, refetchDashboard, refetchNodes, refetchMetrics])
+  }, [onSseEvent, refetchDashboard, refetchMetrics])
 
   const cmdTrend = useMemo(() => computeTrend(metrics?.command_metrics), [metrics])
   const scrTrend = useMemo(() => computeTrend(metrics?.script_metrics), [metrics])
@@ -117,10 +115,13 @@ export function Dashboard() {
       {/* Stats — now with real v2 counts for commands/scripts/packs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" aria-busy={dashboardLoading} aria-live="polite">
         {dashboardLoading
-          ? Array.from({ length: 7 }).map((_, i) => (<StatCardSkeleton key={i} />))
+          ? Array.from({ length: 7 }).map((_, i) => (
+            // oxlint-disable-next-line react/no-array-index-key -- static loading placeholder, never reorders
+            <StatCardSkeleton key={i} />
+          ))
           : (
             <>
-              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes')}><CardContent><StatCard label={t('dashboard.totalNodes')} value={dashboard?.nodes.total ?? 0} icon={<IconNodes className="w-5 h-5" />} /></CardContent></Card>
+              <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes')}><CardContent><StatCard label={t('dashboard.totalNodes')} value={dashboard?.nodes.has_more ? `${dashboard?.nodes.total ?? 0}+` : (dashboard?.nodes.total ?? 0)} icon={<IconNodes className="w-5 h-5" />} /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes?status=active')}><CardContent><StatCard label={t('dashboard.online')} value={dashboard?.nodes.active ?? 0} icon={<IconCheckCircle className="w-5 h-5" />} tone="success" /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/nodes?status=unreachable')}><CardContent><StatCard label={t('dashboard.offline')} value={dashboard?.nodes.unreachable ?? 0} icon={<IconXCircle className="w-5 h-5" />} tone="danger" /></CardContent></Card>
               <Card hover className="stagger-item cursor-pointer" onClick={()=> navigate('/commands')}><CardContent><StatCard label={t('dashboard.totalCommands')} value={dashboard?.commands.total ?? 0} icon={<IconZap className="w-5 h-5" />} /></CardContent></Card>
@@ -142,7 +143,9 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             {nodesLoading ? (
-              <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => (<div key={i} className="flex items-center justify-between p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30"><div className="flex items-center gap-3"><div className="w-2 h-2 rounded-full shimmer" /><div><div className="h-4 w-24 shimmer rounded" /><div className="h-3 w-20 shimmer rounded mt-1" /></div></div><div className="h-5 w-14 shimmer rounded-full" /></div>))}</div>
+              <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => (
+              // oxlint-disable-next-line react/no-array-index-key -- static loading placeholder, never reorders
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-surface-50/50 dark:bg-surface-800/30"><div className="flex items-center gap-3"><div className="w-2 h-2 rounded-full shimmer" /><div><div className="h-4 w-24 shimmer rounded" /><div className="h-3 w-20 shimmer rounded mt-1" /></div></div><div className="h-5 w-14 shimmer rounded-full" /></div>))}</div>
             ) : recentNodes.length === 0 ? (
               <EmptyState icon={<IconNodes className="w-10 h-10" />} title={t('dashboard.emptyTitle')} description={t('dashboard.emptyDesc')} action={<Button onClick={() => navigate('/nodes')}>{t('nodes.addNode')}</Button>} />
             ) : (

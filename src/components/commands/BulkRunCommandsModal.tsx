@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
@@ -22,21 +21,23 @@ interface BulkRunCommandsModalProps {
 export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsModalProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [search, setSearch] = useState('')
+  const { data: nodesData } = useNodes({ size: 100, search: search || null })
   const nodes = nodesData?.items || []
   const { data: commandsData } = useCommands({ size: 100 })
   const commands = commandsData?.items || []
-  const [search, setSearch] = useState('')
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set())
   const [results, setResults] = useState<{ command: string; results: Array<BulkNodeResult & { command_id?: string }> } | null>(null)
   const bulkExec = useMutation({ mutationFn: (data: { command_ids: string[]; node_ids: string[] }) => commandsApi.executions({ command_ids: data.command_ids, node_ids: data.node_ids } as never) })
 
   const commandIdsKey = commandIds.join(',')
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies -- intentional reset of selection/search/results when the modal target changes; key dep is sufficient, setters are stable */
   useEffect(() => {
     setSelectedNodeIds(new Set())
     setSearch('')
     setResults(null)
   }, [commandIdsKey])
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies */
 
   const filtered = nodes.filter((n) => n.name.toLowerCase().includes(search.toLowerCase()))
   const allSelected = filtered.length > 0 && filtered.every((n) => selectedNodeIds.has(n.id))
@@ -91,11 +92,11 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
             <span className="text-red-600 dark:text-red-400">{t('commands.failed', 'Failed')}: {results.results.filter((r) => r.exit_code !== 0).length}</span>
           </div>
           <div className="max-h-96 overflow-y-auto space-y-3">
-            {results.results.map((r, idx) => {
+            {results.results.map((r) => {
               const cmdName = (r as { command_id?: string }).command_id ? commands.find((c) => c.id === (r as { command_id?: string }).command_id)?.name ?? (r as { command_id?: string }).command_id : undefined
               const label = cmdName ? `${cmdName} — ${r.node_name ?? r.node_id}` : (r.node_name ?? r.node_id)
               return (
-                <div key={`${(r as { command_id?: string }).command_id ?? 'cmd'}:${r.node_id}:${idx}`} className="border border-surface-200 dark:border-surface-700 rounded-lg p-3">
+                <div key={`${(r as { command_id?: string }).command_id ?? 'cmd'}:${r.node_id}`} className="border border-surface-200 dark:border-surface-700 rounded-lg p-3">
                   <p className="text-sm font-medium text-surface-900 dark:text-white">{label}</p>
                   <ExecutionResult stdout={r.stdout} stderr={r.stderr} exitCode={r.exit_code} />
                 </div>
@@ -115,6 +116,7 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
     <Modal isOpen={commandIds.length > 0} onClose={onClose} title={`${t('commands.execute', 'Execute')} (${commandIds.length})`} size="lg">
       <div className="space-y-3">
         <SearchInput value={search} onChange={setSearch} placeholder={t('nodes.searchPlaceholder', 'Search nodes...')} />
+        {nodesData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
         {filtered.length > 0 && (
           <div className="flex items-center justify-between px-1">
             <label className="flex items-center gap-2 text-xs cursor-pointer">

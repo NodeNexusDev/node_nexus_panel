@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -67,14 +66,14 @@ export function TagFilter({ available, selected, onChange }: TagFilterProps) {
 
   const toggle = (tag: string) => {
     if (selected.includes(tag)) {
-      onChange(selected.filter((t) => t !== tag))
+      onChange(selected.filter((s) => s !== tag))
     } else {
       onChange([...selected, tag])
     }
   }
 
   const remove = (tag: string) => {
-    onChange(selected.filter((t) => t !== tag))
+    onChange(selected.filter((s) => s !== tag))
   }
 
   return (

@@ -5,7 +5,6 @@ import type { components } from './__generated/v2'
 // ── Generic helpers ─────────────────────────────────────────────
 export type CursorPage<T> = { items: T[]; limit: number; next_cursor: string | null; has_more: boolean; total?: number; page?: number; size?: number }
 export type BulkResult<T> = { total: number; succeeded: number; failed: number; results: T[]; items?: T[]; page?: number; size?: number }
-export interface PaginatedResponse<T> { items: T[]; total: number; page: number; size: number; limit?: number; next_cursor?: string | null; has_more?: boolean } // @deprecated use CursorPage
 
 // ── Re-exports from generated schemas ───────────────────────────
 export type APIKeyCreate = Omit<components['schemas']['APIKeyCreate'], 'scope'> & { scope?: "read-only" | "read-write" }
@@ -207,6 +206,7 @@ export type PackLocalCreateRequest = components['schemas']['PackLocalCreateReque
 export type PackManifestRequest = components['schemas']['PackManifestRequest']
 export type PackResponse = components['schemas']['PackResponse']
 export type PackStatsResponse = components['schemas']['PackStatsResponse']
+export type PackUpdate = components['schemas']['PackUpdate']
 export type RawExecutionsRequest = components['schemas']['RawExecutionsRequest']
 export type ReadyCheck = components['schemas']['ReadyCheck']
 export type ReadyResponse = components['schemas']['ReadyResponse']
@@ -254,14 +254,11 @@ export type CommandParameter = CommandParameter_Output // legacy unified
 export type ScriptStep = ScriptStep_Output
 
 // ── Helpers ─────────────────────────────────────────────────────
-export type NodeOffsetListResponse = { items: Node[]; total: number; page: number; size: number } // legacy
-export type NodeListResponse = NodeCursorListResponse | NodeOffsetListResponse
-export function isNodeCursorResponse(resp: NodeListResponse): resp is NodeCursorListResponse { return 'next_cursor' in resp && 'has_more' in resp }
 
 export interface ApiError { code: string; message: string; detail?: unknown; request_id?: string | null; details?: Record<string, string[]> }
 
 // ── Panel-specific extensions (not in spec, kept for UI) ────────
-export interface NodeStats { total: number; active: number; unreachable: number }
+export interface NodeStats { total: number; active: number; unreachable: number; has_more: boolean }
 export interface DashboardDockerStats { total: number; running: number; stopped: number }
 export interface EntityStats { total: number }
 export interface RecentActivity { id: string; action: string; node_id?: string | null; user?: string | null; details?: string | null; created_at: string }
@@ -304,7 +301,6 @@ export interface ScriptBulkOperationResponse { results: { execution_id: string; 
 export interface ScriptBulkResult { execution_id: string; status: string; message: string }
 export interface NodeValidateRequest { host: string; port?: number; connection_type?: ConnectionType; username?: string | null; password?: string | null; ssh_key?: string | null; passphrase?: string | null }
 export interface NodeValidateResponse { status: NodeStatus; message: string }
-export interface NodeStatusHistoryResponse { items: NodeStatusHistoryItem[]; total: number; page: number; size: number }
 export interface DockerContainerStatsResponse { Container: string; Name: string; CPUPerc: string; MemUsage: string; MemPerc: string; NetIO: string; BlockIO: string; MemLimit?: string | null; PIDs?: string | null }
 export interface BulkDockerRequest { container_id: string; command?: string | null; node_ids: string[]; node_tags?: string[]; timeout?: number | null }
 export interface BulkDockerResponse { action: string; results: { node_id: string; node_name: string; status: string; output?: string; error?: string }[]; total: number; succeeded: number; failed: number }

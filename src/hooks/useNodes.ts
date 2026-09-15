@@ -8,7 +8,7 @@ import type {
   NodeUpdate,
   NodeMetrics,
   ExecutionStatsResponse,
-  NodeListResponse,
+  NodeCursorListResponse,
   CursorPage_NodeStatusHistoryItem_,
   CursorPage_CommandHistoryResponse_,
   BulkResult_BulkNodeUpdateResult_,
@@ -18,13 +18,13 @@ import type {
   NodeBulkUpdatesRequest,
 } from '../api/types'
 
-export function useNodes(params?: { page?: number; size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
+export function useNodes(params?: { size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
   const apiParams: { cursor?: string | null; limit?: number; tag?: string | null; search?: string | null } = {}
   if (params?.cursor !== undefined) apiParams.cursor = params.cursor
-  else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+  else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
   if (params?.tag) apiParams.tag = params.tag
   if (params?.search) apiParams.search = params.search
-  return useQuery<NodeListResponse>({
+  return useQuery<NodeCursorListResponse>({
     queryKey: ['nodes', 'list', params],
     queryFn: () => nodesApi.getAll(apiParams),
     placeholderData: keepPreviousData,
@@ -77,13 +77,13 @@ export function useNodeStats(id: string, params?: { date_from?: string; date_to?
   })
 }
 
-export function useNodeStatusHistory(id: string, params?: { page?: number; size?: number; cursor?: string | null; limit?: number }) {
+export function useNodeStatusHistory(id: string, params?: { size?: number; cursor?: string | null; limit?: number }) {
   return useQuery<CursorPage_NodeStatusHistoryItem_>({
     queryKey: ['nodes', 'detail', id, 'status-history', params],
     queryFn: () => {
       const apiParams: { cursor?: string | null; limit?: number } = {}
       if (params?.cursor !== undefined) apiParams.cursor = params.cursor
-      else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+      else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
       return nodesApi.getStatusHistory(id, apiParams)
     },
     enabled: !!id,
@@ -177,13 +177,13 @@ export function useNodeMetrics(id: string) {
   })
 }
 
-export function useNodeCommandHistory(id: string, params?: { page?: number; size?: number; cursor?: string | null; limit?: number }) {
+export function useNodeCommandHistory(id: string, params?: { size?: number; cursor?: string | null; limit?: number }) {
   return useQuery<CursorPage_CommandHistoryResponse_>({
     queryKey: ['nodes', 'detail', id, 'commands-history', params],
     queryFn: () => {
       const apiParams: { cursor?: string | null; limit?: number } = {}
       if (params?.cursor !== undefined) apiParams.cursor = params.cursor
-      else if (params?.page != null) { const limit = params.limit ?? params.size ?? 20; const offset = (params.page - 1) * limit; apiParams.cursor = offset ? btoa(String(offset)) : null; apiParams.limit = limit } else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
+      else { if (params?.limit != null) apiParams.limit = params.limit; if (params?.size != null) apiParams.limit = params.size }
       return commandsApi.getHistory({ node_id: id, ...apiParams })
     },
     enabled: !!id,
@@ -236,17 +236,6 @@ export function useBulkUpdateNodes() {
 
   return useMutation<BulkResult_BulkNodeUpdateResult_, Error, NodeBulkUpdatesRequest>({
     mutationFn: (data: NodeBulkUpdatesRequest) => nodesApi.bulkUpdate(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nodes'] })
-    },
-  })
-}
-
-// Legacy wrapper for old call shape {node_ids, changes}
-export function useBulkUpdateNodesLegacy() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: { node_ids: string[]; changes: NodeUpdate }) => nodesApi.bulkUpdateLegacy(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nodes'] })
     },

@@ -5,21 +5,14 @@ import type {
   CommandResponse,
   CommandCreate,
   CommandUpdate,
-  CursorPage_CommandHistoryResponse_,
   CursorPage_CommandResponse_,
   ExecutionStatsResponse,
 } from '../api/types'
 
-export function useCommands(params?: { page?: number; size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
-  // Translate legacy page/size to cursor/limit
+export function useCommands(params?: { size?: number; cursor?: string | null; limit?: number; tag?: string | null; search?: string | null }) {
   const apiParams: { cursor?: string | null; limit?: number; tag?: string | null; search?: string | null } = {}
   if (params?.cursor !== undefined) apiParams.cursor = params.cursor
-  else if (params?.page != null) {
-    const limit = params.limit ?? params.size ?? 20
-    const offset = (params.page - 1) * limit
-    apiParams.cursor = offset ? btoa(String(offset)) : null
-    apiParams.limit = limit
-  } else {
+  else {
     if (params?.limit != null) apiParams.limit = params.limit
     if (params?.size != null) apiParams.limit = params.size
   }
@@ -140,16 +133,7 @@ export function useBulkRetryCommands() {
 export function useBulkDeleteCommands() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (ids: string[]) => {
-      const settled = await Promise.allSettled(ids.map((id) => commandsApi.remove(id)))
-      let succeeded = 0, failed = 0
-      const results: Array<{ id: string; status: 'success' | 'failed'; error?: string }> = []
-      settled.forEach((r, i) => {
-        if (r.status === 'fulfilled') { succeeded++; results.push({ id: ids[i], status: 'success' }) }
-        else { failed++; results.push({ id: ids[i], status: 'failed', error: String((r.reason as Error)?.message ?? r.reason) }) }
-      })
-      return { total: ids.length, succeeded, failed, results }
-    },
+    mutationFn: (ids: string[]) => commandsApi.bulkDelete({ ids }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['commands'] }),
   })
 }
@@ -170,20 +154,8 @@ export function useBulkCloneCommands() {
 export function useBulkUpdateCommands() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<CommandUpdate> }) => {
-      const settled = await Promise.allSettled(ids.map((id) => commandsApi.update(id, data as CommandUpdate)))
-      let succeeded = 0, failed = 0
-      settled.forEach((r) => { if (r.status === 'fulfilled') succeeded++; else failed++ })
-      return { total: ids.length, succeeded, failed, results: settled.map((r, i) => ({ id: ids[i], status: r.status === 'fulfilled' ? 'success' as const : 'failed' as const })) }
-    },
+    mutationFn: ({ ids, data }: { ids: string[]; data: Partial<CommandUpdate> }) =>
+      commandsApi.bulkUpdate({ updates: ids.map((id) => ({ id, changes: data as CommandUpdate })) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['commands'] }),
   })
-}
-
-export function useCommandExecutionsHistory(batchId: string, params?: { cursor?: string | null; limit?: number }) {
-  return useQuery<CursorPage_CommandHistoryResponse_>({ queryKey:['commands','executions','history', batchId, params], queryFn: ()=> commandsApi.getExecutionsHistory({ batch_id: batchId, cursor: params?.cursor, limit: params?.limit }), enabled: !!batchId })
-}
-
-export function useCommandHistory(params?: { node_id?: string; cursor?: string | null; limit?: number }) {
-  return useQuery({ queryKey:['commands','history', params], queryFn: ()=> commandsApi.getHistory(params as never) })
 }

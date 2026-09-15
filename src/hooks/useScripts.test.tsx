@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { useScripts, useScript, useCreateScript, useDeleteScript } from './useScripts'
+import { useScripts, useScript, useCreateScript, useDeleteScript, useScriptTags } from './useScripts'
 
 function createWrapper() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
@@ -18,6 +18,14 @@ describe('useScripts', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data?.items).toHaveLength(3)
     expect(result.current.data?.total).toBe(3)
+  })
+})
+
+describe('useScriptTags', () => {
+  it('fetches tags from the vocabulary endpoint', async () => {
+    const { result } = renderHook(() => useScriptTags(), { wrapper: createWrapper() })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(Array.isArray(result.current.data)).toBe(true)
   })
 })
 

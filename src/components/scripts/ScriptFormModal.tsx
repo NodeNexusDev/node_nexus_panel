@@ -1,10 +1,10 @@
-// oxlint-disable
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { Spinner } from '../ui/Spinner'
+import { SearchInput } from '../ui/SearchInput'
 import { useToast } from '../ui/useToast'
 import { useCommands } from '../../hooks/useCommands'
 import type { ScriptStep } from '../../api/types'
@@ -41,7 +41,8 @@ const EMPTY_STEP: StepInput = { id: '', label: '', type: 'inline', command: '', 
 export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, onClose, onSubmit }: ScriptFormModalProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: commandsData, isLoading: commandsLoading } = useCommands({ size: 100 })
+  const [commandSearch, setCommandSearch] = useState('')
+  const { data: commandsData, isLoading: commandsLoading } = useCommands({ size: 100, search: commandSearch || null })
   const commands = commandsData?.items || []
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -63,9 +64,10 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
       setName('')
       setDescription('')
       setTags('')
+      setCommandSearch('')
       setSteps([{ ...EMPTY_STEP, id: generateId() }])
     }
-  }, [isOpen, t])
+  }, [isOpen])
 
   const handleSubmit = () => {
     if (steps.some((s) => !s.label.trim())) { toast('error', t('scripts.toastStepLabelRequired', 'Step label is required')); return }
@@ -96,6 +98,12 @@ export function ScriptFormModal({ isOpen, title, submitLabel, pending, initial, 
             <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('scripts.steps')}</label>
             <Button variant="ghost" size="sm" onClick={() => setSteps((prev) => [...prev, { id: generateId(), label: '', type: 'inline', command: '', command_id: '', params: {}, on_failure: 'stop' }])}>{t('scripts.addStep', '+ Add Step')}</Button>
           </div>
+          {steps.some((s) => s.type === 'command') && (
+            <div>
+              <SearchInput value={commandSearch} onChange={setCommandSearch} placeholder={t('nodes.selectCommand', 'Search commands...')} />
+              {commandsData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
+            </div>
+          )}
           {steps.map((step, idx) => (
             <div key={step.id} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg space-y-2">
               <div className="flex items-center gap-2">

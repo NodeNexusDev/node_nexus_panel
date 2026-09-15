@@ -1,9 +1,11 @@
 import { api } from './client'
+import { runBulkChunks } from '../lib/chunks'
 import type {
   PackResponse,
   PackDetailWithAssetsResponse,
   PackLocalCreateRequest,
   PackStatsResponse,
+  PackUpdate,
   RegistryResponse,
   RegistryCreate,
   RegistrySyncResult,
@@ -38,13 +40,13 @@ export const templatesApi = {
 
   createPack: (data: PackLocalCreateRequest) => api.post<PackResponse>('/templates/packs', data),
 
-  updatePackMeta: (packId: string, data: { name?: string; description?: string; version?: string }) =>
-    api.patch<PackResponse>(`/templates/packs/${packId}`, data),
-
   deletePack: (packId: string) => api.delete<void>(`/templates/packs/${packId}`),
 
+  updatePackMeta: (packId: string, data: PackUpdate) => api.patch<PackResponse>(`/templates/packs/${packId}`, data),
+
   bulkDeletePacks: (data: { pack_ids: string[] }) =>
-    api.post<{ total: number; succeeded: number; failed: number; results: Array<{ pack_id: string; status: string; error: string }> }>('/templates/packs/deletions', data),
+    runBulkChunks(data.pack_ids, 100, (pack_ids) =>
+      api.post<{ total: number; succeeded: number; failed: number; results: Array<{ pack_id: string; status: string; error: string }> }>('/templates/packs/deletions', { pack_ids })),
 
   getPackStats: (params?: { group_by?: string | null }) => {
     const qs = params?.group_by ? `?group_by=${encodeURIComponent(params.group_by)}` : ''

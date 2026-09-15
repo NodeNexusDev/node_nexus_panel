@@ -1,5 +1,4 @@
 // @ts-nocheck
-// oxlint-disable
 import type { Meta, StoryObj } from '@storybook/react'
 import { Tooltip } from './Tooltip'
 import { Button } from './Button'

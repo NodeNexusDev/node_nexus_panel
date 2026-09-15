@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
@@ -6,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
@@ -50,7 +50,7 @@ export function Commands() {
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteCommands({ limit, search: search || undefined, tag: tagFilter.length === 1 ? tagFilter[0] : undefined })
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteCommands({ limit, search: search || undefined, tag: tagFilter.length === 1 ? tagFilter[0] : undefined })
   const commandsData = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: CommandResponse[] } : undefined
   const { data: tags } = useCommandTags()
   const createCommand = useCreateCommand()
@@ -69,7 +69,7 @@ export function Commands() {
   })
 
   const commands = (commandsData?.items || []).filter(
-    (cmd: CommandResponse) => tagFilter.length <= 1 || tagFilter.some((t) => cmd.tags.includes(t))
+    (cmd: CommandResponse) => tagFilter.length <= 1 || tagFilter.some((tag) => cmd.tags.includes(tag))
   )
 
   const sortedCommands = sort
@@ -87,10 +87,10 @@ export function Commands() {
   const allSelected = commands.length > 0 && commands.every((c) => selectedIds.includes(c.id))
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-  }, [])
+  }, [setSelectedIds])
   const toggleAll = useCallback(() => {
     setSelectedIds(allSelected ? [] : commands.map((c) => c.id))
-  }, [allSelected, commands])
+  }, [allSelected, commands, setSelectedIds])
 
   const openCreate = () => {
     createForm.reset({ name: '', command: '', description: '', tags: [], parameters: [] })
@@ -153,7 +153,7 @@ export function Commands() {
       render: (cmd) => (
         <div className="flex flex-wrap gap-1">
           {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((s) => s !== tag) : [...prev, tag])} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -184,7 +184,7 @@ export function Commands() {
       </div>
       <div className="flex flex-wrap gap-1">
         {cmd.tags.length > 0 ? cmd.tags.map((tag) => (
-          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((s) => s !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="flex items-center gap-3 text-xs text-surface-500">
@@ -223,6 +223,8 @@ export function Commands() {
           )}
           {isLoading ? (
             <TableSkeleton rows={5} cols={4} />
+          ) : error ? (
+            <ErrorState error={error as Error} onRetry={() => refetch()} />
           ) : commands.length === 0 ? (
             <EmptyState
               icon={<IconCommands className="w-10 h-10" />}

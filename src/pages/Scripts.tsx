@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCallback } from 'react'
@@ -6,6 +5,7 @@ import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -50,7 +50,7 @@ export function Scripts() {
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScripts({ limit, search: search || undefined, tag: tagFilter.length === 1 ? tagFilter[0] : undefined })
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteScripts({ limit, search: search || undefined, tag: tagFilter.length === 1 ? tagFilter[0] : undefined })
   const data = infiniteData ? { items: infiniteData.pages.flatMap((p) => p.items) } as { items: ScriptResponse[] } : undefined
   const { data: tags } = useScriptTags()
   const createScript = useCreateScript()
@@ -66,7 +66,7 @@ export function Scripts() {
   const bulkClone = useBulkCloneScripts()
 
   const scripts = (data?.items || []).filter(
-    (script) => tagFilter.length <= 1 || tagFilter.some((t) => script.tags.includes(t))
+    (script) => tagFilter.length <= 1 || tagFilter.some((tag) => script.tags.includes(tag))
   )
 
   const sortedScripts = sort
@@ -86,10 +86,10 @@ export function Scripts() {
   const allSelected = scripts.length > 0 && scripts.every((s) => selectedIds.includes(s.id))
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-  }, [])
+  }, [setSelectedIds])
   const toggleAll = useCallback(() => {
     setSelectedIds(allSelected ? [] : scripts.map((s) => s.id))
-  }, [allSelected, scripts])
+  }, [allSelected, scripts, setSelectedIds])
 
   const handleDelete = () => {
     if (!deleteTarget) return
@@ -141,7 +141,7 @@ export function Scripts() {
       render: (script) => (
         <div className="flex flex-wrap gap-1">
           {script.tags.length > 0 ? script.tags.map((tag) => (
-            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
+            <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((s) => s !== tag) : [...prev, tag])} />
           )) : <span className="text-surface-400">—</span>}
         </div>
       ),
@@ -174,7 +174,7 @@ export function Scripts() {
       </div>
       <div className="flex flex-wrap gap-1">
         {script.tags.length > 0 ? script.tags.map((tag) => (
-          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} />
+          <TagBadge key={tag} tag={tag} onClick={() => setTagFilter((prev) => prev.includes(tag) ? prev.filter((s) => s !== tag) : [...prev, tag])} />
         )) : <span className="text-surface-400">—</span>}
       </div>
       <div className="text-xs text-surface-500">
@@ -205,13 +205,15 @@ export function Scripts() {
             <div className="flex flex-wrap items-center gap-2 px-6 py-3 bg-accent-50 dark:bg-accent-900/20 border-b border-accent-200 dark:border-accent-800">
               <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{t('common.selected', { count: selectedIds.length })}</span>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkRun(true)}>{t('scripts.run')} ({selectedIds.length})</Button>
-              <Button variant="ghost" size="sm" disabled={bulkClone.isPending} onClick={() => bulkClone.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('scripts.toastCloned') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('scripts.toastCloned')); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastCloneFailed')) })}>{bulkClone.isPending ? t('common.loading') : t('scripts.clone')}</Button>
+              <Button variant="ghost" size="sm" disabled={bulkClone.isPending} onClick={() => bulkClone.mutate(selectedIds, { onSuccess: (res: unknown) => { const d = res as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('scripts.toastCloned') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('scripts.toastCloned')); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastCloneFailed')) })}>{bulkClone.isPending ? t('common.loading') : t('scripts.clone')}</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowBulkDelete(true)} className="text-red-500">{t('common.delete')}</Button>
               <button onClick={() => setSelectedIds([])} className="ml-auto text-xs text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 cursor-pointer">{t('common.clear')}</button>
             </div>
           )}
           {isLoading ? (
             <TableSkeleton rows={5} cols={4} />
+          ) : error ? (
+            <ErrorState error={error as Error} onRetry={() => refetch()} />
           ) : scripts.length === 0 ? (
             <EmptyState icon={<IconScripts className="w-10 h-10" />} title={t('scripts.emptyTitle')} description={t('scripts.emptyDesc')} action={<Button onClick={() => setShowCreateModal(true)}>{t('scripts.createScript')}</Button>} />
           ) : (
@@ -245,7 +247,7 @@ export function Scripts() {
       />
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} loading={deleteScript.isPending} />
-      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => bulkDelete.mutate(selectedIds, { onSuccess: (data: unknown) => { const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('scripts.toastDeleted') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('scripts.toastDeleted')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastDeleteFailed')) })} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: `${selectedIds.length} scripts` })} confirmLabel={t('common.delete')} loading={bulkDelete.isPending} />
+      <ConfirmDialog isOpen={showBulkDelete} onClose={() => setShowBulkDelete(false)} onConfirm={() => bulkDelete.mutate(selectedIds, { onSuccess: (res: unknown) => { const d = res as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('scripts.toastDeleted') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('scripts.toastDeleted')); setShowBulkDelete(false); setSelectedIds([]) }, onError: () => toast('error', t('scripts.toastDeleteFailed')) })} title={t('scripts.deleteTitle')} message={t('scripts.deleteMsg', { name: `${selectedIds.length} scripts` })} confirmLabel={t('common.delete')} loading={bulkDelete.isPending} />
       <BulkRunScriptsOnNodesModal scriptIds={showBulkRun ? selectedIds : []} onClose={() => setShowBulkRun(false)} />
 
       <Drawer isOpen={!!drawerScript} onClose={() => setDrawerScript(null)} size="lg">

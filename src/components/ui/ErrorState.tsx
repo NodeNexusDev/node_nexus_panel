@@ -1,4 +1,3 @@
-// oxlint-disable
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
@@ -39,8 +38,8 @@ export function ErrorState({
         <div className="text-xs text-surface-500 dark:text-surface-400 mt-1 max-w-sm font-mono break-all text-left">
           {Array.isArray(error.error.detail) ? (
             <ul className="list-disc list-inside space-y-1">
-              {(error.error.detail as Array<{ loc?: (string|number)[]; msg?: string; type?: string }>).map((d, i) => (
-                <li key={i}>{d.loc ? `${d.loc.join('.')}: ` : ''}{d.msg ?? JSON.stringify(d)}</li>
+              {(error.error.detail as Array<{ loc?: (string|number)[]; msg?: string; type?: string }>).map((d) => (
+                <li key={`${(d.loc ?? []).join('.')}:${d.type ?? ''}:${d.msg ?? ''}`}>{d.loc ? `${d.loc.join('.')}: ` : ''}{d.msg ?? JSON.stringify(d)}</li>
               ))}
             </ul>
           ) : typeof error.error.detail === 'string' ? (

@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '../ui/Badge'
@@ -53,7 +52,9 @@ export function ScriptDrawer({ script, onClose }: ScriptDrawerProps) {
     { key: 'edit', label: t('common.edit', 'Edit') },
   ]
 
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies -- intentional reset of drawer tab state when the target script changes; key dep is sufficient, setters are stable */
   useEffect(() => { setActive('overview'); setShowDeleteConfirm(false) }, [script.id])
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies */
 
   const handleClone = () => {
     cloneScript.mutate({ id: script.id }, {
@@ -141,6 +142,7 @@ function ScriptSteps({ script }: { script: ScriptResponse }) {
     <Card>
       <CardContent className="pt-4 space-y-3">
         {script.steps.map((step, idx) => (
+          // oxlint-disable-next-line react/no-array-index-key -- definition steps are positional; rendered as Step N
           <div key={idx} className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm font-medium text-surface-900 dark:text-white">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span>
@@ -269,6 +271,7 @@ function ScriptEditTab({ script, onDone, updateScript }: { script: ScriptRespons
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-700 dark:text-surface-300 mb-2">{t('scripts.steps', 'Steps')} ({formValues.steps.length})</p>
         {formValues.steps.map((step: unknown, idx: number) => {
           const s = step as { label?: string; type: string; command?: string }
+          // oxlint-disable-next-line react/no-array-index-key -- definition steps preview is positional and static
           return <div key={idx} className="text-xs font-mono text-surface-600 dark:text-surface-400 p-2 bg-white dark:bg-surface-900 rounded border mb-2">{idx + 1}. {s.label || s.type} — {s.command?.slice(0, 60) || s.type}</div>
         })}
         <p className="text-xs text-surface-500">{t('scripts.editStepsHint', 'Edit steps in full page for full editor')}</p>
@@ -281,21 +284,23 @@ function ScriptEditTab({ script, onDone, updateScript }: { script: ScriptRespons
 function ScriptRunTab({ script }: { script: ScriptResponse }) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { data: nodesData } = useNodes({ size: 100 })
+  const [searchNode, setSearchNode] = useState('')
+  const { data: nodesData } = useNodes({ size: 100, search: searchNode || null })
   const nodes = nodesData?.items || []
   const runScript = useRunScript()
   const bulkRun = useMutation({ mutationFn: (data: { script_ids: string[]; node_ids: string[] }) => scriptsApi.executions({ script_ids: data.script_ids, node_ids: data.node_ids }) })
-  const [searchNode, setSearchNode] = useState('')
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set())
   const [result, setResult] = useState<ScriptNodeResult | null>(null)
   const [bulkResults, setBulkResults] = useState<Array<{ node_id: string; node_name: string; result: ScriptNodeResult }> | null>(null)
 
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies -- intentional reset of run state when the target script changes; key dep is sufficient, setters are stable */
   useEffect(() => {
     setResult(null)
     setBulkResults(null)
     setSelectedNodeIds(new Set())
     setSearchNode('')
   }, [script.id])
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies */
 
   const filteredNodes = nodes.filter((n) => n.name.toLowerCase().includes(searchNode.toLowerCase()))
   const allFilteredSelected = filteredNodes.length > 0 && filteredNodes.every((n) => selectedNodeIds.has(n.id))
@@ -361,6 +366,7 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
       <div className="space-y-3 flex-1 min-h-0 overflow-y-auto">
         <div className="space-y-3">
           {result.steps.map((step, idx) => (
+            // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
             <div key={idx} className="space-y-1">
               <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
               <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
@@ -378,6 +384,7 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
           <div key={item.node_id} className="space-y-2">
             <p className="text-xs font-medium text-surface-700 dark:text-surface-300">{item.node_name || item.node_id}</p>
             {item.result.steps.map((step, idx) => (
+              // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
               <div key={idx} className="space-y-1">
                 <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge></div>
                 <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
@@ -393,6 +400,7 @@ function ScriptRunTab({ script }: { script: ScriptResponse }) {
   return (
     <div className="flex flex-col flex-1 min-h-0 space-y-3">
       <SearchInput value={searchNode} onChange={setSearchNode} placeholder={t('nodes.searchPlaceholder', 'Search nodes...')} />
+      {nodesData?.has_more && <p className="text-xs text-surface-400 dark:text-surface-500 px-1">{t('common.refineSearchHint')}</p>}
       {filteredNodes.length > 0 && (
         <div className="flex items-center justify-between px-1">
           <label className="flex items-center gap-2 text-xs cursor-pointer">

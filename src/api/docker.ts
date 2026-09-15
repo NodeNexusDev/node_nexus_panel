@@ -1,6 +1,6 @@
 import { api } from './client'
+import { runBulkChunks } from '../lib/chunks'
 import type {
-  DockerContainer,
   DockerContainerInspect,
   ContainerCreateRequest,
   ContainerCreatedResponse,
@@ -28,6 +28,10 @@ import type {
   DockerSystemInfo,
   DockerSystemDfItem,
   DockerActionResponse,
+  DockerArchiveResponse,
+  DockerPortResponse,
+  DockerVersionResponse,
+  DockerWaitResponse,
   DockerContainerRenameResponse,
   CursorPage_DockerContainer_,
   CursorPage_DockerImage_,
@@ -67,12 +71,6 @@ export const dockerApi = {
     if (params?.all) query.set('all', 'true')
     const qs = query.toString()
     return api.get<CursorPage_DockerContainer_>(`${nodesBase(nodeId)}/containers${qs ? `?${qs}` : ''}`)
-  },
-
-  // Legacy wrapper returning array (unwrap cursor)
-  getContainersLegacy: async (nodeId: string, params?: { all?: boolean }) => {
-    const res = await api.get<CursorPage_DockerContainer_>(`${nodesBase(nodeId)}/containers${params?.all ? '?all=true' : ''}`)
-    return (res as unknown as CursorPage_DockerContainer_).items ?? (res as unknown as DockerContainer[])
   },
 
   createContainer: (nodeId: string, data: ContainerCreateRequest) =>
@@ -138,10 +136,10 @@ export const dockerApi = {
   },
 
   pullImage: (nodeId: string, data: DockerImagePullRequest) =>
-    api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/pull`, data),
+    api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/pull`, data, { timeoutMs: 300_000 }),
 
   buildImage: (nodeId: string, data: DockerImageBuildRequest) =>
-    api.post<DockerImageBuildResponse>(`${nodesBase(nodeId)}/images/build`, data),
+    api.post<DockerImageBuildResponse>(`${nodesBase(nodeId)}/images/build`, data, { timeoutMs: 300_000 }),
 
   getImage: (nodeId: string, imageId: string) =>
     api.get<DockerImageInspectResponse>(`${nodesBase(nodeId)}/images/${imageId}`),
@@ -199,21 +197,24 @@ export const dockerApi = {
 
   getSystemDf: (nodeId: string) => api.get<DockerSystemDfItem[]>(`${nodesBase(nodeId)}/system/df`),
 
-  getSystemVersion: (nodeId: string) => api.get<{ version: string; api_version: string }>(`${nodesBase(nodeId)}/system/version`),
+  getSystemVersion: (nodeId: string) => api.get<DockerVersionResponse>(`${nodesBase(nodeId)}/system/version`),
 
-  pruneSystem: (nodeId: string) => api.post<{ space_reclaimed: string }>(`${nodesBase(nodeId)}/system/prune`),
+  pruneSystem: (nodeId: string, volumes?: boolean) => {
+    const qs = volumes ? '?volumes=true' : ''
+    return api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/system/prune${qs}`)
+  },
 
   pruneNetworks: (nodeId: string) => api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/networks/prune`),
 
   // ── Singular container/image ops (v2) ───────────────────────
   getContainerArchive: (nodeId: string, containerId: string, path?: string) => {
     const qs = path ? `?path=${encodeURIComponent(path)}` : ''
-    return api.get<{ data: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`)
+    return api.get<DockerArchiveResponse>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`)
   },
 
   putContainerArchive: (nodeId: string, containerId: string, data: unknown, path?: string) => {
     const qs = path ? `?path=${encodeURIComponent(path)}` : ''
-    return api.put<{ status: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`, data)
+    return api.put<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`, data)
   },
 
   killContainer: (nodeId: string, containerId: string, signal?: string) => {
@@ -223,83 +224,87 @@ export const dockerApi = {
 
   getContainerPort: (nodeId: string, containerId: string, port?: string) => {
     const qs = port ? `?port=${encodeURIComponent(port)}` : ''
-    return api.get<{ host: string; port: string }>(`${nodesBase(nodeId)}/containers/${containerId}/port${qs}`)
+    return api.get<DockerPortResponse>(`${nodesBase(nodeId)}/containers/${containerId}/port${qs}`)
   },
 
-  updateContainer: (nodeId: string, containerId: string, data: unknown) => api.post<{ status: string }>(`${nodesBase(nodeId)}/containers/${containerId}/update`, data),
+  updateContainer: (nodeId: string, containerId: string, data: unknown) => api.post<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/update`, data),
 
-  waitContainer: (nodeId: string, containerId: string) => api.post<{ statusCode: number }>(`${nodesBase(nodeId)}/containers/${containerId}/wait`),
+  waitContainer: (nodeId: string, containerId: string) => api.post<DockerWaitResponse>(`${nodesBase(nodeId)}/containers/${containerId}/wait`),
 
-  pushImage: (nodeId: string, data: { image: string }) => api.post<{ status: string }>(`${nodesBase(nodeId)}/images/push`, data),
+  pushImage: (nodeId: string, data: { image: string }) => api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/push`, data),
 
   getImageHistory: (nodeId: string, imageId: string) => api.get<unknown[]>(`${nodesBase(nodeId)}/images/${imageId}/history`),
 
-  pushImageById: (nodeId: string, imageId: string) => api.post<{ status: string }>(`${nodesBase(nodeId)}/images/${imageId}/push`),
+  pushImageById: (nodeId: string, imageId: string) => api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/${imageId}/push`),
 
-  // ── Per-node bulk (v2) ──────────────────────────────────────
+  // ── Per-node bulk (v2; id-lists auto-chunked to the server max of 100) ──
   bulkExec: (nodeId: string, data: ContainerExecutionsRequest) =>
-    api.post<BulkResult_ContainerExecBulkResult_>(`${nodesBase(nodeId)}/containers/executions`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerExecBulkResult_>(`${nodesBase(nodeId)}/containers/executions`, { ...data, container_ids })),
 
   bulkInspect: (nodeId: string, data: ContainerInspectionsRequest) =>
-    api.post<BulkResult_ContainerInspectBulkResult_>(`${nodesBase(nodeId)}/containers/inspections`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerInspectBulkResult_>(`${nodesBase(nodeId)}/containers/inspections`, { ...data, container_ids })),
 
   bulkKill: (nodeId: string, data: ContainerKillsRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/kills`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/kills`, { ...data, container_ids })),
 
   bulkLogs: (nodeId: string, data: ContainerLogsRequest) =>
-    api.post<BulkResult_ContainerLogsBulkResult_>(`${nodesBase(nodeId)}/containers/logs`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerLogsBulkResult_>(`${nodesBase(nodeId)}/containers/logs`, { ...data, container_ids })),
 
   bulkPause: (nodeId: string, data: ContainerIdsRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/pauses`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/pauses`, { ...data, container_ids })),
 
   bulkRemove: (nodeId: string, data: ContainerIdsRequest, force?: boolean) => {
     const qs = force ? '?force=true' : ''
-    return api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/removals${qs}`, data)
+    return runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/removals${qs}`, { ...data, container_ids }))
   },
 
   bulkRestart: (nodeId: string, data: ContainerIdsRequest, timeout?: number) => {
     const qs = timeout ? `?timeout=${timeout}` : ''
-    return api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/restarts${qs}`, data)
+    return runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/restarts${qs}`, { ...data, container_ids }))
   },
 
   bulkStart: (nodeId: string, data: ContainerIdsRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/starts`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/starts`, { ...data, container_ids })),
 
   bulkStats: (nodeId: string, data: ContainerStatsRequest) =>
-    api.post<BulkResult_ContainerStatsBulkResult_>(`${nodesBase(nodeId)}/containers/stats`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerStatsBulkResult_>(`${nodesBase(nodeId)}/containers/stats`, { ...data, container_ids })),
 
   bulkStop: (nodeId: string, data: ContainerIdsRequest, timeout?: number) => {
     const qs = timeout ? `?timeout=${timeout}` : ''
-    return api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/stops${qs}`, data)
+    return runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/stops${qs}`, { ...data, container_ids }))
   },
 
   bulkUnpause: (nodeId: string, data: ContainerIdsRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/unpauses`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/unpauses`, { ...data, container_ids })),
 
   bulkUpdate: (nodeId: string, data: ContainerUpdatesRequest) =>
-    api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/updates`, data),
+    runBulkChunks(data.container_ids, 100, (container_ids) =>
+      api.post<BulkResult_ContainerBulkResult_>(`${nodesBase(nodeId)}/containers/updates`, { ...data, container_ids })),
 
   bulkImagePulls: (nodeId: string, data: ImagePullsRequest) =>
-    api.post<BulkResult_ImageBulkResult_>(`${nodesBase(nodeId)}/images/pulls`, data),
+    runBulkChunks(data.images, 100, (images) =>
+      api.post<BulkResult_ImageBulkResult_>(`${nodesBase(nodeId)}/images/pulls`, { ...data, images })),
 
   bulkImageRemovals: (nodeId: string, data: ImageRemovalsRequest) =>
-    api.post<BulkResult_ImageBulkResult_>(`${nodesBase(nodeId)}/images/removals`, data),
+    runBulkChunks(data.image_ids, 100, (image_ids) =>
+      api.post<BulkResult_ImageBulkResult_>(`${nodesBase(nodeId)}/images/removals`, { ...data, image_ids })),
 
   bulkNetworkRemovals: (nodeId: string, data: NetworkRemovalsRequest) =>
-    api.post<BulkResult_NetworkBulkResult_>(`${nodesBase(nodeId)}/networks/removals`, data),
+    runBulkChunks(data.network_ids, 100, (network_ids) =>
+      api.post<BulkResult_NetworkBulkResult_>(`${nodesBase(nodeId)}/networks/removals`, { ...data, network_ids })),
 
   bulkVolumeRemovals: (nodeId: string, data: VolumeRemovalsRequest) =>
-    api.post<BulkResult_VolumeBulkResult_>(`${nodesBase(nodeId)}/volumes/removals`, data),
-
-  // ── Deprecated global bulk (pre-v2) ─────────────────────────
-  // Kept for type compat, delegates to per-node for first node if available
-  bulkExecLegacy: (data: { container_id: string; node_ids: string[]; command?: string; timeout?: number }) => {
-    const nodeId = data.node_ids[0]
-    if (!nodeId) return Promise.reject(new Error('node_ids required'))
-    return api.post<BulkResult_ContainerExecBulkResult_>(`${nodesBase(nodeId)}/containers/executions`, {
-      container_ids: [data.container_id],
-      command: data.command || '',
-      timeout: data.timeout,
-    })
-  },
+    runBulkChunks(data.volume_names, 100, (volume_names) =>
+      api.post<BulkResult_VolumeBulkResult_>(`${nodesBase(nodeId)}/volumes/removals`, { ...data, volume_names })),
 }
