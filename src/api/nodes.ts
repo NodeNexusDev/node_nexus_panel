@@ -63,10 +63,10 @@ export const nodesApi = {
     runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/deletions', { ids: c } satisfies NodeDeletionsRequest)),
 
   bulkCheck: (ids: string[]) =>
-    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/checks', { ids: c } satisfies NodeChecksRequest)),
+    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeUpdateResult_>('/nodes/checks', { ids: c } satisfies NodeChecksRequest, { timeoutMs: 120_000 })),
 
   bulkMetrics: (ids: string[]) =>
-    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeMetricsResult_>('/nodes/metrics', { ids: c } satisfies NodeMetricsRequest)),
+    runBulkChunks(ids, 100, (c) => api.post<BulkResult_BulkNodeMetricsResult_>('/nodes/metrics', { ids: c } satisfies NodeMetricsRequest, { timeoutMs: 120_000 })),
 
   bulkValidateCredentials: (data: CredentialValidationsRequest) => {
     if (!data.ids || data.ids.length <= 100) return api.post<BulkResult_BulkValidateCredentialsResult_>('/nodes/credential-validations', data)

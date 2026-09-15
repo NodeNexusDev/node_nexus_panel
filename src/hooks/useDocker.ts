@@ -397,7 +397,7 @@ export function usePruneNetworks() {
 
 export function usePruneSystem() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (nodeId: string) => dockerApi.pruneSystem(nodeId), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
+  return useMutation({ mutationFn: ({ nodeId, volumes }: { nodeId: string; volumes?: boolean }) => dockerApi.pruneSystem(nodeId, volumes), onSuccess: ()=> qc.invalidateQueries({ queryKey:['docker'] }) })
 }
 
 export function useDockerSystemVersion(nodeId: string) {

@@ -7,6 +7,8 @@ class ApiClient {
   private baseUrl: string
   private accessToken: string | null = null
   private refreshPromise: Promise<string | null> | null = null
+  /** Default abort timeout for requests; heavy bulk ops override per call. */
+  static readonly DEFAULT_TIMEOUT_MS = 15_000
 
   constructor(baseUrl: string) {
     this.baseUrl = `${baseUrl}/api/v2`
@@ -34,7 +36,7 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {},
+    options: RequestInit & { timeoutMs?: number } = {},
   ): Promise<T> {
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string>),
@@ -49,7 +51,8 @@ class ApiClient {
     }
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 15_000)
+    const timeoutMs = options.timeoutMs ?? ApiClient.DEFAULT_TIMEOUT_MS
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
     const signal = options.signal ?? controller.signal
 
     let response: Response
@@ -74,7 +77,7 @@ class ApiClient {
       if (newToken) {
         headers['Authorization'] = `Bearer ${newToken}`
         const retryController = new AbortController()
-        const retryTimeout = setTimeout(() => retryController.abort(), 15_000)
+        const retryTimeout = setTimeout(() => retryController.abort(), timeoutMs)
         try {
           const retryResponse = await fetch(`${this.baseUrl}${endpoint}`, {
             ...options,
@@ -138,8 +141,8 @@ class ApiClient {
     return this.refreshPromise
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' })
+  async get<T>(endpoint: string, options?: RequestInit & { timeoutMs?: number }): Promise<T> {
+    return this.request<T>(endpoint, { method: 'GET', ...options })
   }
 
   async getBlob(endpoint: string): Promise<Blob> {
@@ -153,10 +156,11 @@ class ApiClient {
     throw new ApiRequestError(response.status, error)
   }
 
-  async post<T>(endpoint: string, body?: unknown): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, options?: RequestInit & { timeoutMs?: number }): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
+      ...options,
     })
   }
 

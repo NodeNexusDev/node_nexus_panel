@@ -136,10 +136,10 @@ export const dockerApi = {
   },
 
   pullImage: (nodeId: string, data: DockerImagePullRequest) =>
-    api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/pull`, data),
+    api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/pull`, data, { timeoutMs: 300_000 }),
 
   buildImage: (nodeId: string, data: DockerImageBuildRequest) =>
-    api.post<DockerImageBuildResponse>(`${nodesBase(nodeId)}/images/build`, data),
+    api.post<DockerImageBuildResponse>(`${nodesBase(nodeId)}/images/build`, data, { timeoutMs: 300_000 }),
 
   getImage: (nodeId: string, imageId: string) =>
     api.get<DockerImageInspectResponse>(`${nodesBase(nodeId)}/images/${imageId}`),
@@ -199,7 +199,10 @@ export const dockerApi = {
 
   getSystemVersion: (nodeId: string) => api.get<DockerVersionResponse>(`${nodesBase(nodeId)}/system/version`),
 
-  pruneSystem: (nodeId: string) => api.post<{ space_reclaimed: string }>(`${nodesBase(nodeId)}/system/prune`),
+  pruneSystem: (nodeId: string, volumes?: boolean) => {
+    const qs = volumes ? '?volumes=true' : ''
+    return api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/system/prune${qs}`)
+  },
 
   pruneNetworks: (nodeId: string) => api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/networks/prune`),
 

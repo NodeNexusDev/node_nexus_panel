@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '../ui/Card'
 import { ErrorState } from '../ui/ErrorState'
 import { TableSkeleton } from '../ui/Skeleton'
 import { Button } from '../ui/Button'
+import { Checkbox } from '../ui/Checkbox'
 import { Modal } from '../ui/Modal'
 import { useToast } from '../ui/useToast'
 import { useDockerSystemInfo, useDockerSystemDf, useDockerSystemVersion, usePruneSystem, usePruneNetworks, usePruneImages, usePruneVolumes, usePruneContainers } from '../../hooks/useDocker'
@@ -20,6 +21,7 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
   const pruneVolumes = usePruneVolumes()
   const pruneContainers = usePruneContainers()
   const [showPruneConfirm, setShowPruneConfirm] = useState<null | 'system' | 'networks' | 'images' | 'volumes' | 'containers'>(null)
+  const [pruneWithVolumes, setPruneWithVolumes] = useState(false)
 
   if (infoLoading || dfLoading) {
     return (
@@ -46,8 +48,13 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
   ] : []
 
   const handlePrune = (type: 'system' | 'networks' | 'images' | 'volumes' | 'containers') => {
+    const done = () => { toast('success', t('docker.toastPruneDone', 'Pruned')); setShowPruneConfirm(null); setPruneWithVolumes(false) }
+    const fail = () => toast('error', t('docker.toastPruneFailed', 'Prune failed'))
+    if (type === 'system') {
+      pruneSystem.mutate({ nodeId, volumes: pruneWithVolumes }, { onSuccess: done, onError: fail })
+      return
+    }
     const map = {
-      system: pruneSystem,
       networks: pruneNetworks,
       images: pruneImages,
       volumes: pruneVolumes,
@@ -55,8 +62,8 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
     } as const
     const mut = map[type]
     mut.mutate(nodeId, {
-      onSuccess: () => { toast('success', t('docker.toastPruneDone', 'Pruned')); setShowPruneConfirm(null) },
-      onError: () => toast('error', t('docker.toastPruneFailed', 'Prune failed')),
+      onSuccess: done,
+      onError: fail,
     })
   }
 
@@ -130,6 +137,9 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
       <Modal isOpen={!!showPruneConfirm} onClose={() => setShowPruneConfirm(null)} title={t('docker.prune', 'Prune')}>
         <div className="space-y-4">
           <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.confirmPrune', 'Remove unused data? This cannot be undone.')}</p>
+          {showPruneConfirm === 'system' && (
+            <Checkbox checked={pruneWithVolumes} onChange={setPruneWithVolumes} label={t('docker.pruneVolumesToo', 'Include volumes')} />
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowPruneConfirm(null)}>{t('common.cancel')}</Button>
             <Button variant="danger" onClick={() => showPruneConfirm && handlePrune(showPruneConfirm)}>{t('common.confirm', 'Confirm')}</Button>

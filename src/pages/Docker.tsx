@@ -1,7 +1,7 @@
 // oxlint-disable
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
@@ -27,6 +27,7 @@ type Tab = 'containers' | 'images' | 'networks' | 'volumes' | 'system' | 'compos
 
 export function Docker() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { toast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
   const { data: nodesData } = useNodes({ size: 100 })
@@ -114,7 +115,7 @@ export function Docker() {
       <Card hover className="stagger-item">
         <CardContent className="p-0">
           {dockerNodes.length === 0 ? (
-            <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noDockerNodes', 'No Docker nodes')} description={t('docker.noDockerNodesDesc', 'Add a Docker node to manage containers, images, networks and volumes')} action={<Button onClick={()=> window.location.href='/nodes'}>{t('nodes.addNode')}</Button>} />
+            <EmptyState icon={<IconDocker className="w-10 h-10" />} title={t('docker.noDockerNodes', 'No Docker nodes')} description={t('docker.noDockerNodesDesc', 'Add a Docker node to manage containers, images, networks and volumes')} action={<Button onClick={() => navigate('/nodes')}>{t('nodes.addNode')}</Button>} />
           ) : !selectedNodeId ? (
             <TableSkeleton rows={6} cols={6} />
           ) : (
