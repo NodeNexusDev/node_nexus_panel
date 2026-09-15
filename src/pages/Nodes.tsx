@@ -1,7 +1,7 @@
 // oxlint-disable
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '../components/ui/Card'
@@ -46,8 +46,13 @@ export function Nodes() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState(() => {
+    const s = searchParams.get('status') ?? ''
+    return s === 'active' || s === 'unreachable' || s === 'error' ? s : ''
+  })
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
@@ -100,7 +105,7 @@ export function Nodes() {
   const [drawerNode, setDrawerNode] = useState<Node | null>(null)
 
   const nodes = (data?.items || []).filter(
-    (node) => tagFilter.length <= 1 || tagFilter.some((t) => node.tags.includes(t))
+    (node) => (tagFilter.length <= 1 || tagFilter.some((t) => node.tags.includes(t))) && (!statusFilter || node.status === statusFilter),
   )
   const allSelected = nodes.length > 0 && nodes.every((n) => selectedIds.includes(n.id))
 
@@ -179,7 +184,7 @@ export function Nodes() {
         actions={<Button onClick={() => setShowAddModal(true)}>{t('nodes.addNode')}</Button>}
       />
 
-      <NodesFilters search={search} setSearch={setSearch} tagFilter={tagFilter} setTagFilter={setTagFilter} allTags={allTags ?? []} />
+      <NodesFilters search={search} setSearch={setSearch} tagFilter={tagFilter} setTagFilter={setTagFilter} allTags={allTags ?? []} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
 
       <Card hover className="stagger-item">
         <CardContent className="p-0">
