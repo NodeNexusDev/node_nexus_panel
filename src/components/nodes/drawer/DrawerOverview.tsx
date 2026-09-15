@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useTranslation } from 'react-i18next'
 import { Badge } from '../../ui/Badge'
 import { IconCopy } from '../../ui/Icons'

@@ -1,4 +1,3 @@
-// oxlint-disable
 // @ts-nocheck
 import { http, HttpResponse } from 'msw'
 
@@ -67,7 +66,7 @@ export const templatesHandlers = [
     return new HttpResponse(tar, { headers: { 'Content-Type': 'application/x-tar', 'Content-Disposition': `attachment; filename="${pack.name}.tar"` } })
   }),
   http.get(`${API_URL}/api/v2/templates/packs/:packId/installations`, () => HttpResponse.json({ items: [], limit: 20, next_cursor: null, has_more: false })),
-  http.post(`${API_URL}/api/v2/templates/packs/:packId/updates`, async ({ params, request }) => {
+  http.post(`${API_URL}/api/v2/templates/packs/:packId/updates`, async ({ params }) => {
     const pack = packs.find((p)=> p.id===params.packId); if(!pack) return HttpResponse.json({code:'not_found',message:'Pack not found'},{status:404})
     pack.updated_at=new Date().toISOString(); return HttpResponse.json({ total:1, succeeded:1, failed:0, results:[{ entity_type:'command', name: pack.name, status:'success', entity_id: crypto.randomUUID(), error:'' }] })
   }),

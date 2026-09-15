@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '../../ui/Badge'
@@ -25,7 +24,9 @@ export function DrawerScript({ node }: { node: Node }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [result, setResult] = useState<ScriptNodeResult | null>(null)
   const [bulkResults, setBulkResults] = useState<Array<{ id: string; name: string; result: ScriptNodeResult }> | null>(null)
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies -- intentional reset of drawer state when the target node changes; key dep is sufficient, setters are stable */
   useEffect(() => { setSearch(''); setSelectedIds(new Set()); setResult(null); setBulkResults(null) }, [node.id])
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies */
   const filtered = scripts.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
   const allFilteredSelected = filtered.length > 0 && filtered.every((s) => selectedIds.has(s.id))
   const toggleSelect = (id: string) => {
@@ -103,6 +104,7 @@ export function DrawerScript({ node }: { node: Node }) {
         <p className="text-sm font-medium text-surface-600 dark:text-surface-400">{t('scripts.result', 'Result')}</p>
         <div className="flex-1 min-h-0 space-y-3 overflow-y-auto">
           {result.steps.map((step, idx) => (
+            // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
             <div key={idx} className="space-y-1">
               <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
               <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
@@ -120,6 +122,7 @@ export function DrawerScript({ node }: { node: Node }) {
           <div key={item.id} className="space-y-2">
             <p className="text-xs font-medium text-surface-700 dark:text-surface-300">{item.name}</p>
             {item.result.steps.map((step, idx) => (
+              // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
               <div key={idx} className="space-y-1">
                 <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
                 <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />

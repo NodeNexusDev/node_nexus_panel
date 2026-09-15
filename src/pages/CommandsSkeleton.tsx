@@ -1,4 +1,3 @@
-// oxlint-disable
 import { Skeleton } from '../components/ui/Skeleton'
 
 export function CommandsSkeleton() {
@@ -22,6 +21,7 @@ export function CommandsSkeleton() {
         <div className="h-5 w-36 bg-surface-200 dark:bg-surface-700 rounded animate-pulse mb-4" />
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
+            // oxlint-disable-next-line react/no-array-index-key -- static loading placeholder, never reorders
             <div key={i} className="p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">

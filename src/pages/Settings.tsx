@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardContent } from '../components/ui/Card'
@@ -333,6 +332,7 @@ export function Settings() {
               <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">{t('settings.duplicates', 'Duplicates')}: {importPreview.result.duplicates.length}</h4>
               <div className="space-y-1">
                 {importPreview.result.duplicates.map((d, i) => (
+                  // oxlint-disable-next-line react/no-array-index-key -- static import preview; duplicate strings carry no identity by definition
                   <div key={i} className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">{d}</div>
                 ))}
               </div>
@@ -343,6 +343,7 @@ export function Settings() {
               <h4 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">{t('settings.errors', 'Errors')}: {importPreview.result.errors.length}</h4>
               <div className="space-y-1">
                 {importPreview.result.errors.map((e, i) => (
+                  // oxlint-disable-next-line react/no-array-index-key -- static import preview; error entries carry no stable id
                   <div key={i} className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">{e}</div>
                 ))}
               </div>

@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -42,6 +41,7 @@ export function Docker() {
   const initialTab = (searchParams.get('tab') as Tab | null) ?? 'containers'
   const validTabs: Tab[] = ['containers', 'images', 'networks', 'volumes', 'system', 'compose']
 
+  /* oxlint-disable react/set-state-in-effect -- selects the first docker node by default once the list loads; skipped while searching */
   useEffect(() => {
     if (!nodeSearch && dockerNodes.length > 0 && !dockerNodes.some((n) => n.id === selectedNodeId)) {
       const first = dockerNodes[0].id
@@ -51,6 +51,7 @@ export function Docker() {
       setSearchParams(next, { replace: true })
     }
   }, [dockerNodes, selectedNodeId, searchParams, setSearchParams, nodeSearch])
+  /* oxlint-enable react/set-state-in-effect */
   const [activeTab, setActiveTab] = useState<Tab>(validTabs.includes(initialTab) ? initialTab : 'containers')
 
   const handleNodeChange = (id: string) => {

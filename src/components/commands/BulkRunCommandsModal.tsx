@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
@@ -32,11 +31,13 @@ export function BulkRunCommandsModal({ commandIds, onClose }: BulkRunCommandsMod
   const bulkExec = useMutation({ mutationFn: (data: { command_ids: string[]; node_ids: string[] }) => commandsApi.executions({ command_ids: data.command_ids, node_ids: data.node_ids } as never) })
 
   const commandIdsKey = commandIds.join(',')
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies -- intentional reset of selection/search/results when the modal target changes; key dep is sufficient, setters are stable */
   useEffect(() => {
     setSelectedNodeIds(new Set())
     setSearch('')
     setResults(null)
   }, [commandIdsKey])
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies */
 
   const filtered = nodes.filter((n) => n.name.toLowerCase().includes(search.toLowerCase()))
   const allSelected = filtered.length > 0 && filtered.every((n) => selectedNodeIds.has(n.id))

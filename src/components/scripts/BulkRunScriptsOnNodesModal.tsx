@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
@@ -34,12 +33,14 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
   const bulkRun = useMutation({ mutationFn: (data: { script_ids: string[]; node_ids: string[] }) => scriptsApi.executions({ script_ids: data.script_ids, node_ids: data.node_ids }) })
 
   const scriptIdsKey = scriptIds.join(',')
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies -- intentional reset of selection/search/results when the modal target changes; key dep is sufficient, setters are stable */
   useEffect(() => {
     setSelectedNodeIds(new Set())
     setSearch('')
     setSingleResult(null)
     setBulkResults(null)
   }, [scriptIdsKey])
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies */
 
   const filtered = nodes.filter((n) => n.name.toLowerCase().includes(search.toLowerCase()))
   const allSelected = filtered.length > 0 && filtered.every((n) => selectedNodeIds.has(n.id))
@@ -115,6 +116,7 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
       <Modal isOpen={scriptIds.length > 0} onClose={onClose} title={t('scripts.run', 'Run')} size="lg">
         <div className="space-y-3">
           {singleResult.steps.map((step, idx) => (
+            // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
             <div key={idx} className="space-y-1">
               <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
               <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />
@@ -133,6 +135,7 @@ export function BulkRunScriptsOnNodesModal({ scriptIds, onClose }: BulkRunScript
             <div key={item.id} className="space-y-2">
               <p className="text-xs font-medium text-surface-700 dark:text-surface-300">{item.name}</p>
               {item.result.steps.map((step, idx) => (
+                // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
                 <div key={idx} className="space-y-1">
                   <div className="flex items-center gap-2"><span className="text-xs font-medium text-surface-700 dark:text-surface-300">{t('scripts.step', 'Step')} {idx + 1}{step.label ? `: ${step.label}` : ''}</span><Badge variant={step.exit_code === 0 ? 'success' : 'danger'}>{t('common.exitCode', 'exit')} {step.exit_code}</Badge>{step.truncated && <Badge variant="warning">{t('scripts.truncated', 'Truncated')}</Badge>}</div>
                   <ExecutionResult stdout={step.stdout} stderr={step.stderr} exitCode={step.exit_code} showExitCode={false} />

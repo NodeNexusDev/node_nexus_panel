@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../../ui/Button'
@@ -38,6 +37,7 @@ export function DrawerExec({ node }: { node: Node }) {
   const [bulkResults, setBulkResults] = useState<Array<{ id: string; name: string; result: CommandResult }> | null>(null)
   const [customOutputs, setCustomOutputs] = useState<Array<{ command: string; result: CommandResult }>>([])
 
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies -- intentional reset of drawer state when the target node changes; key dep is sufficient, setters are stable */
   useEffect(() => {
     setSearch('')
     setSelectedIds(new Set())
@@ -49,6 +49,7 @@ export function DrawerExec({ node }: { node: Node }) {
     setCustomOutputs([])
     setTab('command')
   }, [node.id])
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies */
 
   const filtered = useMemo(() => commands.filter((c: CommandResponse) => c.name.toLowerCase().includes(search.toLowerCase())), [commands, search])
   const selectedCommands = useMemo(() => filtered.filter((c: CommandResponse) => selectedIds.has(c.id)), [filtered, selectedIds])
@@ -80,10 +81,12 @@ export function DrawerExec({ node }: { node: Node }) {
     setBulkResults(null)
   }
   const singleSelected = selectedCommands.length === 1 ? commands.find((c) => c.id === [...selectedIds][0]) ?? null : null
+  /* oxlint-disable react/set-state-in-effect -- derives default params from the single selected command; selection object identity changes only on user action */
   useEffect(() => {
     if (singleSelected) setParams(getDefaultParams(singleSelected.parameters))
     else setParams({})
   }, [singleSelected])
+  /* oxlint-enable react/set-state-in-effect */
 
   const handleRunCommand = () => {
     if (selectedIds.size === 0) return
@@ -223,6 +226,7 @@ export function DrawerExec({ node }: { node: Node }) {
                 <Button variant="ghost" size="sm" onClick={() => setCustomOutputs([])} className="h-6 px-2 text-xs">{t('common.clear')}</Button>
               </div>
               {customOutputs.map((item, i) => (
+                // oxlint-disable-next-line react/no-array-index-key -- append-only execution history without stable ids; entries never reorder
                 <div key={i} className="space-y-2">
                   <p className="text-xs font-mono text-surface-500">$ {item.command}</p>
                   <ExecutionResult stdout={item.result.stdout} stderr={item.result.stderr} exitCode={item.result.exit_code} />

@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '../ui/Badge'
@@ -30,6 +29,7 @@ export function ScriptBulkNodeResultItem({ result }: ScriptBulkNodeResultItemPro
       {expanded && (
         <div className="border-t border-surface-200 dark:border-surface-700 p-3 space-y-3">
           {result.steps.map((step, idx) => (
+            // oxlint-disable-next-line react/no-array-index-key -- execution steps are positional and append-only; rendered as Step N
             <div key={idx} className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-surface-700 dark:text-surface-300">

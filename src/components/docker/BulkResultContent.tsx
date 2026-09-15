@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useTranslation } from 'react-i18next'
 import { TableSkeleton } from '../ui/Skeleton'
 import type { BulkDockerResponse } from '../../api/types'

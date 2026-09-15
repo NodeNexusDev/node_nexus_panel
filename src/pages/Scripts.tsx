@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCallback } from 'react'
@@ -87,10 +86,10 @@ export function Scripts() {
   const allSelected = scripts.length > 0 && scripts.every((s) => selectedIds.includes(s.id))
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-  }, [])
+  }, [setSelectedIds])
   const toggleAll = useCallback(() => {
     setSelectedIds(allSelected ? [] : scripts.map((s) => s.id))
-  }, [allSelected, scripts])
+  }, [allSelected, scripts, setSelectedIds])
 
   const handleDelete = () => {
     if (!deleteTarget) return

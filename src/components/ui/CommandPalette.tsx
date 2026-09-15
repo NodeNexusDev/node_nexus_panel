@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -71,6 +70,7 @@ export function CommandPalette() {
 
   const previousFocusRef = useRef<HTMLElement | null>(null)
 
+  /* oxlint-disable react/set-state-in-effect -- command palette open/focus orchestration; runs on open state change only */
   useEffect(() => {
     if (isOpen) {
       previousFocusRef.current = document.activeElement as HTMLElement
@@ -81,10 +81,13 @@ export function CommandPalette() {
       previousFocusRef.current?.focus()
     }
   }, [isOpen])
+  /* oxlint-enable react/set-state-in-effect */
 
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies -- reset highlight when the query changes; query dep is sufficient, setter is stable */
   useEffect(() => {
     setSelectedIndex(0)
   }, [query])
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies */
 
   useEffect(() => {
     if (!listRef.current) return

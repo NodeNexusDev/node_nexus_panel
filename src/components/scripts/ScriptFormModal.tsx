@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'

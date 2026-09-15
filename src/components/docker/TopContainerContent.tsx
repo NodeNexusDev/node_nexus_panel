@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useTranslation } from 'react-i18next'
 import { TableSkeleton } from '../ui/Skeleton'
 import { useDockerContainerTop } from '../../hooks/useDocker'
@@ -26,6 +25,7 @@ export function TopContainerContent({ nodeId, containerId }: { nodeId: string; c
             {top.processes?.map((process) => (
               <tr key={process[0]} className="table-row-hover">
                 {process.map((cell: string, j: number) => (
+                  // oxlint-disable-next-line react/no-array-index-key -- columns are fixed positional slots from docker top output
                   <td key={j} className="px-3 py-2 text-sm text-surface-700 dark:text-surface-300 font-mono">{cell}</td>
                 ))}
               </tr>

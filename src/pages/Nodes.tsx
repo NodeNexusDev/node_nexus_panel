@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -131,11 +130,11 @@ export function Nodes() {
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-  }, [])
+  }, [setSelectedIds])
 
   const toggleAll = useCallback(() => {
     setSelectedIds(allSelected ? [] : nodes.map((n) => n.id))
-  }, [allSelected, nodes])
+  }, [allSelected, nodes, setSelectedIds])
 
   const handleAdd = (values: NodeCreateFormValues) => {
     createNode.mutate(

@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../ui/Modal'
@@ -42,6 +41,7 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
   const [bulkResult, setBulkResult] = useState<{ command: string; results: BulkNodeResult[] } | null>(null)
   const [bulkMultiResults, setBulkMultiResults] = useState<Array<{ name: string; results: BulkNodeResult[] }> | null>(null)
 
+  /* oxlint-disable react/set-state-in-effect -- intentional reset of tab/search/selection when the modal target changes */
   useEffect(() => {
     if (nodeIds.length > 0) {
       setTab('command')
@@ -53,16 +53,19 @@ export function BulkCommandModal({ nodeIds, onClose }: BulkCommandModalProps) {
       setBulkMultiResults(null)
     }
   }, [nodeIds])
+  /* oxlint-enable react/set-state-in-effect */
 
   const filtered = commands.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
   const allFilteredSelected = filtered.length > 0 && filtered.every((c) => selectedIds.has(c.id))
   const selectedCommands = commands.filter((c) => selectedIds.has(c.id))
   const singleSelected = selectedCommands.length === 1 ? selectedCommands[0] : null
 
+  /* oxlint-disable react/set-state-in-effect -- derives default params from the single selected command; selection object identity changes only on user action */
   useEffect(() => {
     if (singleSelected) setParams(getDefaultParams(singleSelected.parameters))
     else setParams({})
   }, [singleSelected])
+  /* oxlint-enable react/set-state-in-effect */
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {

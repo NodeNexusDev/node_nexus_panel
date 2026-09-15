@@ -1,4 +1,3 @@
-// oxlint-disable
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm, FormProvider, Controller, type Resolver } from 'react-hook-form'
@@ -88,10 +87,10 @@ export function Commands() {
   const allSelected = commands.length > 0 && commands.every((c) => selectedIds.includes(c.id))
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
-  }, [])
+  }, [setSelectedIds])
   const toggleAll = useCallback(() => {
     setSelectedIds(allSelected ? [] : commands.map((c) => c.id))
-  }, [allSelected, commands])
+  }, [allSelected, commands, setSelectedIds])
 
   const openCreate = () => {
     createForm.reset({ name: '', command: '', description: '', tags: [], parameters: [] })
