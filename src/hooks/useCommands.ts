@@ -140,16 +140,7 @@ export function useBulkRetryCommands() {
 export function useBulkDeleteCommands() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (ids: string[]) => {
-      const settled = await Promise.allSettled(ids.map((id) => commandsApi.remove(id)))
-      let succeeded = 0, failed = 0
-      const results: Array<{ id: string; status: 'success' | 'failed'; error?: string }> = []
-      settled.forEach((r, i) => {
-        if (r.status === 'fulfilled') { succeeded++; results.push({ id: ids[i], status: 'success' }) }
-        else { failed++; results.push({ id: ids[i], status: 'failed', error: String((r.reason as Error)?.message ?? r.reason) }) }
-      })
-      return { total: ids.length, succeeded, failed, results }
-    },
+    mutationFn: (ids: string[]) => commandsApi.bulkDelete({ ids }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['commands'] }),
   })
 }
@@ -170,12 +161,8 @@ export function useBulkCloneCommands() {
 export function useBulkUpdateCommands() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<CommandUpdate> }) => {
-      const settled = await Promise.allSettled(ids.map((id) => commandsApi.update(id, data as CommandUpdate)))
-      let succeeded = 0, failed = 0
-      settled.forEach((r) => { if (r.status === 'fulfilled') succeeded++; else failed++ })
-      return { total: ids.length, succeeded, failed, results: settled.map((r, i) => ({ id: ids[i], status: r.status === 'fulfilled' ? 'success' as const : 'failed' as const })) }
-    },
+    mutationFn: ({ ids, data }: { ids: string[]; data: Partial<CommandUpdate> }) =>
+      commandsApi.bulkUpdate({ updates: ids.map((id) => ({ id, changes: data as CommandUpdate })) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['commands'] }),
   })
 }
