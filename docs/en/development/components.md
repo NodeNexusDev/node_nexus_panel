@@ -2,7 +2,7 @@
 title: Components
 status: stable
 translation_key: development.components
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Components
@@ -65,7 +65,21 @@ src/
 │   │   ├── ThemeToggle.tsx
 │   │   └── MobileMenu.tsx
 │   ├── nodes/            # Node-specific components
-│   │   └── ConnectionTypeSelect.tsx
+│   │   ├── NodesTable.tsx
+│   │   ├── NodesFilters.tsx
+│   │   ├── NodesForms.tsx
+│   │   ├── NodesBulkBar.tsx
+│   │   ├── NodeDrawer.tsx
+│   │   ├── ConnectionTypeSelect.tsx
+│   │   ├── connection-types.ts
+│   │   └── drawer/       # Node drawer tabs
+│   │       ├── DrawerOverview.tsx
+│   │       ├── DrawerMetrics.tsx
+│   │       ├── DrawerStats.tsx
+│   │       ├── DrawerHistory.tsx
+│   │       ├── DrawerExec.tsx
+│   │       ├── DrawerScript.tsx
+│   │       └── DrawerMetricBar.tsx
 │   └── scripts/          # Script-specific components
 ├── pages/                # Route-level components
 ├── hooks/                # Custom React hooks
@@ -335,7 +349,31 @@ Filter controls bar for list pages.
 
 | Component | Description |
 |-----------|-------------|
+| `NodesTable` | Responsive node table with selection, sorting, tag filters, Docker/status badges |
+| `NodesFilters` | Search + tag filter bar for the node list |
+| `NodesForms` | Create/Edit modals and Bulk Update form (`react-hook-form`) |
+| `NodesBulkBar` | Bulk actions toolbar (Check, Metrics, Update, Validate, Delete, Exec, Script) |
+| `NodeDrawer` | Detail drawer shell with 7 tabs wiring the subcomponents below |
+| `DrawerOverview` | Overview tab: host:port, description, connection, tags, timestamps |
+| `DrawerMetrics` | Metrics tab: live CPU/memory/disk via `GET /nodes/{id}/metrics` |
+| `DrawerStats` | Stats tab: command stats with `date_from/date_to` range |
+| `DrawerHistory` | History tab: status + command history (infinite lists, retry) |
+| `DrawerExec` | Exec tab: run command/custom shell on the node |
+| `DrawerScript` | Script tab: run a script on the node |
+| `DrawerMetricBar` | Reusable metrics progress bar used by `DrawerMetrics` |
 | `ConnectionTypeSelect` | SSH/Docker/Proxmox connection type selector |
+| `connection-types.ts` | Connection type constants and `CONNECTION_TYPE_OPTIONS` |
+
+## Hooks (`src/hooks/`)
+
+### Docker
+
+| Hook | Lines | Description |
+|------|-------|-------------|
+| `useDocker` | 404 | Single-item Docker hooks: containers, images, networks, volumes, Compose |
+| `useDockerBulk` | 242 | Bulk Docker operations: exec, start/stop/restart, remove, pull/build/inspect, logs, stats, kill |
+
+The former monolithic `useDocker` (643 lines) was split into `useDocker` (404) + `useDockerBulk` (242).
 
 ## Conventions
 

@@ -2,7 +2,7 @@
 title: Local Setup
 status: stable
 translation_key: development.local_setup
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Local Setup

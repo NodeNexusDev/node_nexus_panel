@@ -489,6 +489,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/commands/{command_id}/executions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Command Executions By Command
+         * @description RESTful alias for per-command executions (bulk-first consistency).
+         */
+        get: operations["get_api_v2_commands_command_id_executions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/commands/{command_id}/stats": {
         parameters: {
             query?: never;
@@ -3836,6 +3856,12 @@ export interface components {
             parameters?: components["schemas"]["CommandParameter-Input"][];
             /** Tags */
             tags?: string[];
+            /**
+             * Timeout
+             * @description Execution timeout in seconds (1..3600)
+             * @default 30
+             */
+            timeout: number;
         };
         /** CommandDeletionsRequest */
         CommandDeletionsRequest: {
@@ -3857,6 +3883,11 @@ export interface components {
             params?: {
                 [key: string]: components["schemas"]["JsonObject-Input"];
             };
+            /**
+             * Timeout
+             * @description Optional timeout override (1..3600)
+             */
+            timeout?: number | null;
         };
         /**
          * CommandExport
@@ -3996,6 +4027,8 @@ export interface components {
             parameters: components["schemas"]["CommandParameter-Output"][] | null;
             /** Tags */
             tags: string[];
+            /** Timeout */
+            timeout: number;
             /**
              * Updated At
              * Format: date-time
@@ -4017,6 +4050,11 @@ export interface components {
             parameters?: components["schemas"]["CommandParameter-Input"][] | null;
             /** Tags */
             tags?: string[] | null;
+            /**
+             * Timeout
+             * @description Optional timeout override (1..3600)
+             */
+            timeout?: number | null;
         };
         /**
          * ComposeActionResponse
@@ -5593,19 +5631,6 @@ export interface components {
             scripts?: components["schemas"]["DryRunScriptPreview"][];
         };
         /**
-         * ErrorResponse
-         * @description Unified error response schema — always 4 fields.
-         */
-        ErrorResponse: {
-            /** Code */
-            code: string;
-            detail?: components["schemas"]["JsonValue-Output"] | null;
-            /** Message */
-            message: string;
-            /** Request Id */
-            request_id?: string | null;
-        };
-        /**
          * ExecutionCancelsRequest
          * @description Request to cancel multiple executions.
          */
@@ -6439,6 +6464,28 @@ export interface components {
             version?: string | null;
         };
         /**
+         * ProblemResponse
+         * @description RFC 9457 problem+json with legacy compat members.
+         */
+        ProblemResponse: {
+            /** Code */
+            code?: string | null;
+            /** Detail */
+            detail?: string | null;
+            /** Instance */
+            instance?: string | null;
+            /** Message */
+            message?: string | null;
+            /** Request Id */
+            request_id?: string | null;
+            /** Status */
+            status: number;
+            /** Title */
+            title: string;
+            /** Type */
+            type: string;
+        };
+        /**
          * RawExecutionsRequest
          * @description Bulk raw command executions.
          */
@@ -6449,6 +6496,11 @@ export interface components {
             node_ids?: string[];
             /** Node Tags */
             node_tags?: string[];
+            /**
+             * Timeout
+             * @description Optional timeout override (1..3600)
+             */
+            timeout?: number | null;
         };
         /**
          * ReadyCheck
@@ -6751,6 +6803,12 @@ export interface components {
             steps: components["schemas"]["ScriptStep-Input"][];
             /** Tags */
             tags?: string[];
+            /**
+             * Timeout
+             * @description Execution timeout in seconds (1..3600)
+             * @default 30
+             */
+            timeout: number;
         };
         /** ScriptDeletionsRequest */
         ScriptDeletionsRequest: {
@@ -6805,6 +6863,11 @@ export interface components {
             };
             /** Script Ids */
             script_ids: string[];
+            /**
+             * Timeout
+             * @description Optional timeout override (1..3600)
+             */
+            timeout?: number | null;
         };
         /**
          * ScriptExport
@@ -6857,6 +6920,8 @@ export interface components {
             steps: components["schemas"]["ScriptStep-Output"][];
             /** Tags */
             tags: string[];
+            /** Timeout */
+            timeout: number;
             /**
              * Updated At
              * Format: date-time
@@ -6964,6 +7029,11 @@ export interface components {
             steps?: components["schemas"]["ScriptStep-Input"][] | null;
             /** Tags */
             tags?: string[] | null;
+            /**
+             * Timeout
+             * @description Optional timeout override (1..3600)
+             */
+            timeout?: number | null;
         };
         /**
          * SearchResultItem
@@ -7188,7 +7258,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -7197,7 +7267,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -7206,7 +7276,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -7215,7 +7285,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -7224,7 +7294,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -7233,7 +7303,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -7242,7 +7330,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -7251,7 +7339,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -7260,7 +7348,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -7293,7 +7381,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -7302,7 +7390,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -7311,7 +7399,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -7320,7 +7408,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -7329,7 +7417,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -7338,7 +7426,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -7347,7 +7453,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -7356,7 +7462,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -7365,7 +7471,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -7398,7 +7504,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -7407,7 +7513,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -7416,7 +7522,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -7425,7 +7531,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -7434,7 +7540,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -7443,7 +7549,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -7452,7 +7576,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -7461,7 +7585,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -7470,7 +7594,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -7501,7 +7625,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -7510,7 +7634,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -7519,7 +7643,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -7528,7 +7652,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -7537,7 +7661,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -7546,7 +7670,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -7555,7 +7697,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -7564,7 +7706,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -7573,7 +7715,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -7602,7 +7744,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -7611,7 +7753,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -7620,7 +7762,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -7629,7 +7771,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -7638,7 +7780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -7647,7 +7789,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -7656,7 +7816,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -7665,7 +7825,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -7674,7 +7834,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -7709,7 +7869,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -7718,7 +7878,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -7727,7 +7887,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -7736,7 +7896,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -7745,7 +7905,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -7754,7 +7914,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -7763,7 +7941,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -7772,7 +7950,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -7781,7 +7959,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -7825,7 +8003,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -7834,7 +8012,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -7843,7 +8021,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -7852,7 +8030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -7861,7 +8039,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -7870,7 +8048,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -7879,7 +8075,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -7888,7 +8084,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -7897,7 +8093,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -7927,7 +8123,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -7936,7 +8132,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -7945,7 +8141,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -7954,7 +8150,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -7963,7 +8159,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -7972,7 +8168,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -7981,7 +8195,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -7990,7 +8204,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -7999,7 +8213,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8044,7 +8258,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8053,7 +8267,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8062,7 +8276,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -8071,7 +8285,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -8080,7 +8294,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -8089,7 +8303,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -8098,7 +8330,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -8107,7 +8339,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -8116,7 +8348,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8152,7 +8384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8161,7 +8393,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8170,7 +8402,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -8179,7 +8411,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -8188,7 +8420,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -8197,7 +8429,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -8206,7 +8456,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -8215,7 +8465,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -8224,7 +8474,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8255,7 +8505,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8264,7 +8514,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8273,7 +8523,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -8282,7 +8532,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -8291,7 +8541,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -8300,7 +8550,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -8309,7 +8577,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -8318,7 +8586,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -8327,7 +8595,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8418,7 +8686,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8427,7 +8695,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8436,7 +8704,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -8445,7 +8713,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -8454,7 +8722,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -8463,7 +8731,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -8472,7 +8758,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -8481,7 +8767,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -8490,7 +8776,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8559,7 +8845,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8568,7 +8854,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8577,7 +8863,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -8586,7 +8872,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -8595,7 +8881,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -8604,7 +8890,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -8613,7 +8917,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -8622,7 +8926,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -8631,7 +8935,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8664,7 +8968,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8673,7 +8977,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8682,7 +8986,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -8691,7 +8995,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -8700,7 +9004,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -8709,7 +9013,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -8718,7 +9040,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -8727,7 +9049,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -8736,7 +9058,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8769,7 +9091,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8778,7 +9100,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8787,7 +9109,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -8796,7 +9118,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -8805,7 +9127,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -8814,7 +9136,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -8823,7 +9163,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -8832,7 +9172,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -8841,7 +9181,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8874,7 +9214,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8883,7 +9223,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8892,7 +9232,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -8901,7 +9241,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -8910,7 +9250,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -8919,7 +9259,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -8928,7 +9286,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -8937,7 +9295,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -8946,7 +9304,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -8979,7 +9337,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -8988,7 +9346,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -8997,7 +9355,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9006,7 +9364,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9015,7 +9373,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9024,7 +9382,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9033,7 +9409,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9042,7 +9418,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9051,7 +9427,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9084,7 +9460,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9093,7 +9469,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9102,7 +9478,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9111,7 +9487,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9120,7 +9496,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9129,7 +9505,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9138,7 +9532,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9147,7 +9541,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9156,7 +9550,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9192,7 +9586,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9201,7 +9595,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9210,7 +9604,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9219,7 +9613,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9228,7 +9622,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9237,7 +9631,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9246,7 +9658,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9255,7 +9667,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9264,7 +9676,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9297,7 +9709,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9306,7 +9718,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9315,7 +9727,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9324,7 +9736,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9333,7 +9745,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9342,7 +9754,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9351,7 +9781,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9360,7 +9790,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9369,7 +9799,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9405,7 +9835,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9414,7 +9844,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9423,7 +9853,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9432,7 +9862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9441,7 +9871,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9450,7 +9880,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9459,7 +9907,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9468,7 +9916,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9477,7 +9925,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9510,7 +9958,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9519,7 +9967,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9528,7 +9976,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9537,7 +9985,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9546,7 +9994,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9555,7 +10003,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9564,7 +10030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9573,7 +10039,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9582,7 +10048,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9617,7 +10083,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9626,7 +10092,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9635,7 +10101,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9644,7 +10110,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9653,7 +10119,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9662,7 +10128,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9671,7 +10155,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9680,7 +10164,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9689,7 +10173,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9720,7 +10204,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9729,7 +10213,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9738,7 +10222,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9747,7 +10231,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9756,7 +10240,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9765,7 +10249,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9774,7 +10276,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9783,7 +10285,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9792,7 +10294,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9821,7 +10323,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9830,7 +10332,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9839,7 +10341,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9848,7 +10350,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9857,7 +10359,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9866,7 +10368,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9875,7 +10395,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9884,7 +10404,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -9893,7 +10413,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -9928,7 +10448,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -9937,7 +10457,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -9946,7 +10466,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -9955,7 +10475,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -9964,7 +10484,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -9973,7 +10493,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -9982,7 +10520,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -9991,7 +10529,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10000,7 +10538,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10033,7 +10571,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10042,7 +10580,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10051,7 +10589,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10060,7 +10598,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10069,7 +10607,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10078,7 +10616,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10087,7 +10643,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10096,7 +10652,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10105,7 +10661,132 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+        };
+    };
+    get_api_v2_commands_command_id_executions: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor for pagination */
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                command_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPage_CommandHistoryResponse_"];
+                };
+            };
+            /** @description Authentication credentials are missing or invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The authenticated principal lacks the required permission. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested resource was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The request conflicts with the current resource state. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The request or a domain value failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The configured request rate limit was exceeded. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description Upstream Docker daemon returned a bad gateway. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description A required backend or remote service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description Remote operation timed out. */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10140,7 +10821,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10149,7 +10830,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10158,7 +10839,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10167,7 +10848,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10176,7 +10857,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10185,7 +10866,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10194,7 +10893,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10203,7 +10902,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10212,7 +10911,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10241,7 +10940,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10250,7 +10949,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10259,7 +10958,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10268,7 +10967,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10277,7 +10976,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10286,7 +10985,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10295,7 +11012,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10304,7 +11021,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10313,7 +11030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10346,7 +11063,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10355,7 +11072,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10364,7 +11081,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10373,7 +11090,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10382,7 +11099,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10391,7 +11108,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10400,7 +11135,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10409,7 +11144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10418,7 +11153,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10447,7 +11182,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10456,7 +11191,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10465,7 +11200,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10474,7 +11209,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10483,7 +11218,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10492,7 +11227,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10501,7 +11254,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10510,7 +11263,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10519,7 +11272,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10555,7 +11308,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10564,7 +11317,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10573,7 +11326,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10582,7 +11335,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10591,7 +11344,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10600,7 +11353,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10609,7 +11380,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10618,7 +11389,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10627,7 +11398,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10660,7 +11431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10669,7 +11440,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10678,7 +11449,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10687,7 +11458,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10696,7 +11467,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10705,7 +11476,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10714,7 +11503,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10723,7 +11512,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10732,7 +11521,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10764,7 +11553,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10773,7 +11562,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10782,7 +11571,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10791,7 +11580,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10800,7 +11589,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10809,7 +11598,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10818,7 +11625,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10827,7 +11634,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10836,7 +11643,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10866,7 +11673,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10875,7 +11682,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10884,7 +11691,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -10893,7 +11700,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -10902,7 +11709,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -10911,7 +11718,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -10920,7 +11745,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -10929,7 +11754,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -10938,7 +11763,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -10974,7 +11799,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -10983,7 +11808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -10992,7 +11817,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11001,7 +11826,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11010,7 +11835,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11019,7 +11844,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11028,7 +11871,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11037,7 +11880,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11046,7 +11889,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11084,7 +11927,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11093,7 +11936,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11102,7 +11945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11111,7 +11954,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11120,7 +11963,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11129,7 +11972,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11138,7 +11999,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11147,7 +12008,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11156,7 +12017,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11189,7 +12050,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11198,7 +12059,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11207,7 +12068,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11216,7 +12077,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11225,7 +12086,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11234,7 +12095,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11243,7 +12122,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11252,7 +12131,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11261,7 +12140,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11294,7 +12173,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11303,7 +12182,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11312,7 +12191,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11321,7 +12200,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11330,7 +12209,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11339,7 +12218,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11348,7 +12245,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11357,7 +12254,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11366,7 +12263,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11402,7 +12299,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11411,7 +12308,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11420,7 +12317,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11429,7 +12326,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11438,7 +12335,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11447,7 +12344,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11456,7 +12371,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11465,7 +12380,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11474,7 +12389,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11507,7 +12422,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11516,7 +12431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11525,7 +12440,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11534,7 +12449,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11543,7 +12458,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11552,7 +12467,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11561,7 +12494,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11570,7 +12503,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11579,7 +12512,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11612,7 +12545,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11621,7 +12554,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11630,7 +12563,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11639,7 +12572,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11648,7 +12581,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11657,7 +12590,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11666,7 +12617,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11675,7 +12626,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11684,7 +12635,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11717,7 +12668,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11726,7 +12677,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11735,7 +12686,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11744,7 +12695,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11753,7 +12704,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11762,7 +12713,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11771,7 +12740,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11780,7 +12749,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11789,7 +12758,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11820,7 +12789,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11829,7 +12798,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11838,7 +12807,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11847,7 +12816,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11856,7 +12825,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11865,7 +12834,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11874,7 +12861,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11883,7 +12870,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11892,7 +12879,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -11921,7 +12908,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -11930,7 +12917,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -11939,7 +12926,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -11948,7 +12935,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -11957,7 +12944,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -11966,7 +12953,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -11975,7 +12980,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -11984,7 +12989,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -11993,7 +12998,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12028,7 +13033,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12037,7 +13042,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12046,7 +13051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12055,7 +13060,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12064,7 +13069,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12073,7 +13078,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12082,7 +13105,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12091,7 +13114,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12100,7 +13123,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12136,7 +13159,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12145,7 +13168,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12154,7 +13177,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12163,7 +13186,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12172,7 +13195,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12181,7 +13204,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12190,7 +13231,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12199,7 +13240,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12208,7 +13249,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12243,7 +13284,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12252,7 +13293,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12261,7 +13302,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12270,7 +13311,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12279,7 +13320,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12288,7 +13329,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12297,7 +13356,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12306,7 +13365,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12315,7 +13374,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12347,7 +13406,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12356,7 +13415,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12365,7 +13424,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12374,7 +13433,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12383,7 +13442,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12392,7 +13451,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12401,7 +13478,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12410,7 +13487,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12419,7 +13496,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12449,7 +13526,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12458,7 +13535,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12467,7 +13544,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12476,7 +13553,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12485,7 +13562,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12494,7 +13571,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12503,7 +13598,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12512,7 +13607,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12521,7 +13616,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12557,7 +13652,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12566,7 +13661,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12575,7 +13670,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12584,7 +13679,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12593,7 +13688,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12602,7 +13697,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12611,7 +13724,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12620,7 +13733,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12629,7 +13742,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12667,7 +13780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12676,7 +13789,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12685,7 +13798,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12694,7 +13807,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12703,7 +13816,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12712,7 +13825,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12721,7 +13852,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12730,7 +13861,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12739,7 +13870,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12771,7 +13902,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12780,7 +13911,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12789,7 +13920,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12798,7 +13929,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12807,7 +13938,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12816,7 +13947,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12825,7 +13974,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12834,7 +13983,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12843,7 +13992,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12879,7 +14028,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12888,7 +14037,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -12897,7 +14046,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -12906,7 +14055,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -12915,7 +14064,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -12924,7 +14073,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -12933,7 +14100,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -12942,7 +14109,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -12951,7 +14118,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -12987,7 +14154,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -12996,7 +14163,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13005,7 +14172,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13014,7 +14181,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13023,7 +14190,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13032,7 +14199,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13041,7 +14226,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13050,7 +14235,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13059,7 +14244,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13095,7 +14280,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13104,7 +14289,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13113,7 +14298,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13122,7 +14307,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13131,7 +14316,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13140,7 +14325,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13149,7 +14352,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13158,7 +14361,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13167,7 +14370,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13199,7 +14402,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13208,7 +14411,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13217,7 +14420,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13226,7 +14429,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13235,7 +14438,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13244,7 +14447,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13253,7 +14474,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13262,7 +14483,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13271,7 +14492,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13307,7 +14528,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13316,7 +14537,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13325,7 +14546,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13334,7 +14555,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13343,7 +14564,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13352,7 +14573,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13361,7 +14600,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13370,7 +14609,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13379,7 +14618,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13416,7 +14655,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13425,7 +14664,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13434,7 +14673,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13443,7 +14682,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13452,7 +14691,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13461,7 +14700,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13470,7 +14727,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13479,7 +14736,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13488,7 +14745,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13524,7 +14781,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13533,7 +14790,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13542,7 +14799,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13551,7 +14808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13560,7 +14817,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13569,7 +14826,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13578,7 +14853,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13587,7 +14862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13596,7 +14871,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13631,7 +14906,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13640,7 +14915,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13649,7 +14924,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13658,7 +14933,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13667,7 +14942,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13676,7 +14951,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13685,7 +14978,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13694,7 +14987,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13703,7 +14996,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13737,7 +15030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13746,7 +15039,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13755,7 +15048,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13764,7 +15057,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13773,7 +15066,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13782,7 +15075,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13791,7 +15102,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13800,7 +15111,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13809,7 +15120,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13845,7 +15156,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13854,7 +15165,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13863,7 +15174,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13872,7 +15183,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13881,7 +15192,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13890,7 +15201,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -13899,7 +15228,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -13908,7 +15237,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -13917,7 +15246,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -13953,7 +15282,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -13962,7 +15291,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -13971,7 +15300,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -13980,7 +15309,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -13989,7 +15318,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -13998,7 +15327,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14007,7 +15354,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14016,7 +15363,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14025,7 +15372,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14063,7 +15410,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14072,7 +15419,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14081,7 +15428,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14090,7 +15437,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14099,7 +15446,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14108,7 +15455,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14117,7 +15482,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14126,7 +15491,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14135,7 +15500,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14173,7 +15538,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14182,7 +15547,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14191,7 +15556,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14200,7 +15565,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14209,7 +15574,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14218,7 +15583,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14227,7 +15610,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14236,7 +15619,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14245,7 +15628,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14281,7 +15664,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14290,7 +15673,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14299,7 +15682,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14308,7 +15691,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14317,7 +15700,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14326,7 +15709,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14335,7 +15736,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14344,7 +15745,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14353,7 +15754,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14389,7 +15790,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14398,7 +15799,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14407,7 +15808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14416,7 +15817,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14425,7 +15826,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14434,7 +15835,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14443,7 +15862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14452,7 +15871,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14461,7 +15880,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14499,7 +15918,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14508,7 +15927,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14517,7 +15936,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14526,7 +15945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14535,7 +15954,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14544,7 +15963,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14553,7 +15990,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14562,7 +15999,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14571,7 +16008,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14605,7 +16042,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14614,7 +16051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14623,7 +16060,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14632,7 +16069,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14641,7 +16078,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14650,7 +16087,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14659,7 +16114,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14668,7 +16123,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14677,7 +16132,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14713,7 +16168,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14722,7 +16177,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14731,7 +16186,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14740,7 +16195,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14749,7 +16204,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14758,7 +16213,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14767,7 +16240,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14776,7 +16249,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14785,7 +16258,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14821,7 +16294,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14830,7 +16303,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14839,7 +16312,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14848,7 +16321,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14857,7 +16330,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14866,7 +16339,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14875,7 +16366,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14884,7 +16375,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14893,7 +16384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -14925,7 +16416,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -14934,7 +16425,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -14943,7 +16434,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -14952,7 +16443,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -14961,7 +16452,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -14970,7 +16461,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -14979,7 +16488,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -14988,7 +16497,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -14997,7 +16506,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15035,7 +16544,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15044,7 +16553,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15053,7 +16562,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15062,7 +16571,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15071,7 +16580,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15080,7 +16589,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15089,7 +16616,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15098,7 +16625,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15107,7 +16634,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15142,7 +16669,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15151,7 +16678,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15160,7 +16687,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15169,7 +16696,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15178,7 +16705,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15187,7 +16714,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15196,7 +16741,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15205,7 +16750,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15214,7 +16759,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15249,7 +16794,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15258,7 +16803,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15267,7 +16812,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15276,7 +16821,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15285,7 +16830,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15294,7 +16839,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15303,7 +16866,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15312,7 +16875,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15321,7 +16884,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15356,7 +16919,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15365,7 +16928,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15374,7 +16937,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15383,7 +16946,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15392,7 +16955,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15401,7 +16964,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15410,7 +16991,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15419,7 +17000,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15428,7 +17009,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15463,7 +17044,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15472,7 +17053,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15481,7 +17062,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15490,7 +17071,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15499,7 +17080,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15508,7 +17089,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15517,7 +17116,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15526,7 +17125,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15535,7 +17134,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15570,7 +17169,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15579,7 +17178,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15588,7 +17187,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15597,7 +17196,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15606,7 +17205,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15615,7 +17214,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15624,7 +17241,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15633,7 +17250,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15642,7 +17259,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15677,7 +17294,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15686,7 +17303,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15695,7 +17312,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15704,7 +17321,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15713,7 +17330,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15722,7 +17339,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15731,7 +17366,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15740,7 +17375,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15749,7 +17384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15780,7 +17415,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15789,7 +17424,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15798,7 +17433,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15807,7 +17442,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15816,7 +17451,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15825,7 +17460,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15834,7 +17487,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15843,7 +17496,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15852,7 +17505,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15889,7 +17542,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -15898,7 +17551,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -15907,7 +17560,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -15916,7 +17569,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -15925,7 +17578,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -15934,7 +17587,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -15943,7 +17614,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -15952,7 +17623,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -15961,7 +17632,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -15998,7 +17669,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16007,7 +17678,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16016,7 +17687,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16025,7 +17696,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16034,7 +17705,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16043,7 +17714,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16052,7 +17741,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16061,7 +17750,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16070,7 +17759,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16105,7 +17794,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16114,7 +17803,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16123,7 +17812,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16132,7 +17821,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16141,7 +17830,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16150,7 +17839,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16159,7 +17866,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16168,7 +17875,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16177,7 +17884,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16212,7 +17919,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16221,7 +17928,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16230,7 +17937,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16239,7 +17946,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16248,7 +17955,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16257,7 +17964,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16266,7 +17991,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16275,7 +18000,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16284,7 +18009,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16321,7 +18046,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16330,7 +18055,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16339,7 +18064,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16348,7 +18073,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16357,7 +18082,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16366,7 +18091,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16375,7 +18118,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16384,7 +18127,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16393,7 +18136,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16428,7 +18171,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16437,7 +18180,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16446,7 +18189,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16455,7 +18198,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16464,7 +18207,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16473,7 +18216,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16482,7 +18243,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16491,7 +18252,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16500,7 +18261,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16535,7 +18296,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16544,7 +18305,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16553,7 +18314,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16562,7 +18323,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16571,7 +18332,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16580,7 +18341,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16589,7 +18368,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16598,7 +18377,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16607,7 +18386,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16639,7 +18418,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16648,7 +18427,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16657,7 +18436,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16666,7 +18445,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16675,7 +18454,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16684,7 +18463,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16693,7 +18490,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16702,7 +18499,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16711,7 +18508,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16743,7 +18540,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16752,7 +18549,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16761,7 +18558,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16770,7 +18567,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16779,7 +18576,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16788,7 +18585,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16797,7 +18612,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16806,7 +18621,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16815,7 +18630,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16849,7 +18664,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16858,7 +18673,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16867,7 +18682,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16876,7 +18691,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16885,7 +18700,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -16894,7 +18709,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -16903,7 +18736,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -16912,7 +18745,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -16921,7 +18754,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -16957,7 +18790,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -16966,7 +18799,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -16975,7 +18808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -16984,7 +18817,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -16993,7 +18826,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17002,7 +18835,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17011,7 +18862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17020,7 +18871,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17029,7 +18880,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17065,7 +18916,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17074,7 +18925,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17083,7 +18934,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17092,7 +18943,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17101,7 +18952,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17110,7 +18961,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17119,7 +18988,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17128,7 +18997,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17137,7 +19006,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17173,7 +19042,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17182,7 +19051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17191,7 +19060,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17200,7 +19069,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17209,7 +19078,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17218,7 +19087,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17227,7 +19114,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17236,7 +19123,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17245,7 +19132,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17280,7 +19167,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17289,7 +19176,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17298,7 +19185,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17307,7 +19194,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17316,7 +19203,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17325,7 +19212,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17334,7 +19239,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17343,7 +19248,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17352,7 +19257,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17384,7 +19289,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17393,7 +19298,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17402,7 +19307,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17411,7 +19316,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17420,7 +19325,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17429,7 +19334,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17438,7 +19361,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17447,7 +19370,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17456,7 +19379,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17490,7 +19413,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17499,7 +19422,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17508,7 +19431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17517,7 +19440,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17526,7 +19449,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17535,7 +19458,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17544,7 +19485,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17553,7 +19494,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17562,7 +19503,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17598,7 +19539,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17607,7 +19548,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17616,7 +19557,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17625,7 +19566,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17634,7 +19575,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17643,7 +19584,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17652,7 +19611,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17661,7 +19620,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17670,7 +19629,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17702,7 +19661,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17711,7 +19670,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17720,7 +19679,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17729,7 +19688,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17738,7 +19697,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17747,7 +19706,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17756,7 +19733,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17765,7 +19742,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17774,7 +19751,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17804,7 +19781,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17813,7 +19790,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17822,7 +19799,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17831,7 +19808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17840,7 +19817,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17849,7 +19826,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17858,7 +19853,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17867,7 +19862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17876,7 +19871,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -17908,7 +19903,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -17917,7 +19912,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -17926,7 +19921,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -17935,7 +19930,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -17944,7 +19939,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -17953,7 +19948,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -17962,7 +19975,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -17971,7 +19984,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -17980,7 +19993,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18012,7 +20025,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18021,7 +20034,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18030,7 +20043,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18039,7 +20052,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18048,7 +20061,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18057,7 +20070,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18066,7 +20097,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18075,7 +20106,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18084,7 +20115,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18116,7 +20147,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18125,7 +20156,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18134,7 +20165,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18143,7 +20174,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18152,7 +20183,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18161,7 +20192,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18170,7 +20219,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18179,7 +20228,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18188,7 +20237,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18220,7 +20269,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18229,7 +20278,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18238,7 +20287,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18247,7 +20296,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18256,7 +20305,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18265,7 +20314,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18274,7 +20341,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18283,7 +20350,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18292,7 +20359,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18328,7 +20395,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18337,7 +20404,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18346,7 +20413,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18355,7 +20422,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18364,7 +20431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18373,7 +20440,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18382,7 +20467,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18391,7 +20476,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18400,7 +20485,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18434,7 +20519,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18443,7 +20528,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18452,7 +20537,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18461,7 +20546,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18470,7 +20555,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18479,7 +20564,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18488,7 +20591,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18497,7 +20600,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18506,7 +20609,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18542,7 +20645,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18551,7 +20654,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18560,7 +20663,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18569,7 +20672,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18578,7 +20681,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18587,7 +20690,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18596,7 +20717,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18605,7 +20726,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18614,7 +20735,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18649,7 +20770,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18658,7 +20779,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18667,7 +20788,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18676,7 +20797,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18685,7 +20806,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18694,7 +20815,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18703,7 +20842,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18712,7 +20851,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18721,7 +20860,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18752,7 +20891,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18761,7 +20900,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18770,7 +20909,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18779,7 +20918,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18788,7 +20927,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18797,7 +20936,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18806,7 +20963,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18815,7 +20972,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18824,7 +20981,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18859,7 +21016,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18868,7 +21025,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18877,7 +21034,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18886,7 +21043,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -18895,7 +21052,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -18904,7 +21061,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -18913,7 +21088,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -18922,7 +21097,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -18931,7 +21106,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -18966,7 +21141,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -18975,7 +21150,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -18984,7 +21159,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -18993,7 +21168,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19002,7 +21177,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19011,7 +21186,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19020,7 +21213,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19029,7 +21222,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19038,7 +21231,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19073,7 +21266,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19082,7 +21275,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19091,7 +21284,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19100,7 +21293,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19109,7 +21302,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19118,7 +21311,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19127,7 +21338,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19136,7 +21347,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19145,7 +21356,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19180,7 +21391,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19189,7 +21400,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19198,7 +21409,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19207,7 +21418,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19216,7 +21427,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19225,7 +21436,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19234,7 +21463,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19243,7 +21472,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19252,7 +21481,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19284,7 +21513,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19293,7 +21522,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19302,7 +21531,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19311,7 +21540,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19320,7 +21549,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19329,7 +21558,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19338,7 +21585,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19347,7 +21594,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19356,7 +21603,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19386,7 +21633,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19395,7 +21642,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19404,7 +21651,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19413,7 +21660,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19422,7 +21669,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19431,7 +21678,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19440,7 +21705,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19449,7 +21714,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19458,7 +21723,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19490,7 +21755,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19499,7 +21764,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19508,7 +21773,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19517,7 +21782,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19526,7 +21791,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19535,7 +21800,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19544,7 +21827,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19553,7 +21836,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19562,7 +21845,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19594,7 +21877,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19603,7 +21886,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19612,7 +21895,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19621,7 +21904,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19630,7 +21913,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19639,7 +21922,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19648,7 +21949,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19657,7 +21958,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19666,7 +21967,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19702,7 +22003,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19711,7 +22012,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19720,7 +22021,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19729,7 +22030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19738,7 +22039,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19747,7 +22048,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19756,7 +22075,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19765,7 +22084,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19774,7 +22093,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19810,7 +22129,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19819,7 +22138,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19828,7 +22147,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19837,7 +22156,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19846,7 +22165,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19855,7 +22174,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19864,7 +22201,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19873,7 +22210,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19882,7 +22219,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -19917,7 +22254,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -19926,7 +22263,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -19935,7 +22272,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -19944,7 +22281,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -19953,7 +22290,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -19962,7 +22299,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -19971,7 +22326,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -19980,7 +22335,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -19989,7 +22344,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20020,7 +22375,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20029,7 +22384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20038,7 +22393,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20047,7 +22402,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20056,7 +22411,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20065,7 +22420,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20074,7 +22447,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20083,7 +22456,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20092,7 +22465,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20127,7 +22500,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20136,7 +22509,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20145,7 +22518,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20154,7 +22527,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20163,7 +22536,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20172,7 +22545,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20181,7 +22572,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20190,7 +22581,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20199,7 +22590,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20231,7 +22622,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20240,7 +22631,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20249,7 +22640,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20258,7 +22649,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20267,7 +22658,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20276,7 +22667,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20285,7 +22694,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20294,7 +22703,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20303,7 +22712,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20333,7 +22742,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20342,7 +22751,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20351,7 +22760,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20360,7 +22769,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20369,7 +22778,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20378,7 +22787,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20387,7 +22814,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20396,7 +22823,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20405,7 +22832,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20441,7 +22868,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20450,7 +22877,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20459,7 +22886,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20468,7 +22895,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20477,7 +22904,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20486,7 +22913,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20495,7 +22940,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20504,7 +22949,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20513,7 +22958,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20549,7 +22994,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20558,7 +23003,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20567,7 +23012,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20576,7 +23021,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20585,7 +23030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20594,7 +23039,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20603,7 +23066,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20612,7 +23075,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20621,7 +23084,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20652,7 +23115,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20661,7 +23124,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20670,7 +23133,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20679,7 +23142,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20688,7 +23151,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20697,7 +23160,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20706,7 +23187,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20715,7 +23196,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20724,7 +23205,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20755,7 +23236,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20764,7 +23245,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20773,7 +23254,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20782,7 +23263,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20791,7 +23272,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20800,7 +23281,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20809,7 +23308,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20818,7 +23317,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20827,7 +23326,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20860,7 +23359,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20869,7 +23368,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20878,7 +23377,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20887,7 +23386,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20896,7 +23395,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -20905,7 +23404,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -20914,7 +23431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -20923,7 +23440,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -20932,7 +23449,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -20963,7 +23480,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -20972,7 +23489,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -20981,7 +23498,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -20990,7 +23507,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -20999,7 +23516,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21008,7 +23525,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21017,7 +23552,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21026,7 +23561,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21035,7 +23570,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21071,7 +23606,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21080,7 +23615,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21089,7 +23624,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21098,7 +23633,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21107,7 +23642,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21116,7 +23651,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21125,7 +23678,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21134,7 +23687,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21143,7 +23696,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21178,7 +23731,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21187,7 +23740,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21196,7 +23749,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21205,7 +23758,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21214,7 +23767,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21223,7 +23776,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21232,7 +23803,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21241,7 +23812,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21250,7 +23821,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21281,7 +23852,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21290,7 +23861,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21299,7 +23870,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21308,7 +23879,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21317,7 +23888,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21326,7 +23897,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21335,7 +23924,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21344,7 +23933,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21353,7 +23942,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21388,7 +23977,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21397,7 +23986,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21406,7 +23995,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21415,7 +24004,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21424,7 +24013,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21433,7 +24022,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21442,7 +24049,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21451,7 +24058,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21460,7 +24067,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21492,7 +24099,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21501,7 +24108,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21510,7 +24117,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21519,7 +24126,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21528,7 +24135,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21537,7 +24144,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21546,7 +24171,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21555,7 +24180,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21564,7 +24189,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21594,7 +24219,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21603,7 +24228,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21612,7 +24237,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21621,7 +24246,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21630,7 +24255,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21639,7 +24264,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21648,7 +24291,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21657,7 +24300,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21666,7 +24309,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21702,7 +24345,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21711,7 +24354,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21720,7 +24363,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21729,7 +24372,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21738,7 +24381,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21747,7 +24390,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21756,7 +24417,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21765,7 +24426,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21774,7 +24435,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21812,7 +24473,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21821,7 +24482,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21830,7 +24491,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21839,7 +24500,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21848,7 +24509,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21857,7 +24518,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21866,7 +24545,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21875,7 +24554,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21884,7 +24563,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -21917,7 +24596,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -21926,7 +24605,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -21935,7 +24614,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -21944,7 +24623,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -21953,7 +24632,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -21962,7 +24641,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -21971,7 +24668,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -21980,7 +24677,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -21989,7 +24686,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22022,7 +24719,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22031,7 +24728,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22040,7 +24737,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22049,7 +24746,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22058,7 +24755,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22067,7 +24764,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22076,7 +24791,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22085,7 +24800,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22094,7 +24809,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22127,7 +24842,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22136,7 +24851,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22145,7 +24860,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22154,7 +24869,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22163,7 +24878,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22172,7 +24887,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22181,7 +24914,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22190,7 +24923,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22199,7 +24932,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22232,7 +24965,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22241,7 +24974,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22250,7 +24983,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22259,7 +24992,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22268,7 +25001,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22277,7 +25010,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22286,7 +25037,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22295,7 +25046,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22304,7 +25055,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22337,7 +25088,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22346,7 +25097,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22355,7 +25106,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22364,7 +25115,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22373,7 +25124,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22382,7 +25133,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22391,7 +25160,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22400,7 +25169,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22409,7 +25178,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22442,7 +25211,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22451,7 +25220,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22460,7 +25229,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22469,7 +25238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22478,7 +25247,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22487,7 +25256,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22496,7 +25283,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22505,7 +25292,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22514,7 +25301,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22549,7 +25336,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22558,7 +25345,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22567,7 +25354,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22576,7 +25363,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22585,7 +25372,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22594,7 +25381,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22603,7 +25408,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22612,7 +25417,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22621,7 +25426,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22652,7 +25457,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22661,7 +25466,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22670,7 +25475,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22679,7 +25484,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22688,7 +25493,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22697,7 +25502,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22706,7 +25529,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22715,7 +25538,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22724,7 +25547,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22753,7 +25576,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22762,7 +25585,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22771,7 +25594,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22780,7 +25603,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22789,7 +25612,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22798,7 +25621,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22807,7 +25648,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22816,7 +25657,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22825,7 +25666,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22860,7 +25701,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22869,7 +25710,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22878,7 +25719,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22887,7 +25728,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -22896,7 +25737,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -22905,7 +25746,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -22914,7 +25773,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -22923,7 +25782,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -22932,7 +25791,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -22965,7 +25824,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -22974,7 +25833,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -22983,7 +25842,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -22992,7 +25851,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23001,7 +25860,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23010,7 +25869,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23019,7 +25896,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23028,7 +25905,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23037,7 +25914,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23073,7 +25950,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23082,7 +25959,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23091,7 +25968,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23100,7 +25977,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23109,7 +25986,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23118,7 +25995,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23127,7 +26022,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23136,7 +26031,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23145,7 +26040,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23181,7 +26076,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23190,7 +26085,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23199,7 +26094,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23208,7 +26103,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23217,7 +26112,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23226,7 +26121,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23235,7 +26148,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23244,7 +26157,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23253,7 +26166,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23284,7 +26197,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23293,7 +26206,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23302,7 +26215,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23311,7 +26224,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23320,7 +26233,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23329,7 +26242,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23338,7 +26269,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23347,7 +26278,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23356,7 +26287,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23391,7 +26322,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23400,7 +26331,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23409,7 +26340,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23418,7 +26349,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23427,7 +26358,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23436,7 +26367,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23445,7 +26394,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23454,7 +26403,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23463,7 +26412,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23492,7 +26441,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23501,7 +26450,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23510,7 +26459,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23519,7 +26468,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23528,7 +26477,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23537,7 +26486,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23546,7 +26513,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23555,7 +26522,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23564,7 +26531,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23599,7 +26566,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23608,7 +26575,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23617,7 +26584,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23626,7 +26593,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23635,7 +26602,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23644,7 +26611,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23653,7 +26638,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23662,7 +26647,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23671,7 +26656,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23704,7 +26689,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23713,7 +26698,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23722,7 +26707,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23731,7 +26716,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23740,7 +26725,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23749,7 +26734,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23758,7 +26761,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23767,7 +26770,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23776,7 +26779,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23818,7 +26821,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23827,7 +26830,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23836,7 +26839,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23845,7 +26848,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23854,7 +26857,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23863,7 +26866,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23872,7 +26893,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23881,7 +26902,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23890,7 +26911,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -23923,7 +26944,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -23932,7 +26953,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -23941,7 +26962,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -23950,7 +26971,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -23959,7 +26980,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -23968,7 +26989,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -23977,7 +27016,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -23986,7 +27025,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -23995,7 +27034,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24028,7 +27067,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24037,7 +27076,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24046,7 +27085,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24055,7 +27094,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24064,7 +27103,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24073,7 +27112,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24082,7 +27139,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24091,7 +27148,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24100,7 +27157,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24132,7 +27189,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24141,7 +27198,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24150,7 +27207,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24159,7 +27216,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24168,7 +27225,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24177,7 +27234,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24186,7 +27261,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24195,7 +27270,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24204,7 +27279,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24235,7 +27310,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24244,7 +27319,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24253,7 +27328,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24262,7 +27337,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24271,7 +27346,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24280,7 +27355,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24289,7 +27382,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24298,7 +27391,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24307,7 +27400,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24336,7 +27429,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24345,7 +27438,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24354,7 +27447,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24363,7 +27456,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24372,7 +27465,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24381,7 +27474,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24390,7 +27501,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24399,7 +27510,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24408,7 +27519,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24443,7 +27554,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24452,7 +27563,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24461,7 +27572,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24470,7 +27581,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24479,7 +27590,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24488,7 +27599,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24497,7 +27626,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24506,7 +27635,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24515,7 +27644,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24546,7 +27675,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24555,7 +27684,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24564,7 +27693,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24573,7 +27702,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24582,7 +27711,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24591,7 +27720,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24600,7 +27747,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24609,7 +27756,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24618,7 +27765,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24654,7 +27801,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24663,7 +27810,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24672,7 +27819,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24681,7 +27828,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24690,7 +27837,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24699,7 +27846,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24708,7 +27873,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24717,7 +27882,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24726,7 +27891,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24759,7 +27924,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24768,7 +27933,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24777,7 +27942,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24786,7 +27951,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24795,7 +27960,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24804,7 +27969,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24813,7 +27996,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24822,7 +28005,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24831,7 +28014,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24860,7 +28043,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24869,7 +28052,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24878,7 +28061,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24887,7 +28070,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -24896,7 +28079,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -24905,7 +28088,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -24914,7 +28115,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -24923,7 +28124,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -24932,7 +28133,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -24965,7 +28166,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -24974,7 +28175,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -24983,7 +28184,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -24992,7 +28193,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25001,7 +28202,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25010,7 +28211,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25019,7 +28238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25028,7 +28247,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25037,7 +28256,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25071,7 +28290,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25080,7 +28299,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25089,7 +28308,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25098,7 +28317,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25107,7 +28326,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25116,7 +28335,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25125,7 +28362,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25134,7 +28371,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25143,7 +28380,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25176,7 +28413,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25185,7 +28422,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25194,7 +28431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25203,7 +28440,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25212,7 +28449,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25221,7 +28458,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25230,7 +28485,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25239,7 +28494,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25248,7 +28503,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25279,7 +28534,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25288,7 +28543,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25297,7 +28552,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25306,7 +28561,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25315,7 +28570,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25324,7 +28579,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25333,7 +28606,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25342,7 +28615,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25351,7 +28624,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25380,7 +28653,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25389,7 +28662,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25398,7 +28671,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25407,7 +28680,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25416,7 +28689,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25425,7 +28698,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25434,7 +28725,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25443,7 +28734,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25452,7 +28743,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25487,7 +28778,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25496,7 +28787,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25505,7 +28796,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25514,7 +28805,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25523,7 +28814,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25532,7 +28823,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25541,7 +28850,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25550,7 +28859,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25559,7 +28868,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25590,7 +28899,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25599,7 +28908,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25608,7 +28917,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25617,7 +28926,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25626,7 +28935,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25635,7 +28944,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25644,7 +28971,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25653,7 +28980,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25662,7 +28989,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25694,7 +29021,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25703,7 +29030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25712,7 +29039,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25721,7 +29048,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25730,7 +29057,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25739,7 +29066,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25748,7 +29093,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25757,7 +29102,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25766,7 +29111,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25799,7 +29144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25808,7 +29153,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25817,7 +29162,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25826,7 +29171,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25835,7 +29180,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25844,7 +29189,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25853,7 +29216,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25862,7 +29225,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25871,7 +29234,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -25902,7 +29265,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -25911,7 +29274,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -25920,7 +29283,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -25929,7 +29292,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -25938,7 +29301,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -25947,7 +29310,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -25956,7 +29337,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -25965,7 +29346,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -25974,7 +29355,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -26003,7 +29384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -26012,7 +29393,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -26021,7 +29402,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -26030,7 +29411,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -26039,7 +29420,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -26048,7 +29429,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -26057,7 +29456,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -26066,7 +29465,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -26075,7 +29474,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };
@@ -26110,7 +29509,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The authenticated principal lacks the required permission. */
@@ -26119,7 +29518,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The requested resource was not found. */
@@ -26128,7 +29527,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request conflicts with the current resource state. */
@@ -26137,7 +29536,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The request or a domain value failed validation. */
@@ -26146,7 +29545,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description The configured request rate limit was exceeded. */
@@ -26155,7 +29554,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description An unexpected server error occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
+                };
+            };
+            /** @description The requested capability is not implemented. */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Upstream Docker daemon returned a bad gateway. */
@@ -26164,7 +29581,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description A required backend or remote service is unavailable. */
@@ -26173,7 +29590,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
             /** @description Remote operation timed out. */
@@ -26182,7 +29599,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ProblemResponse"];
                 };
             };
         };

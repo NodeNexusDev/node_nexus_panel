@@ -2,7 +2,7 @@
 title: Security
 status: stable
 translation_key: operations.security
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Security

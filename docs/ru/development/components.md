@@ -2,7 +2,7 @@
 title: Компоненты
 status: stable
 translation_key: development.components
-source_revision: 2026-09-07
+source_revision: 2026-09-09
 ---
 
 # Компоненты
@@ -65,7 +65,21 @@ src/
 │   │   ├── ThemeToggle.tsx
 │   │   └── MobileMenu.tsx
 │   ├── nodes/            # Компоненты нод
-│   │   └── ConnectionTypeSelect.tsx
+│   │   ├── NodesTable.tsx
+│   │   ├── NodesFilters.tsx
+│   │   ├── NodesForms.tsx
+│   │   ├── NodesBulkBar.tsx
+│   │   ├── NodeDrawer.tsx
+│   │   ├── ConnectionTypeSelect.tsx
+│   │   ├── connection-types.ts
+│   │   └── drawer/       # Вкладки drawer-панели ноды
+│   │       ├── DrawerOverview.tsx
+│   │       ├── DrawerMetrics.tsx
+│   │       ├── DrawerStats.tsx
+│   │       ├── DrawerHistory.tsx
+│   │       ├── DrawerExec.tsx
+│   │       ├── DrawerScript.tsx
+│   │       └── DrawerMetricBar.tsx
 │   └── scripts/          # Компоненты скриптов
 ├── pages/                # Компоненты страниц
 ├── hooks/                # Пользовательские React хуки
@@ -335,7 +349,31 @@ React Error Boundary с fallback UI.
 
 | Компонент | Описание |
 |-----------|----------|
+| `NodesTable` | Адаптивная таблица нод с выбором, сортировкой, фильтром по тегам, бейджами Docker/статуса |
+| `NodesFilters` | Панель поиска + фильтра по тегам для списка нод |
+| `NodesForms` | Модалки Создать/Изменить и форма массового обновления (`react-hook-form`) |
+| `NodesBulkBar` | Панель массовых действий (Check, Metrics, Update, Validate, Delete, Exec, Script) |
+| `NodeDrawer` | Каркас drawer-панели деталей с 7 вкладками, связывающий подкомпоненты ниже |
+| `DrawerOverview` | Вкладка обзор: host:port, описание, подключение, теги, даты |
+| `DrawerMetrics` | Вкладка метрики: живые CPU/память/диск через `GET /nodes/{id}/metrics` |
+| `DrawerStats` | Вкладка статистика: статистика команд с диапазоном `date_from/date_to` |
+| `DrawerHistory` | Вкладка история: история статуса + команд (бесконечные списки, retry) |
+| `DrawerExec` | Вкладка выполнить: запуск команды/произвольной команды на ноде |
+| `DrawerScript` | Вкладка скрипт: запуск скрипта на ноде |
+| `DrawerMetricBar` | Переиспользуемый прогресс-бар метрик для `DrawerMetrics` |
 | `ConnectionTypeSelect` | Селектор типа подключения SSH/Docker/Proxmox |
+| `connection-types.ts` | Константы типов подключения и `CONNECTION_TYPE_OPTIONS` |
+
+## Хуки (`src/hooks/`)
+
+### Docker
+
+| Хук | Строки | Описание |
+|-----|--------|----------|
+| `useDocker` | 404 | Одиночные Docker-хуки: контейнеры, образы, сети, тома, Compose |
+| `useDockerBulk` | 242 | Массовые Docker-операции: exec, start/stop/restart, remove, pull/build/inspect, logs, stats, kill |
+
+Монолитный `useDocker` (643 строки) был разделён на `useDocker` (404) + `useDockerBulk` (242).
 
 ## Конвенции
 

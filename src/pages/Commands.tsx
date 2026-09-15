@@ -104,6 +104,7 @@ export function Commands() {
       description: values.description || undefined,
       parameters: normalizeParameters(values.parameters) as CommandCreate['parameters'],
       tags: values.tags,
+      timeout: 30,
     }
     createCommand.mutate(data, {
       onSuccess: () => { toast('success', t('commands.toastCreated')); setShowCreateModal(false); createForm.reset() },

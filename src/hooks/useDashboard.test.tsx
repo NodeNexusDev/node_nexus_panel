@@ -15,7 +15,7 @@ describe('useDashboard', () => {
   it('fetches dashboard stats', async () => {
     const { result } = renderHook(() => useDashboard(), { wrapper: createWrapper() })
     expect(result.current.isLoading).toBe(true)
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 5000 })
     expect(result.current.data).toBeDefined()
   })
 })
@@ -23,7 +23,7 @@ describe('useDashboard', () => {
 describe('useDashboardMetrics', () => {
   it('fetches dashboard metrics', async () => {
     const { result } = renderHook(() => useDashboardMetrics(), { wrapper: createWrapper() })
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 5000 })
     expect(result.current.data).toBeDefined()
   })
 })

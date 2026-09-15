@@ -37,7 +37,7 @@ describe('useCommand', () => {
 describe('useCreateCommand', () => {
   it('creates a command', async () => {
     const { result } = renderHook(() => useCreateCommand(), { wrapper: createWrapper() })
-    result.current.mutate({ name: 'new-cmd', command: 'echo hello' })
+    result.current.mutate({ name: 'new-cmd', command: 'echo hello', timeout: 30 })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toBeDefined()
   })
