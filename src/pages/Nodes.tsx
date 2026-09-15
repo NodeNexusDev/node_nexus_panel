@@ -8,6 +8,7 @@ import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
 import { Modal } from '../components/ui/Modal'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { InfiniteScroll } from '../components/ui/InfiniteScroll'
@@ -56,7 +57,7 @@ export function Nodes() {
   const { sort, toggle: toggleSort } = useSort<SortKey>()
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodes({
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteNodes({
     limit,
     tag: tagFilter.length === 1 ? tagFilter[0] : undefined,
     search: search || undefined,
@@ -199,6 +200,8 @@ export function Nodes() {
           )}
           {isLoading ? (
             <TableSkeleton rows={5} cols={8} />
+          ) : error ? (
+            <ErrorState error={error as Error} onRetry={() => refetch()} />
           ) : nodes.length === 0 ? (
             data && data.items.length > 0 ? (
               <EmptyState

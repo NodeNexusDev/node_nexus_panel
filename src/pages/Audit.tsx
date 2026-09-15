@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { IconAudit } from '../components/ui/Icons'
@@ -68,7 +69,7 @@ export function Audit() {
   const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json')
   const limit = 20
 
-  const { data: infiniteData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteAuditLogs({
+  const { data: infiniteData, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteAuditLogs({
     limit,
     node_id: nodeFilter || undefined,
     action: actionFilter || undefined,
@@ -214,6 +215,8 @@ export function Audit() {
         <CardContent className="p-0">
           {isLoading ? (
             <TableSkeleton rows={10} cols={5} />
+          ) : error ? (
+            <ErrorState error={error as Error} onRetry={() => refetch()} />
           ) : logs.length === 0 ? (
             <EmptyState
               icon={<IconAudit className="w-10 h-10" />}
