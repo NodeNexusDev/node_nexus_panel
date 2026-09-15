@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -86,6 +87,37 @@ jobs:
       - name: Check out release tag
         if: steps.find_tag.outputs.skip == 'false'
         run: git checkout --detach "${{ steps.find_tag.outputs.tag }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,prefix=
+            type=semver,pattern={{version}},value=${{ steps.find_tag.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.find_tag.outputs.tag }}
+            type=raw,value=latest,enable=${{ steps.find_tag.outputs.skip == 'false' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Create GitHub Release
         if: steps.find_tag.outputs.skip == 'false'
