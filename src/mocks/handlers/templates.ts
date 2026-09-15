@@ -45,6 +45,17 @@ export const templatesHandlers = [
     if (!pack) return HttpResponse.json({ code: 'not_found', message: 'Pack not found' }, { status: 404 })
     return HttpResponse.json({ ...pack, assets: [] })
   }),
+  http.patch(`${API_URL}/api/v2/templates/packs/:packId`, async ({ params, request }) => {
+    const pack = packs.find((p) => p.id === params.packId)
+    if (!pack) return HttpResponse.json({ code: 'not_found', message: 'Pack not found' }, { status: 404 })
+    const body = await request.json() as { name?: string; description?: string | null; version?: string; author?: string | null }
+    if (body.name !== undefined) pack.name = body.name
+    if (body.description !== undefined) pack.description = body.description ?? ''
+    if (body.version !== undefined) pack.version = body.version
+    if (body.author !== undefined) pack.author = body.author
+    pack.updated_at = new Date().toISOString()
+    return HttpResponse.json(pack)
+  }),
   http.post(`${API_URL}/api/v2/templates/packs`, async ({ request }) => {
     const body = await request.json() as { name: string; description?: string; tags?: string[]; pack_id?: string; version?: string; author?: string }
     const pack = { id: crypto.randomUUID(), pack_id: body.pack_id || body.name, name: body.name, description: body.description||'', tags: body.tags||[], version: body.version||'1.0.0', author: body.author||null, readme: null, registry_id: null, manifest_sha: null, installed_at: null, installed_version: null, created_at:new Date().toISOString(), updated_at:new Date().toISOString(), assets:[] }

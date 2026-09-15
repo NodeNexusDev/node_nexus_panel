@@ -771,6 +771,8 @@
     "syncFailed": "Failed to sync registry",
     "deleted": "Registry deleted",
     "deleteFailed": "Failed to delete registry",
+    "metaUpdated": "Pack details updated",
+    "metaUpdateFailed": "Failed to update pack details",
     "deleteTitle": "Delete Pack",
     "deleteMsg": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
     "name": "Name",

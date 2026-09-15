@@ -9,7 +9,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/useToast'
-import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack, useInfinitePackInstallations, useCreatePack, useUpdatePack, useDeletePack, useRegistry } from '../hooks/useTemplates'
+import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack, useInfinitePackInstallations, useCreatePack, useUpdatePack, useUpdatePackMeta, useDeletePack, useRegistry } from '../hooks/useTemplates'
 import { templatesApi } from '../api/templates'
 import { Modal } from '../components/ui/Modal'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
@@ -63,6 +63,11 @@ function PacksTab() {
   const { data: instInfinite, fetchNextPage: fetchInstNext, hasNextPage: hasInstNext, isFetchingNextPage: isInstFetching } = useInfinitePackInstallations(detailId ?? '')
   const createPack = useCreatePack()
   const updatePack = useUpdatePack()
+  const updateMeta = useUpdatePackMeta()
+  const [editingMeta, setEditingMeta] = useState(false)
+  const [emName, setEmName] = useState('')
+  const [emDesc, setEmDesc] = useState('')
+  const [emVersion, setEmVersion] = useState('')
   const [showCreatePack, setShowCreatePack] = useState(false)
   const [cpPackId, setCpPackId] = useState('')
   const [cpName, setCpName] = useState('')
@@ -173,7 +178,7 @@ function PacksTab() {
           )}
         </CardContent>
       </Card>
-      <Modal isOpen={!!detailId} onClose={()=> setDetailId(null)} title={detail?.name ?? t('templates.packs')} size="lg">
+      <Modal isOpen={!!detailId} onClose={()=> { setDetailId(null); setEditingMeta(false) }} title={detail?.name ?? t('templates.packs')} size="lg">
         {detail ? (
           <div className="space-y-3">
             {detail.description && <p className="text-sm text-surface-600 dark:text-surface-300">{detail.description}</p>}
@@ -185,7 +190,22 @@ function PacksTab() {
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={async()=> { try{ const blob = await templatesApi.getPackArchive(detail.id); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${detail.name}.tar`; a.click(); URL.revokeObjectURL(url)} catch{ toast('error', t('templates.downloadFailed','Download failed')) } }}>{t('templates.download','Download')}</Button>
+              <Button variant="ghost" size="sm" onClick={()=> { setEmName(detail.name); setEmDesc(detail.description ?? ''); setEmVersion((detail as { version?: string }).version ?? ''); setEditingMeta(true) }}>{t('common.edit')}</Button>
             </div>
+            {editingMeta && (
+              <div className="space-y-3 p-3 border border-surface-200 dark:border-surface-700 rounded-lg">
+                <Input label={t('templates.name')} value={emName} onChange={(e)=> setEmName(e.target.value)} />
+                <Input label={t('templates.descriptionLabel', 'Description')} value={emDesc} onChange={(e)=> setEmDesc(e.target.value)} />
+                <Input label={t('templates.version')} value={emVersion} onChange={(e)=> setEmVersion(e.target.value)} />
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={()=> setEditingMeta(false)}>{t('common.cancel')}</Button>
+                  <Button size="sm" onClick={()=> {
+                    if (!emName.trim()) { toast('error', t('templates.metaUpdateFailed')); return }
+                    updateMeta.mutate({ packId: detail.id, data: { name: emName.trim(), description: emDesc.trim() || null, version: emVersion.trim() || undefined } }, { onSuccess: ()=> { toast('success', t('templates.metaUpdated')); setEditingMeta(false) }, onError: ()=> toast('error', t('templates.metaUpdateFailed')) })
+                  }} disabled={updateMeta.isPending || !emName.trim()}>{updateMeta.isPending ? t('common.loading') : t('common.save')}</Button>
+                </div>
+              </div>
+            )}
             <div>
               <h4 className="text-sm font-medium mb-1">{t('templates.installations','Installations')}</h4>
               {(() => { const instItems = instInfinite ? instInfinite.pages.flatMap((p)=> (p as { items: unknown[] }).items) : []; return instItems.length? (
@@ -202,7 +222,7 @@ function PacksTab() {
           </div>
         ) : <p className="text-sm text-surface-500">{t('common.loading')}</p>}
       </Modal>
-      <ConfirmDialog isOpen={!!deletePackTarget} onClose={()=> setDeletePackTarget(null)} onConfirm={()=> deletePackTarget && deletePack.mutate(deletePackTarget.id, { onSuccess: ()=> { toast('success', t('templates.deleted')); setDeletePackTarget(null) }, onError: ()=> toast('error', t('templates.deleteFailed')) })} title={t('templates.deleteTitle', 'Delete Pack')} message={t('templates.deleteMsg', { name: deletePackTarget?.name ?? '' })} confirmLabel={t('common.delete')} loading={deletePack.isPending} />
+      <ConfirmDialog isOpen={!!deletePackTarget} onClose={()=> setDeletePackTarget(null)} onConfirm={()=> deletePackTarget && deletePack.mutate(deletePackTarget.id, { onSuccess: ()=> { toast('success', t('templates.deleted')); setDeletePackTarget(null) }, onError: ()=> toast('error', t('templates.deleteFailed')) })} title={t('templates.deleteTitle')} message={t('templates.deleteMsg', { name: deletePackTarget?.name ?? '' })} confirmLabel={t('common.delete')} loading={deletePack.isPending} />
       <Modal isOpen={showCreatePack} onClose={()=> setShowCreatePack(false)} title={t('templates.createPack')} size="lg">
         <div className="space-y-4">
           <Input label={t('templates.packId')} placeholder="my-pack" value={cpPackId} onChange={(e)=> setCpPackId(e.target.value)} />

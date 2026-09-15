@@ -206,6 +206,7 @@ export type PackLocalCreateRequest = components['schemas']['PackLocalCreateReque
 export type PackManifestRequest = components['schemas']['PackManifestRequest']
 export type PackResponse = components['schemas']['PackResponse']
 export type PackStatsResponse = components['schemas']['PackStatsResponse']
+export type PackUpdate = components['schemas']['PackUpdate']
 export type RawExecutionsRequest = components['schemas']['RawExecutionsRequest']
 export type ReadyCheck = components['schemas']['ReadyCheck']
 export type ReadyResponse = components['schemas']['ReadyResponse']

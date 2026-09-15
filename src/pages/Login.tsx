@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
@@ -9,6 +9,7 @@ import { useAuthStore } from '../stores/auth-store'
 export function Login() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const login = useAuthStore((s) => s.login)
   const loginRef = useRef<HTMLInputElement>(null)
 
@@ -27,7 +28,8 @@ export function Login() {
 
     try {
       await login(email, password)
-      navigate('/')
+      const from = (location.state as { from?: string } | null)?.from
+      navigate(from && from.startsWith('/') && !from.startsWith('//') ? from : '/', { replace: true })
     } catch {
       setError(t('login.error'))
       setSubmitting(false)

@@ -4,6 +4,7 @@ import { templatesApi } from '../api/templates'
 import type {
   PackDetailWithAssetsResponse,
   PackStatsResponse,
+  PackUpdate,
   CursorPage_PackResponse_,
   CursorPage_RegistryResponse_,
   CursorPage_PackInstallationResponse_,
@@ -153,6 +154,14 @@ export function useDeletePack() {
   const qc = useQueryClient()
   return useMutation<void, Error, string>({
     mutationFn: (packId) => templatesApi.deletePack(packId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['templates'] }),
+  })
+}
+
+export function useUpdatePackMeta() {
+  const qc = useQueryClient()
+  return useMutation<PackResponse, Error, { packId: string; data: PackUpdate }>({
+    mutationFn: ({ packId, data }) => templatesApi.updatePackMeta(packId, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['templates'] }),
   })
 }

@@ -5,6 +5,7 @@ import type {
   PackDetailWithAssetsResponse,
   PackLocalCreateRequest,
   PackStatsResponse,
+  PackUpdate,
   RegistryResponse,
   RegistryCreate,
   RegistrySyncResult,
@@ -40,6 +41,8 @@ export const templatesApi = {
   createPack: (data: PackLocalCreateRequest) => api.post<PackResponse>('/templates/packs', data),
 
   deletePack: (packId: string) => api.delete<void>(`/templates/packs/${packId}`),
+
+  updatePackMeta: (packId: string, data: PackUpdate) => api.patch<PackResponse>(`/templates/packs/${packId}`, data),
 
   bulkDeletePacks: (data: { pack_ids: string[] }) =>
     runBulkChunks(data.pack_ids, 100, (pack_ids) =>
