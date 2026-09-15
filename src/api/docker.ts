@@ -28,6 +28,10 @@ import type {
   DockerSystemInfo,
   DockerSystemDfItem,
   DockerActionResponse,
+  DockerArchiveResponse,
+  DockerPortResponse,
+  DockerVersionResponse,
+  DockerWaitResponse,
   DockerContainerRenameResponse,
   CursorPage_DockerContainer_,
   CursorPage_DockerImage_,
@@ -199,7 +203,7 @@ export const dockerApi = {
 
   getSystemDf: (nodeId: string) => api.get<DockerSystemDfItem[]>(`${nodesBase(nodeId)}/system/df`),
 
-  getSystemVersion: (nodeId: string) => api.get<{ version: string; api_version: string }>(`${nodesBase(nodeId)}/system/version`),
+  getSystemVersion: (nodeId: string) => api.get<DockerVersionResponse>(`${nodesBase(nodeId)}/system/version`),
 
   pruneSystem: (nodeId: string) => api.post<{ space_reclaimed: string }>(`${nodesBase(nodeId)}/system/prune`),
 
@@ -208,12 +212,12 @@ export const dockerApi = {
   // ── Singular container/image ops (v2) ───────────────────────
   getContainerArchive: (nodeId: string, containerId: string, path?: string) => {
     const qs = path ? `?path=${encodeURIComponent(path)}` : ''
-    return api.get<{ data: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`)
+    return api.get<DockerArchiveResponse>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`)
   },
 
   putContainerArchive: (nodeId: string, containerId: string, data: unknown, path?: string) => {
     const qs = path ? `?path=${encodeURIComponent(path)}` : ''
-    return api.put<{ status: string }>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`, data)
+    return api.put<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/archive${qs}`, data)
   },
 
   killContainer: (nodeId: string, containerId: string, signal?: string) => {
@@ -223,18 +227,18 @@ export const dockerApi = {
 
   getContainerPort: (nodeId: string, containerId: string, port?: string) => {
     const qs = port ? `?port=${encodeURIComponent(port)}` : ''
-    return api.get<{ host: string; port: string }>(`${nodesBase(nodeId)}/containers/${containerId}/port${qs}`)
+    return api.get<DockerPortResponse>(`${nodesBase(nodeId)}/containers/${containerId}/port${qs}`)
   },
 
-  updateContainer: (nodeId: string, containerId: string, data: unknown) => api.post<{ status: string }>(`${nodesBase(nodeId)}/containers/${containerId}/update`, data),
+  updateContainer: (nodeId: string, containerId: string, data: unknown) => api.post<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/update`, data),
 
-  waitContainer: (nodeId: string, containerId: string) => api.post<{ statusCode: number }>(`${nodesBase(nodeId)}/containers/${containerId}/wait`),
+  waitContainer: (nodeId: string, containerId: string) => api.post<DockerWaitResponse>(`${nodesBase(nodeId)}/containers/${containerId}/wait`),
 
-  pushImage: (nodeId: string, data: { image: string }) => api.post<{ status: string }>(`${nodesBase(nodeId)}/images/push`, data),
+  pushImage: (nodeId: string, data: { image: string }) => api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/push`, data),
 
   getImageHistory: (nodeId: string, imageId: string) => api.get<unknown[]>(`${nodesBase(nodeId)}/images/${imageId}/history`),
 
-  pushImageById: (nodeId: string, imageId: string) => api.post<{ status: string }>(`${nodesBase(nodeId)}/images/${imageId}/push`),
+  pushImageById: (nodeId: string, imageId: string) => api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/${imageId}/push`),
 
   // ── Per-node bulk (v2) ──────────────────────────────────────
   bulkExec: (nodeId: string, data: ContainerExecutionsRequest) =>

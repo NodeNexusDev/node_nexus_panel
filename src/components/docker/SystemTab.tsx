@@ -66,7 +66,7 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <span>{t('docker.systemInfo', 'System Info')}</span>
-            {versionInfo && <span className="text-xs text-surface-500">API {versionInfo.api_version} — {versionInfo.version}</span>}
+            {versionInfo && <span className="text-xs text-surface-500">API {versionInfo.api_version} — {versionInfo.server_version}</span>}
           </div>
         </CardHeader>
         <CardContent>
@@ -80,7 +80,7 @@ export function SystemTab({ nodeId }: { nodeId: string }) {
           </div>
           {versionInfo && (
             <div className="mt-4 p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg">
-              <p className="text-xs text-surface-500">Docker version {versionInfo.version} (API {versionInfo.api_version})</p>
+              <p className="text-xs text-surface-500">Docker version {versionInfo.server_version} (API {versionInfo.api_version})</p>
             </div>
           )}
         </CardContent>
