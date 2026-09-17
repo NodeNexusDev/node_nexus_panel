@@ -41,6 +41,20 @@ describe('BulkResultPanel', () => {
     expect(screen.getByText(/line1/)).toBeInTheDocument()
   })
 
+  it('shows a placeholder for empty logs payload', () => {
+    render(
+      <BulkResultPanel
+        result={{
+          total: 1,
+          succeeded: 1,
+          failed: 0,
+          results: [{ container_id: 'c1', status: 'success', logs: '' }],
+        }}
+      />,
+    )
+    expect(screen.getByText('No logs')).toBeInTheDocument()
+  })
+
   it('renders exec stdout/stderr block and stringifies objects', () => {
     render(
       <BulkResultPanel

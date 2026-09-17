@@ -87,6 +87,7 @@ export function BulkResultPanel({
   toView = defaultView,
 }: BulkResultPanelProps) {
   const { t } = useTranslation()
+  const emptyLogsLabel = t('docker.noLogs', 'No logs')
 
   if (isLoading) return <TableSkeleton rows={5} cols={3} />
   if (!result) return null
@@ -108,6 +109,14 @@ export function BulkResultPanel({
       <div className={`${maxHeightClass} overflow-y-auto space-y-2`}>
         {(result.results ?? []).map((r, idx) => {
           const item = toView(r, idx)
+          // Empty logs payload (container produced no output) — show an
+          // explicit placeholder instead of a bare status.
+          const isEmptyLogs =
+            item.detail === null &&
+            typeof r === 'object' &&
+            r !== null &&
+            'logs' in r
+          const detail = isEmptyLogs ? emptyLogsLabel : item.detail
           return (
             <div
               key={item.key}
@@ -123,9 +132,9 @@ export function BulkResultPanel({
                   {item.status}
                 </span>
               </div>
-              {item.detail && (
+              {detail && (
                 <pre className="whitespace-pre-wrap break-all text-surface-700 dark:text-surface-300">
-                  {item.detail}
+                  {detail}
                 </pre>
               )}
             </div>
