@@ -206,7 +206,7 @@ export const dockerApi = {
     return api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/system/prune${qs}`)
   },
 
-  pruneNetworks: (nodeId: string) => api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/networks/prune`),
+  pruneNetworks: (nodeId: string) => api.post<DockerVolumePruneResponse>(`${nodesBase(nodeId)}/networks/prune`),
 
   // ── Singular container/image ops (v2) ───────────────────────
   getContainerArchive: (nodeId: string, containerId: string, path?: string) => {
