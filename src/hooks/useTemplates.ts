@@ -46,14 +46,6 @@ export function usePackStats(params?: { group_by?: string | null }) {
   })
 }
 
-export function usePackArchive(packId: string, enabled = true) {
-  return useQuery<Blob>({
-    queryKey: ['templates', 'packs', packId, 'archive'],
-    queryFn: () => templatesApi.getPackArchive(packId),
-    enabled: !!packId && enabled,
-  })
-}
-
 export function useCreatePack() {
   const qc = useQueryClient()
   return useMutation<PackDetailWithAssetsResponse, Error, PackLocalCreateRequest>({
