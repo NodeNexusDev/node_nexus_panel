@@ -11,6 +11,8 @@ import { SortableHeader, type SortState } from '../ui/SortableHeader'
 import { TableSkeleton } from '../ui/Skeleton'
 import { IconDocker } from '../ui/Icons'
 import { useToast } from '../ui/useToast'
+import { BulkResultPanel } from '../ui/BulkResultPanel'
+import { bulkToast, type BulkSummary } from '../../lib/bulk-toast'
 import { useSort } from '../../hooks/useSort'
 import { InfiniteScroll } from '../ui/InfiniteScroll'
 import { useInfiniteDockerImages, useBuildImage, usePruneImages, useBulkDockerImageRemove, useBulkDockerImageBuild, useBulkDockerPull } from '../../hooks/useDocker'
@@ -38,6 +40,7 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
   const [drawerImage, setDrawerImage] = useState<DockerImage | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showBulkRemove, setShowBulkRemove] = useState(false)
+  const [bulkRemoveResult, setBulkRemoveResult] = useState<BulkSummary | null>(null)
   const [showBulkBuild, setShowBulkBuild] = useState(false)
   const [showBulkPull, setShowBulkPull] = useState(false)
   const [bulkPullImage, setBulkPullImage] = useState('')
@@ -148,23 +151,26 @@ export function ImagesTab({ nodeId }: { nodeId: string }) {
         </div>
       </Modal>
 
-      <Modal isOpen={showBulkRemove} onClose={() => setShowBulkRemove(false)} title={t('docker.bulkRemoveImages', 'Bulk Remove Images')}>
+      <Modal isOpen={showBulkRemove} onClose={() => { setShowBulkRemove(false); setBulkRemoveResult(null) }} title={t('docker.bulkRemoveImages', 'Bulk Remove Images')}>
         <div className="space-y-4">
           <p className="text-sm text-surface-600 dark:text-surface-300">{t('docker.bulkRemoveImagesMsg', { count: selectedIds.size })}</p>
+          {bulkRemoveResult && <BulkResultPanel result={bulkRemoveResult} />}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowBulkRemove(false)}>{t('common.cancel')}</Button>
+            <Button variant="ghost" onClick={() => { setShowBulkRemove(false); setBulkRemoveResult(null) }}>{bulkRemoveResult ? t('common.close') : t('common.cancel')}</Button>
+            {!bulkRemoveResult && (
             <Button variant="danger" onClick={() => {
               const ids = Array.from(selectedIds)
               bulkImageRemove.mutate({ nodeId, image_ids: ids }, {
                 onSuccess: (data: unknown) => {
-                  const d = data as { failed?: number; succeeded?: number }
-                  if (d.failed && d.failed>0) toast('warning', t('docker.toastBulkRemovePartial', { succeeded: d.succeeded, failed: d.failed }))
-                  else toast('success', t('docker.toastBulkRemoveDone', 'Images removed'))
-                  setShowBulkRemove(false); setSelectedIds(new Set())
+                  const d = data as BulkSummary
+                  bulkToast(t, toast, t('docker.toastBulkRemoveDone', 'Images removed'), d)
+                  setBulkRemoveResult(d)
+                  setSelectedIds(new Set())
                 },
                 onError: () => toast('error', t('docker.toastBulkRemoveFailed')),
               })
             }} disabled={bulkImageRemove.isPending}>{bulkImageRemove.isPending ? t('common.loading') : t('common.delete')}</Button>
+            )}
           </div>
         </div>
       </Modal>

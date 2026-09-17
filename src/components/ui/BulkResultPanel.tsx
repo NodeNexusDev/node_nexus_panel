@@ -5,7 +5,7 @@ export interface BulkResultLike {
   total: number
   succeeded: number
   failed: number
-  results: unknown[]
+  results?: unknown[] | null
 }
 
 interface BulkItemView {
@@ -13,6 +13,19 @@ interface BulkItemView {
   label: string
   status: string
   detail?: string | null
+}
+
+const MAX_DETAIL_CHARS = 2000
+
+function stringifyDetail(value: unknown): string | null {
+  if (typeof value === 'string') return value || null
+  if (value === null || value === undefined) return null
+  try {
+    const text = JSON.stringify(value, null, 2) ?? ''
+    return text.length > MAX_DETAIL_CHARS ? text.slice(0, MAX_DETAIL_CHARS) + '…' : text || null
+  } catch {
+    return String(value)
+  }
 }
 
 function defaultView(item: unknown, idx: number): BulkItemView {
@@ -31,9 +44,30 @@ function defaultView(item: unknown, idx: number): BulkItemView {
     str(r.entity_id) ??
     `result-${idx}`
   const status = str(r.status) ?? 'unknown'
-  const output = str(r.output)
-  const error = str(r.error)
-  return { key: `${label}:${status}:${idx}`, label, status, detail: output ?? error ?? null }
+  // Payload lives in type-specific fields depending on the bulk verb:
+  // output (generic), logs, stdout/stderr/exit_code (exec), stats/data (objects).
+  const stdout = str(r.stdout)
+  const stderr = str(r.stderr)
+  const exitCode = typeof r.exit_code === 'number' ? r.exit_code : undefined
+  const execBlock =
+    stdout !== undefined || stderr !== undefined || exitCode !== undefined
+      ? [
+          stdout !== undefined ? `stdout: ${stdout}` : null,
+          stderr !== undefined ? `stderr: ${stderr}` : null,
+          exitCode !== undefined ? `exit_code: ${exitCode}` : null,
+        ]
+          .filter((x): x is string => x !== null)
+          .join('\n') || null
+      : null
+  const detail =
+    str(r.output) ??
+    str(r.logs) ??
+    execBlock ??
+    stringifyDetail(r.stats) ??
+    stringifyDetail(r.data) ??
+    str(r.error) ??
+    null
+  return { key: `${label}:${status}:${idx}`, label, status, detail }
 }
 
 interface BulkResultPanelProps {
@@ -72,7 +106,7 @@ export function BulkResultPanel({
       </div>
 
       <div className={`${maxHeightClass} overflow-y-auto space-y-2`}>
-        {result.results.map((r, idx) => {
+        {(result.results ?? []).map((r, idx) => {
           const item = toView(r, idx)
           return (
             <div
