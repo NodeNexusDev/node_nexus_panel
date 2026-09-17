@@ -27,6 +27,39 @@ describe('BulkResultPanel', () => {
     expect(screen.getByText('boom')).toBeInTheDocument()
   })
 
+  it('renders logs payload instead of bare status', () => {
+    render(
+      <BulkResultPanel
+        result={{
+          total: 1,
+          succeeded: 1,
+          failed: 0,
+          results: [{ container_id: 'c1', status: 'success', logs: 'line1\nline2' }],
+        }}
+      />,
+    )
+    expect(screen.getByText(/line1/)).toBeInTheDocument()
+  })
+
+  it('renders exec stdout/stderr block and stringifies objects', () => {
+    render(
+      <BulkResultPanel
+        result={{
+          total: 2,
+          succeeded: 2,
+          failed: 0,
+          results: [
+            { container_id: 'c1', status: 'success', stdout: 'ok', exit_code: 0 },
+            { container_id: 'c2', status: 'success', stats: { cpu: '1%' } },
+          ],
+        }}
+      />,
+    )
+    expect(screen.getByText(/stdout: ok/)).toBeInTheDocument()
+    expect(screen.getByText(/exit_code: 0/)).toBeInTheDocument()
+    expect(screen.getByText(/"cpu": "1%"/)).toBeInTheDocument()
+  })
+
   it('renders nothing without result and skeleton while loading', () => {
     const { container, rerender } = render(<BulkResultPanel result={null} />)
     expect(container.textContent).toBe('')

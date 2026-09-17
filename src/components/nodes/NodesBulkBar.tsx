@@ -1,6 +1,7 @@
 import { Button } from '../ui/Button'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../ui/useToast'
+import { bulkToast, type BulkSummary } from '../../lib/bulk-toast'
 import type { useBulkCheck, useBulkMetrics, useBulkValidateCredentials } from '../../hooks/useNodes'
 
 type Props = {
@@ -45,7 +46,7 @@ function BulkCheckButton({ selectedIds, setSelectedIds, bulkCheck }: { selectedI
   return (
     <Button variant="ghost" size="sm" disabled={bulkCheck.isPending} onClick={() => {
       bulkCheck.mutate(selectedIds, {
-        onSuccess: (data: unknown) => { const d = data as { failed?: number; succeeded?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkCheckDone') + t('common.failedSuffix', { count: d.failed })); else toast('success', t('nodes.toastBulkCheckDone')); setSelectedIds([]) },
+        onSuccess: (data: unknown) => { bulkToast(t, toast, t('nodes.toastBulkCheckDone'), data as BulkSummary); setSelectedIds([]) },
         onError: () => toast('error', t('nodes.toastBulkCheckFailed')),
       })
     }}>{bulkCheck.isPending ? t('common.loading') : t('nodes.bulkCheck')}</Button>
@@ -56,7 +57,7 @@ function BulkMetricsButton({ selectedIds, setShowBulkMetrics, setBulkMetricsResu
   const { t } = useTranslation()
   const { toast } = useToast()
   return (
-    <Button variant="ghost" size="sm" onClick={() => { setShowBulkMetrics(true); setBulkMetricsResult(null); bulkMetrics.mutate(selectedIds, { onSuccess: (data) => { setBulkMetricsResult(data); const d = data as { failed?: number }; if (d.failed && d.failed > 0) toast('warning', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics') + t('common.failedSuffix', { count: d.failed })) }, onError: () => toast('error', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics')), }) }} disabled={bulkMetrics.isPending}>{bulkMetrics.isPending ? t('common.loading') : t('nodes.bulkMetrics', 'Bulk Metrics')}</Button>
+    <Button variant="ghost" size="sm" onClick={() => { setShowBulkMetrics(true); setBulkMetricsResult(null); bulkMetrics.mutate(selectedIds, { onSuccess: (data) => { setBulkMetricsResult(data); bulkToast(t, toast, t('nodes.bulkMetrics', 'Bulk Metrics'), data as BulkSummary) }, onError: () => toast('error', t('nodes.toastBulkMetricsFailed', 'Failed to fetch metrics')), }) }} disabled={bulkMetrics.isPending}>{bulkMetrics.isPending ? t('common.loading') : t('nodes.bulkMetrics', 'Bulk Metrics')}</Button>
   )
 }
 
