@@ -34,8 +34,7 @@ jobs:
       - name: Tests
         run: npm run test:run
 
-      - name: Coverage (informational — ratchet to 70% before enforcing)
-        continue-on-error: true
+      - name: Coverage (ratchet floor enforced; raise in vitest.config.ts)
         run: npm run test:coverage
 
   e2e:
