@@ -8,6 +8,7 @@ import { Checkbox } from '../ui/Checkbox'
 import { Tabs } from '../ui/Tabs'
 import { Card, CardContent } from '../ui/Card'
 import { useToast } from '../ui/useToast'
+import { bulkToast, type BulkSummary } from '../../lib/bulk-toast'
 import { IconDocker } from '../ui/Icons'
 import {
   useComposePs,
@@ -132,8 +133,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       onSuccess: (res) => {
         const bulk = res as BulkResult_ComposeServiceBulkResult_
         setUpResult(bulk)
-        if (bulk.failed > 0) toast('warning', t('docker.composeUp') + t('common.failedSuffix', { count: bulk.failed }))
-        else toast('success', t('docker.composeUp'))
+        bulkToast(t, toast, t('docker.composeUp'), bulk as BulkSummary)
       },
       onError: () => toast('error', t('docker.composeUpFailed')),
     })
@@ -166,8 +166,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       onSuccess: (res: unknown) => {
         const bulk = res as BulkResult_ComposeServiceBulkResult_
         if (bulk.results) setActionResult(bulk)
-        if (bulk.failed && bulk.failed > 0) toast('warning', name + t('common.failedSuffix', { count: bulk.failed }))
-        else toast('success', name)
+        bulkToast(t, toast, name, bulk as BulkSummary)
       },
       onError: () => toast('error', t('common.failed')),
     })

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
+import { BulkResultPanel } from '../components/ui/BulkResultPanel'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
@@ -181,9 +182,15 @@ function PacksTab() {
               {lastBulk && (
                 <div className="px-6 py-3 border-t border-surface-200 dark:border-surface-800">
                   <h4 className="text-xs font-medium mb-2">{t('templates.bulkResult','Bulk result')}: {lastBulk.succeeded}/{lastBulk.total}</h4>
-                  <div className="space-y-1 max-h-32 overflow-auto">
-                    {lastBulk.results.map((r)=> <div key={`${r.entity_type}:${r.name}:${r.status}`} className="text-xs flex gap-2"><Badge variant={r.status==='success'?'success':'danger'}>{r.status}</Badge><span>{r.entity_type}:{r.name}</span>{r.error && <span className="text-red-500">{r.error}</span>}</div>)}
-                  </div>
+                  <BulkResultPanel
+                    result={lastBulk}
+                    maxHeightClass="max-h-32"
+                    toView={(r, idx) => {
+                      const item = r as { entity_type?: string; name?: string; status?: string; error?: string }
+                      const label = `${item.entity_type ?? 'item'}:${item.name ?? idx}`
+                      return { key: `${label}:${item.status ?? idx}`, label, status: item.status ?? 'unknown', detail: item.error ?? null }
+                    }}
+                  />
                 </div>
               )}
             </>
