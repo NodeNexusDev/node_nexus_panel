@@ -19,7 +19,19 @@ import {
   useComposePort,
   useComposeUp,
   useComposeDown,
+  useComposeStart,
+  useComposeStop,
   useComposeRestart,
+  useComposePause,
+  useComposeUnpause,
+  useComposeKill,
+  useComposeCreate,
+  useComposeRm,
+  useComposePull,
+  useComposePush,
+  useComposeBuild,
+  useComposeExec,
+  useComposeRun,
   useDeleteComposeProject,
   useUpdateComposeProject,
 } from '../../hooks/useCompose'
@@ -48,10 +60,31 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
   const [actionResult, setActionResult] = useState<BulkResult_ComposeServiceBulkResult_ | null>(null)
   const [downVolumes, setDownVolumes] = useState(false)
   const [downOrphans, setDownOrphans] = useState(false)
+  const [downTimeout, setDownTimeout] = useState('')
+  const [downImages, setDownImages] = useState('')
   const [killSignal, setKillSignal] = useState('SIGTERM')
+  const [portService, setPortService] = useState('web')
+  const [portPrivate, setPortPrivate] = useState('80')
+  const [execService, setExecService] = useState('')
+  const [execCommand, setExecCommand] = useState('')
+  const [runService, setRunService] = useState('')
+  const [runCommand, setRunCommand] = useState('')
+  const [execOutput, setExecOutput] = useState<string | null>(null)
   const up = useComposeUp()
   const down = useComposeDown()
   const restart = useComposeRestart()
+  const start = useComposeStart()
+  const stop = useComposeStop()
+  const pause = useComposePause()
+  const unpause = useComposeUnpause()
+  const kill = useComposeKill()
+  const createSvc = useComposeCreate()
+  const rm = useComposeRm()
+  const pullOp = useComposePull()
+  const pushOp = useComposePush()
+  const buildOp = useComposeBuild()
+  const execOp = useComposeExec()
+  const runOp = useComposeRun()
   const remove = useDeleteComposeProject()
   const update = useUpdateComposeProject()
 
@@ -61,7 +94,7 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
   const { data: images } = useComposeImages(nodeId, projectName, !!projectName)
   const { data: top } = useComposeTop(nodeId, projectName, !!projectName)
   const { data: version } = useComposeVersion(nodeId, projectName, !!projectName)
-  const { data: port } = useComposePort(nodeId, projectName, 'web', '80', false)
+  const { data: port } = useComposePort(nodeId, projectName, portService, portPrivate, !!projectName && !!portService && !!portPrivate)
 
   useEffect(() => {
     setActive('ps')
@@ -107,7 +140,9 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
   }
   const handleDown = () => {
     setActionResult(null); setUpResult(null)
-    down.mutate({ nodeId, projectName, data: { volumes: downVolumes, remove_orphans: downOrphans } as never }, {
+    const timeout = downTimeout.trim() ? Number(downTimeout) : undefined
+    const imagesOpt = downImages.trim() || undefined
+    down.mutate({ nodeId, projectName, data: { volumes: downVolumes, remove_orphans: downOrphans, ...(timeout ? { timeout } : {}), ...(imagesOpt ? { images: imagesOpt } : {}) } as never }, {
       onSuccess: (res) => {
         const bulk = res as BulkResult_ComposeServiceBulkResult_ | { status: string }
         // downs returns ComposeActionResponse, not BulkResult — handle both
@@ -134,6 +169,23 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
         if (bulk.failed && bulk.failed > 0) toast('warning', name + t('common.failedSuffix', { count: bulk.failed }))
         else toast('success', name)
       },
+      onError: () => toast('error', t('common.failed')),
+    })
+  }
+
+  const handleExec = () => {
+    if (!execService.trim() || !execCommand.trim()) return
+    setExecOutput(null)
+    execOp.mutate({ nodeId, projectName, data: { service: execService.trim(), command: execCommand, timeout: 30 } }, {
+      onSuccess: (res) => setExecOutput(JSON.stringify(res, null, 2)),
+      onError: () => toast('error', t('common.failed')),
+    })
+  }
+  const handleRun = () => {
+    if (!runService.trim()) return
+    setExecOutput(null)
+    runOp.mutate({ nodeId, projectName, data: { service: runService.trim(), detached: false, timeout: 60, ...(runCommand.trim() ? { command: runCommand } : {}) } }, {
+      onSuccess: (res) => setExecOutput(JSON.stringify(res, null, 2)),
       onError: () => toast('error', t('common.failed')),
     })
   }
@@ -184,7 +236,17 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       <div className="flex flex-wrap gap-2 items-center">
         <Button variant="secondary" size="sm" disabled={up.isPending} onClick={handleUp}>{up.isPending ? t('common.loading') : t('docker.up')}</Button>
         <Button variant="ghost" size="sm" disabled={down.isPending} onClick={handleDown}>{t('docker.down')}</Button>
+        <Button variant="ghost" size="sm" disabled={start.isPending} onClick={() => handleGeneric(start, 'start')}>{t('docker.start', 'Start')}</Button>
+        <Button variant="ghost" size="sm" disabled={stop.isPending} onClick={() => handleGeneric(stop, 'stop')}>{t('docker.stop', 'Stop')}</Button>
         <Button variant="ghost" size="sm" disabled={restart.isPending} onClick={() => handleGeneric(restart, 'restart')}>{t('docker.restartCompose')}</Button>
+        <Button variant="ghost" size="sm" disabled={pause.isPending} onClick={() => handleGeneric(pause, 'pause')}>{t('docker.pause', 'Pause')}</Button>
+        <Button variant="ghost" size="sm" disabled={unpause.isPending} onClick={() => handleGeneric(unpause, 'unpause')}>{t('docker.unpause', 'Unpause')}</Button>
+        <Button variant="ghost" size="sm" disabled={kill.isPending} onClick={() => handleGeneric(kill, 'kill')}>{t('docker.kill', 'Kill')}</Button>
+        <Button variant="ghost" size="sm" disabled={createSvc.isPending} onClick={() => handleGeneric(createSvc, 'create')}>{t('docker.create', 'Create')}</Button>
+        <Button variant="ghost" size="sm" disabled={rm.isPending} onClick={() => handleGeneric(rm, 'rm')}>{t('docker.rm', 'Rm')}</Button>
+        <Button variant="ghost" size="sm" disabled={pullOp.isPending} onClick={() => handleGeneric(pullOp, 'pull')}>{t('docker.pull', 'Pull')}</Button>
+        <Button variant="ghost" size="sm" disabled={pushOp.isPending} onClick={() => handleGeneric(pushOp, 'push')}>{t('docker.push', 'Push')}</Button>
+        <Button variant="ghost" size="sm" disabled={buildOp.isPending} onClick={() => handleGeneric(buildOp, 'build')}>{t('docker.build', 'Build')}</Button>
         <Button variant="ghost" size="sm" onClick={() => setShowEdit((v) => !v)}>{t('common.edit')}</Button>
         <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm((v) => !v)} className="text-red-500 ml-auto">{t('common.delete')}</Button>
       </div>
@@ -225,8 +287,39 @@ export function ComposeDrawer({ nodeId, projectName, composeYaml, onClose }: Com
       <div className="flex flex-wrap gap-2 items-center text-xs">
         <Checkbox checked={downVolumes} onChange={setDownVolumes} label={t('docker.volumes')} />
         <Checkbox checked={downOrphans} onChange={setDownOrphans} label={t('docker.orphans', 'Orphans')} />
+        <Input value={downTimeout} onChange={(e) => setDownTimeout(e.target.value)} placeholder={t('docker.timeoutSec', 'Timeout (s)')} className="w-24" />
+        <Input value={downImages} onChange={(e) => setDownImages(e.target.value)} placeholder="all|local" className="w-24" />
         <Input value={killSignal} onChange={(e) => setKillSignal(e.target.value)} placeholder="SIGTERM" className="w-24 ml-auto" />
       </div>
+
+      <Card>
+        <CardContent className="pt-4 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <Input label={t('docker.execService', 'Exec service')} value={execService} onChange={(e) => setExecService(e.target.value)} placeholder="web" />
+            <Input label={t('docker.execCommand', 'Command')} value={execCommand} onChange={(e) => setExecCommand(e.target.value)} placeholder="nginx -t" />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" disabled={execOp.isPending || !execService.trim() || !execCommand.trim()} onClick={handleExec}>{t('docker.exec', 'Exec')}</Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Input label={t('docker.runService', 'Run service')} value={runService} onChange={(e) => setRunService(e.target.value)} placeholder="web" />
+            <Input label={t('docker.runCommand', 'Command (optional)')} value={runCommand} onChange={(e) => setRunCommand(e.target.value)} placeholder="echo hello" />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" disabled={runOp.isPending || !runService.trim()} onClick={handleRun}>{t('docker.run', 'Run')}</Button>
+          </div>
+          {execOutput && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-64 overflow-y-auto whitespace-pre-wrap break-all">{execOutput}</pre>}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-4 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <Input label={t('docker.portService', 'Service')} value={portService} onChange={(e) => setPortService(e.target.value)} placeholder="web" />
+            <Input label={t('docker.privatePort', 'Private port')} value={portPrivate} onChange={(e) => setPortPrivate(e.target.value)} placeholder="80" />
+          </div>
+        </CardContent>
+      </Card>
 
       {showEdit && (
         <div className="p-3 rounded-lg bg-surface-50 dark:bg-surface-800/50 border space-y-2">

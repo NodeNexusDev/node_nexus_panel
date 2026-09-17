@@ -1,6 +1,7 @@
 import { api } from './client'
 import { runBulkChunks } from '../lib/chunks'
 import type {
+  BulkPackDeleteResponse,
   PackResponse,
   PackDetailWithAssetsResponse,
   PackLocalCreateRequest,
@@ -38,7 +39,7 @@ export const templatesApi = {
 
   getPack: (packId: string) => api.get<PackDetailWithAssetsResponse>(`/templates/packs/${packId}`),
 
-  createPack: (data: PackLocalCreateRequest) => api.post<PackResponse>('/templates/packs', data),
+  createPack: (data: PackLocalCreateRequest) => api.post<PackDetailWithAssetsResponse>('/templates/packs', data),
 
   deletePack: (packId: string) => api.delete<void>(`/templates/packs/${packId}`),
 
@@ -46,7 +47,7 @@ export const templatesApi = {
 
   bulkDeletePacks: (data: { pack_ids: string[] }) =>
     runBulkChunks(data.pack_ids, 100, (pack_ids) =>
-      api.post<{ total: number; succeeded: number; failed: number; results: Array<{ pack_id: string; status: string; error: string }> }>('/templates/packs/deletions', { pack_ids })),
+      api.post<BulkPackDeleteResponse>('/templates/packs/deletions', { pack_ids })),
 
   getPackStats: (params?: { group_by?: string | null }) => {
     const qs = params?.group_by ? `?group_by=${encodeURIComponent(params.group_by)}` : ''
@@ -65,7 +66,7 @@ export const templatesApi = {
 
   installPack: (packId: string, params?: { on_conflict?: 'fail' | 'rename' }) => {
     const qs = params?.on_conflict ? `?on_conflict=${params.on_conflict}` : ''
-    return api.post<BulkResult_PackInstallResult_>(`/templates/packs/${packId}/installations${qs}`)
+    return api.post<BulkResult_PackInstallResult_>(`/templates/packs/${packId}/installations${qs}`, undefined, { acceptBulk422: true })
   },
 
   uninstallPack: (packId: string) =>

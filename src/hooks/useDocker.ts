@@ -4,6 +4,7 @@ import { dockerApi } from '../api/docker'
 import type {
   DockerContainerInspect,
   ContainerCreateRequest,
+  DockerImageHistoryResponse,
   DockerImageInspectResponse,
   DockerImageBuildRequest,
   DockerImageTagRequest,
@@ -382,7 +383,7 @@ export function usePushImage() {
 }
 
 export function useImageHistory(nodeId: string, imageId: string) {
-  return useQuery<unknown[]>({ queryKey:['docker',nodeId,'images',imageId,'history'], queryFn:()=> dockerApi.getImageHistory(nodeId, imageId), enabled: !!nodeId && !!imageId })
+  return useQuery<DockerImageHistoryResponse>({ queryKey:['docker',nodeId,'images',imageId,'history'], queryFn:()=> dockerApi.getImageHistory(nodeId, imageId), enabled: !!nodeId && !!imageId })
 }
 
 export function usePushImageById() {

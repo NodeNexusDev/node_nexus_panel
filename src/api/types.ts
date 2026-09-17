@@ -1,5 +1,5 @@
-// Auto-synced with OpenAPI 2.0.0 — generated from node_nexus_api/build/openapi.json
-// This file re-exports v2 schemas via generated types. Do not edit manually — regenerate via: npx openapi-typescript build/openapi.json -o src/api/__generated/v2.d.ts
+// Auto-synced with OpenAPI 2.5.3 — generated from node_nexus_api openapi.json
+// This file re-exports v2 schemas via generated types. Do not edit manually — regenerate via: npm run generate:api
 import type { components } from './__generated/v2'
 
 // ── Generic helpers ─────────────────────────────────────────────
@@ -29,6 +29,7 @@ export type BulkResult_BulkValidateCredentialsResult_ = components['schemas']['B
 export type BulkAPIKeyDeleteRequest = components['schemas']['BulkAPIKeyDeleteRequest']
 export type BulkAPIKeyDeleteResult = components['schemas']['BulkAPIKeyDeleteResult']
 export type BulkPackDeleteRequest = components['schemas']['BulkPackDeleteRequest']
+export type BulkPackDeleteResponse = components['schemas']['BulkPackDeleteResponse']
 export type BulkPackDeleteResult = components['schemas']['BulkPackDeleteResult']
 export type BulkResult_CommandBulkCreateResult_ = components['schemas']['BulkResult_CommandBulkCreateResult_']
 export type BulkResult_CommandBulkUpdateResult_ = components['schemas']['BulkResult_CommandBulkUpdateResult_']

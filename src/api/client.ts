@@ -36,7 +36,7 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit & { timeoutMs?: number } = {},
+    options: RequestInit & { timeoutMs?: number; acceptBulk422?: boolean } = {},
   ): Promise<T> {
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string>),
@@ -111,6 +111,16 @@ class ApiClient {
     if (response.ok || response.status === 207) {
       return response.json() as Promise<T>
     }
+    // All-failed bulk installs share the BulkResult shape on 422 — return it
+    // instead of throwing when the caller opted in.
+    if (response.status === 422 && options.acceptBulk422) {
+      try {
+        const data: unknown = await response.json()
+        if (isBulkResult(data)) return data as T
+      } catch {
+        // fall through to error handling
+      }
+    }
 
     const error = await this.parseError(response)
     throw new ApiRequestError(response.status, error)
@@ -156,7 +166,7 @@ class ApiClient {
     throw new ApiRequestError(response.status, error)
   }
 
-  async post<T>(endpoint: string, body?: unknown, options?: RequestInit & { timeoutMs?: number }): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, options?: RequestInit & { timeoutMs?: number; acceptBulk422?: boolean }): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
@@ -219,5 +229,30 @@ export function toApiError(_status: number, data: ApiError & ProblemBody): ApiEr
     message: typeof data.message === 'string' && data.message ? data.message : title,
     detail: (data.detail ?? null) as unknown,
     request_id: (typeof data.request_id === 'string' ? data.request_id : null),
+    details: toFieldDetails(data.errors),
   } as ApiError;
+}
+
+/** Map FastAPI validation `errors: [{loc, msg}]` to per-field messages. */
+function toFieldDetails(errors: unknown): Record<string, string[]> | undefined {
+  if (!Array.isArray(errors)) return undefined
+  const out: Record<string, string[]> = {}
+  for (const item of errors) {
+    if (typeof item !== 'object' || item === null) continue
+    const loc = (item as { loc?: unknown }).loc
+    const msg = (item as { msg?: unknown }).msg
+    if (typeof msg !== 'string') continue
+    const key = Array.isArray(loc)
+      ? loc.map(String).filter((p) => p !== 'body').join('.') || 'general'
+      : 'general'
+    ;(out[key] ??= []).push(msg)
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
+/** BulkResult shape guard (200/207 success + 422 all-failed share it). */
+function isBulkResult(data: unknown): data is { total: number; results: unknown[] } {
+  if (typeof data !== 'object' || data === null) return false
+  const rec = data as Record<string, unknown>
+  return typeof rec.total === 'number' && Array.isArray(rec.results)
 }

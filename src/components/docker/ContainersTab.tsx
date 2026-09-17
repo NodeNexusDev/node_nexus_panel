@@ -23,6 +23,9 @@ import {
   useBulkDockerInspect,
   useBulkDockerLogs,
   useBulkDockerStats,
+  useBulkDockerPause,
+  useBulkDockerUnpause,
+  useBulkContainerKill,
 } from '../../hooks/useDocker'
 import { InfiniteScroll } from '../ui/InfiniteScroll'
 import { ContainerRow } from './ContainerRow'
@@ -71,6 +74,9 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
   const bulkInspect = useBulkDockerInspect()
   const bulkLogs = useBulkDockerLogs()
   const bulkStats = useBulkDockerStats()
+  const bulkPause = useBulkDockerPause()
+  const bulkUnpause = useBulkDockerUnpause()
+  const bulkKill = useBulkContainerKill()
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'stopped'>('all')
@@ -158,6 +164,9 @@ export function ContainersTab({ nodeId }: { nodeId: string }) {
           <Button variant="ghost" size="sm" onClick={() => bulkRestart.mutate({ nodeId, container_ids: selectedContainerIds }, { onSuccess: (d: unknown) => { const r = d as { failed?: number }; if (r.failed && r.failed>0) toast('warning', t('docker.restartAll') + t('common.failedSuffix', { count: r.failed })); else toast('success', t('docker.restartAll')) } })} disabled={bulkRestart.isPending}>{t('docker.restartAll')}</Button>
           <Button variant="ghost" size="sm" onClick={() => bulkStart.mutate({ nodeId, container_ids: selectedContainerIds }, { onSuccess: (d: unknown) => { const r = d as { failed?: number }; if (r.failed && r.failed>0) toast('warning', t('docker.startAll') + t('common.failedSuffix', { count: r.failed })); else toast('success', t('docker.startAll')) } })} disabled={bulkStart.isPending}>{t('docker.startAll')}</Button>
           <Button variant="ghost" size="sm" onClick={() => bulkStop.mutate({ nodeId, container_ids: selectedContainerIds }, { onSuccess: (d: unknown) => { const r = d as { failed?: number }; if (r.failed && r.failed>0) toast('warning', t('docker.stopAll') + t('common.failedSuffix', { count: r.failed })); else toast('success', t('docker.stopAll')) } })} disabled={bulkStop.isPending}>{t('docker.stopAll')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkPause.mutate({ nodeId, container_ids: selectedContainerIds }, { onSuccess: (d: unknown) => { const r = d as { failed?: number }; if (r.failed && r.failed>0) toast('warning', t('docker.pauseAll', 'Pause all') + t('common.failedSuffix', { count: r.failed })); else toast('success', t('docker.pauseAll', 'Pause all')) } })} disabled={bulkPause.isPending}>{t('docker.pauseAll', 'Pause all')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkUnpause.mutate({ nodeId, container_ids: selectedContainerIds }, { onSuccess: (d: unknown) => { const r = d as { failed?: number }; if (r.failed && r.failed>0) toast('warning', t('docker.unpauseAll', 'Unpause all') + t('common.failedSuffix', { count: r.failed })); else toast('success', t('docker.unpauseAll', 'Unpause all')) } })} disabled={bulkUnpause.isPending}>{t('docker.unpauseAll', 'Unpause all')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => bulkKill.mutate({ nodeId, container_ids: selectedContainerIds }, { onSuccess: (d: unknown) => { const r = d as { failed?: number }; if (r.failed && r.failed>0) toast('warning', t('docker.killAll', 'Kill all') + t('common.failedSuffix', { count: r.failed })); else toast('success', t('docker.killAll', 'Kill all')) } })} disabled={bulkKill.isPending}>{t('docker.killAll', 'Kill all')}</Button>
           <Button variant="ghost" size="sm" onClick={() => setShowBulkRemoveConfirm(true)} disabled={bulkRemove.isPending} className="text-red-500">{bulkRemove.isPending ? t('common.loading') : t('docker.bulkRemove')}</Button>
           <Button variant="ghost" size="sm" onClick={() => { setShowBulkExecModal(true); setBulkExecResult('') }}>{t('docker.bulkExec')}</Button>
           <Button variant="ghost" size="sm" onClick={() => { setShowBulkInspectModal(true); setBulkInspectResult(null); bulkInspect.mutate({ nodeId, container_ids: selectedContainerIds }, { onSuccess: (data) => setBulkInspectResult(data as unknown as BulkDockerResponse), onError: () => toast('error', t('docker.toastBulkInspectFailed')) }) }} disabled={bulkInspect.isPending}>{t('docker.bulkInspect')}</Button>

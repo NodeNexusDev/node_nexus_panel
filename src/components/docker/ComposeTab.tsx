@@ -19,6 +19,7 @@ import {
   useUpdateComposeProject,
   useDeleteComposeProject,
 } from '../../hooks/useCompose'
+import { usePacks } from '../../hooks/useTemplates'
 import { ComposeDrawer } from './ComposeDrawer'
 import { Checkbox } from '../ui/Checkbox'
 
@@ -39,14 +40,47 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [envText, setEnvText] = useState('')
+  const [templatePackId, setTemplatePackId] = useState('')
+  const { data: packsPage } = usePacks({ limit: 100 })
+  const templatePacks = (packsPage as { items?: Array<{ id: string; pack_id: string; name: string }> } | undefined)?.items ?? []
   const filtered = projects.filter((p)=> !search || p.project_name.toLowerCase().includes(search.toLowerCase()))
 
   const toggleOne = (id: string) => setSelectedIds((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
+  const parseEnv = (): Record<string, string> | undefined => {
+    const out: Record<string, string> = {}
+    for (const line of envText.split('\n')) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+      const eq = trimmed.indexOf('=')
+      if (eq <= 0) return undefined
+      out[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim()
+    }
+    return out
+  }
+
+  const handleBulkDelete = () => {
+    const names = filtered.filter((p) => selectedIds.has(p.id)).map((p) => p.project_name)
+    if (names.length === 0) return
+    void Promise.allSettled(names.map((name) =>
+      new Promise<void>((resolve, reject) => {
+        remove.mutate({ nodeId, projectName: name }, { onSuccess: () => resolve(), onError: () => reject(new Error(name)) })
+      }),
+    )).then((results) => {
+      const failed = results.filter((r) => r.status === 'rejected').length
+      if (failed > 0) toast('error', `${t('docker.bulkDeletePartial', 'Deleted with errors')}: ${names.length - failed}/${names.length}`)
+      else toast('success', t('docker.composeDeleted'))
+      setSelectedIds(new Set())
+    })
+  }
+
   const handleCreate = () => {
     if (!projectName.trim() || !composeYaml.trim()) return
-    create.mutate({ nodeId, data: { project_name: projectName.trim(), compose: composeYaml } }, {
-      onSuccess: () => { toast('success', t('docker.composeCreated')); setShowCreate(false); setProjectName(''); },
+    const env = parseEnv()
+    if (env === undefined) { toast('error', t('docker.invalidEnv', 'Invalid env format, use KEY=value lines')); return }
+    create.mutate({ nodeId, data: { project_name: projectName.trim(), compose: composeYaml, env, ...(templatePackId ? { template_pack_id: templatePackId } : {}) } }, {
+      onSuccess: () => { toast('success', t('docker.composeCreated')); setShowCreate(false); setProjectName(''); setEnvText(''); setTemplatePackId('') },
       onError: () => toast('error', t('docker.composeCreateFailed')),
     })
   }
@@ -72,7 +106,7 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 px-4 py-2 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800 mb-4">
           <span className="text-sm text-accent-700 dark:text-accent-300">{t('docker.selected', { count: selectedIds.size })}</span>
-          <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(filtered.find((p) => selectedIds.has(p.id))?.project_name || null)} className="text-red-500">{t('common.delete')}</Button>
+          <Button variant="ghost" size="sm" onClick={handleBulkDelete} className="text-red-500" disabled={remove.isPending}>{t('common.delete')}</Button>
           <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface-500 cursor-pointer">{t('docker.clearSelection')}</button>
         </div>
       )}
@@ -101,6 +135,17 @@ export function ComposeTab({ nodeId }: { nodeId: string }) {
           <div className="space-y-1">
             <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('docker.composeYaml')}</label>
             <textarea value={composeYaml} onChange={(e) => setComposeYaml(e.target.value)} rows={12} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-xs font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('docker.envVars', 'Environment (.env KEY=value lines)')}</label>
+            <textarea value={envText} onChange={(e) => setEnvText(e.target.value)} rows={3} placeholder="NGINX_HOST=example.com" className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-xs font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">{t('docker.templatePack', 'Template pack (optional)')}</label>
+            <select value={templatePackId} onChange={(e) => setTemplatePackId(e.target.value)} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-sm dark:bg-surface-800 dark:border-surface-700 dark:text-white">
+              <option value="">{t('common.none', 'None')}</option>
+              {templatePacks.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pack_id})</option>)}
+            </select>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>

@@ -55,8 +55,10 @@ export function usePackArchive(packId: string, enabled = true) {
 }
 
 export function useCreatePack() {
-  return useMutation<PackResponse, Error, PackLocalCreateRequest>({
+  const qc = useQueryClient()
+  return useMutation<PackDetailWithAssetsResponse, Error, PackLocalCreateRequest>({
     mutationFn: (data) => templatesApi.createPack(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['templates', 'packs'] }),
   })
 }
 
@@ -131,6 +133,25 @@ export function useDeleteRegistry() {
   return useMutation({
     mutationFn: (registryId: string) => templatesApi.deleteRegistry(registryId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['templates', 'registries'] }),
+  })
+}
+
+export function useUpdateRegistry() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ registryId, data }: {
+      registryId: string
+      data: { name?: string; owner?: string; default_branch?: string }
+    }) => templatesApi.updateRegistry(registryId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['templates', 'registries'] }),
+  })
+}
+
+export function useBulkDeletePacks() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (packIds: string[]) => templatesApi.bulkDeletePacks({ pack_ids: packIds }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['templates', 'packs'] }),
   })
 }
 

@@ -8,6 +8,7 @@ import { useUiStore } from '../stores/ui-store'
 import { useSse } from '../hooks/useSse'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useHealth } from '../hooks/useHealth'
+import { useBackendVersion } from '../api/compat'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { CommandPalette } from '../components/ui/CommandPalette'
 import { Tooltip } from '../components/ui/Tooltip'
@@ -37,6 +38,8 @@ export function MainLayout() {
   const wsConnected = useSse().isConnected
   const isFetching = useIsFetching() > 0
   const { data: health } = useHealth()
+  const { data: backend } = useBackendVersion()
+  const showCompatWarning = backend != null && !backend.supported
 
   const location = useLocation()
 
@@ -257,6 +260,11 @@ export function MainLayout() {
 
         {/* Page content */}
         <main id="main-content" className="flex-1 overflow-y-auto p-6">
+          {showCompatWarning && backend && (
+            <div role="alert" className="mb-4 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              {t('common.backendVersionMismatch', 'Backend version {{version}} may be incompatible with this panel. Some features may not work.', { version: backend.version })}
+            </div>
+          )}
           <div className="animate-fade-in">
             <Outlet />
           </div>

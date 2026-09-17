@@ -33,7 +33,7 @@ import { ContainerStatusBadge } from './ContainerStatusBadge'
 import type { DockerContainer } from '../../api/types'
 import { dockerApi } from '../../api/docker'
 
-type DrawerTab = 'overview' | 'logs' | 'stats' | 'exec' | 'inspect' | 'top'
+type DrawerTab = 'overview' | 'logs' | 'stats' | 'exec' | 'inspect' | 'top' | 'archive'
 
 interface ContainerDrawerProps {
   nodeId: string
@@ -71,6 +71,9 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
   const waitContainer = useWaitContainer()
 
   const [waitResult, setWaitResult] = useState<string | null>(null)
+  const [archivePath, setArchivePath] = useState('/etc/hosts')
+  const [archiveResult, setArchiveResult] = useState<string | null>(null)
+  const [archiveData, setArchiveData] = useState('')
 
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -84,6 +87,7 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
     setPortResult(null)
     setShowUpdate(false)
     setWaitResult(null)
+    setArchiveResult(null)
   }, [container.ID])
 
   const tabs: { key: DrawerTab; label: string }[] = [
@@ -93,6 +97,7 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
     { key: 'exec', label: t('docker.exec', 'Exec') },
     { key: 'inspect', label: t('docker.inspect', 'Inspect') },
     { key: 'top', label: t('docker.top', 'Top') },
+    { key: 'archive', label: t('docker.archive', 'Archive') },
   ]
 
   const isRunning = container.State?.toLowerCase() === 'running'
@@ -141,6 +146,27 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
       onSuccess: (res) => setWaitResult(JSON.stringify(res, null, 2)),
       onError: (e) => setWaitResult(String((e as Error).message)),
     })
+  }
+  const handleArchiveGet = async () => {
+    if (!archivePath.trim()) return
+    setArchiveResult(null)
+    try {
+      const res = await dockerApi.getContainerArchive(nodeId, container.ID, archivePath.trim())
+      setArchiveResult(JSON.stringify(res, null, 2))
+    } catch (e) {
+      setArchiveResult(String((e as Error).message))
+    }
+  }
+  const handleArchivePut = async () => {
+    if (!archivePath.trim()) return
+    setArchiveResult(null)
+    try {
+      const res = await dockerApi.putContainerArchive(nodeId, container.ID, { data: archiveData }, archivePath.trim())
+      setArchiveResult(JSON.stringify(res, null, 2))
+      toast('success', t('docker.toastArchiveDone', 'Archived'))
+    } catch {
+      setArchiveResult(t('docker.toastArchiveFailed', 'Archive failed'))
+    }
   }
 
   const name = container.Names?.split('/').pop() || container.ID.slice(0, 12)
@@ -243,6 +269,21 @@ export function ContainerDrawer({ nodeId, container, onClose }: ContainerDrawerP
       {active === 'exec' && <ExecContainerContent nodeId={nodeId} containerId={container.ID} onClose={() => setActive('overview')} />}
       {active === 'inspect' && <ContainerInspectContent nodeId={nodeId} containerId={container.ID} />}
       {active === 'top' && <TopContainerContent nodeId={nodeId} containerId={container.ID} />}
+      {active === 'archive' && (
+        <Card>
+          <CardContent className="pt-4 space-y-3">
+            <Input label={t('docker.archivePath', 'Path in container')} value={archivePath} onChange={(e) => setArchivePath(e.target.value)} placeholder="/etc/hosts" />
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={handleArchiveGet}>{t('docker.archiveGet', 'Copy from')}</Button>
+            </div>
+            <textarea value={archiveData} onChange={(e) => setArchiveData(e.target.value)} rows={3} placeholder={t('docker.archiveData', 'Data to copy into container')} className="w-full px-3 py-2 bg-white border border-surface-300 rounded-lg text-xs font-mono dark:bg-surface-800 dark:border-surface-700 dark:text-white" />
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={handleArchivePut}>{t('docker.archivePut', 'Copy to')}</Button>
+            </div>
+            {archiveResult && <pre className="text-xs font-mono bg-surface-50 dark:bg-surface-800/50 rounded p-3 max-h-64 overflow-y-auto whitespace-pre-wrap break-all">{archiveResult}</pre>}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
