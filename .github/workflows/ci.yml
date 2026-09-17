@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   check:
@@ -22,11 +22,21 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Typecheck & Build
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: OpenAPI sync check
+        run: npm run sync:check
+
+      - name: Build
         run: npm run build
 
       - name: Tests
         run: npm run test:run
+
+      - name: Coverage (informational — ratchet to 70% before enforcing)
+        continue-on-error: true
+        run: npm run test:coverage
 
   e2e:
     needs: check

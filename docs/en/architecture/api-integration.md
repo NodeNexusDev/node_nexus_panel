@@ -58,7 +58,18 @@ const result = await api.post<NodeResponse>('/nodes/', {
 
 ## TypeScript Types
 
-All API types are defined in `src/api/types.ts`:
+Types are generated from the backend OpenAPI spec — never hand-edit
+`src/api/__generated/v2.d.ts`:
+
+```bash
+# Refresh snapshot + regenerate (needs backend spec file or live backend):
+npm run generate:api -- --file ../node_nexus_api/build/openapi.json
+npm run generate:api -- --url http://localhost:8000/openapi.json
+# CI drift gate:
+npm run sync:check
+```
+
+All API types are defined in `src/api/types.ts` (re-exports of the generated schemas):
 
 - `Node`, `NodeCreate`, `NodeUpdate`, `NodeMetrics` — node entities
 - `Command`, `CommandCreate`, `CommandUpdate`, `CommandExecuteRequest`, `CommandResult` — command entities
@@ -161,8 +172,18 @@ All API types are defined in `src/api/types.ts`:
 | `configApi` | Runtime configuration |
 | `eventsApi` | SSE event stream |
 
-## Server-Sent Events (SSE)
+## Backend Compatibility
 
+The panel targets backend `2.5.x` (same major, minor >= 5). On startup the client
+reads `GET /openapi.json → info.version` (`src/api/compat.ts`) and shows a banner
+when the backend is outside the supported range. Auth is JWT-only (refresh cookie);
+API keys can be managed in UI but are not used by the client.
+
+| Panel | Backend |
+|-------|---------|
+| 2.5.x | 2.5.x   |
+
+## Server-Sent Events (SSE)
 The panel uses SSE for real-time updates via `src/api/events.ts` and the `useSse` hook:
 
 ```typescript

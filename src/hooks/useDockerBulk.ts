@@ -240,3 +240,23 @@ export function useBulkContainerKill() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['docker'] }),
   })
 }
+
+export function useBulkDockerPause() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { nodeId: string; container_ids: string[] }) => {
+      return dockerApi.bulkPause(data.nodeId, { container_ids: data.container_ids })
+    },
+    onSuccess: () => invalidateDocker(queryClient),
+  })
+}
+
+export function useBulkDockerUnpause() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { nodeId: string; container_ids: string[] }) => {
+      return dockerApi.bulkUnpause(data.nodeId, { container_ids: data.container_ids })
+    },
+    onSuccess: () => invalidateDocker(queryClient),
+  })
+}

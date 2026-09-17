@@ -15,6 +15,23 @@ describe('toApiError', () => {
     expect(err.request_id).toBe('req-422');
   });
 
+  it('maps FastAPI validation errors list to per-field details', () => {
+    const err = toApiError(422, {
+      type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/request-validation-error',
+      title: 'Unprocessable Entity', status: 422,
+      detail: 'Request validation failed', request_id: 'req-1',
+      errors: [
+        { loc: ['body', 'name'], msg: 'Field required', type: 'missing' },
+        { loc: ['body', 'name'], msg: 'Too short', type: 'string_too_short' },
+        { loc: ['body', 'tags', 0], msg: 'Not a string', type: 'string_type' },
+      ],
+    } as never);
+    expect(err.details).toEqual({
+      name: ['Field required', 'Too short'],
+      'tags.0': ['Not a string'],
+    });
+  });
+
   it('maps 429 problem via slug fallback', () => {
     const err = toApiError(429, {
       type: 'https://nodenexusdev.github.io/node_nexus_api/en/errors/rate-limited-error',

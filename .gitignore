@@ -19,6 +19,8 @@ coverage
 dist-ssr
 *.local
 openapi.json
+# Contract snapshot for sync:check drift gate (regenerate via npm run generate:api)
+!src/api/__generated/openapi.json
 
 # Editor directories and files
 .vscode/*

@@ -25,10 +25,12 @@ import type {
   VolumeInspectResponse,
   DockerPruneResponse,
   DockerTopResult,
+  DockerStats,
   DockerSystemInfo,
   DockerSystemDfItem,
   DockerActionResponse,
   DockerArchiveResponse,
+  DockerImageHistoryResponse,
   DockerPortResponse,
   DockerVersionResponse,
   DockerWaitResponse,
@@ -124,7 +126,7 @@ export const dockerApi = {
   },
 
   getContainerStats: (nodeId: string, containerId: string) =>
-    api.get<Record<string, unknown>>(`${nodesBase(nodeId)}/containers/${containerId}/stats`),
+    api.get<DockerStats>(`${nodesBase(nodeId)}/containers/${containerId}/stats`),
 
   // ── Images ──────────────────────────────────────────────────
   getImages: (nodeId: string, params?: { cursor?: string | null; limit?: number }) => {
@@ -142,12 +144,12 @@ export const dockerApi = {
     api.post<DockerImageBuildResponse>(`${nodesBase(nodeId)}/images/build`, data, { timeoutMs: 300_000 }),
 
   getImage: (nodeId: string, imageId: string) =>
-    api.get<DockerImageInspectResponse>(`${nodesBase(nodeId)}/images/${imageId}`),
+    api.get<DockerImageInspectResponse>(`${nodesBase(nodeId)}/images/${encodeURIComponent(imageId)}`),
 
-  deleteImage: (nodeId: string, imageId: string) => api.delete<void>(`${nodesBase(nodeId)}/images/${imageId}`),
+  deleteImage: (nodeId: string, imageId: string) => api.delete<void>(`${nodesBase(nodeId)}/images/${encodeURIComponent(imageId)}`),
 
   tagImage: (nodeId: string, imageId: string, data: DockerImageTagRequest) =>
-    api.post<DockerImageTagResponse>(`${nodesBase(nodeId)}/images/${imageId}/tag`, data),
+    api.post<DockerImageTagResponse>(`${nodesBase(nodeId)}/images/${encodeURIComponent(imageId)}/tag`, data),
 
   pruneImages: (nodeId: string) => api.post<DockerPruneResponse>(`${nodesBase(nodeId)}/images/prune`),
 
@@ -163,16 +165,16 @@ export const dockerApi = {
   createNetwork: (nodeId: string, data: NetworkCreateRequest) =>
     api.post<DockerNetworkCreateResponse>(`${nodesBase(nodeId)}/networks`, data),
 
-  deleteNetwork: (nodeId: string, networkId: string) => api.delete<void>(`${nodesBase(nodeId)}/networks/${networkId}`),
+  deleteNetwork: (nodeId: string, networkId: string) => api.delete<void>(`${nodesBase(nodeId)}/networks/${encodeURIComponent(networkId)}`),
 
   inspectNetwork: (nodeId: string, networkId: string) =>
-    api.get<NetworkInspectResponse>(`${nodesBase(nodeId)}/networks/${networkId}`),
+    api.get<NetworkInspectResponse>(`${nodesBase(nodeId)}/networks/${encodeURIComponent(networkId)}`),
 
   connectNetwork: (nodeId: string, networkId: string, data: NetworkConnectRequest) =>
-    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/networks/${networkId}/connect`, data),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/networks/${encodeURIComponent(networkId)}/connect`, data),
 
   disconnectNetwork: (nodeId: string, networkId: string, data: NetworkDisconnectRequest) =>
-    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/networks/${networkId}/disconnect`, data),
+    api.post<DockerActionResponse>(`${nodesBase(nodeId)}/networks/${encodeURIComponent(networkId)}/disconnect`, data),
 
   // ── Volumes ─────────────────────────────────────────────────
   getVolumes: (nodeId: string, params?: { cursor?: string | null; limit?: number }) => {
@@ -186,10 +188,10 @@ export const dockerApi = {
   createVolume: (nodeId: string, data: VolumeCreateRequest) =>
     api.post<DockerVolumeCreateResponse>(`${nodesBase(nodeId)}/volumes`, data),
 
-  deleteVolume: (nodeId: string, volumeName: string) => api.delete<void>(`${nodesBase(nodeId)}/volumes/${volumeName}`),
+  deleteVolume: (nodeId: string, volumeName: string) => api.delete<void>(`${nodesBase(nodeId)}/volumes/${encodeURIComponent(volumeName)}`),
 
   inspectVolume: (nodeId: string, volumeName: string) =>
-    api.get<VolumeInspectResponse>(`${nodesBase(nodeId)}/volumes/${volumeName}`),
+    api.get<VolumeInspectResponse>(`${nodesBase(nodeId)}/volumes/${encodeURIComponent(volumeName)}`),
 
   pruneVolumes: (nodeId: string) => api.post<DockerVolumePruneResponse>(`${nodesBase(nodeId)}/volumes/prune`),
 
@@ -218,24 +220,26 @@ export const dockerApi = {
   },
 
   killContainer: (nodeId: string, containerId: string, signal?: string) => {
-    const qs = signal ? `?signal=${encodeURIComponent(signal)}` : ''
-    return api.post<void>(`${nodesBase(nodeId)}/containers/${containerId}/kill${qs}`)
+    return api.post<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/kill`, { signal: signal ?? 'SIGTERM' })
   },
 
-  getContainerPort: (nodeId: string, containerId: string, port?: string) => {
-    const qs = port ? `?port=${encodeURIComponent(port)}` : ''
+  getContainerPort: (nodeId: string, containerId: string, privatePort?: string) => {
+    const qs = privatePort ? `?private_port=${encodeURIComponent(privatePort)}` : ''
     return api.get<DockerPortResponse>(`${nodesBase(nodeId)}/containers/${containerId}/port${qs}`)
   },
 
   updateContainer: (nodeId: string, containerId: string, data: unknown) => api.post<DockerActionResponse>(`${nodesBase(nodeId)}/containers/${containerId}/update`, data),
 
-  waitContainer: (nodeId: string, containerId: string) => api.post<DockerWaitResponse>(`${nodesBase(nodeId)}/containers/${containerId}/wait`),
+  waitContainer: (nodeId: string, containerId: string, timeout?: number) => {
+    const qs = timeout ? `?timeout=${timeout}` : ''
+    return api.post<DockerWaitResponse>(`${nodesBase(nodeId)}/containers/${containerId}/wait${qs}`)
+  },
 
   pushImage: (nodeId: string, data: { image: string }) => api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/push`, data),
 
-  getImageHistory: (nodeId: string, imageId: string) => api.get<unknown[]>(`${nodesBase(nodeId)}/images/${imageId}/history`),
+  getImageHistory: (nodeId: string, imageId: string) => api.get<DockerImageHistoryResponse>(`${nodesBase(nodeId)}/images/${encodeURIComponent(imageId)}/history`),
 
-  pushImageById: (nodeId: string, imageId: string) => api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/${imageId}/push`),
+  pushImageById: (nodeId: string, imageId: string) => api.post<DockerPullResult>(`${nodesBase(nodeId)}/images/${encodeURIComponent(imageId)}/push`),
 
   // ── Per-node bulk (v2; id-lists auto-chunked to the server max of 100) ──
   bulkExec: (nodeId: string, data: ContainerExecutionsRequest) =>

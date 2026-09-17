@@ -58,7 +58,18 @@ const result = await api.post<NodeResponse>('/nodes/', {
 
 ## TypeScript-типы
 
-Все типы API определены в `src/api/types.ts`:
+Типы генерируются из backend OpenAPI-спеки — `src/api/__generated/v2.d.ts`
+вручную не править:
+
+```bash
+# Обновить снапшот + регенерировать (нужен файл спеки или живой бэкенд):
+npm run generate:api -- --file ../node_nexus_api/build/openapi.json
+npm run generate:api -- --url http://localhost:8000/openapi.json
+# CI-гейт дрейфа:
+npm run sync:check
+```
+
+Все типы API определены в `src/api/types.ts` (реэкспорт сгенерированных схем):
 
 - `Node`, `NodeCreate`, `NodeUpdate`, `NodeMetrics` — сущности нод
 - `Command`, `CommandCreate`, `CommandUpdate`, `CommandExecuteRequest`, `CommandResult` — сущности команд
@@ -160,6 +171,17 @@ const result = await api.post<NodeResponse>('/nodes/', {
 | `searchApi` | Глобальный поиск по сущностям |
 | `configApi` | Runtime-конфигурация |
 | `eventsApi` | SSE-поток событий |
+
+## Совместимость с бэкендом
+
+Панель таргетит бэкенд `2.5.x` (тот же major, minor >= 5). На старте клиент читает
+`GET /openapi.json → info.version` (`src/api/compat.ts`) и показывает баннер,
+если бэкенд вне поддерживаемого диапазона. Авторизация только JWT (refresh-cookie);
+API-ключи управляются в UI, но клиентом не используются.
+
+| Панель | Бэкенд  |
+|--------|---------|
+| 2.5.x  | 2.5.x   |
 
 ## Server-Sent Events (SSE)
 

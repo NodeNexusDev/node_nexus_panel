@@ -37,6 +37,26 @@ test.describe('Navigation', () => {
     await page.waitForSelector('main h1')
 
     await openSidebar(page)
+    await page.locator('a[href="/docker"]').click()
+    await expect(page).toHaveURL('/docker')
+    await page.waitForSelector('main h1')
+
+    await openSidebar(page)
+    await page.locator('a[href="/templates"]').click()
+    await expect(page).toHaveURL('/templates')
+    await page.waitForSelector('main h1')
+
+    await openSidebar(page)
+    await page.locator('a[href="/favorites"]').click()
+    await expect(page).toHaveURL('/favorites')
+    await page.waitForSelector('main h1')
+
+    await openSidebar(page)
+    await page.locator('a[href="/audit"]').click()
+    await expect(page).toHaveURL('/audit')
+    await page.waitForSelector('main h1')
+
+    await openSidebar(page)
     await page.locator('a[href="/settings"]').click()
     await expect(page).toHaveURL('/settings')
     await page.waitForSelector('main h1')

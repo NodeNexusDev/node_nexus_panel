@@ -8,7 +8,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/useToast'
-import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useInstallPack, useUninstallPack, usePack, useInfinitePackInstallations, useCreatePack, useUpdatePack, useUpdatePackMeta, useDeletePack, useRegistry } from '../hooks/useTemplates'
+import { useInfinitePacks, usePackStats, useInfiniteRegistries, useSyncRegistry, useDeleteRegistry, useCreateRegistry, useUpdateRegistry, useInstallPack, useUninstallPack, usePack, useInfinitePackInstallations, useCreatePack, useUpdatePack, useUpdatePackMeta, useDeletePack, useRegistry } from '../hooks/useTemplates'
 import { templatesApi } from '../api/templates'
 import { Modal } from '../components/ui/Modal'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
@@ -93,10 +93,10 @@ function PacksTab() {
         {p.installed_at ? (
           <>
             <Button variant="ghost" size="sm" onClick={()=> uninstall.mutate(p.id,{onSuccess:()=>toast('success',t('templates.uninstallStarted')), onError:()=>toast('error',t('templates.uninstallFailed'))})} disabled={uninstall.isPending}>{t('templates.uninstall')}</Button>
-            <Button variant="ghost" size="sm" onClick={()=> updatePack.mutate({packId:p.id, on_conflict: onConflict},{onSuccess:(res)=>{ setLastBulk(res as never); toast('success',`${t('templates.updatePack')} ${res.succeeded}/${res.total}`)}, onError:()=>toast('error',t('templates.updateFailed','Update failed'))})} disabled={updatePack.isPending}>{t('templates.updatePack')}</Button>
+            <Button variant="ghost" size="sm" onClick={()=> updatePack.mutate({packId:p.id, on_conflict: onConflict},{onSuccess:(res)=>{ setLastBulk(res as never); if (res.succeeded === 0) { toast('error',`${t('templates.updateFailed','Update failed')} ${res.failed}/${res.total}`) } else { toast('success',`${t('templates.updatePack')} ${res.succeeded}/${res.total}`) } }, onError:()=>toast('error',t('templates.updateFailed','Update failed'))})} disabled={updatePack.isPending}>{t('templates.updatePack')}</Button>
           </>
         ) : (
-          <Button variant="ghost" size="sm" onClick={() => install.mutate({ packId: p.id, on_conflict: onConflict }, { onSuccess: (res) => { setLastBulk(res as never); toast('success', `${t('templates.installStarted')} ${res.succeeded}/${res.total}`)}, onError: () => toast('error', t('templates.installFailed')) })} disabled={install.isPending}>{t('templates.install')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => install.mutate({ packId: p.id, on_conflict: onConflict }, { onSuccess: (res) => { setLastBulk(res as never); if (res.succeeded === 0) { const firstErr = res.results.find((r) => (r as { status?: string }).status === 'error') as { error?: string } | undefined; toast('error', firstErr?.error || `${t('templates.installFailed')} ${res.failed}/${res.total}`) } else { toast('success', `${t('templates.installStarted')} ${res.succeeded}/${res.total}`) } }, onError: () => toast('error', t('templates.installFailed')) })} disabled={install.isPending}>{t('templates.install')}</Button>
         )}
         <Button variant="ghost" size="sm" onClick={()=> setDetailId(p.id)}>{t('common.view')}</Button>
         <Button variant="ghost" size="sm" onClick={()=> setDeletePackTarget({ id: p.id, name: p.name })} className="text-red-500">{t('common.delete')}</Button>
@@ -139,7 +139,7 @@ function PacksTab() {
               <option value="">{t('templates.registries')}</option>
               {regsForFilter.map((r)=> <option key={r.id} value={r.id}>{r.owner}/{r.name}</option>)}
             </select>
-            <select value={onConflict} onChange={(e)=> setOnConflict(e.target.value as never)} className="px-2 py-1 text-xs bg-white border border-surface-300 rounded dark:bg-surface-800 dark:border-surface-700">
+            <select value={onConflict} onChange={(e)=> setOnConflict(e.target.value as never)} className="px-2 py-1 text-xs bg-white border border-surface-300 rounded dark:bg-surface-800 dark:border-surface-700" title={t('templates.onConflictHint', 'Update reinstalls the pack: local edits to generated commands/scripts are lost')}>
               <option value="fail">{t('templates.onConflictFail','Fail')}</option>
               <option value="rename">{t('templates.onConflictRename','Rename')}</option>
             </select>
@@ -198,6 +198,8 @@ function PacksTab() {
             <div className="text-xs text-surface-500 space-y-1">
               {(detail as { version?: string }).version && <p>{t('templates.version')}: {(detail as { version: string }).version}</p>}
               {(detail as { author?: string }).author && <p>{t('templates.author','Author')}: {(detail as { author: string }).author}</p>}
+              {(detail as { manifest_sha?: string | null }).manifest_sha && <p>{t('templates.manifestSha','Manifest SHA')}: <span className="font-mono">{(detail as { manifest_sha: string }).manifest_sha.slice(0, 12)}</span></p>}
+              {(detail as { installed_version?: string | null }).installed_version && <p>{t('templates.installedVersion','Installed')}: {(detail as { installed_version: string }).installed_version}</p>}
               {detail.created_at && <p>{t('common.created')}: {new Date(detail.created_at).toLocaleString()}</p>}
             </div>
             <div className="flex gap-2">
@@ -287,7 +289,9 @@ function RegistriesTab() {
   const sync = useSyncRegistry()
   const del = useDeleteRegistry()
   const create = useCreateRegistry()
+  const updateReg = useUpdateRegistry()
   const [showCreate, setShowCreate] = useState(false)
+  const [editingRegId, setEditingRegId] = useState<string | null>(null)
   const [owner, setOwner] = useState('')
   const [name, setName] = useState('')
   const [branch, setBranch] = useState('main')
@@ -304,7 +308,8 @@ function RegistriesTab() {
     { key:'actions', header: t('common.actions'), render:(r)=> (
       <div className="flex gap-1">
         <Button variant="ghost" size="sm" onClick={()=> setRegDetailId(r.id)}>{t('common.view')}</Button>
-        <Button variant="ghost" size="sm" onClick={() => sync.mutate(r.id, { onSuccess: (res) => toast('success', `${t('templates.synced')} ${res.succeeded}/${res.total}`), onError: () => toast('error', t('templates.syncFailed')) })} disabled={sync.isPending}>{t('templates.sync')}</Button>
+        <Button variant="ghost" size="sm" onClick={()=> { setEditingRegId(r.id); setOwner(r.owner); setName(r.name); setBranch(r.default_branch); setGithubToken(''); setShowCreate(true) }}>{t('common.edit')}</Button>
+        <Button variant="ghost" size="sm" onClick={() => sync.mutate(r.id, { onSuccess: (res) => { const failed = (res.results ?? []).filter((i: { status?: string }) => i.status === 'error'); if (failed.length > 0) { toast('error', `${t('templates.syncPartial', 'Sync partial')}: ${failed.map((i: { pack_id?: string; error?: string }) => i.pack_id).join(', ')}`) } else { toast('success', `${t('templates.synced')} ${res.succeeded}/${res.total}`) } }, onError: () => toast('error', t('templates.syncFailed')) })} disabled={sync.isPending}>{t('templates.sync')}</Button>
         <Button variant="ghost" size="sm" onClick={() => del.mutate(r.id, { onSuccess: () => toast('success', t('templates.deleted')), onError: () => toast('error', t('templates.deleteFailed')) })} className="text-red-500" disabled={del.isPending}>{t('common.delete')}</Button>
       </div>
     )},
@@ -342,16 +347,20 @@ function RegistriesTab() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={t('templates.addRegistry')} size="sm">
+      <Modal isOpen={showCreate} onClose={() => { setShowCreate(false); setEditingRegId(null) }} title={editingRegId ? t('templates.editRegistry', 'Edit registry') : t('templates.addRegistry')} size="sm">
         <div className="space-y-4">
-          <Input label={t('templates.owner', 'Owner')} placeholder="NodeNexusDev" value={owner} onChange={(e) => setOwner(e.target.value)} />
-          <Input label={t('templates.name')} placeholder="official" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input label={t('templates.owner', 'Owner')} placeholder="NodeNexusDev" value={owner} onChange={(e) => setOwner(e.target.value)} disabled={!!editingRegId} />
+          <Input label={t('templates.name')} placeholder="official" value={name} onChange={(e) => setName(e.target.value)} disabled={!!editingRegId} />
           <Input label={t('templates.defaultBranch', 'Branch')} placeholder="main" value={branch} onChange={(e) => setBranch(e.target.value)} />
           <Input label={t('templates.githubToken', 'GitHub Token')} placeholder={t('templates.githubTokenPlaceholder', 'ghp_...')} type="password" value={githubToken} onChange={(e) => setGithubToken(e.target.value)} />
           <p className="text-xs text-surface-500">{t('templates.githubTokenHint', 'For private repos, leave blank for public')}</p>
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>
+            <Button variant="ghost" onClick={() => { setShowCreate(false); setEditingRegId(null) }}>{t('common.cancel')}</Button>
+            {editingRegId ? (
+              <Button onClick={() => updateReg.mutate({ registryId: editingRegId, data: { default_branch: branch.trim() || 'main', ...(githubToken.trim() ? { github_token: githubToken.trim() } : {}) } }, { onSuccess: () => { toast('success', t('templates.updated', 'Updated')); setShowCreate(false); setEditingRegId(null); setOwner(''); setName(''); setBranch('main'); setGithubToken('') }, onError: () => toast('error', t('templates.updateFailed', 'Update failed')) })} disabled={updateReg.isPending}>{updateReg.isPending ? t('common.loading') : t('common.save')}</Button>
+            ) : (
             <Button onClick={() => { if (owner.trim() && name.trim()) create.mutate({ owner: owner.trim(), name: name.trim(), default_branch: branch.trim()||'main', github_token: githubToken.trim()||null } as never, { onSuccess: () => { toast('success', t('templates.created', 'Created')); setShowCreate(false); setOwner(''); setName(''); setBranch('main'); setGithubToken('') }, onError: () => toast('error', t('templates.createFailed')) }) }} disabled={!owner.trim() || !name.trim() || create.isPending}>{create.isPending ? t('common.loading') : t('common.create')}</Button>
+            )}
           </div>
         </div>
       </Modal>
